@@ -27,7 +27,7 @@ OBJS = start.o main.o ipc.o vsprintf.o string.o gecko.o memory.o memory_asm.o \
 
 include common.mk
 
-all: $(TARGET_BIN)
+all: $(TARGET_BIN) loader
 
 main.o: main.c git_version.h
 
@@ -39,6 +39,12 @@ $(TARGET_BIN): $(TARGET_STRIPPED) $(ELFLOADER)
 	@echo  "MAKEBIN	$@"
 	@$(MAKEBIN) $(ELFLOADER) $< $@
 
+run: 
+	@make --no-print-directory -C ppcloader -f Makefile run
+loader:
+	@echo making ppcloader...
+	@make --no-print-directory -C ppcloader -f Makefile
+	
 upload: $(TARGET_BIN)
 	@$(WIIDEV)/bin/bootmii -a $<
 
@@ -54,4 +60,5 @@ $(ELFLOADER):
 myclean:
 	-rm -f $(TARGET) $(TARGET_STRIPPED) $(TARGET_BIN) git_version.h
 	@$(MAKE) -C elfloader clean
+	@make --no-print-directory -C ppcloader -f Makefile clean
 
