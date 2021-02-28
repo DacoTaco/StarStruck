@@ -35,6 +35,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 static volatile ipc_request in_queue[IPC_IN_SIZE] ALIGNED(32) MEM2_BSS;
 static volatile ipc_request out_queue[IPC_OUT_SIZE] ALIGNED(32) MEM2_BSS;
 static volatile ipc_request slow_queue[IPC_SLOW_SIZE];
+static volatile u32 reset_vector = 0;
 
 extern char __mem2_area_start[];
 extern const char git_version[];
@@ -331,8 +332,7 @@ void ipc_irq(void)
 				*(u32*)(req->ioctl.buffer_io) = 0xDEADBEEF;
 			
 			gecko_printf("result - 0x%08X\n",req->result);
-			dc_invalidaterange(req, sizeof(ipcreq));
-			ic_invalidateall();
+			dc_inval_block_fast(req);
 		}
 		
 		
@@ -343,6 +343,14 @@ void ipc_irq(void)
 		write32(HW_IPC_ARMMSG, (u32)req);
 		write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) | IPCY1 | IPCIY1 | IPCIY2 );
 		write32(HW_IPC_ARMCTRL, regs | ARMY1 );		
+		
+		//we got asked to start HBC. lets do that :)
+		if(req->cmd == 0x06 && req->ioctl.ioctl == 0x08)
+		{
+			reset_vector = boot2_run(0x00010001, 0x4C554C5A);
+			return;
+		}
+		
 		donebell++;
 	}
 	if(!donebell)
@@ -377,15 +385,13 @@ void ipc_shutdown(void)
 
 u32 ipc_process_slow(void)
 {
-	u32 vector = 0;
-
-	while (!vector) {
-		while (!vector && (slow_queue_head != slow_queue_tail)) {
-			vector = process_slow(&slow_queue[slow_queue_head]);
+	while (!reset_vector) {
+		/*while (!reset_vector && (slow_queue_head != slow_queue_tail)) {
+			reset_vector = process_slow(&slow_queue[slow_queue_head]);
 			slow_queue_head = (slow_queue_head+1)&(IPC_SLOW_SIZE-1);
 		}
 
-		if (!vector)
+		if (!reset_vector)
 		{
 			gecko_process();
 
@@ -393,8 +399,8 @@ u32 ipc_process_slow(void)
 			if(slow_queue_head == slow_queue_tail)
 				irq_wait();
 			irq_restore(cookie);
-		}
+		}*/
 	}
-	return vector;
+	return reset_vector;
 }
 

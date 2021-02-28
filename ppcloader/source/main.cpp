@@ -71,7 +71,15 @@ int main(int argc, char **argv) {
 		u32 output = 0xFFFFFFFF;
 
 		// We return to the launcher application via exit
-		if ( pressed & WPAD_BUTTON_HOME || gcPressed & PAD_BUTTON_START) exit(0);
+		if ( pressed & WPAD_BUTTON_HOME || gcPressed & PAD_BUTTON_START) 
+		{
+			if(!mini_loaded)
+				exit(0);
+			
+			printf("exit with mini : %d\n", IOS_Ioctl(0x50, 0x08, &pressed, 4, &output, 4));
+			while(1);
+		}
+		
 		if ( pressed & WPAD_BUTTON_B || gcPressed & PAD_BUTTON_B)
 		{
 			printf("im alive!\n");
