@@ -138,6 +138,7 @@ void _ahb_flush_to(enum AHBDEV dev) {
 				clear32(HW_120, 0x400);
 				clear32(HW_188, 0x2000000);
 				mask32(HW_124, 0x7c0, 0xc0);
+				break;
 			//0, 1, 11 in IOS, add more
 			case AHB_STARLET:
 			case AHB_1:

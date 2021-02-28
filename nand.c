@@ -109,7 +109,7 @@ void nand_irq(void)
 	irq_flag = 1;
 }
 
-inline void __nand_wait(void) {
+static inline void __nand_wait(void) {
 	while(read32(NAND_CMD) & NAND_BUSY_MASK);
 	if(read32(NAND_CMD) & NAND_ERROR)
 		gecko_printf("NAND: Error on wait\n");

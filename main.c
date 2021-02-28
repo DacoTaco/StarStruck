@@ -73,11 +73,11 @@ u32 _main(void *base)
 	gecko_printf("Initializing IPC...\n");
 	ipc_initialize();
 
-	gecko_printf("Initializing SDHC...\n");
+	/*gecko_printf("Initializing SDHC...\n");
 	sdhc_init();
 
 	gecko_printf("Mounting SD...\n");
-	fres = f_mount(0, &fatfs);
+	fres = f_mount(0, &fatfs);*/
 
 	if (read32(0x0d800190) & 2) {
 		gecko_printf("GameCube compatibility mode detected...\n");
@@ -90,7 +90,7 @@ u32 _main(void *base)
 		panic2(0, PANIC_MOUNT);
 	}
 
-	gecko_printf("Trying to boot:" PPC_BOOT_FILE "\n");
+	/*gecko_printf("Trying to boot:" PPC_BOOT_FILE "\n");
 
 	res = powerpc_boot_file(PPC_BOOT_FILE);
 	if(res < 0) {
@@ -98,7 +98,7 @@ u32 _main(void *base)
 		gecko_printf("Booting System Menu\n");
 		vector = boot2_run(1, 2);
 		goto shutdown;
-	}
+	}*/
 
 	gecko_printf("Going into IPC mainloop...\n");
 	vector = ipc_process_slow();

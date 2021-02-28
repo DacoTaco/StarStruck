@@ -30,7 +30,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "panic.h"
 
 #define MINI_VERSION_MAJOR 1
-#define MINI_VERSION_MINOR 3
+#define MINI_VERSION_MINOR 4
 
 static volatile ipc_request in_queue[IPC_IN_SIZE] ALIGNED(32) MEM2_BSS;
 static volatile ipc_request out_queue[IPC_OUT_SIZE] ALIGNED(32) MEM2_BSS;
@@ -128,7 +128,7 @@ void ipc_flush(void)
 
 static u32 process_slow(volatile ipc_request *req)
 {
-	//gecko_printf("IPC: process slow_queue @ %p\n",req);
+	gecko_printf("IPC: process slow_queue @ %p\n",req);
 
 	//gecko_printf("IPC: req %08x %08x [%08x %08x %08x %08x %08x %08x]\n", req->code, req->tag,
 	//	req->args[0], req->args[1], req->args[2], req->args[3], req->args[4], req->args[5]);
@@ -187,9 +187,11 @@ void ipc_enqueue_slow(u8 device, u16 req, u32 num_args, ...)
 	va_list ap;
 
 	if(slow_queue_head == ((slow_queue_tail + 1)&(IPC_SLOW_SIZE-1))) {
-		gecko_printf("IPC: Slowqueue overrun\n");
+		gecko_printf("IPC: Slowqueue1 overrun\n");
 		panic2(0, PANIC_IPCOVF);
 	}
+	
+	gecko_printf("IPC: process in %d @ 0x%08X\n", slow_queue_tail, slow_queue[slow_queue_tail].req);
 
 	slow_queue[slow_queue_tail].flags = IPC_SLOW;
 	slow_queue[slow_queue_tail].device = device;
@@ -210,7 +212,7 @@ static void process_in(void)
 {
 	volatile ipc_request *req = &in_queue[in_head];
 
-	//gecko_printf("IPC: process in %d @ %p\n",in_head,req);
+	gecko_printf("IPC: process in %d @ %p\n",in_head,req);
 
 	dc_inval_block_fast((void*)req);
 
@@ -281,7 +283,7 @@ static void process_in(void)
 		}
 	} else {
 		if(slow_queue_head == ((slow_queue_tail + 1)&(IPC_SLOW_SIZE-1))) {
-			gecko_printf("IPC: Slowqueue overrun\n");
+			gecko_printf("IPC: Slowqueue2 overrun\n");
 			panic2(0, PANIC_IPCOVF);
 		}
 
@@ -289,21 +291,63 @@ static void process_in(void)
 		slow_queue_tail = (slow_queue_tail+1)&(IPC_SLOW_SIZE-1);
 	}
 }
-
 void ipc_irq(void)
 {
 	int donebell = 0;
-	while(read32(HW_IPC_ARMCTRL) & IPC_CTRL_IN) {
-		write32(HW_IPC_ARMCTRL, IPC_CTRL_IRQ_IN | IPC_CTRL_IN);
-		while(peek_intail() != in_head) {
-			process_in();
-			in_head = (in_head+1)&(IPC_IN_SIZE-1);
-			poke_inhead(in_head);
+	const u8 INT_CAUSE_IPC_BROADWAY = 0x40000000;
+	const u8 INT_CAUSE_IPC_STARLET = 0x80000000;
+	const u8 IPCX1  = 0x1;
+	const u8 IPCY2  = 0x2;
+	const u8 IPCY1  = 0x4;
+	const u8 IPCX2  = 0x8;
+	const u8 IPCIY1 = 0x10;
+	const u8 IPCIY2 = 0x20;
+	
+	const u8 ARMY1  = 0x1;
+	const u8 ARMX2  = 0x2;
+	const u8 ARMX1  = 0x4;
+	const u8 ARMY2  = 0x8;
+	const u8 ARMIX1 = 0x10;
+	const u8 ARMIX2 = 0x20;
+	
+	while(read32(HW_IPC_ARMCTRL) & IPC_CTRL_IN) 
+	{
+		u32 regs = read32(HW_IPC_ARMCTRL);
+		gecko_printf("ARM registers : 0x%08X\n",regs);
+		regs &= ~(ARMX1);
+		
+		//Send ACK to the PPC
+		regs |= ARMY2;
+		write32(HW_IPC_ARMCTRL, regs );
+
+		//do command
+		ipcreq* req = (ipcreq*)read32(HW_IPC_PPCMSG);
+		gecko_printf("loop - %d\n",read32(HW_IPC_PPCMSG) & 0xFFFF);
+		if(req)
+		{
+			gecko_printf("value : 0x%08X - 0x%08X\n", req->ioctl.ioctl, (u32)req->ioctl.buffer_in );
+			req->result = 0xDEADDEAD;
+			if(req->ioctl.buffer_io != NULL)
+				*(u32*)(req->ioctl.buffer_io) = 0xDEADBEEF;
+			
+			gecko_printf("result - 0x%08X\n",req->result);
+			dc_invalidaterange(req, sizeof(ipcreq));
+			ic_invalidateall();
 		}
+		
+		
+		//Send Reply
+		regs = read32(HW_IPC_ARMCTRL);
+		gecko_printf("PPC registers : 0x%08X\n", read32(HW_IPC_PPCCTRL));
+		gecko_printf("ARM registers : 0x%08X\n", regs);
+		write32(HW_IPC_ARMMSG, (u32)req);
+		write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) | IPCY1 | IPCIY1 | IPCIY2 );
+		write32(HW_IPC_ARMCTRL, regs | ARMY1 );		
 		donebell++;
 	}
 	if(!donebell)
 		gecko_printf("IPC: IRQ but no bell!\n");
+	gecko_printf("irq handled\n");
 }
 
 void ipc_initialize(void)
