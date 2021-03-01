@@ -76,7 +76,12 @@ int main(int argc, char **argv) {
 			if(!mini_loaded)
 				exit(0);
 			
-			printf("exit with mini : %d\n", IOS_Ioctl(0x50, 0x08, &pressed, 4, &output, 4));
+			ioctlv data[2] = {0};
+			u64 titleID = 0x000100014C554C5ALL;
+			data[0].data = &titleID;
+			data[0].len = sizeof(u64);
+			printf("opening ES : %d\n", __ES_Init());
+			printf("ret of Launch : %d\n", IOS_IoctlvReboot((mini_loaded) ? 0x08 : 0x50, 0x08, 2, 0, data));
 			while(1);
 		}
 		
@@ -87,8 +92,9 @@ int main(int argc, char **argv) {
 		
 		if ( pressed & WPAD_BUTTON_1 || gcPressed & PAD_BUTTON_Y ) 
 		{
+			printf("opening ES : %d\n", __ES_Init());
 			printf("sending IOS_Ioctl : 0x%08X - 0x%08X\n",(u32)&pressed, (u32)&output);
-			printf("ret of IOS_Ioctl : %d\n", IOS_Ioctl(0x50, 0x0F, &pressed, 4, &output, 4));
+			printf("ret of IOS_Ioctl : %d\n", IOS_Ioctl((mini_loaded) ? 0x08 : 0x50, 0x0F, &pressed, 4, &output, 4));
 			printf("output : 0x%08X\n", output);
 			continue;
 		}

@@ -28,14 +28,17 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "boot2.h"
 #include "powerpc.h"
 #include "panic.h"
+#include "ios_module.h"
+#include "es.h"
+#include "string.h"
 
 #define MINI_VERSION_MAJOR 1
 #define MINI_VERSION_MINOR 4
 
+//Old stuff
 static volatile ipc_request in_queue[IPC_IN_SIZE] ALIGNED(32) MEM2_BSS;
 static volatile ipc_request out_queue[IPC_OUT_SIZE] ALIGNED(32) MEM2_BSS;
 static volatile ipc_request slow_queue[IPC_SLOW_SIZE];
-static volatile u32 reset_vector = 0;
 
 extern char __mem2_area_start[];
 extern const char git_version[];
@@ -53,12 +56,52 @@ extern const char git_version[];
 
 // Our definitions for this IPC interface
 #define		IPC_CTRL_OUT	IPC_CTRL_Y1
-#define		IPC_CTRL_IN	IPC_CTRL_X1
+#define		IPC_CTRL_IN		IPC_CTRL_X1
 #define		IPC_CTRL_IRQ_IN	IPC_CTRL_IX1
 
-// reset both flags (X* for ARM and Y* for PPC)
-#define		IPC_CTRL_RESET	0x06
+static u16 slow_queue_head;
+static vu16 slow_queue_tail;
 
+static u16 in_head;
+static u16 out_tail;
+
+//New Stuff
+// These defines are for the ARMCTRL regs
+// See http://wiibrew.org/wiki/Hardware/IPC
+#define IPC_ARM_Y1			0x01
+#define IPC_ARM_X2			0x02
+#define IPC_ARM_X1			0x04
+#define IPC_ARM_Y2			0x08
+#define IPC_ARM_IX1			0x10
+#define IPC_ARM_IX2			0x20
+
+#define IPC_PPC_X1			0x01
+#define IPC_PPC_Y2			0x02
+#define IPC_PPC_Y1			0x04
+#define IPC_PPC_X2			0x08
+#define IPC_PPC_IY1			0x10
+#define IPC_PPC_IY2			0x20
+
+// reset both flags (X* for ARM and Y* for PPC)
+#define	IPC_CTRL_RESET		0x06
+
+#define IPC_ARM_INCOMING	IPC_ARM_X1
+#define IPC_ARM_OUTGOING	IPC_ARM_Y1
+#define IPC_ARM_ACK_OUT		IPC_ARM_Y2
+
+#define IPC_PPC_OUTGOING	IPC_PPC_Y1
+#define IPC_TRIG_OUTGOING	IPC_PPC_IY1
+#define IPC_TRIG_ACK		IPC_PPC_IY2
+
+#define IPC_MAX_FILENAME	0x1300
+
+static volatile u64 boot_titleID = 0;
+static volatile ipcreq* input_queue[IPC_IN_SIZE] ALIGNED(0x20) MEM2_BSS;
+static volatile ipcreq* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) MEM2_BSS;
+static u16 in_cnt = 0;
+static u16 out_cnt = 0;
+
+//code
 const ipc_infohdr __ipc_info ALIGNED(32) MEM2_RODATA = {
 	.magic = "IPC",
 	.version = 1,
@@ -68,12 +111,6 @@ const ipc_infohdr __ipc_info ALIGNED(32) MEM2_RODATA = {
 	.ipc_out = out_queue,
 	.ipc_out_size = IPC_OUT_SIZE,
 };
-
-static u16 slow_queue_head;
-static vu16 slow_queue_tail;
-
-static u16 in_head;
-static u16 out_tail;
 
 static inline void poke_outtail(u16 num)
 {
@@ -95,9 +132,10 @@ static inline u16 peek_outhead(void)
 	return read32(HW_IPC_PPCMSG) >> 16;
 }
 
+
 void ipc_post(u32 code, u32 tag, u32 num_args, ...)
 {
-	int arg = 0;
+	/*int arg = 0;
 	va_list ap;
 	u32 cookie = irq_kill();
 
@@ -119,14 +157,14 @@ void ipc_post(u32 code, u32 tag, u32 num_args, ...)
 	poke_outtail(out_tail);
 	write32(HW_IPC_ARMCTRL, IPC_CTRL_IRQ_IN | IPC_CTRL_OUT);
 
-	irq_restore(cookie);
+	irq_restore(cookie);*/
 }
 
 void ipc_flush(void)
 {
 	while(peek_outhead() != out_tail);
 }
-
+/*
 static u32 process_slow(volatile ipc_request *req)
 {
 	gecko_printf("IPC: process slow_queue @ %p\n",req);
@@ -180,11 +218,11 @@ static u32 process_slow(volatile ipc_request *req)
 	}
 
 	return 0;
-}
+}*/
 
 void ipc_enqueue_slow(u8 device, u16 req, u32 num_args, ...)
 {
-	int arg = 0;
+	/*int arg = 0;
 	va_list ap;
 
 	if(slow_queue_head == ((slow_queue_tail + 1)&(IPC_SLOW_SIZE-1))) {
@@ -206,9 +244,9 @@ void ipc_enqueue_slow(u8 device, u16 req, u32 num_args, ...)
 		va_end(ap);
 	}
 
-	slow_queue_tail = (slow_queue_tail+1)&(IPC_SLOW_SIZE-1);
+	slow_queue_tail = (slow_queue_tail+1)&(IPC_SLOW_SIZE-1);*/
 }
-
+/*
 static void process_in(void)
 {
 	volatile ipc_request *req = &in_queue[in_head];
@@ -291,71 +329,122 @@ static void process_in(void)
 		slow_queue[slow_queue_tail] = *req;
 		slow_queue_tail = (slow_queue_tail+1)&(IPC_SLOW_SIZE-1);
 	}
+}*/
+void ipc_reply(ipcreq* req)
+{
+	//Send Reply
+	u32 regs = read32(HW_IPC_ARMCTRL);
+	write32(HW_IPC_ARMMSG, (u32)req);
+	write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) | IPC_PPC_OUTGOING | IPC_TRIG_OUTGOING | IPC_TRIG_ACK );
+	write32(HW_IPC_ARMCTRL, regs | IPC_ARM_OUTGOING );	
 }
+
+void enqueue_reply(ipcreq* req)
+{
+	if(out_cnt >= IPC_OUT_SIZE)
+	{
+		gecko_printf("IPC: OUTPUT QUEUE OVERLOAD\n");
+		return;
+	}
+	
+	output_queue[out_cnt] = req;
+	out_cnt++;
+}
+
+void enqueue_request(ipcreq* req)
+{
+	if(in_cnt >= IPC_IN_SIZE)
+	{
+		gecko_printf("IPC: INPUT QUEUE OVERLOAD\n");
+		return;
+	}
+	
+	input_queue[in_cnt] = req;
+	in_cnt++;
+}
+
+void ipc_process_input(void)
+{
+	if(in_cnt == 0)
+		return;
+	
+	volatile ipcreq* req = input_queue[in_cnt-1];
+	if(req == NULL)
+		goto exit_process;
+	
+	s32 return_value = IOS_EINVAL;	
+	u8 reply = 1;
+	request_handler req_handler = NULL;
+	request_open open_handler = NULL;
+	dc_flushrange((u32*)req, sizeof(ipcreq));
+	dc_invalidaterange((u32*)req, sizeof(ipcreq));
+	
+	if(req->cmd == IOS_OPEN)
+	{
+		if(strncmp(req->open.filepath, es_module.device_name, IPC_MAX_FILENAME) == 0)
+			open_handler = es_module.handle_open;
+		else
+			gecko_printf("IPC: unknown open request 0x%04x-0x%04x - '%s'\n", req->cmd, req->fd, req->open.filepath);
+	}
+	else
+	{	
+		switch(req->fd)
+		{
+			case IPC_DEV_ES:
+				req_handler = es_module.handle_request;
+				break;
+			default:
+				gecko_printf("IPC: unknown request 0x%04x-0x%04x\n", req->cmd, req->fd);
+				break;
+		}
+	}
+	
+	if(req_handler)
+		return_value = req_handler((ipcreq*)req, &reply);
+	else if(open_handler)
+		return_value = open_handler(req->open.filepath, req->open.mode, &reply);
+	
+	write32((u32)&req->result, return_value);
+	dc_flushrange((u32*)&req->result, 0x04);
+	dc_invalidaterange((u32*)&req->result, 0x04);
+	
+	if(reply)
+		ipc_reply((ipcreq*)req);
+	else
+	{
+		//only ack
+		u32 regs = read32(HW_IPC_PPCCTRL);
+		regs &= ~(IPC_TRIG_OUTGOING | IPC_PPC_OUTGOING);
+		write32(HW_IPC_PPCCTRL, IPC_TRIG_ACK );
+	}
+
+exit_process:
+	in_cnt--;
+	return;
+}
+
 void ipc_irq(void)
 {
-	int donebell = 0;
-	const u8 INT_CAUSE_IPC_BROADWAY = 0x40000000;
-	const u8 INT_CAUSE_IPC_STARLET = 0x80000000;
-	const u8 IPCX1  = 0x1;
-	const u8 IPCY2  = 0x2;
-	const u8 IPCY1  = 0x4;
-	const u8 IPCX2  = 0x8;
-	const u8 IPCIY1 = 0x10;
-	const u8 IPCIY2 = 0x20;
-	
-	const u8 ARMY1  = 0x1;
-	const u8 ARMX2  = 0x2;
-	const u8 ARMX1  = 0x4;
-	const u8 ARMY2  = 0x8;
-	const u8 ARMIX1 = 0x10;
-	const u8 ARMIX2 = 0x20;
-	
-	while(read32(HW_IPC_ARMCTRL) & IPC_CTRL_IN) 
+	int donebell = 0;	
+	while(read32(HW_IPC_ARMCTRL) & IPC_ARM_INCOMING) 
 	{
 		u32 regs = read32(HW_IPC_ARMCTRL);
-		gecko_printf("ARM registers : 0x%08X\n",regs);
-		regs &= ~(ARMX1);
+		regs &= ~(IPC_ARM_INCOMING);
 		
 		//Send ACK to the PPC
-		regs |= ARMY2;
+		regs |= IPC_ARM_ACK_OUT;
 		write32(HW_IPC_ARMCTRL, regs );
 
-		//do command
-		ipcreq* req = (ipcreq*)read32(HW_IPC_PPCMSG);
-		gecko_printf("loop - %d\n",read32(HW_IPC_PPCMSG) & 0xFFFF);
-		if(req)
-		{
-			gecko_printf("value : 0x%08X - 0x%08X\n", req->ioctl.ioctl, (u32)req->ioctl.buffer_in );
-			req->result = 0xDEADDEAD;
-			if(req->ioctl.buffer_io != NULL)
-				*(u32*)(req->ioctl.buffer_io) = 0xDEADBEEF;
-			
-			gecko_printf("result - 0x%08X\n",req->result);
-			dc_inval_block_fast(req);
-		}
+		//enqueue command
+		enqueue_request((ipcreq*)read32(HW_IPC_PPCMSG));
 		
-		
-		//Send Reply
-		regs = read32(HW_IPC_ARMCTRL);
-		gecko_printf("PPC registers : 0x%08X\n", read32(HW_IPC_PPCCTRL));
-		gecko_printf("ARM registers : 0x%08X\n", regs);
-		write32(HW_IPC_ARMMSG, (u32)req);
-		write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) | IPCY1 | IPCIY1 | IPCIY2 );
-		write32(HW_IPC_ARMCTRL, regs | ARMY1 );		
-		
-		//we got asked to start HBC. lets do that :)
-		if(req->cmd == 0x06 && req->ioctl.ioctl == 0x08)
-		{
-			reset_vector = boot2_run(0x00010001, 0x4C554C5A);
-			return;
-		}
+		//disable interrupt
+		write32(HW_IPC_ARMCTRL, read32(HW_IPC_ARMCTRL) | IPC_ARM_OUTGOING );
 		
 		donebell++;
 	}
 	if(!donebell)
 		gecko_printf("IPC: IRQ but no bell!\n");
-	gecko_printf("irq handled\n");
 }
 
 void ipc_initialize(void)
@@ -383,9 +472,21 @@ void ipc_shutdown(void)
 	irq_disable(IRQ_IPC);
 }
 
-u32 ipc_process_slow(void)
+void ipc_ppc_boot_title(u64 titleId)
 {
-	while (!reset_vector) {
+	boot_titleID = titleId;
+	return;
+}
+
+u32 ipc_main(void)
+{
+	while (!boot_titleID) 
+	{
+		u32 cookie = irq_kill();
+		if(in_cnt > 0)
+			ipc_process_input();
+		irq_restore(cookie);
+		
 		/*while (!reset_vector && (slow_queue_head != slow_queue_tail)) {
 			reset_vector = process_slow(&slow_queue[slow_queue_head]);
 			slow_queue_head = (slow_queue_head+1)&(IPC_SLOW_SIZE-1);
@@ -401,6 +502,7 @@ u32 ipc_process_slow(void)
 			irq_restore(cookie);
 		}*/
 	}
-	return reset_vector;
+	irq_kill();
+	return boot2_run(boot_titleID >> 32, boot_titleID & 0xFFFFFFFF);
 }
 

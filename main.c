@@ -101,7 +101,7 @@ u32 _main(void *base)
 	}*/
 
 	gecko_printf("Going into IPC mainloop...\n");
-	vector = ipc_process_slow();
+	vector = ipc_main();
 	gecko_printf("IPC mainloop done!\n");
 	gecko_printf("Shutting down IPC...\n");
 	ipc_shutdown();

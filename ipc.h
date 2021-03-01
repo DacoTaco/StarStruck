@@ -31,17 +31,23 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
    Even still, you are encouraged to add in sanity checks and version
    checking to prevent strange bugs or even data loss.  --bushing */
 
-#define IPC_FAST	0x01
-#define IPC_SLOW	0x00
+#define IPC_FAST		0x01
+#define IPC_SLOW		0x00
 
-#define IPC_DEV_SYS	0x00
+#define IPC_OPEN_NONE	0x00
+#define IPC_OPEN_READ	0x01
+#define IPC_OPEN_WRITE	0x02
+#define IPC_OPEN_RW		(IPC_OPEN_READ|IPC_OPEN_WRITE)
+
+#define IPC_DEV_SYS		0x00
 #define IPC_DEV_NAND	0x01
 #define IPC_DEV_SDHC	0x02
 #define IPC_DEV_KEYS	0x03
-#define IPC_DEV_AES	0x04
+#define IPC_DEV_AES		0x04
 #define IPC_DEV_BOOT2	0x05
-#define IPC_DEV_PPC	0x06
+#define IPC_DEV_PPC		0x06
 #define IPC_DEV_SDMMC	0x07
+#define IPC_DEV_ES		0x08
 
 //#define IPC_DEV_USER0 0x80
 //#define IPC_DEV_USER1 0x81
@@ -103,7 +109,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 #define IPC_CODE (f,d,r) (((f)<<24)|((d)<<16)|(r))
 
-#define IPC_IN_SIZE	32
+#define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 #define IPC_SLOW_SIZE	128
 
@@ -119,44 +125,6 @@ typedef struct {
 	u32 tag;
 	u32 args[6];
 } ipc_request;
-
-typedef struct _ipcreq
-{						//ipc struct size: 32
-	u32 cmd;			//0
-	s32 result;			//4
-	union {				//8
-		s32 fd;
-		u32 req_cmd;
-	};
-	union {
-		struct {
-			char *filepath;
-			u32 mode;
-		} open;
-		struct {
-			void *data;
-			u32 len;
-		} read, write;
-		struct {
-			s32 where;
-			s32 whence;
-		} seek;
-		struct {
-			u32 ioctl;
-			void *buffer_in;
-			u32 len_in;
-			void *buffer_io;
-			u32 len_io;
-		} ioctl;
-		struct {
-			u32 ioctl;
-			u32 argcin;
-			u32 argcio;
-			struct _ioctlv *argv;
-		} ioctlv;
-		u32 args[5];
-	};
-} ipcreq;
 
 typedef const struct {
 	char magic[3];
@@ -174,7 +142,8 @@ void ipc_initialize(void);
 void ipc_shutdown(void);
 void ipc_post(u32 code, u32 tag, u32 num_args, ...);
 void ipc_flush(void);
-u32  ipc_process_slow(void);
+u32  ipc_main(void);
+void ipc_ppc_boot_title(u64 titleId);
 
 // Enqueues a request in the slow in_queue, use this in IRQ context only.
 void ipc_enqueue_slow(u8 device, u16 req, u32 num_args, ...);
