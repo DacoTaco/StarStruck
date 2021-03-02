@@ -31,7 +31,7 @@ typedef volatile signed short vs16;
 typedef volatile signed int vs32;
 typedef volatile signed long long vs64;
 
-typedef s32 size_t;
+typedef u32 size_t;
 
 #define NULL ((void *)0)
 
@@ -54,8 +54,8 @@ typedef s32 size_t;
 #define LONG_MAX INT_MAX
 #define ULONG_MAX UINT_MAX
 
-#define LLONG_MAX ((long long)0x7fffffffffffffff)
-#define ULLONG_MAX ((unsigned long long)0xffffffffffffffff)
+#define LLONG_MAX 0x7fffffffffffffffLL
+#define ULLONG_MAX 0xffffffffffffffffULL
 
 #endif
 
