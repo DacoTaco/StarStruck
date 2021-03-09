@@ -67,8 +67,8 @@ int main(int argc, char **argv) {
 		// WPAD_ButtonsDown tells us which buttons were pressed in this loop
 		// this is a "one shot" state which will not fire again until the button has been released
 		u32 pressed = 0; //WPAD_ButtonsDown(0);
-		u32 gcPressed = PAD_ButtonsDown(0);
-		u32 output = 0xFFFFFFFF;
+		u32 gcPressed ATTRIBUTE_ALIGN(32) = PAD_ButtonsDown(0);
+		u32 output ATTRIBUTE_ALIGN(32) = 0xB16B00B5;
 
 		// We return to the launcher application via exit
 		if ( pressed & WPAD_BUTTON_HOME || gcPressed & PAD_BUTTON_START) 

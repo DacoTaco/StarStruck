@@ -11,6 +11,14 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#ifndef STR_HELPER
+#define STR_HELPER(x) 	#x
+#endif
+
+#ifndef STR
+#define STR(x) 			STR_HELPER(x)
+#endif
+
 #include "types.h"
 
 static inline u32 read32(u32 addr)

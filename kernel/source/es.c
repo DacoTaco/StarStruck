@@ -11,8 +11,11 @@ Copyright (C) 2021	DacoTaco
 #define DEVICE_NAME "/dev/es"
 #define _DEBUG_ES
 
+#include "utils.h"
+#include "memory.h"
 #include "string.h"
 #include "ipc.h"
+#include "syscallcore.h"
 #include "es.h"
 #include "template_bin.h"
 
@@ -78,6 +81,7 @@ Copyright (C) 2021	DacoTaco
 #define IOCTL_ES_GETSHAREDCONTENTS		0x37
 
 static char _opened = 0;
+
 int _es_process_ioctlv(ipcreq* request, unsigned char* do_reply)
 {
 #ifdef _DEBUG_ES
@@ -129,6 +133,11 @@ int _es_process_ioctl(ipcreq* request, unsigned char* do_reply)
 			handle_request handler = (handle_request)module.request_handler;
 			if(request->ioctl.buffer_io != NULL)
 				*(u32*)(request->ioctl.buffer_io) = handler(request, do_reply);
+			//syscall(0x0001, 0xCA, 0xAD, 0xFE);
+			gecko_printf("ptr : %p\n", &ret);
+			os_freeMemory(&ret);
+			gecko_printf("syscall returned\n");
+			gecko_printf("exit _es_process_ioctl\n");
 			return ES_IOSC_ENOENT;
 	}
 }

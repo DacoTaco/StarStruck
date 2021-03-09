@@ -344,6 +344,7 @@ void ipc_send_ack(void)
 	write32(HW_IPC_PPCCTRL, ppc_regs );
 	write32(HW_IPC_ARMCTRL, arm_regs );
 }
+
 void ipc_reply(ipcreq* req)
 {
 	//Send Reply
@@ -413,17 +414,25 @@ void ipc_process_input(void)
 		}
 	}
 	
+	gecko_printf("checked fd\n");
+	
 	if(req_handler)
 		return_value = req_handler((ipcreq*)req, &reply);
 	else if(open_handler)
 		return_value = open_handler(req->open.filepath, req->open.mode, &reply);
 	
+	gecko_printf("req_handler executed\n");
 	write32((u32)&req->result, return_value);
-	dc_flushrange((u32*)&req->result, 0x04);
-	dc_invalidaterange((u32*)&req->result, 0x04);
-	
+	dc_flushrange((void*)req, sizeof(ipcreq));
+	dc_invalidaterange((void*)req, sizeof(ipcreq));
+	ic_invalidateall();
+	gecko_printf("ret written executed (0x%08X)\n", req->result);
 	if(reply)
+	{
+		gecko_printf("sending reply...\n");
 		ipc_reply((ipcreq*)req);
+		gecko_printf("sent!\n");
+	}
 	else
 	{
 		//only ack
@@ -432,6 +441,7 @@ void ipc_process_input(void)
 
 exit_process:
 	in_cnt--;
+	gecko_printf("exit ipc_process_input\n");
 	return;
 }
 
@@ -495,7 +505,7 @@ u32 ipc_main(void)
 {
 	while (!boot_titleID) 
 	{
-		u32 cookie = irq_kill();
+		u32 cookie = irq_kill();		
 		if(in_cnt > 0)
 			ipc_process_input();
 		irq_restore(cookie);
@@ -516,6 +526,8 @@ u32 ipc_main(void)
 		}*/
 	}
 	irq_kill();
-	return boot2_run(boot_titleID >> 32, boot_titleID & 0xFFFFFFFF);
+	u32 vector = boot2_run(boot_titleID >> 32, boot_titleID & 0xFFFFFFFF);
+	gecko_printf("vector : 0x%08X\n", vector);
+	return vector;
 }
 

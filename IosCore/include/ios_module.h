@@ -74,7 +74,7 @@ typedef struct _ipcreq
 	};
 	
 	void *cb;			//32
-	void *usrdata;		//36
+	u32 caller_data;	//36
 	u32 relnch;			//40
 } ipcreq;
 

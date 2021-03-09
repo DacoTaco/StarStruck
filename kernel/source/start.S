@@ -23,7 +23,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl _start
 
 .extern v_undf
-.extern v_swi
+.extern syscall_handler
 .extern v_instr_abrt
 .extern v_data_abrt
 .extern v_reserved
@@ -36,7 +36,7 @@ _vectors:
 _start:
 	ldr	pc, =v_reset
 	ldr	pc, =v_undf
-	ldr	pc, =v_swi
+	ldr	pc, =syscall_handler
 	ldr	pc, =v_instr_abrt
 	ldr	pc, =v_data_abrt
 	ldr	pc, =v_reserved
