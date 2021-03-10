@@ -90,16 +90,6 @@ u32 _main(void *base)
 		panic2(0, PANIC_MOUNT);
 	}
 
-	/*gecko_printf("Trying to boot:" PPC_BOOT_FILE "\n");
-
-	res = powerpc_boot_file(PPC_BOOT_FILE);
-	if(res < 0) {
-		gecko_printf("Failed to boot PPC: %d\n", res);
-		gecko_printf("Booting System Menu\n");
-		vector = boot2_run(1, 2);
-		goto shutdown;
-	}*/
-
 	gecko_printf("Going into IPC mainloop...\n");
 	vector = ipc_main();
 	gecko_printf("IPC mainloop done!\n");

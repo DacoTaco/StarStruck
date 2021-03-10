@@ -163,7 +163,7 @@ int sdmmc_check_card(void);
 int sdmmc_ack_card(void);
 int sdmmc_read(u32 blk_start, u32 blk_count, void *data);
 #ifdef CAN_HAZ_IPC
-void sdmmc_ipc(volatile ipc_request *req);
+
 #endif
 
 /* MMC commands */				/* response type */

@@ -16,6 +16,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define __IPC_H__
 
 #include "types.h"
+#include "ios_module.h"
 
 /* For the sake of interface compatibility between mini and powerpc code,
    you should try to commit any enhancements you make back upstream so
@@ -30,9 +31,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
    Even still, you are encouraged to add in sanity checks and version
    checking to prevent strange bugs or even data loss.  --bushing */
-
-#define IPC_FAST		0x01
-#define IPC_SLOW		0x00
 
 #define IPC_OPEN_NONE	0x00
 #define IPC_OPEN_READ	0x01
@@ -49,104 +47,29 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_DEV_SDMMC	0x07
 #define IPC_DEV_ES		0x08
 
-//#define IPC_DEV_USER0 0x80
-//#define IPC_DEV_USER1 0x81
-
-#define IPC_SYS_PING	0x0000
-#define IPC_SYS_JUMP	0x0001
-#define IPC_SYS_GETVERS 0x0002
-#define IPC_SYS_GETGITS 0x0003
-#define IPC_SYS_WRITE32	0x0100
-#define IPC_SYS_WRITE16	0x0101
-#define IPC_SYS_WRITE8	0x0102
-#define IPC_SYS_READ32	0x0103
-#define IPC_SYS_READ16	0x0104
-#define IPC_SYS_READ8	0x0105
-#define IPC_SYS_SET32	0x0106
-#define IPC_SYS_SET16	0x0107
-#define IPC_SYS_SET8	0x0108
-#define IPC_SYS_CLEAR32	0x0109
-#define IPC_SYS_CLEAR16	0x010a
-#define IPC_SYS_CLEAR8	0x010b
-#define IPC_SYS_MASK32	0x010c
-#define IPC_SYS_MASK16	0x010d
-#define IPC_SYS_MASK8	0x010e
-
-#define IPC_NAND_RESET	0x0000
-#define IPC_NAND_GETID	0x0001
-#define IPC_NAND_READ	0x0002
-#define IPC_NAND_WRITE	0x0003
-#define IPC_NAND_ERASE	0x0004
-#define IPC_NAND_STATUS	0x0005
-#define IPC_NAND_SETMINPAGE 0x0006
-#define IPC_NAND_GETMINPAGE 0x0007
-//#define IPC_NAND_USER0 0x8000
-//#define IPC_NAND_USER1 0x8001
-// etc.
-
-#define IPC_SDHC_DISCOVER 0x0000
-#define IPC_SDHC_EXIT	0x0001
-
-#define IPC_SDMMC_ACK	0x0000
-#define IPC_SDMMC_READ	0x0001
-#define IPC_SDMMC_WRITE	0x0002
-#define IPC_SDMMC_STATE 0x0003
-#define IPC_SDMMC_SIZE	0x0004
-
-#define IPC_KEYS_GETOTP	0x0000
-#define IPC_KEYS_GETEEP	0x0001
-
-#define IPC_AES_RESET	0x0000
-#define IPC_AES_SETIV	0x0001
-#define IPC_AES_SETKEY	0x0002
-#define IPC_AES_DECRYPT	0x0003
-
-#define IPC_BOOT2_RUN	0x0000
-#define IPC_BOOT2_TMD	0x0001
-
-#define IPC_PPC_BOOT	0x0000
-#define IPC_PPC_BOOT_FILE 0x0001
-
-#define IPC_CODE (f,d,r) (((f)<<24)|((d)<<16)|(r))
-
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
-#define IPC_SLOW_SIZE	128
-
-typedef struct {
-	union {
-		struct {
-			u8 flags;
-			u8 device;
-			u16 req;
-		};
-		u32 code;
-	};
-	u32 tag;
-	u32 args[6];
-} ipc_request;
 
 typedef const struct {
 	char magic[3];
 	char version;
 	void *mem2_boundary;
-	volatile ipc_request *ipc_in;
+	volatile ipcreq **ipc_in;
 	u32 ipc_in_size;
-	volatile ipc_request *ipc_out;
+	volatile ipcreq **ipc_out;
 	u32 ipc_out_size;
 } ipc_infohdr;
 
 void ipc_irq(void);
-
+void ipc_send_ack(void);
+void ipc_reply(ipcreq* req);
+void ipc_enqueue_reuqest(ipcreq* req);
 void ipc_initialize(void);
 void ipc_shutdown(void);
 void ipc_post(u32 code, u32 tag, u32 num_args, ...);
 void ipc_flush(void);
 u32  ipc_main(void);
 void ipc_ppc_boot_title(u64 titleId);
-
-// Enqueues a request in the slow in_queue, use this in IRQ context only.
-void ipc_enqueue_slow(u8 device, u16 req, u32 num_args, ...);
 
 #endif
 

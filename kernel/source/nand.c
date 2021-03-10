@@ -52,8 +52,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define NAND_FLAGS_RD	0x2000
 #define NAND_FLAGS_ECC	0x1000
 
-static ipc_request current_request;
-
 static u8 ipc_data[PAGE_SIZE] MEM2_BSS ALIGNED(32);
 static u8 ipc_ecc[ECC_BUFFER_ALLOC] MEM2_BSS ALIGNED(128); //128 alignment REQUIRED
 
@@ -63,14 +61,12 @@ static u32 nand_min_page = 0x200; // default to protecting boot1+boot2
 
 void nand_irq(void)
 {
-	int code, tag, err = 0;
 	if(read32(NAND_CMD) & NAND_ERROR) {
 		gecko_printf("NAND: Error on IRQ\n");
-		err = -1;
 	}
 	ahb_flush_from(AHB_NAND);
 	ahb_flush_to(AHB_STARLET);
-	if (current_request.code != 0) {
+	/*if (current_request.code != 0) {
 		switch (current_request.req) {
 			case IPC_NAND_GETID:
 				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
@@ -105,7 +101,7 @@ void nand_irq(void)
 		tag = current_request.tag;
 		current_request.code = 0;
 		ipc_post(code, tag, 1, err);
-	}
+	}*/
 	irq_flag = 1;
 }
 
@@ -242,7 +238,6 @@ void nand_erase_block(u32 pageno) {
 
 void nand_initialize(void)
 {
-	current_request.code = 0;
 	nand_reset();
 	irq_enable(IRQ_NAND);
 }
@@ -290,73 +285,5 @@ int nand_correct(u32 pageno, void *data, void *ecc)
 	if(corrected)
 		return NAND_ECC_CORRECTED;
 	return NAND_ECC_OK;
-}
-
-void nand_ipc(volatile ipc_request *req)
-{
-	u32 new_min_page = 0x200;
-	if (current_request.code != 0) {
-		gecko_printf("NAND: previous IPC request is not done yet.");
-		ipc_post(req->code, req->tag, 1, -1);
-		return;
-	}
-	switch (req->req) {
-		case IPC_NAND_RESET:
-			nand_reset();
-			ipc_post(req->code, req->tag, 0);
-			break;
-
-		case IPC_NAND_GETID:
-			current_request = *req;
-			nand_get_id(ipc_data);
-			break;
-
-		case IPC_NAND_STATUS:
-			current_request = *req;
-			nand_get_status(ipc_data);
-			break;
-
-		case IPC_NAND_READ:
-			current_request = *req;
-			nand_read_page(req->args[0], ipc_data, ipc_ecc);
-			break;
-#ifdef NAND_SUPPORT_WRITE
-		case IPC_NAND_WRITE:
-			current_request = *req;
-			dc_invalidaterange((void*)req->args[1], PAGE_SIZE);
-			dc_invalidaterange((void*)req->args[2], PAGE_SPARE_SIZE);
-			memcpy(ipc_data, (void*)req->args[1], PAGE_SIZE);
-			memcpy(ipc_ecc, (void*)req->args[2], PAGE_SPARE_SIZE);
-			nand_write_page(req->args[0], ipc_data, ipc_ecc);
-			break;
-#endif
-#ifdef NAND_SUPPORT_ERASE
-		case IPC_NAND_ERASE:
-			current_request = *req;
-			nand_erase_block(req->args[0]);
-			break;
-#endif
-/* This is only here to support the truly brave or stupid who are using hardware hacks to reflash
-   boot1/boot2 onto blank or corrupted NAND flash chips.  Best practices dictate that you should
-   query minpage (and make sure it is the value you expect -- usually 0x200) before writing to NAND.
-   If you call SETMINPAGE, you MUST then call GETMINPAGE to check that it actually succeeded, do your
-   writes, and then as soon as possible call SETMINPAGE(0x200) to restore the default minimum page. */
-		case IPC_NAND_SETMINPAGE:
-			new_min_page = req->args[0];
-			if (new_min_page > 0x200) {
-				gecko_printf("Ignoring strange NAND_SETMINPAGE request: %u\n", new_min_page);
-				break;
-			}
-			gecko_printf("WARNING: setting minimum allowed NAND page to %u\n", new_min_page);
-			nand_min_page = new_min_page;
-			ipc_post(req->code, req->tag, 0);
-			break;
-		case IPC_NAND_GETMINPAGE:
-			ipc_post(req->code, req->tag, 1, nand_min_page);
-			break;
-		default:
-			gecko_printf("IPC: unknown SLOW NAND request %04x\n",
-					req->req);
-	}
 }
 

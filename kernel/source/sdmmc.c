@@ -416,34 +416,5 @@ int sdmmc_get_sectors(void)
 #endif
 
 #ifdef CAN_HAZ_IPC
-void sdmmc_ipc(volatile ipc_request *req)
-{
-	int ret;
-	switch (req->req) {
-	case IPC_SDMMC_ACK:
-		ret = sdmmc_ack_card();
-		ipc_post(req->code, req->tag, 1, ret);
-		break;
-	case IPC_SDMMC_READ:
-		ret = sdmmc_read(req->args[0], req->args[1], (void *)req->args[2]);
-		dc_flushrange((void *)req->args[2],
-				req->args[1]*SDMMC_DEFAULT_BLOCKLEN);
-		ipc_post(req->code, req->tag, 1, ret);
-		break;
-	case IPC_SDMMC_WRITE:
-		dc_invalidaterange((void *)req->args[2],
-				req->args[1]*SDMMC_DEFAULT_BLOCKLEN);
-		ret = sdmmc_write(req->args[0],	req->args[1], (void *)req->args[2]);
-		ipc_post(req->code, req->tag, 1, ret);
-		break;
-	case IPC_SDMMC_STATE:
-		ipc_post(req->code, req->tag, 1,
-				sdmmc_check_card());
-		break;
-	case IPC_SDMMC_SIZE:
-		ipc_post(req->code, req->tag, 1,
-				sdmmc_get_sectors());
-		break;
-	}
-}
+
 #endif

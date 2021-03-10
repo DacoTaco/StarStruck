@@ -39,7 +39,6 @@ void nand_wait(void);
 
 int nand_correct(u32 pageno, void *data, void *ecc);
 void nand_initialize(void);
-void nand_ipc(volatile ipc_request *req);
 
 #endif
 

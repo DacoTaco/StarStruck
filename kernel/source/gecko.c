@@ -138,12 +138,11 @@ void gecko_process(void) {
 					(void *) (h->hdrsize + h->loadersize), 7))
 			goto cleanup;
 
-		ipc_enqueue_slow(IPC_DEV_SYS, IPC_SYS_JUMP, 1, h->hdrsize);
+		/*enqueue ppc jump here*/
 		break;
 
 	case GECKO_CMD_BIN_PPC:
-		ipc_enqueue_slow(IPC_DEV_PPC, IPC_PPC_BOOT, 3,
-							1, (u32) 0x10100000, _gecko_receive_len);
+		/*enqueue ppc jump here*/
 		break;
 	}
 

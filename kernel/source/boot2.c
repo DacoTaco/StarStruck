@@ -314,35 +314,3 @@ u32 boot2_run(u32 tid_hi, u32 tid_lo) {
 	gecko_printf("boot2 is at 0x%08x\n", vector);
 	return vector;
 }
-
-u32 boot2_ipc(volatile ipc_request *req)
-{
-	u32 vector = 0;
-
-	switch (req->req) {
-		case IPC_BOOT2_RUN:
-			if(boot2_initialized) {
-				// post first so that the memory protection doesn't kill IPC for the PowerPC
-				ipc_post(req->code, req->tag, 1, boot2_copy);
-				ipc_flush();
-				vector = boot2_run((u32)req->args[0], (u32)req->args[1]);
-			} else {
-				ipc_post(req->code, req->tag, 1, -1);
-			}
-			break;
-
-		case IPC_BOOT2_TMD:
-			if (boot2_initialized)
-				ipc_post(req->code, req->tag, 1, &tmd);
-			else
-				ipc_post(req->code, req->tag, 1, -1);
-
-			break;
-
-		default:
-			gecko_printf("IPC: unknown SLOW BOOT2 request %04X\n", req->req);
-	}
-
-	return vector;
-}
-

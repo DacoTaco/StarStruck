@@ -69,7 +69,6 @@ typedef struct _tik {
 
 u32 boot2_run(u32 tid_hi, u32 tid_lo);
 void boot2_init();
-u32 boot2_ipc(volatile ipc_request *req);
 
 #endif
 
