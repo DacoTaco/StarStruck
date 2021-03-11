@@ -1,23 +1,23 @@
-TOOLSDIR = ../tools
-include $(TOOLSDIR)/starlet.mk
+SDKDIR = ../sdk
+include $(SDKDIR)/starlet.mk
 
 SOURCES		= source
 DATA 		= data 
 INCLUDES	= include
 
 ASFLAGS += -D_LANGUAGE_ASSEMBLY
-CFLAGS += -DCAN_HAZ_IRQ -DCAN_HAZ_IPC -DCAN_HAZ_USBGECKO -fpie
+CFLAGS += -DCAN_HAZ_USBGECKO -fpie
 LIBS = -lgcc
 LDSCRIPT = 
-TARGET = libIosCore.a
+LIBRARY = libcore.a
 
-include $(TOOLSDIR)/common.mk
+include $(SDKDIR)/common.mk
 
-all: $(TARGET)
+all: $(LIBRARY)
 
-$(TARGET): ./include/git_version.h $(OBJS)
+$(LIBRARY): ./include/git_version.h $(OBJS)
 	@echo "  BUILDING  $@"
-	@ar -rc $@ $(OBJS)
+	@$(AR) -rc $@ $(OBJS)
 	@$(RANLIB) $@
 
 ./include/git_version.h: describesimple.sh
@@ -28,3 +28,4 @@ clean: myclean
 
 myclean:
 	@rm -f ./include/git_version.h
+	@rm -f $(LIBRARY)

@@ -145,9 +145,7 @@ struct sdmmc_function {
 #define	SDMMC_ASSERT_LOCKED(sc) \
 	KASSERT(lockstatus(&((sc))->sc_lock) == LK_EXCLUSIVE)
 
-#ifdef CAN_HAZ_IPC
 #include "ipc.h"
-#endif
 
 #define SDMMC_DEFAULT_CLOCK		25000
 #define SDMMC_DEFAULT_BLOCKLEN		  512
@@ -162,9 +160,6 @@ int sdmmc_select(void);
 int sdmmc_check_card(void);
 int sdmmc_ack_card(void);
 int sdmmc_read(u32 blk_start, u32 blk_count, void *data);
-#ifdef CAN_HAZ_IPC
-
-#endif
 
 /* MMC commands */				/* response type */
 #define MMC_GO_IDLE_STATE		0	/* R0 */

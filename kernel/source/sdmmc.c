@@ -24,6 +24,8 @@ static int sdmmcdebug = 0;
 #define DPRINTF(n,s)	do {} while(0)
 #endif
 
+static struct sdmmc_card card MEM2_BSS;
+
 struct sdmmc_card {
 	sdmmc_chipset_handle_t handle;
 	int inserted;
@@ -36,12 +38,6 @@ struct sdmmc_card {
 	u32 cid;
 	u16 rca;
 };
-
-#ifdef LOADER
-static struct sdmmc_card card;
-#else
-static struct sdmmc_card card MEM2_BSS;
-#endif
 
 void sdmmc_attach(sdmmc_chipset_handle_t handle)
 {
@@ -353,7 +349,6 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void *data)
 	return 0;
 }
 
-#ifndef LOADER
 int sdmmc_write(u32 blk_start, u32 blk_count, void *data)
 {
 	struct sdmmc_command cmd;
@@ -413,8 +408,3 @@ int sdmmc_get_sectors(void)
 	
 	return card.num_sectors;
 }
-#endif
-
-#ifdef CAN_HAZ_IPC
-
-#endif

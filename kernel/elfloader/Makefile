@@ -1,9 +1,9 @@
-TOOLSDIR = ../../tools
-include $(TOOLSDIR)/starlet.mk
+SDKDIR = ../../sdk
+include $(SDKDIR)/starlet.mk
 
 CFLAGS += -fpic
 LDSCRIPT = stub.ld
-LIBS =  -lIosCore -lgcc
+LIBS =  -lcore -lgcc
 
 TARGET 		= elfloader.elf
 TARGET_BIN 	= elfloader.bin
@@ -11,7 +11,7 @@ SOURCES		= source
 DATA 		= data 
 INCLUDES	= include
 
-include $(TOOLSDIR)/common.mk
+include $(SDKDIR)/common.mk
 
 all: $(TARGET_BIN)
 

@@ -21,9 +21,7 @@
 #define _SDHCVAR_H_
 
 #include "bsdtypes.h"
-#ifdef CAN_HAZ_IPC
 #include "ipc.h"
-#endif
 #include "sdmmc.h"
 struct sdhc_host {
 	bus_space_tag_t iot;		/* host register set tag */
@@ -47,9 +45,6 @@ int	sdhc_intr(void);
 void	sdhc_init(void);
 void	sdhc_exit(void);
 void	sdhc_irq(void);
-#ifdef CAN_HAZ_IPC
-
-#endif
 
 /* Host standard register set */
 #define SDHC_DMA_ADDR			0x00

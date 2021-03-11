@@ -8,19 +8,16 @@ Copyright (C) 2021	DacoTaco
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#define DEVICE_NAME "/dev/es"
 #define _DEBUG_ES
 
 #include "utils.h"
 #include "memory.h"
 #include "string.h"
-#include "ipc.h"
 #include "syscallcore.h"
 #include "es.h"
-#include "template_bin.h"
 
 #ifdef _DEBUG_ES
-#include "gecko.h"
+#include "geckocore.h"
 #endif
 
 
@@ -99,7 +96,7 @@ int _es_process_ioctlv(ipcreq* request, unsigned char* do_reply)
 				return ES_INVALIDARGUMENT;
 			
 			*do_reply = (request->relnch & RELNCH_RELAUNCH) > 0 ? 0 : 1;
-			ipc_ppc_boot_title(*((u64*)vector->data));
+			//ipc_ppc_boot_title(*((u64*)vector->data));
 			return 1;
 		default:
 #ifdef _DEBUG_ES
@@ -121,30 +118,20 @@ int _es_process_ioctl(ipcreq* request, unsigned char* do_reply)
 #ifdef _DEBUG_ES
 			gecko_printf("Unknown IOCTL\n");
 #endif
-			memcpy((void*)0x13400000, template_bin, template_bin_size );
-			load_module loadModule = (load_module)0x13400000;
-			ios_module module ALIGNED(32);
-			module.device_name = NULL;
-			unsigned int ret = loadModule(&module);	
-			if(module.device_name != NULL)
-				gecko_printf("module name : %s\n", module.device_name);
-			else
-				gecko_printf("its null :( \n");
-			handle_request handler = (handle_request)module.request_handler;
 			if(request->ioctl.buffer_io != NULL)
-				*(u32*)(request->ioctl.buffer_io) = handler(request, do_reply);
-			//syscall(0x0001, 0xCA, 0xAD, 0xFE);
-			gecko_printf("ptr : %p\n", &ret);
-			os_freeMemory(&ret);
+				*(u32*)(request->ioctl.buffer_io) = 0xDEADCAFE;
+
+			u32* ret = (u32*)os_allocateMemory(32);
+			gecko_printf("ptr : %p\n", ret);
+			os_freeMemory(ret);
 			gecko_printf("syscall returned\n");
-			gecko_printf("exit _es_process_ioctl\n");
 			return ES_IOSC_ENOENT;
 	}
 }
 
-int es_request_handler(ipcreq* request, unsigned char* do_reply)
+int request_handler(ipcreq* request, unsigned char* do_reply)
 {
-	if(!request || !do_reply || !_opened || request->fd != IPC_DEV_ES)
+	if(!request || !do_reply || !_opened )
 		return ES_INVALIDARGUMENT;
 	
 	*do_reply = 1;
@@ -162,24 +149,30 @@ int es_request_handler(ipcreq* request, unsigned char* do_reply)
 	return ES_IOSC_ENOENT;
 }
 
-int es_request_open(char* filepath, u32 mode, unsigned char* do_reply)
+int request_open(char* filepath, u32 mode, unsigned char* do_reply)
 {
-	if(!filepath || mode > IPC_OPEN_RW || !do_reply)
+	if(!filepath || mode > IOS_OPEN_RW || !do_reply)
 		return ES_INVALIDARGUMENT;
 	
 	if(_opened)
 		return 1;
 	
-	if(strncmp(filepath, DEVICE_NAME, 32) != 0)
+	if(strncmp(filepath, "/dev/"MODULE_NAME, 32) != 0)
 		return ES_FILENOTFOUND;
 	
 	_opened = 1;
-	return IPC_DEV_ES;
+	return _opened;
 }
 
-ios_module es_module =
+//this is our 'main' function. it gets called when the module gets loaded and should :
+// * do any module specific actions on startup
+// * return a value which the kernel will report back on
+int load(ios_module* output)
 {
-	DEVICE_NAME,
-	es_request_handler,
-	es_request_open,	
-};
+#ifdef _DEBUG_ES
+	gecko_init();
+	gecko_printf("hello from inside the module %s!\n", output->device_name);
+#endif
+
+	return 0xCAFECAFE;
+}

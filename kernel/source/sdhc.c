@@ -28,13 +28,9 @@
 #include "memory.h"
 #include "utils.h"
 
-#ifdef CAN_HAZ_IRQ
-#include "irq.h"
-#endif
 
-#ifdef CAN_HAZ_IPC
+#include "irq.h"
 #include "ipc.h"
-#endif
 
 struct sdhc_host sc_host;
 
@@ -218,7 +214,6 @@ err:
 	return (error);
 }
 
-#ifndef LOADER
 /*
  * Shutdown hook established by or called from attachment driver.
  */
@@ -228,7 +223,6 @@ sdhc_shutdown(void)
 	/* XXX chip locks up if we don't disable it before reboot. */
 	(void)sdhc_host_reset(&sc_host);
 }
-#endif
 
 /*
  * Reset the host controller.  Called during initialization, when
@@ -256,9 +250,7 @@ sdhc_host_reset(struct sdhc_host *hp)
 
 	/* Enable interrupts. */
 	imask =
-#ifndef LOADER
 	    SDHC_CARD_REMOVAL | SDHC_CARD_INSERTION |
-#endif
 	    SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY |
 	    SDHC_DMA_INTERRUPT | SDHC_BLOCK_GAP_EVENT |
 	    SDHC_TRANSFER_COMPLETE | SDHC_COMMAND_COMPLETE;
@@ -692,9 +684,6 @@ sdhc_wait_intr_debug(const char *funcname, int line, struct sdhc_host *hp, int m
 	status = hp->intr_status & mask;
 
 	for (; timo > 0; timo--) {
-#ifndef CAN_HAZ_IRQ
-		sdhc_irq(); // seems backwards but ok
-#endif
 		if (hp->intr_status != 0) {
 			status = hp->intr_status & mask;
 			break;
@@ -784,14 +773,13 @@ sdhc_intr(void)
 		}
 	}
 
-#ifdef CAN_HAZ_IPC
 	/* Wake up the sdmmc event thread to scan for cards. */
 	 if (ISSET(status, SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION)) {
 		// this pushes a request to the slow queue so that we
 		// don't block other IRQs.
 		//ipc_enqueue_slow(IPC_DEV_SDHC, IPC_SDHC_DISCOVER, 0);
 	}
-#endif
+	
 	/*
 	 * Wake up the blocking process to service command
 	 * related interrupt(s).
@@ -846,20 +834,12 @@ void sdhc_irq(void)
 
 void sdhc_init(void)
 {
-#ifdef CAN_HAZ_IRQ
 	irq_enable(IRQ_SDHC);
-#endif
 	sdhc_host_found(0, SDHC_REG_BASE, 1);
 }
 
 void sdhc_exit(void)
 {
-#ifdef CAN_HAZ_IRQ
        irq_disable(IRQ_SDHC);
-#endif
        sdhc_shutdown();
 }
-
-#ifdef CAN_HAZ_IPC
-
-#endif

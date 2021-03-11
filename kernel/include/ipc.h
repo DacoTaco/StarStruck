@@ -32,11 +32,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
    Even still, you are encouraged to add in sanity checks and version
    checking to prevent strange bugs or even data loss.  --bushing */
 
-#define IPC_OPEN_NONE	0x00
-#define IPC_OPEN_READ	0x01
-#define IPC_OPEN_WRITE	0x02
-#define IPC_OPEN_RW		(IPC_OPEN_READ|IPC_OPEN_WRITE)
-
 #define IPC_DEV_SYS		0x00
 #define IPC_DEV_NAND	0x01
 #define IPC_DEV_SDHC	0x02

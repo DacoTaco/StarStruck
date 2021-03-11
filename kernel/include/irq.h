@@ -12,8 +12,6 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #ifndef __IRQ_H__
 #define __IRQ_H__
 
-#ifdef CAN_HAZ_IRQ
-
 #ifndef _LANGUAGE_ASSEMBLY
 
 #include "types.h"
@@ -28,7 +26,6 @@ void irq_enable(u32 irq);
 void irq_disable(u32 irq);
 void irq_set_alarm(u32 ms, u8 enable);
 
-#endif
 #endif
 #endif
 

@@ -17,7 +17,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 #include <stdarg.h>
 
-#if defined(CAN_HAZ_USBGECKO) && !defined(LOADER) && !defined(NDEBUG)
+#if defined(CAN_HAZ_USBGECKO) && !defined(NDEBUG)
 static char ascii(char s) {
   if(s < 0x20) return '.';
   if(s > 0x7E) return '.';

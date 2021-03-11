@@ -22,6 +22,11 @@ Copyright (C) 2021	DacoTaco
 #define IOS_IOCTLV			0x07
 #define IOS_REPLY			0x08
 
+#define IOS_OPEN_NONE	0x00
+#define IOS_OPEN_READ	0x01
+#define IOS_OPEN_WRITE	0x02
+#define IOS_OPEN_RW		(IOS_OPEN_READ|IOS_OPEN_WRITE)
+
 #define RELNCH_RELAUNCH 	0x01
 #define RELNCH_BACKGROUND 	0x02
 

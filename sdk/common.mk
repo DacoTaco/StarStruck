@@ -9,8 +9,9 @@ STRIP = $(PREFIX)strip
 OBJDIR = ./build/
 INCLUDES += $(OBJDIR)
 CFLAGS += $(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir))
-CFLAGS += $(foreach dir,$(LIBSDIR), -I$(dir)/include) -DPROJECT_NAME=\"$(OUTPUT)\"
+CFLAGS += $(foreach dir,$(LIBSDIR), -I$(dir)/include) 
 CXXFLAGS = $(CFLAGS)
+
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
@@ -54,12 +55,12 @@ endif
 $(OBJDIR)%.o: %.cpp
 	@echo "  COMPILE   $(notdir $<)"
 	@mkdir -p $(OBJDIR)
-	@$(CC) $(CXXFLAGS) $(DEFINES) -Wp,-MMD,$(OBJDIR)/$(*F).d,-MQ,"$@",-MP -c $< -o $@
+	@$(CC) $(CXXFLAGS) $(DEFINES) -Wp,-MMD,$(OBJDIR)$(*F).d,-MQ,"$@",-MP -c $< -o $@
 	
 $(OBJDIR)%.o: %.c
 	@echo "  COMPILE   $(notdir $<)"
 	@mkdir -p $(OBJDIR)
-	@$(CC) $(CFLAGS) $(DEFINES) -Wp,-MMD,$(OBJDIR)/$(*F).d,-MQ,"$@",-MP -c $< -o $@
+	@$(CC) $(CFLAGS) $(DEFINES) -Wp,-MMD,$(OBJDIR)$(*F).d,-MQ,"$@",-MP -c $< -o $@
 
 $(OBJDIR)%.o: %.s
 	@echo "  ASSEMBLE  $(notdir $<)"

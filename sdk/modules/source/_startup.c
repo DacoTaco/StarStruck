@@ -4,7 +4,7 @@
 
 #include <ios_module.h>
 
-#define DEVICE_NAME "/dev/"PROJECT_NAME
+#define DEVICE_NAME "/dev/"MODULE_NAME
 
 asm(".section	\".crt0\",\"ax\"");
 

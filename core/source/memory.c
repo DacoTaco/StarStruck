@@ -264,7 +264,6 @@ void mem_setswap(int enable)
 		write32(HW_MEMMIRR, d | 0x20);
 }
 
-#ifndef LOADER
 u32 dma_addr(void *p)
 {
 	u32 addr = (u32)p;
@@ -371,4 +370,3 @@ void mem_shutdown(void)
 	_tlb_inval();
 	irq_restore(cookie);
 }
-#endif

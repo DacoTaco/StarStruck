@@ -29,7 +29,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "powerpc.h"
 #include "panic.h"
 #include "ios_module.h"
-#include "es.h"
 #include "string.h"
 
 #define STARSTRUCK_VERSION__MAJOR 1
@@ -141,59 +140,66 @@ void ipc_process_input(void)
 	
 	s32 return_value = IOS_EINVAL;	
 	u8 reply = 1;
-	handle_request req_handler = NULL;
-	handle_open open_handler = NULL;
+	ios_module* module = NULL;
 	dc_flushrange((u32*)req, sizeof(ipcreq));
 	dc_invalidaterange((u32*)req, sizeof(ipcreq));
 	
 	if(req->cmd == IOS_OPEN)
 	{
-		if(strncmp(req->open.filepath, es_module.device_name, IPC_MAX_FILENAME) == 0)
-			open_handler = es_module.open_handler;
-		else
-			gecko_printf("IPC: unknown open request 0x%04x-0x%04x - '%s'\n", req->cmd, req->fd, req->open.filepath);
+		/*example on how we could with IOS_OPEN commands, except maybe look it up in a list?
+			if(strncmp(req->open.filepath, es_module.device_name, IPC_MAX_FILENAME) == 0)
+				ios_module = es_module;
+			else
+				...
+		*/
+		gecko_printf("IPC: unknown open request 0x%04x-0x%04x - '%s'\n", req->cmd, req->fd, req->open.filepath);
 	}
 	else
 	{	
-		switch(req->fd)
+		/*example on how we could with other commands, except maybe look it up in a list?
+			switch(req->fd)
+			{
+				case IPC_DEV_ES:
+					ios_module = es_module;
+					break;
+				...
+		*/
+		gecko_printf("IPC: unknown request 0x%04x-0x%04x\n", req->cmd, req->fd);
+	}
+	
+	if(module != NULL)
+	{
+		switch(req->cmd)
 		{
-			case IPC_DEV_ES:
-				req_handler = es_module.request_handler;
+			case IOS_IOCTLV:
+			case IOS_IOCTL:
+				return_value = module->request_handler((ipcreq*)req, &reply);
 				break;
+			case IOS_OPEN:
+				return_value = module->open_handler(req->open.filepath, req->open.mode, &reply);
+				break;
+			case IOS_CLOSE:
+			case IOS_READ:
+			case IOS_WRITE:
+			case IOS_SEEK:
+			//do nothing
 			default:
-				gecko_printf("IPC: unknown request 0x%04x-0x%04x\n", req->cmd, req->fd);
 				break;
 		}
 	}
 	
-	gecko_printf("checked fd\n");
-	
-	if(req_handler)
-		return_value = req_handler((ipcreq*)req, &reply);
-	else if(open_handler)
-		return_value = open_handler(req->open.filepath, req->open.mode, &reply);
-	
-	gecko_printf("req_handler executed\n");
 	write32((u32)&req->result, return_value);
 	dc_flushrange((void*)req, sizeof(ipcreq));
 	dc_invalidaterange((void*)req, sizeof(ipcreq));
 	ic_invalidateall();
-	gecko_printf("ret written executed (0x%08X)\n", req->result);
+
 	if(reply)
-	{
-		gecko_printf("sending reply...\n");
 		ipc_reply((ipcreq*)req);
-		gecko_printf("sent!\n");
-	}
-	else
-	{
-		//only ack
+	else //only ack
 		ipc_send_ack();
-	}
 
 exit_process:
 	in_cnt--;
-	gecko_printf("exit ipc_process_input\n");
 	return;
 }
 
@@ -202,10 +208,6 @@ void ipc_irq(void)
 	int donebell = 0;	
 	while(read32(HW_IPC_ARMCTRL) & IPC_ARM_INCOMING) 
 	{		
-		u32 ppc_regs = read32(HW_IPC_PPCCTRL);
-		u32 arm_regs = read32(HW_IPC_ARMCTRL);
-		arm_regs &= ~(IPC_ARM_INCOMING);
-		
 		//Send ACK to the PPC + remove the reply flag
 		ipc_send_ack();
 
@@ -218,6 +220,7 @@ void ipc_irq(void)
 		
 		donebell++;
 	}
+	
 	if(!donebell)
 		gecko_printf("IPC: IRQ but no bell!\n");
 }

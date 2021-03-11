@@ -1,6 +1,6 @@
-TOOLSDIR = ../tools
-include $(TOOLSDIR)/starlet.mk
-LDSCRIPT = tools/mini.ld
+SDKDIR = ../sdk
+include $(SDKDIR)/starlet.mk
+LDSCRIPT = tools/kernel.ld
 
 SOURCES			= source
 DATA 			= data 
@@ -10,11 +10,10 @@ MAKEBIN 		= tools/makebin.py
 TARGET 			= armboot-sym.elf
 TARGET_STRIPPED = armboot.elf
 TARGET_BIN 		= armboot.bin
-LIBS 			= -lIosCore -lgcc 
+LIBS 			= -lcore -lgcc 
 
 #Compilation Flags
 ASFLAGS += -D_LANGUAGE_ASSEMBLY
-CFLAGS += -DCAN_HAZ_IRQ -DCAN_HAZ_IPC
 
 # enabled usbgecko support
 CFLAGS += -DCAN_HAZ_USBGECKO
@@ -26,7 +25,7 @@ CFLAGS += -DCAN_HAZ_USBGECKO
 #CFLAGS += -DGECKO_SAFE
 
 #PrepareCompilation
-include $(TOOLSDIR)/common.mk
+include $(SDKDIR)/common.mk
 
 #Compîle
 all: $(TARGET_BIN)
