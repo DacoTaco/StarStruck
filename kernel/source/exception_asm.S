@@ -17,8 +17,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .globl exc_setup_stack
 .extern __excstack_addr
-.extern __swistack_addr
 .extern exc_handler
+.extern undf_handler
 
 exc_setup_stack:
 	mrs	r0, cpsr
@@ -31,7 +31,7 @@ exc_setup_stack:
 	@ Switch to SVC mode
 	msr cpsr_c, #0xd3
 	@ Setup exception stack
-	ldr	sp, =__swistack_addr
+	ldr	sp, =__excstack_size
 
 	@ Switch to ABORT mode
 	msr cpsr_c, #0xd7
@@ -50,18 +50,13 @@ exc_setup_stack:
 .pool
 
 v_undf:
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-	sub		sp, sp, #0x3c
-	mov		r2, sp
-	mrs		r1, spsr
-	mov		r0, #1
+	stmfd 	sp!,{r0-r12,lr}
+	ldr		r0,[lr,#-4]
+	mov		r1,sp
+	
+	blx		undf_handler
 
-	blx		exc_handler
-
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
+	LDMFD sp!, {r0-r12,pc}^
 	movs	pc, lr
 
 #old swi handler from mini. basically just throws the exception

@@ -16,6 +16,7 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #include "ipc.h"
 #include "memory.h"
 #include "panic.h"
+#include "syscall.h"
 
 const char *exceptions[] = {
 	"RESET", "UNDEFINED INSTR", "SWI", "INSTR ABORT", "DATA ABORT",
@@ -112,5 +113,18 @@ void exc_handler(u32 type, u32 spsr, u32 *regs)
 		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc+16, read32(pc+16), read32(pc+20), read32(pc+24), read32(pc+28));
 	}
 	panic2(0, PANIC_EXCEPTION);
+}
+
+void undf_handler(unsigned instruction, unsigned *regs)
+{
+	//Nintendo's implementation of a syscall is actually an invalid instruction. 
+	//the instruction is 0xE6000010 | (syscall_num << 5).
+	//so if we do the reverse, we have a syscall
+	u16 syscall = (instruction & 0xE6007FE0) >> 5;
+	if( syscall > 0 )
+		return handle_syscall(syscall & 0xFF, regs[0], (void**)regs[1], regs[2], (void**)regs[3]);
+			
+	//actual invalid instruction lol.
+	exc_handler(1, 0, regs);
 }
 

@@ -1,7 +1,7 @@
 ### TODO's
 
 * ~~make todo list~~
-* add nintendo syscall handling and let it call our syscall handler(swi)
+* ~~add nintendo syscall handling and let it call our syscall handler(swi)~~
 * go through everything from mini and clean up project to fit our needs
 * verify nand irq code that is in comments
 * implement memory manager
