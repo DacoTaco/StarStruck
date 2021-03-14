@@ -122,7 +122,10 @@ void undf_handler(unsigned instruction, unsigned *regs)
 	//so if we do the reverse, we have a syscall
 	u16 syscall = (instruction & 0xE6007FE0) >> 5;
 	if( syscall > 0 )
-		return handle_syscall(syscall & 0xFF, regs[0], (void**)regs[1], regs[2], (void**)regs[3]);
+	{
+		gecko_printf("Nintendo syscall detected\n");
+		return handle_syscall(syscall & 0xFF, regs);
+	}
 			
 	//actual invalid instruction lol.
 	exc_handler(1, 0, regs);

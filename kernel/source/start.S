@@ -36,7 +36,7 @@ _vectors:
 _start:
 	ldr	pc, =v_reset
 	ldr	pc, =v_undf
-	ldr	pc, =syscall_handler
+	ldr	pc, =v_swi
 	ldr	pc, =v_instr_abrt
 	ldr	pc, =v_data_abrt
 	ldr	pc, =v_reserved

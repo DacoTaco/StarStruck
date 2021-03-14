@@ -12,11 +12,20 @@
 #include <syscallcore.h>
 #include "gecko.h"
 
-void handle_syscall(u16 syscall, u32 parameter1, void** parameter2, u32 parameter3, void** parameter4)
+//We implement syscalls using the SVC/SWI instruction. 
+//Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
+//Both our SWI and (if applicable) undefined instruction handlers call this function
+int handle_syscall(u16 syscall, unsigned *parameters)
 {	
 	gecko_printf("hello from handle_syscall\n");
 	gecko_printf("syscall : 0x%04X\n", syscall);
-	gecko_printf("parameters : 0x%08X - 0x%p - 0x%08X - 0x%p \n", parameter1, parameter2, parameter3, parameter4);
+	if(parameters != NULL)
+	{
+		gecko_printf("Registers (%p):\n", parameters);
+		gecko_printf("  R0-R3: %08x %08x %08x %08x\n", parameters[0], parameters[1], parameters[2], parameters[3]);
+	}
+	else
+		gecko_printf("parameters == NULL");
 	
 	switch(syscall)
 	{
@@ -31,16 +40,22 @@ void handle_syscall(u16 syscall, u32 parameter1, void** parameter2, u32 paramete
 			break;
 	}
 	
-	return;
+	return -666;
 }
 
-//We implement syscalls using the SVC/SWI instruction. 
-//Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
-__attribute__ ((interrupt ("SWI"))) void syscall_handler(u32 parameter1, void** parameter2, u32 parameter3, void** parameter4)
+/*	
+	This is how to implement the SWI handler in C++/GCC.
+	However, it overwrites our return register(r0) when restoring the registers to their original state...
+	Hence we use our own asm to store the state, get the parameters and call the handle_syscall function
+*/
+
+/*__attribute__ ((interrupt ("SWI"))) int syscall_handler(u32 r0, u32 r1, u32 r2, u32 r3)
 {
 	//always retrieve the number first, before any registers get touched !
 	u16 syscall = 0;
 	__asm__ volatile ("ldr\t%0, [lr,#-4]" : "=r" (syscall));
-	handle_syscall(syscall, parameter1, parameter2, parameter3, parameter4);
-}
+	unsigned* parameters;
+	__asm__ volatile ("mov\t%0, sp " : "=r" (parameters));
+	return handle_syscall(syscall & 0xFFFF, parameters);
+}*/
 

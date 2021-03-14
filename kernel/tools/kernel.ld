@@ -16,7 +16,8 @@ ENTRY(_start)
 
 __stack_size = 0x800;
 __irqstack_size = 0x100;
-__excstack_size = 0x400;
+__excstack_size = 0x100;
+__swistack_size = 0x200;
 
 MEMORY {
 	sram		: ORIGIN = 0xFFFF0000, LENGTH = 64K
@@ -120,6 +121,10 @@ SECTIONS
 		. = . +__excstack_size;
 		. = ALIGN(16);
 		__excstack_addr = .;
+		__swistack_end = .;
+		. = . +__swistack_size;
+		. = ALIGN(16);
+		__swistack_addr = .;
 	} >sram2
 
 	/DISCARD/ :
