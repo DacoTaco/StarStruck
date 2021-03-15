@@ -27,6 +27,10 @@ MEMORY {
 	mem2		: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
+__modules_area_start = ORIGIN(modules);
+__modules_area_size = LENGTH(modules);
+__modules_area_end = ORIGIN(modules) + LENGTH(modules);
+
 __mem2_area_start = ORIGIN(mem2);
 __mem2_area_size = LENGTH(mem2);
 __mem2_area_end = ORIGIN(mem2) + LENGTH(mem2);

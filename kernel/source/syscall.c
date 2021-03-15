@@ -11,13 +11,16 @@
 #include <types.h>
 #include <syscallcore.h>
 #include "gecko.h"
+#include "heaps.h"
+
+//#define _DEBUG_SYSCALL
 
 //We implement syscalls using the SVC/SWI instruction. 
 //Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
 //Both our SWI and (if applicable) undefined instruction handlers call this function
 int handle_syscall(u16 syscall, unsigned *parameters)
 {	
-	gecko_printf("hello from handle_syscall\n");
+#ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
 	if(parameters != NULL)
 	{
@@ -26,11 +29,19 @@ int handle_syscall(u16 syscall, unsigned *parameters)
 	}
 	else
 		gecko_printf("parameters == NULL");
-	
+#endif
+
 	switch(syscall)
 	{
+		case SYSCALL_CREATEHEAP:
+			return CreateHeap((void*)parameters[0], (u32)parameters[1]);
+			
+		case SYSCALL_DESTROYHEAP:
+			return DestroyHeap((s32)parameters[0]);
+			
+		case SYSCALL_MALLOC:
 		case SYSCALL_MEMALIGN:
-			break;
+			return (s32)AllocateOnHeap((s32)parameters[0], (u32)parameters[1], (syscall == SYSCALL_MALLOC) ? 0x20 : (u32)parameters[2]);
 			
 		case SYSCALL_MEMFREE:
 			break;

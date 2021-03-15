@@ -21,11 +21,11 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "memory.h"
 #include "string.h"
 
-extern u8 __mem2_area_start[];
+extern u8 __modules_area_start[];
 
 #define PPC_MEM1_END	(0x017fffff)
 #define PPC_MEM2_START	(0x10000000)
-#define PPC_MEM2_END	((u32) __mem2_area_start)
+#define PPC_MEM2_END	((u32) __modules_area_start)
 
 #define PHDR_MAX 10
 
