@@ -59,8 +59,9 @@ void* os_alignedAllocateMemory(s32 heapid, u32 size, u32 align)
 	return (void*)ptr;
 }
 
-void os_freeMemory(s32 heapid, void *ptr)
+int os_freeMemory(s32 heapid, void *ptr)
 {
-	_syscall(STR(SYSCALL_MEMFREE), NULL, heapid, (s32)ptr, 0, 0);
-	return;
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_MEMFREE), &ret, heapid, (s32)ptr, 0, 0);
+	return ret;
 }

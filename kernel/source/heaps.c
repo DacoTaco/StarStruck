@@ -149,5 +149,85 @@ void* AllocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		memset8(ptr, 0, size);
 
 	return ptr;
+}
+
+int MergeNextBlockIfUnused(heap_block* parentBlock)
+{
+	if(parentBlock == NULL || parentBlock->nextBlock == NULL)
+		return 0;
 	
+	u32 blockSize = parentBlock->size;
+	heap_block * blockToMerge = parentBlock->nextBlock;
+
+	if(blockToMerge != (heap_block*)(((u32)parentBlock) + blockSize))
+		return 0;
+
+	//link parent block with the tomerge's next block and vice versa
+	heap_block* nextBlock = blockToMerge->nextBlock;
+	parentBlock->nextBlock = nextBlock;
+	if(nextBlock != NULL)
+		nextBlock->prevBlock = parentBlock;
+	
+	//merge sizes
+	parentBlock->size = blockSize + blockToMerge->size;
+	return 1;
+}
+
+s32 FreeOnHeap(s32 heapid, void* ptr)
+{
+	//verify incoming parameters & if the heap is in use
+	if(heapid < 0 || heapid >= 0x10 || ptr == NULL || heaps[heapid].heap == NULL)
+		return -4;
+	
+	//verify the pointer address
+	if( ptr < (heaps[heapid].heap + sizeof(heap_block)) || ptr >= (heaps[heapid].heap + heaps[heapid].size) )
+		return -4;
+	
+	//verify the block that the pointer belongs to
+	heap_block* blockToFree = (heap_block*)(ptr-sizeof(heap_block));
+	
+	if(blockToFree->blockFlag == HEAP_ALIGNED_FLAG)
+		blockToFree = blockToFree->nextBlock;
+	
+	if(blockToFree == NULL || blockToFree->blockFlag != HEAP_INUSE_FLAG)
+		return -4;
+	
+	heap_block* firstBlock = heaps[heapid].firstBlock;
+	heap_block* currBlock = firstBlock;
+	heap_block* nextBlock = NULL;
+	blockToFree->blockFlag = HEAP_INIT_FLAG;
+	
+	while(currBlock != NULL)
+	{
+		nextBlock = currBlock->nextBlock;
+		if(nextBlock == NULL || blockToFree < nextBlock)
+			break;
+		
+		currBlock = nextBlock;
+	}
+
+	//move block to the front
+	if (currBlock == NULL || blockToFree <= firstBlock)
+	{
+		blockToFree->nextBlock = firstBlock;
+		heaps[heapid].firstBlock = blockToFree;
+		blockToFree->prevBlock = NULL;
+	}
+	//just place the block infront of the block closest to us
+	else
+	{
+		blockToFree->prevBlock = currBlock;
+		blockToFree->nextBlock = currBlock->nextBlock;
+		currBlock->nextBlock = blockToFree;
+	}
+	
+	//link the next block if needed
+	if(blockToFree->nextBlock != NULL)
+		blockToFree->nextBlock->prevBlock = blockToFree;
+	
+	//merge blocks if we can
+	MergeNextBlockIfUnused(blockToFree);
+	MergeNextBlockIfUnused(blockToFree->prevBlock);
+
+	return 0;
 }

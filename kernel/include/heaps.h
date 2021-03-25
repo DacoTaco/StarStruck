@@ -35,5 +35,6 @@ typedef struct
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);
 void* AllocateOnHeap(s32 heapid, u32 size, u32 alignment);
+s32 FreeOnHeap(s32 heapid, void* ptr);
 
 #endif

@@ -20,4 +20,4 @@ s32 os_createHeap(void *ptr, u32 size);
 s32 os_destroyHeap(s32 heapid);
 void* os_allocateMemory(s32 heapid, u32 size);
 void* os_alignedAllocateMemory(s32 heapid, u32 size, u32 align);
-void os_freeMemory(s32 heapid, void *ptr);
+int os_freeMemory(s32 heapid, void *ptr);

@@ -17,7 +17,7 @@
 
 //We implement syscalls using the SVC/SWI instruction. 
 //Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
-//Both our SWI and (if applicable) undefined instruction handlers call this function
+//Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
 int handle_syscall(u16 syscall, unsigned *parameters)
 {	
 #ifdef _DEBUG_SYSCALL
@@ -44,7 +44,7 @@ int handle_syscall(u16 syscall, unsigned *parameters)
 			return (s32)AllocateOnHeap((s32)parameters[0], (u32)parameters[1], (syscall == SYSCALL_MALLOC) ? 0x20 : (u32)parameters[2]);
 			
 		case SYSCALL_MEMFREE:
-			break;
+			return FreeOnHeap((s32)parameters[0], (void*)parameters[1]);
 		
 		default:
 			gecko_printf("unknown syscall 0x%04X\n", syscall);
