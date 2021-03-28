@@ -10,6 +10,7 @@
 
 #include <errno.h>
 #include <utils.h>
+#include "defines.h"
 #include "heaps.h"
 #include "gecko.h"
 

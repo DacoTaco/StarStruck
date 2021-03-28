@@ -1,31 +1,138 @@
+#---------------------------------------------------------------------------------
+.SUFFIXES:
+#---------------------------------------------------------------------------------
+ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
+endif
+
 include $(SDKDIR)/starlet.mk
 
-SOURCES		= source
-DATA 		= data 
-INCLUDES	= include
+#---------------------------------------------------------------------------------
+# TARGET is the name of the output
+# BUILD is the directory where object files & intermediate files will be placed
+# SOURCES is a list of directories containing source code
+# INCLUDES is a list of directories containing extra header files
+# DATA is a list of directories containing binary data
+#
+# All directories are specified relative to the project directory where
+# the makefile is found
+#
+#---------------------------------------------------------------------------------
+TARGET		:= libcore
+BUILD		:= build
+SOURCES		:= source
+INCLUDES	:= include
+DATA		:=
 
-ASFLAGS += -D_LANGUAGE_ASSEMBLY
-CFLAGS += -DCAN_HAZ_USBGECKO -fpie
-LIBS = -lgcc
-LDSCRIPT = 
-LIBRARY = libcore.a
+#---------------------------------------------------------------------------------
+# options for code generation
+#---------------------------------------------------------------------------------
+CFLAGS 	+= -DCAN_HAZ_USBGECKO -fpie
+CFLAGS	+=	$(INCLUDE)
+ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
 
-include $(SDKDIR)/common.mk
+#---------------------------------------------------------------------------------
+# any extra libraries we wish to link with the project
+#---------------------------------------------------------------------------------
+LIBS	:= -lgcc
 
-all: $(LIBRARY)
+#---------------------------------------------------------------------------------
+# list of directories containing libraries, this must be the top level containing
+# include and lib
+#---------------------------------------------------------------------------------
+export LIBDIRS	:=	$(COREDIR)
 
-$(LIBRARY): ./include/git_version.h $(OBJS)
-	@echo "  BUILDING  $@"
-	@$(AR) -rc $@ $(OBJS)
-	@$(RANLIB) $@
+#---------------------------------------------------------------------------------
+# no real need to edit anything past this point unless you need to add additional
+# rules for different file extensions
+#---------------------------------------------------------------------------------
+
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+#---------------------------------------------------------------------------------
+
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
+
+export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+
+export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+
+CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+
+#---------------------------------------------------------------------------------
+# use CXX for linking C++ projects, CC for standard C
+#---------------------------------------------------------------------------------
+ifeq ($(strip $(CPPFILES)),)
+#---------------------------------------------------------------------------------
+	export LD	:=	$(CC)
+#---------------------------------------------------------------------------------
+else
+#---------------------------------------------------------------------------------
+	export LD	:=	$(CXX)
+#---------------------------------------------------------------------------------
+endif
+#---------------------------------------------------------------------------------
+
+export OFILES_BIN := $(addsuffix .o,$(BINFILES))
+
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
+					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					-I$(CURDIR)/$(BUILD)
+
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+.PHONY: $(BUILD) clean
+
+#---------------------------------------------------------------------------------
+$(BUILD): ./include/git_version.h
+	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
 
 ./include/git_version.h: describesimple.sh
-	@echo "  GITVER    $@"
-	@echo 'const char git_version[] = "'`./describesimple.sh`'";' > ./include/git_version.h
-	
-clean: myclean
+	$(SILENTCMD)echo "  GITVER    $@"
+	$(SILENTCMD)echo 'const char git_version[] = "'`./describesimple.sh`'";' > ./include/git_version.h
 
-myclean:
-	@rm -f ./include/git_version.h
-	@rm -f $(LIBRARY)
+#---------------------------------------------------------------------------------
+clean:
+	$(SILENTCMD)echo clean ...
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a
+
+
+#---------------------------------------------------------------------------------
+else
+
+#---------------------------------------------------------------------------------
+# main targets
+#---------------------------------------------------------------------------------
+$(OUTPUT).a	:	$(OFILES)
+
+$(OFILES_SOURCES) : $(HFILES)
+
+#---------------------------------------------------------------------------------
+# The bin2o rule should be copied and modified
+# for each extension used in the data directories
+#---------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------
+# This rule links in binary data with the .bin extension
+#---------------------------------------------------------------------------------
+%.bin.o	%_bin.h :	%.bin
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+
+-include $(DEPSDIR)/*.d
+#---------------------------------------------------------------------------------------
+endif
+#---------------------------------------------------------------------------------------

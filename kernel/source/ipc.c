@@ -16,6 +16,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <string.h>
 #include <types.h>
 #include <hollywood.h>
+#include "defines.h"
 #include "gecko.h"
 #include "irq.h"
 #include "memory.h"

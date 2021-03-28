@@ -8,5 +8,7 @@ git_version.h
 .*.swp
 *.dol
 *.a
+*.lst
 */build/*
 tools/ppcloader/build/
+

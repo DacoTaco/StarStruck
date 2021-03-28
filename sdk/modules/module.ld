@@ -3,6 +3,7 @@ OUTPUT_ARCH(arm)
 EXTERN(_start)
 ENTRY(_start)
 
+__stack_size = 0x600;
 __base_addr	= 0x13400000;
 
 MEMORY {
@@ -12,12 +13,6 @@ MEMORY {
 SECTIONS
 {
 	. = __base_addr;
-	
-/*	.header :
-	{
-		LONG(0xB16B00B5);
-		LONG(0x53746172);
-	} >header*/	
 
 	.init :
 	{		
@@ -30,26 +25,6 @@ SECTIONS
 	.crt0	:
 	{
 		
-	} >binary
-	
-	.rodata.mem2 :
-	{
-		*(.rodata.mem2)
-		. = ALIGN(4);
-	} >binary
-
-	.data.mem2 :
-	{
-		*(.data.mem2)
-		. = ALIGN(4);
-	} >binary
-
-	.bss.mem2 :
-	{
-		__bss2_start = . ;
-		*(.bss.mem2)
-		. = ALIGN(4);
-		__bss2_end = . ;
 	} >binary
 
 	.text :
@@ -91,11 +66,19 @@ SECTIONS
 		. = ALIGN(4);
 		__bss_end = . ;
 	} >binary
+	
+	.stack :
+	{
+		. = ALIGN(16);
+		__stack_end = .;
+		. = . +__stack_size;
+		. = ALIGN(16);
+		__stack_addr = .;
+	} >binary
 
 	/DISCARD/ :
 	{
 		*(.ARM.exidx*)
 		*(.ARM.extab*)
 	}
-
 }

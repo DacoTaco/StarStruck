@@ -10,7 +10,8 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
+#include <types.h>
+#include "defines.h"
 #include "elf.h"
 #include "nand.h"
 #include "memory.h"

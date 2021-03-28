@@ -8,6 +8,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include "defines.h"
 #include "bsdtypes.h"
 #include "sdhc.h"
 #include "gecko.h"

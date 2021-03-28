@@ -34,10 +34,6 @@ typedef volatile signed long long vs64;
 typedef u32 size_t;
 
 #define NULL ((void *)0)
-
-#define MEM2_BSS __attribute__ ((section (".bss.mem2")))
-#define MEM2_DATA __attribute__ ((section (".data.mem2")))
-#define MEM2_RODATA __attribute__ ((section (".rodata.mem2")))
 #define ALIGNED(x) __attribute__((aligned(x)))
 
 #define STACK_ALIGN(type, name, cnt, alignment)         \
