@@ -31,6 +31,20 @@
 	if(returnValue != NULL)\
 		*(s32*)returnValue = retValue;}
 
+s32 os_createMessageQueue(void *ptr, u32 size)
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_CREATEMESSAGEQUEUE), &ret, (u32)ptr, size, 0, 0);	
+	return ret;
+}
+
+s32 os_destroyMessageQueue(s32 queueid)
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_DESTROYMESSAGEQUEUE), &ret, queueid, 0, 0, 0);
+	return ret;
+}
+
 s32 os_createHeap(void *ptr, u32 size)
 {
 	s32 ret = -1;

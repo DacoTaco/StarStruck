@@ -12,6 +12,7 @@
 #include <syscallcore.h>
 #include "gecko.h"
 #include "heaps.h"
+#include "message_queue.h"
 
 //#define _DEBUG_SYSCALL
 
@@ -33,6 +34,12 @@ int handle_syscall(u16 syscall, unsigned *parameters)
 
 	switch(syscall)
 	{
+		case SYSCALL_CREATEMESSAGEQUEUE:
+			return CreateMessageQueue((void*)parameters[0], (u32)parameters[1]);
+		
+		case SYSCALL_DESTROYMESSAGEQUEUE:
+			return DestroyMessageQueue((s32)parameters[0]);
+		
 		case SYSCALL_CREATEHEAP:
 			return CreateHeap((void*)parameters[0], (u32)parameters[1]);
 			

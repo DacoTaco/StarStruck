@@ -10,12 +10,16 @@
 
 #include "types.h"
 
-#define SYSCALL_CREATEHEAP		0x0016
-#define SYSCALL_DESTROYHEAP		0x0017
-#define SYSCALL_MALLOC			0x0018
-#define SYSCALL_MEMALIGN		0x0019
-#define SYSCALL_MEMFREE			0x001A
+#define SYSCALL_CREATEMESSAGEQUEUE		0x000A
+#define SYSCALL_DESTROYMESSAGEQUEUE		0x000B
+#define SYSCALL_CREATEHEAP				0x0016
+#define SYSCALL_DESTROYHEAP				0x0017
+#define SYSCALL_MALLOC					0x0018
+#define SYSCALL_MEMALIGN				0x0019
+#define SYSCALL_MEMFREE					0x001A
 
+s32 os_createMessageQueue(void *ptr, u32 size);
+s32 os_destroyMessageQueue(s32 queueid);
 s32 os_createHeap(void *ptr, u32 size);
 s32 os_destroyHeap(s32 heapid);
 void* os_allocateMemory(s32 heapid, u32 size);
