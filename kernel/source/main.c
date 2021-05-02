@@ -22,6 +22,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"
+#include "threads.h"
 #include "irq.h"
 #include "ipc.h"
 #include "exception.h"
@@ -54,6 +55,7 @@ u32 _main(void *base)
 	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 
+	InitializeThreadContext();
 	irq_initialize();
 //	irq_enable(IRQ_GPIO1B);
 	irq_enable(IRQ_GPIO1);

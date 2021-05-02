@@ -29,7 +29,7 @@ s32 CreateHeap(void *ptr, u32 size)
 	if(ptr == NULL || size < 0x30)
 		return -4;
 
-	u32 heap = (u32)ptr;	
+	u32 heap = (u32)ptr;
 	if(heap < MEM_MODULES_START || heap > MEM_MODULES_END || heap+size > MEM_MODULES_END)
 		return -4;
 	

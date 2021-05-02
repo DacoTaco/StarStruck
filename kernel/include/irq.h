@@ -18,6 +18,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #include <irqcore.h>
 
 #define IRQ_ALARM_MS2REG(x)	(1898 * x)
+#define MAX_DEVICE			0x20
 
 void irq_initialize(void);
 void irq_shutdown(void);
@@ -25,6 +26,9 @@ void irq_shutdown(void);
 void irq_enable(u32 irq);
 void irq_disable(u32 irq);
 void irq_set_alarm(u32 ms, u8 enable);
+
+s32 RegisterEventHandler(u8 device, int queueid, int message);
+s32 UnregisterEventHandler(u8 device);
 
 #endif
 #endif

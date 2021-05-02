@@ -1,25 +1,30 @@
 .extern handle_syscall
 .extern exc_handler
+.extern SaveUserModeState
+.extern RestoreUserModeState
 .globl v_swi
 
 v_swi:
 #store registers from before the call. r0 = return, r1 - r12 is parameters. current lr is the return address
-	stmfd	sp!, {lr}
-	stmdb	sp!, {r1-r12, sp, lr}^
-#load syscall number into r0 and cut off the first few bytes of the instruction
-	ldr		r0,[lr,#-4]
+	stmdb	sp!, {lr}
+	mov		r8, lr
+#load address of our state into r1 , which we will use to retrieve the state
+	bl 		SaveUserModeState
+	mov		r1, sp
+#load syscall number into r0 (from r8/lr) and cut off the first few bytes of the instruction
+	ldr		r0,[r8,#-4]
 	bic		r0,r0,#0xFF000000
-#load stackpointer into r1, so we have a pointer to the state/parameters which are now in our stack
-	mov		r1, sp 
 
 #syscall handler
 	blx		handle_syscall
 	
 #load registers back and return
-	ldmia	sp!, {r1-r12, sp, lr}^ 
-	ldmfd	sp!, {lr}
+	mov		r1, #1
+	bl		RestoreUserModeState
+	ldmia	sp!, {lr}
+	ldr		sp, =__swistack_addr
 	movs	pc, lr
-
+	
 #old swi handler from mini. basically just throws the exception
 v_swi_old:
 	stmfd	sp!, {lr}

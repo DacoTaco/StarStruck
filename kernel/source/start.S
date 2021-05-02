@@ -23,7 +23,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl _start
 
 .extern v_undf
-.extern syscall_handler
+.extern v_swi
 .extern v_instr_abrt
 .extern v_data_abrt
 .extern v_reserved

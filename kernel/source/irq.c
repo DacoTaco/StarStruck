@@ -18,6 +18,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "crypto.h"
 #include "nand.h"
 #include "sdhc.h"
+#include "threads.h"
 
 static u32 _alarm_frequency = 0;
 void irq_setup_stack(void);
@@ -25,6 +26,7 @@ void irq_setup_stack(void);
 void irq_initialize(void)
 {
 	irq_setup_stack();
+	write32(HW_ALARM, 0);
 	write32(HW_ARMIRQMASK, 0);
 	write32(HW_ARMIRQFLAG, 0xffffffff);
 	irq_restore(CPSR_FIQDIS);
@@ -32,8 +34,6 @@ void irq_initialize(void)
 	//???
 	write32(HW_ARMIRQMASK+0x04, 0);
 	write32(HW_ARMIRQMASK+0x20, 0);
-
-	write32(HW_ALARM, 0);
 }
 
 void irq_shutdown(void)
@@ -43,16 +43,44 @@ void irq_shutdown(void)
 	irq_kill();
 }
 
-void irq_handler(void)
+s32 RegisterEventHandler(u8 device, int queueid, int message)
+{
+	return 0;
+}
+
+s32 UnregisterEventHandler(u8 device)
+{
+	return 0;
+}
+
+void irq_handler(Registers* regs)
 {
 	u32 enabled = read32(HW_ARMIRQMASK);
 	u32 flags = read32(HW_ARMIRQFLAG);
 	
-	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);
-
+	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);	
 	flags = flags & enabled;
 
-	if(flags & IRQF_TIMER) {
+	if(flags & IRQF_TIMER) 
+	{
+		//clear Timer
+		write32(HW_ALARM, 0);
+		
+		// Do Work
+		//gecko_printf("Registers Init (%p):\n", regs);
+		/*gecko_printf("    R0-R3: %08x %08x %08x %08x\n", regs->registers[0], regs->registers[1], regs->registers[2], regs->registers[3]);
+		gecko_printf("    R4-R7: %08x %08x %08x %08x\n", regs->registers[4], regs->registers[5], regs->registers[6], regs->registers[7]);
+		gecko_printf("   R8-R11: %08x %08x %08x %08x\n", regs->registers[8], regs->registers[9], regs->registers[10], regs->registers[11]);
+		gecko_printf("      R12: %08x\n", regs->registers[12]);
+		gecko_printf("       SP: %08x\n", regs->stackPointer);
+		gecko_printf("       LR: %08x\n", regs->linkRegister);
+		gecko_printf("       PC: %08x\n", regs->programCounter);
+		gecko_printf("     SPSR: %08x\n", regs->statusRegister);
+		*/
+
+		ScheduleYield();
+		
+		//Reset Timer
 		if (_alarm_frequency)
 			write32(HW_ALARM, read32(HW_TIMER) + _alarm_frequency);
 
