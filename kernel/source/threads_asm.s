@@ -12,7 +12,6 @@
 .globl RestoreUserModeState
 .extern SaveThreadInfo
 .extern RestoreThreadInfo
-.extern take_dive2
 
 SaveUserModeState:
 	stmdb	sp!, {r0-r12, sp, lr}^

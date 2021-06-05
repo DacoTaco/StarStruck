@@ -44,6 +44,16 @@ int handle_syscall(u16 syscall, Registers* registers)
 
 		case SYSCALL_STARTTHREAD:
 			return StartThread((s32)registers->registers[1]);
+			
+		case SYSCALL_YIELDTHREAD:
+			YieldThread();
+			return 0;
+			
+		case SYSCALL_GETTHREADPRIORITY:
+			return GetThreadPriority((u32)registers->registers[1]);
+		
+		case SYSCALL_SETTHREADPRIORITY:
+			return SetThreadPriority((u32)registers->registers[1], (s32)registers->registers[2]);
 
 		case SYSCALL_CREATEMESSAGEQUEUE:
 			return CreateMessageQueue((void*)registers->registers[1], (u32)registers->registers[2]);

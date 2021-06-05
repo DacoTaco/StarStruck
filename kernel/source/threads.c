@@ -174,6 +174,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->processId = (currentThread == NULL) ? 0 : currentThread->processId;
 	selectedThread->threadState = Stopped;
 	selectedThread->priority = priority;
+	selectedThread->initialPriority = priority;
 	selectedThread->registers.programCounter = main;
 	selectedThread->registers.registers[0] = (u32)arg;
 	selectedThread->registers.linkRegister = (u32)_thread_end;
@@ -278,6 +279,84 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		YieldThread();
 	}
 	
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
+}
+
+s32 GetThreadPriority( u32 threadId )
+{
+	irq_state = irq_kill();
+	
+	threadInfo* thread;
+	s32 ret = -4;
+	
+	if(threadId == 0 && currentThread != NULL)
+	{
+		ret = currentThread->priority;
+		goto restore_and_return;
+	}
+	
+	if(threadId >= MAX_THREADS)
+		goto return_error;
+	
+	thread = &threads[threadId];
+	//does the current thread even own the thread?
+	if( currentThread != NULL && currentThread->processId != 0 && thread->processId != currentThread->processId)
+		goto return_error;
+	
+	ret = thread->priority;
+	goto restore_and_return;
+	
+return_error:
+	ret = -4;
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
+}
+
+s32 SetThreadPriority( u32 threadId, s32 priority )
+{
+	irq_state = irq_kill();
+
+	threadInfo* thread = NULL;
+	s32 ret = 0;
+	
+	if(threadId > MAX_THREADS || priority >= 0x80 )
+		goto return_error;
+	
+	if( threadId == 0 )
+		thread = currentThread;
+
+	if(thread == NULL)
+		thread = &threads[threadId];
+
+	//does the current thread even own the thread?
+	if( currentThread != NULL && currentThread->processId != 0 && thread->processId != currentThread->processId)
+		goto return_error;
+	
+	if(priority >= thread->initialPriority)
+		goto return_error;
+	
+	if(thread->priority == priority)
+		goto restore_and_return;
+	
+	thread->priority = priority;
+	if(thread != currentThread && thread->threadState != Stopped)
+	{
+		UnQueueThread(threadQueue, thread);
+		QueueNextThread(threadQueue, thread);
+	}
+	
+	if( currentThread->priority < threadQueue[0]->priority )
+	{
+		currentThread->threadState = Ready;
+		YieldThread();
+	}
+	goto restore_and_return;
+	
+return_error:
+	ret = -4;
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;

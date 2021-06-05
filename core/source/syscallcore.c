@@ -54,6 +54,27 @@ s32 os_startThread( s32 threadid )
 	return ret;
 }
 
+s32 os_yieldThread( void )
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_YIELDTHREAD), &ret, 0, 0, 0, 0, 0, 0);	
+	return ret;
+}
+
+s32 os_getThreadPriority( s32 threadid )
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_GETTHREADPRIORITY), &ret, threadid, 0, 0, 0, 0, 0);	
+	return ret;
+}
+
+s32 os_setThreadPriority( s32 threadid, s32 priority )
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_SETTHREADPRIORITY), &ret, threadid, priority, 0, 0, 0, 0);	
+	return ret;
+}
+
 s32 os_createMessageQueue(void *ptr, u32 size)
 {
 	s32 ret = -1;

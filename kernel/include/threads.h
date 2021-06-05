@@ -44,6 +44,7 @@ typedef struct threadInfo
 	u8 threadState;
 	void* arguments;
 	u32* stackAddress;
+	s32 initialPriority;
 	s32 priority;
 	s32 isDetached;	
 	struct threadInfo* nextThread;
@@ -61,5 +62,7 @@ void YieldThread( void );
 s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(u32 threadId, u32 return_value);
 s32	StartThread(s32 threadId);
+s32 GetThreadPriority(u32 threadId);
+s32 SetThreadPriority(u32 threadId, s32 priority);
 
 #endif
