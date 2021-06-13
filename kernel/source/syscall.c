@@ -21,7 +21,7 @@
 typedef u32 (*syscall_handler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6);
 static u32 syscall_handlers[] = {
 	(u32)CreateThread,					//0x0000
-	(u32)0x00000000,					//0x0001
+	(u32)JoinThread,					//0x0001
 	(u32)CancelThread,					//0x0002
 	(u32)GetThreadID,					//0x0003
 	(u32)GetProcessID,					//0x0004

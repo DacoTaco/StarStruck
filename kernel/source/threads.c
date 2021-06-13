@@ -264,6 +264,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		goto restore_and_return;
 	}
 	
+	threadToCancel->returnValue = return_value;	
 	if(threadToCancel->threadState != Stopped)
 		UnQueueThread(threadQueue, threadToCancel);
 	
@@ -280,6 +281,55 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		YieldThread();
 	}
 	
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
+}
+
+s32 JoinThread(s32 threadId, u32* returnedValue)
+{
+	irq_state = irq_kill();
+	s32 ret = 0;
+	
+	if(threadId > 100)
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
+	
+	threadInfo* threadToJoin = NULL;
+	if( threadId == 0 )
+		threadToJoin = currentThread;
+
+	if(threadToJoin == NULL)
+		threadToJoin = &threads[threadId];
+
+	//does the current thread even own the thread?
+	if( currentThread != NULL && currentThread->processId != 0 && threadToJoin->processId != currentThread->processId)
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
+	
+	if(threadToJoin == currentThread || threadToJoin->isDetached)
+		goto restore_and_return;
+	
+	ThreadState threadState = threadToJoin->threadState;
+	
+	if(threadState != Dead)
+	{
+		currentThread->threadState = Waiting;
+		YieldThread();
+		threadState = threadToJoin->threadState;
+	}
+	
+	if(returnedValue != NULL)
+		*returnedValue = threadToJoin->returnValue;
+	
+	if(threadState != Dead)
+		gecko_printf("thread %d is not dead, but join from %d resumed\n", threadToJoin->threadId, currentThread->threadId );
+
+	threadToJoin->threadState = Unset;	
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;
