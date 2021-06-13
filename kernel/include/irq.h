@@ -27,6 +27,7 @@ void irq_enable(u32 irq);
 void irq_disable(u32 irq);
 void irq_set_alarm(u32 ms, u8 enable);
 
+u32 GetTimerValue(void);
 s32 RegisterEventHandler(u8 device, int queueid, int message);
 s32 UnregisterEventHandler(u8 device);
 

@@ -23,8 +23,8 @@ static u32 syscall_handlers[] = {
 	(u32)CreateThread,					//0x0000
 	(u32)0x00000000,					//0x0001
 	(u32)CancelThread,					//0x0002
-	(u32)0x00000000,					//0x0003
-	(u32)0x00000000,					//0x0004
+	(u32)GetThreadID,					//0x0003
+	(u32)GetProcessID,					//0x0004
 	(u32)StartThread,					//0x0005
 	(u32)0x00000000,					//0x0006
 	(u32)YieldThread,					//0x0007
@@ -34,14 +34,14 @@ static u32 syscall_handlers[] = {
 	(u32)DestroyMessageQueue,			//0x000B
 	(u32)0x00000000,					//0x000C
 	(u32)0x00000000,					//0x000D
-	(u32)CreateHeap,					//0x000E
+	(u32)0x00000000,					//0x000E
 	(u32)RegisterEventHandler,			//0x000F
 	(u32)UnregisterEventHandler,		//0x0010
 	(u32)0x00000000,					//0x0011
 	(u32)0x00000000,					//0x0012
 	(u32)0x00000000,					//0x0013
 	(u32)0x00000000,					//0x0014
-	(u32)0x00000000,					//0x0015
+	(u32)GetTimerValue,					//0x0015
 	(u32)CreateHeap,					//0x0016
 	(u32)DestroyHeap,					//0x0017
 	(u32)AllocateOnHeap,				//0x0018

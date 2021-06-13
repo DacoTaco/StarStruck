@@ -171,6 +171,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	}
 
 	selectedThread->threadQueue = currentThread->threadQueue;
+	selectedThread->threadId = threadId;
 	selectedThread->processId = (currentThread == NULL) ? 0 : currentThread->processId;
 	selectedThread->threadState = Stopped;
 	selectedThread->priority = priority;
@@ -282,6 +283,16 @@ s32 CancelThread(u32 threadId, u32 return_value)
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;
+}
+
+s32 GetThreadID()
+{
+	return currentThread->threadId;
+}
+
+s32 GetProcessID()
+{
+	return currentThread->processId;
 }
 
 s32 GetThreadPriority( u32 threadId )

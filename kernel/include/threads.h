@@ -40,6 +40,7 @@ typedef struct
 typedef struct threadInfo
 {
 	Registers registers;
+	u32 threadId;
 	u32 processId;
 	u8 threadState;
 	void* arguments;
@@ -62,6 +63,8 @@ void YieldThread( void );
 s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(u32 threadId, u32 return_value);
 s32	StartThread(s32 threadId);
+s32 GetThreadID(void);
+s32 GetProcessID(void);
 s32 GetThreadPriority(u32 threadId);
 s32 SetThreadPriority(u32 threadId, s32 priority);
 

@@ -43,14 +43,19 @@ void irq_shutdown(void)
 	irq_kill();
 }
 
+u32 GetTimerValue(void)
+{
+	return read32(HW_TIMER);
+}
+
 s32 RegisterEventHandler(u8 device, int queueid, int message)
 {
-	return 0;
+	return -4;
 }
 
 s32 UnregisterEventHandler(u8 device)
 {
-	return 0;
+	return -4;
 }
 
 void irq_handler(Registers* regs)
