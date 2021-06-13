@@ -70,7 +70,12 @@ s32 DestroyHeap(s32 heapid)
 	return 0;
 }
 
-void* AllocateOnHeap(s32 heapid, u32 size, u32 alignment)
+void* AllocateOnHeap(s32 heapid, u32 size)
+{
+	return MallocateOnHeap(heapid, size, 0x20);
+}
+
+void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 {
 	if(	heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].heap || 
 		size == 0 || heaps[heapid].size < size || alignment < 0x20)

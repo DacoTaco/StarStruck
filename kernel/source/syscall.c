@@ -18,11 +18,47 @@
 
 //#define _DEBUG_SYSCALL
 
+typedef u32 (*syscall_handler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6);
+static u32 syscall_handlers[] = {
+	(u32)CreateThread,					//0x0000
+	(u32)0x00000000,					//0x0001
+	(u32)CancelThread,					//0x0002
+	(u32)0x00000000,					//0x0003
+	(u32)0x00000000,					//0x0004
+	(u32)StartThread,					//0x0005
+	(u32)0x00000000,					//0x0006
+	(u32)YieldThread,					//0x0007
+	(u32)GetThreadPriority,				//0x0008
+	(u32)SetThreadPriority,				//0x0009
+	(u32)CreateMessageQueue,			//0x000A
+	(u32)DestroyMessageQueue,			//0x000B
+	(u32)0x00000000,					//0x000C
+	(u32)0x00000000,					//0x000D
+	(u32)CreateHeap,					//0x000E
+	(u32)RegisterEventHandler,			//0x000F
+	(u32)UnregisterEventHandler,		//0x0010
+	(u32)0x00000000,					//0x0011
+	(u32)0x00000000,					//0x0012
+	(u32)0x00000000,					//0x0013
+	(u32)0x00000000,					//0x0014
+	(u32)0x00000000,					//0x0015
+	(u32)CreateHeap,					//0x0016
+	(u32)DestroyHeap,					//0x0017
+	(u32)AllocateOnHeap,				//0x0018
+	(u32)MallocateOnHeap,				//0x0019
+	(u32)FreeOnHeap,					//0x001A
+	(u32)0x00000000,					//0x001B
+	(u32)0x00000000,					//0x001C
+	(u32)0x00000000,					//0x001D
+	(u32)0x00000000,					//0x001E
+	(u32)0x00000000,					//0x001F
+};
+
 //We implement syscalls using the SVC/SWI instruction. 
 //Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
 //Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
 int handle_syscall(u16 syscall, Registers* registers)
-{	
+{
 #ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
 	if(registers != NULL)
@@ -32,60 +68,28 @@ int handle_syscall(u16 syscall, Registers* registers)
 	}
 	else
 		gecko_printf("registers == NULL");
-#endif
+#endif	
 
-	switch(syscall)
+	//is the syscall within our range ?
+	//sizeof(syscall) = the amout of bytes, so /4 since its 4 bytes per address
+	//and -1 since we start at 0000
+	if(syscall > ((sizeof(syscall_handlers) / 4) -1 ))
 	{
-		case SYSCALL_CREATETHREAD:
-			return CreateThread((s32)registers->registers[1], (void*)registers->registers[2], (u32*)registers->registers[3], (u32)registers->registers[4], (s32)registers->registers[5], (u32)registers->registers[6]);
-
-		case SYSCALL_STOPTHREAD:
-			return CancelThread((s32)registers->registers[1], (u32)registers->registers[2]);
-
-		case SYSCALL_STARTTHREAD:
-			return StartThread((s32)registers->registers[1]);
-			
-		case SYSCALL_YIELDTHREAD:
-			YieldThread();
-			return 0;
-			
-		case SYSCALL_GETTHREADPRIORITY:
-			return GetThreadPriority((u32)registers->registers[1]);
-		
-		case SYSCALL_SETTHREADPRIORITY:
-			return SetThreadPriority((u32)registers->registers[1], (s32)registers->registers[2]);
-
-		case SYSCALL_CREATEMESSAGEQUEUE:
-			return CreateMessageQueue((void*)registers->registers[1], (u32)registers->registers[2]);
-		
-		case SYSCALL_DESTROYMESSAGEQUEUE:
-			return DestroyMessageQueue((s32)registers->registers[1]);
-			
-		case SYSCALL_REGISTEREVENTHANDLER:
-			return RegisterEventHandler((u8)registers->registers[1], (s32)registers->registers[2], (s32)registers->registers[3]);
-			
-		case SYSCALL_UNREGISTEREVENTHANDLER:
-			return UnregisterEventHandler((u8)registers->registers[1]);
-		
-		case SYSCALL_CREATEHEAP:
-			return CreateHeap((void*)registers->registers[1], (u32)registers->registers[2]);
-			
-		case SYSCALL_DESTROYHEAP:
-			return DestroyHeap((s32)registers->registers[1]);
-			
-		case SYSCALL_MALLOC:
-		case SYSCALL_MEMALIGN:
-			return (s32)AllocateOnHeap((s32)registers->registers[1], (u32)registers->registers[2], (syscall == SYSCALL_MALLOC) ? 0x20 : (u32)registers->registers[3]);
-			
-		case SYSCALL_MEMFREE:
-			return FreeOnHeap((s32)registers->registers[1], (void*)registers->registers[2]);
-		
-		default:
-			gecko_printf("unknown syscall 0x%04X\n", syscall);
-			break;
+		gecko_printf("unknown syscall 0x%04X\n", syscall);
+		return -666;
 	}
 	
-	return -666;
+	syscall_handler handler = (syscall_handler)syscall_handlers[syscall];
+	u32* reg = registers->registers;
+	
+	if(handler == NULL)
+	{
+		gecko_printf("unimplemented syscall 0x%04X\n", syscall);
+		return -666;
+	}
+	
+	//dive into the handler
+	return handler(reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
 }
 
 /*	
