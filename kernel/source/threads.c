@@ -225,6 +225,7 @@ s32	StartThread(s32 threadId)
 	threadToStart->threadState = Ready;
 	QueueNextThread(threadQueue, threadToStart);
 	
+	currentThread->registers.registers[0] = ret;
 	threadToStart = currentThread;
 	if(threadToStart == NULL)
 		ScheduleYield();
@@ -273,6 +274,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	else
 		threadToCancel->threadState = Unset;
 	
+	currentThread->registers.registers[0] = ret;
 	if(threadToCancel == currentThread)
 		ScheduleYield();
 	else
@@ -314,10 +316,10 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	if(threadToJoin == currentThread || threadToJoin->isDetached)
 		goto restore_and_return;
 	
-	ThreadState threadState = threadToJoin->threadState;
-	
+	ThreadState threadState = threadToJoin->threadState;	
 	if(threadState != Dead)
 	{
+		currentThread->registers.registers[0] = ret;
 		currentThread->threadState = Waiting;
 		YieldThread();
 		threadState = threadToJoin->threadState;
@@ -411,6 +413,7 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 	
 	if( currentThread->priority < threadQueue[0]->priority )
 	{
+		currentThread->registers.registers[0] = ret;
 		currentThread->threadState = Ready;
 		YieldThread();
 	}
