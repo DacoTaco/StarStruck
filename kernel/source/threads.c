@@ -15,11 +15,12 @@
 #include "syscallcore.h"
 #include "utils.h"
 
-u8 active_thread MEM2_BSS = 0;
 threadInfo threads[MAX_THREADS] ALIGNED(0x20) MEM2_BSS;
 threadInfo* threadQueue[MAX_THREADS] MEM2_BSS;
-threadInfo* currentThread = NULL;
-s32 irq_state = 0;
+threadInfo* currentThread ALIGNED(0x20) = NULL;
+static s32 irq_state = 0;
+
+extern void RestoreAndReturnToUserMode(s32 returnValue, Registers* registers, u32 swi_mode);
 
 void _thread_end()
 {
@@ -41,21 +42,13 @@ void InitializeThreadContext()
 	threadQueue[0] = currentThread;
 }
 
-//save & restore current thread state. called by the IRQ, SVC/SWI & UDF handlers
+//save current thread state. called by the IRQ, SVC/SWI & UDF handlers
 void SaveThreadInfo(Registers* input)
 {
 	if(currentThread == NULL || input == NULL)
 		return;
 	
 	memcpy32(&currentThread->registers, input, sizeof(Registers));
-}
-
-void RestoreThreadInfo(Registers* input)
-{
-	if(currentThread == NULL || input == NULL)
-		return;
-	
-	memcpy32(input, &currentThread->registers, sizeof(Registers));
 }
 
 //Scheduler
@@ -127,6 +120,7 @@ void ScheduleYield( void )
 	
 	currentThread = currentThread->nextThread;
 	currentThread->threadState = Running;
+	RestoreAndReturnToUserMode(0, &currentThread->registers, 0);
 	return;
 }
 

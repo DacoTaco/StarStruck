@@ -83,7 +83,8 @@ void irq_handler(Registers* regs)
 		gecko_printf("     SPSR: %08x\n", regs->statusRegister);
 		*/
 
-		ScheduleYield();
+		//change thread queue? 
+		//TODO : check with IOS
 		
 		//Reset Timer
 		if (_alarm_frequency)

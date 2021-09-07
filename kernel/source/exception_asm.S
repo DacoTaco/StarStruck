@@ -21,7 +21,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .extern exc_handler
 .extern undf_handler
 .extern SaveUserModeState
-.extern RestoreUserModeState
+.extern RestoreAndReturnToUserMode
 
 exc_setup_stack:
 	mrs	r0, cpsr
@@ -63,12 +63,10 @@ v_undf:
 
 	blx		undf_handler
 	
-	mov		r1, #1
-	bl		RestoreUserModeState
-	ldmia	sp!, {lr}
-	ldr		sp, =__swistack_addr
-	movs	pc, lr
-
+#	mov		r0, r0
+	mov		r1, sp
+	mov		r2, #1
+	b		RestoreAndReturnToUserMode
 
 v_instr_abrt:
 	stmfd	sp!, {lr}

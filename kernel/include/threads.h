@@ -53,7 +53,6 @@ typedef struct threadInfo
 	struct threadInfo** threadQueue;
 } threadInfo;
 
-extern u8 active_thread;
 extern threadInfo threads[MAX_THREADS];
 extern threadInfo* threadQueue[MAX_THREADS];
 extern threadInfo* currentThread;

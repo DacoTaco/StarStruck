@@ -1,7 +1,7 @@
 .extern handle_syscall
 .extern exc_handler
 .extern SaveUserModeState
-.extern RestoreUserModeState
+.extern RestoreAndReturnToUserMode
 .globl v_swi
 
 v_swi:
@@ -19,25 +19,9 @@ v_swi:
 	blx		handle_syscall
 	
 #load registers back and return
-	mov		r1, #1
-	bl		RestoreUserModeState
-	ldmia	sp!, {lr}
-	ldr		sp, =__swistack_addr
-	movs	pc, lr
-	
-#old swi handler from mini. basically just throws the exception
-v_swi_old:
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-#substract 16*4 to the stack pointer,so we have a pointer to the register values. 
-	sub		sp, sp, #0x3c
-	mov		r2, sp
-	mrs		r1, spsr
-	mov		r0, #2
-
-	blx		exc_handler
-
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
-	movs	pc, lr
+#normally our current sp should be pointing to the saves registers state
+#RestoreAndReturnToUserMode(return_value, registers, new sp, swi_mode)
+#	mov		r0, r0
+	mov		r1, sp
+	mov		r2, #1
+	b		RestoreAndReturnToUserMode

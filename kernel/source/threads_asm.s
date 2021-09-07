@@ -9,9 +9,10 @@
 */
 
 .globl SaveUserModeState
-.globl RestoreUserModeState
+.globl RestoreAndReturnToUserMode
 .extern SaveThreadInfo
-.extern RestoreThreadInfo
+.extern __irqstack_addr
+.extern __swistack_addr
 
 SaveUserModeState:
 	stmdb	sp!, {r0-r12, sp, lr}^
@@ -22,28 +23,36 @@ SaveUserModeState:
 	bl		SaveThreadInfo
 	ldmia	sp!, {r1}
 	mov		pc, r1
-
-RestoreUserModeState:	
-#restore state, store r0 temp on the stack
-	mov		r3,	r0
-	mov		r0, sp
-	stmdb	sp!, {r3}
-	stmdb	sp!, {r1, lr}
-	bl		RestoreThreadInfo
-	ldmia	sp!, {r1, lr}
-	ldmia	sp!, {r3}
-#restore r0 and return
-	mov		r0, r3
-	ldmia	sp!, {r2}
-	msr		spsr_cxsf, r2
-	cmp		r1, #0
+	
+#RestoreAndReturnToUserMode(return_value, registers, swi_mode)
+RestoreAndReturnToUserMode:	
+#restore the status register
+	ldmia	r1!, {r4}
+	msr		spsr_cxsf, r4
+#check the mode this was called in. In SWI mode we need to skip restoring r0
+	cmp		r2, #0
 	bne		swi_restore
 thread_restore:
-	ldmia	sp!, {r0-r12, sp, lr}^
+	ldmia	r1!, {r0-r12, sp, lr}^
 	b		return
 swi_restore:
-#skip r0, as it is our return value
-	add		sp, sp, #0x04
-	ldmia	sp!, {r1-r12, sp, lr}^
+	add		r1, r1, #0x04
+	ldmia	r1!, {r1-r12, sp, lr}^
 return:
-	mov		pc, lr
+	ldmia	r1!, {lr}
+#ios seems to add 0x68 here to create a new stack frame?
+#	add		sp, r2, #0x68
+	mrs		r2, cpsr
+	
+	msr 	cpsr_c, #0xd2
+	ldr		sp, =__irqstack_addr
+
+	msr 	cpsr_c, #0xd3
+	ldr		sp, =__swistack_addr
+
+	msr 	cpsr_c, #0xdb
+	ldr		sp, =__swistack_addr
+
+	msr 	cpsr_c, r2
+	movs	pc, lr
+	

@@ -18,7 +18,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .extern __irqstack_addr
 .extern irq_handler
 .extern SaveUserModeState
-.extern RestoreUserModeState
+.extern RestoreAndReturnToUserMode
+.extern ScheduleYield
 
 irq_setup_stack:
 	@ Switch to IRQ mode
@@ -38,21 +39,10 @@ v_irq:
 	stmdb	sp!, {lr}
 	@save the state and push the state's address to r0
 	bl 		SaveUserModeState
-	mov		r0, sp
+	
 	@handle the irq request with r0 having the state
+	mov		r0, sp
 	blx		irq_handler
-	
-	@load registers back and return	
-	bl		RestoreUserModeState
-	@get the pc address, set sp back to start and return
-	ldmia	sp!, {lr}
-	ldr		sp, =__irqstack_addr
-	movs	pc, lr
-	
-v_irq_old:
-    push    {r0-r3, r9, r12, lr}
 
-    blx     irq_handler
-
-    pop     {r0-r3, r9, r12, lr}
-    subs    pc, lr, #4
+#yield execution to the next thread
+	b		ScheduleYield
