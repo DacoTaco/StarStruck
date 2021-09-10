@@ -257,7 +257,7 @@ void ipc_ppc_boot_title(u64 titleId)
 
 u32 ipc_main(void)
 {
-	while (!boot_titleID) 
+	while (boot_titleID == 0) 
 	{
 		u32 cookie = irq_kill();		
 		if(in_cnt > 0)

@@ -43,7 +43,7 @@ u32 _main(void *base)
 	(void)base;
 
 	gecko_init();
-	gecko_printf("mini %s loading\n", git_version);
+	gecko_printf("StarStruck %s loading\n", git_version);
 
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
@@ -94,14 +94,13 @@ u32 _main(void *base)
 
 	gecko_printf("Going into IPC mainloop...\n");
 	vector = ipc_main();
-	gecko_printf("IPC mainloop done!\n");
-	gecko_printf("Shutting down IPC...\n");
+	gecko_printf("IPC mainloop done! killing IPC...\n");
 	ipc_shutdown();
 
 shutdown:
-	gecko_printf("Shutting down interrupts...\n");
+	gecko_printf("Shutting down...\ninterrupts...\n");
 	irq_shutdown();
-	gecko_printf("Shutting down caches and MMU...\n");
+	gecko_printf("caches and MMU...\n");
 	mem_shutdown();
 
 	gecko_printf("Vectoring to 0x%08x...\n", vector);

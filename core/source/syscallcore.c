@@ -89,6 +89,19 @@ s32 os_destroyMessageQueue(s32 queueid)
 	return ret;
 }
 
+s32 os_sendMessage(s32 queueid, void *message, u32 flags)
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_SENDMESSAGE), &ret, queueid, (u32)message, flags, 0, 0, 0);
+	return ret;
+}
+s32 os_receiveMessage(s32 queueid, void *message, u32 flags)
+{
+	s32 ret = -1;
+	_syscall(STR(SYSCALL_RECEIVEMESSAGE), &ret, queueid, (u32)message, flags, 0, 0, 0);
+	return ret;
+}
+
 s32 os_registerEventHandler(u8 device, s32 queueid, s32 message)
 {
 	s32 ret = -1;

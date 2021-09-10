@@ -118,7 +118,12 @@ void ScheduleYield( void )
 	if(currentThread->threadState == Running)
 		currentThread->threadState = Ready;
 	
-	currentThread = currentThread->nextThread;
+	do
+	{
+		currentThread = currentThread->nextThread;
+	}
+	while(currentThread->threadState != Ready);
+	
 	currentThread->threadState = Running;
 	RestoreAndReturnToUserMode(0, &currentThread->registers, 0);
 	return;

@@ -32,9 +32,9 @@ static u32 syscall_handlers[] = {
 	(u32)SetThreadPriority,				//0x0009
 	(u32)CreateMessageQueue,			//0x000A
 	(u32)DestroyMessageQueue,			//0x000B
-	(u32)0x00000000,					//0x000C
+	(u32)SendMessage,					//0x000C
 	(u32)0x00000000,					//0x000D
-	(u32)0x00000000,					//0x000E
+	(u32)ReceiveMessage,				//0x000E
 	(u32)RegisterEventHandler,			//0x000F
 	(u32)UnregisterEventHandler,		//0x0010
 	(u32)0x00000000,					//0x0011

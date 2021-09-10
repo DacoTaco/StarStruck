@@ -18,6 +18,8 @@
 #define SYSCALL_SETTHREADPRIORITY		0x0009
 #define SYSCALL_CREATEMESSAGEQUEUE		0x000A
 #define SYSCALL_DESTROYMESSAGEQUEUE		0x000B
+#define SYSCALL_SENDMESSAGE				0x000C
+#define SYSCALL_RECEIVEMESSAGE			0x000E
 #define SYSCALL_REGISTEREVENTHANDLER	0x000F
 #define SYSCALL_UNREGISTEREVENTHANDLER	0x0010
 #define SYSCALL_CREATEHEAP				0x0016
@@ -34,6 +36,8 @@ s32 os_getThreadPriority( s32 threadid );
 s32 os_setThreadPriority( s32 threadid, s32 priority );
 s32 os_createMessageQueue(void *ptr, u32 size);
 s32 os_destroyMessageQueue(s32 queueid);
+s32 os_sendMessage(s32 queueid, void *message, u32 flags);
+s32 os_receiveMessage(s32 queueid, void *message, u32 flags);
 s32 os_createHeap(void *ptr, u32 size);
 s32 os_destroyHeap(s32 heapid);
 s32 os_registerEventHandler(u8 device, s32 queueid, s32 message);

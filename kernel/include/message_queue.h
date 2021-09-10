@@ -15,11 +15,24 @@
 
 typedef struct
 {
-	void* queue;
-	s32 numberOfMessages;
+	void** queueHeap;
+	s32 queueSize;
+	s32 used;
+	s32 first;
+	u32 processId;
+	ThreadInfo* receiveThreadQueue;
+	ThreadInfo* sendThreadQueue;
 } message_queue;
 
-s32 CreateMessageQueue(void *ptr, u32 numberOfMessages);
+typedef enum
+{
+	BlockThread = 0,
+	ReturnCall = 1
+} MessageQueueFlags;
+
+s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
 s32 DestroyMessageQueue(s32 queueId);
+s32 SendMessage(s32 queueId, void* message, u32 flags);
+s32 ReceiveMessage(s32 queueid, void **message, u32 flags);
 
 #endif
