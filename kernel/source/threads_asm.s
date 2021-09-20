@@ -9,6 +9,7 @@
 */
 
 .globl SaveUserModeState
+.globl ReturnToLr
 .globl RestoreAndReturnToUserMode
 .extern SaveThreadInfo
 .extern __irqstack_addr
@@ -24,6 +25,9 @@ SaveUserModeState:
 	ldmia	sp!, {r1}
 	mov		pc, r1
 	
+ReturnToLr:
+	bx		lr
+
 #RestoreAndReturnToUserMode(return_value, registers, swi_mode)
 RestoreAndReturnToUserMode:	
 #restore the status register
@@ -40,7 +44,7 @@ swi_restore:
 	ldmia	r1!, {r1-r12, sp, lr}^
 return:
 	ldmia	r1!, {lr}
-#ios seems to add 0x68 here to create a new stack frame?
+#ios loads the threads sys_stack_top back in to sp, resetting the stack
 #	add		sp, r2, #0x68
 	mrs		r2, cpsr
 	

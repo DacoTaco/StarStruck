@@ -35,27 +35,11 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 FATFS fatfs;
 
-u32 _main(void *base)
+void kernel_main( void )
 {
-	FRESULT fres = 0;
-	int res;
 	u32 vector;
-	(void)base;
+	FRESULT fres = 0;
 
-	gecko_init();
-	gecko_printf("StarStruck %s loading\n", git_version);
-
-	gecko_printf("Initializing exceptions...\n");
-	exception_initialize();
-	gecko_printf("Configuring caches and MMU...\n");
-	mem_initialize();
-
-	gecko_printf("IOSflags: %08x %08x %08x\n",
-		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
-	gecko_printf("          %08x %08x %08x\n",
-		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
-
-	InitializeThreadContext();
 	irq_initialize();
 //	irq_enable(IRQ_GPIO1B);
 	irq_enable(IRQ_GPIO1);
@@ -104,6 +88,39 @@ shutdown:
 	mem_shutdown();
 
 	gecko_printf("Vectoring to 0x%08x...\n", vector);
-	return vector;
+	//go to whatever address we got
+	asm("mov\tpc, %0": : "r" (vector));
+}
+
+u32 _main(void *base)
+{
+	(void)base;	
+	gecko_init();
+	gecko_printf("StarStruck %s loading\n", git_version);
+
+	gecko_printf("Initializing exceptions...\n");
+	exception_initialize();
+	gecko_printf("Configuring caches and MMU...\n");
+	mem_initialize();
+
+	gecko_printf("IOSflags: %08x %08x %08x\n",
+		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
+	gecko_printf("          %08x %08x %08x\n",
+		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
+	
+	//init thread context handles
+	InitializeThreadContext();
+	
+	//create main kernel thread
+	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
+	//enable interrupts in this thread
+	threads[threadId].registers.statusRegister |= 0x1f;
+	if( threadId < 0 || StartThread(threadId) < 0 )
+	{
+		gecko_printf("failed to start kernel!\n");
+		while(1){};
+	}
+	gecko_printf("\npanic!\n");
+	return 0;
 }
 

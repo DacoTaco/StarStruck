@@ -15,12 +15,17 @@
 #include "syscallcore.h"
 #include "utils.h"
 
-threadInfo threads[MAX_THREADS] ALIGNED(0x20) MEM2_BSS;
-threadInfo* threadQueue[MAX_THREADS] MEM2_BSS;
-threadInfo* currentThread ALIGNED(0x20) = NULL;
+#define BASE_STACKADDR 	0x13AC0400
+#define STACK_SIZE		0x400
+
+ThreadInfo threads[MAX_THREADS] ALIGNED(0x20) MEM2_BSS;
+ThreadQueue mainQueue ALIGNED(0x10) MEM2_BSS;
+ThreadQueue* mainQueuePtr = &mainQueue;
+ThreadInfo* currentThread ALIGNED(0x20) = NULL;
 static s32 irq_state = 0;
 
 extern void RestoreAndReturnToUserMode(s32 returnValue, Registers* registers, u32 swi_mode);
+extern void ReturnToLr( void );
 
 void _thread_end()
 {
@@ -32,14 +37,15 @@ void _thread_end()
 
 void InitializeThreadContext()
 {
-	//Initilize thread structures & set current thread as thread 0
+	//Initilize thread structures & set stack pointers
 	
-	threads[0].threadQueue = threadQueue;
-	threads[0].threadState = Running;
-	threads[0].priority = 0x80;
-	threads[0].nextThread = &threads[0];
-	currentThread = &threads[0];
-	threadQueue[0] = currentThread;
+	mainQueuePtr->nextThread = &threads[0];
+	for(int i = 0; i < MAX_THREADS; i++)
+	{
+		memset32(&threads[i].registers, 0 , sizeof(Registers));
+		threads[i].supervisorStackTop = BASE_STACKADDR + (STACK_SIZE*i);
+		threads[i].supervisorStackPointer = threads[i].supervisorStackTop;
+	}
 }
 
 //save current thread state. called by the IRQ, SVC/SWI & UDF handlers
@@ -52,10 +58,11 @@ void SaveThreadInfo(Registers* input)
 }
 
 //Scheduler
-void UnQueueThread( threadInfo** threadQueue, threadInfo* thread )
-{  
-	threadInfo* nextThread = threadQueue[0];
-	threadInfo* prevThread = threadQueue[0];
+void UnQueueThread( ThreadQueue* threadQueue, ThreadInfo* thread )
+{
+	ThreadInfo* nextThread = (threadQueue == NULL)
+		? NULL
+		: threadQueue->nextThread;
 	
 	while(1)
 	{
@@ -65,78 +72,98 @@ void UnQueueThread( threadInfo** threadQueue, threadInfo* thread )
 		if(nextThread == thread)
 			break;
 		
-		prevThread = nextThread;
+		//place pointer to the next thread pointer into the queue variable.
+		//since threadQueue starts with a pointer this... works.
+		//wtf nintendo? :)
+		threadQueue = (ThreadQueue*)&nextThread->nextThread;
 		nextThread = nextThread->nextThread;
 	}
 	
-	prevThread->nextThread = nextThread->nextThread;
+	threadQueue->nextThread = thread->nextThread;
 	return;
 }
 
-void QueueNextThread( threadInfo** threadQueue, threadInfo* thread )
+void QueueNextThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 {
-	threadInfo* nextThread = threadQueue[0];
+	ThreadInfo* nextThread = threadQueue->nextThread;
 	s16 threadPriority = thread->priority;
 	s16 nextPriority = nextThread->priority;
 	s16 newPriority = nextPriority - threadPriority;
-	threadInfo** previousThreadLink = threadQueue;
-	
-	while(nextThread != NULL && ((newPriority <= 0) == ( threadPriority > nextPriority ) ))
-	{
-		previousThreadLink = &nextThread->nextThread;
-		//if the next thread is null or itself (aka loop), we need to insert in our thread here
-		if(nextThread->nextThread != NULL && nextThread != nextThread->nextThread)
-		{		
-			nextThread = nextThread->nextThread;
-			nextPriority = nextThread->priority;
-			newPriority = nextPriority - threadPriority;
-		}
-		else
-		{
-			nextPriority = threadPriority-1;
-			newPriority = 1;
-		}	
-	}
-	
-	if(nextThread == NULL)
-	{
-		gecko_printf("not queue'ing - %p - %p\n", nextThread, *previousThreadLink);
-		return;
-	}
+	ThreadQueue* previousThreadLink = threadQueue;
 
-	*previousThreadLink = thread;
-	thread->nextThread = nextThread;
+	while((newPriority <= 0) == ( threadPriority > nextPriority ) )
+	{
+		if(nextThread->nextThread == NULL || nextThread == nextThread->nextThread)
+			break;
+		
+		//place pointer to the next thread pointer into the queue variable.
+		//since threadQueue starts with a pointer this... works.
+		//wtf nintendo? :)
+		previousThreadLink = (ThreadQueue*)&nextThread->nextThread;
+		nextThread = nextThread->nextThread;
+		nextPriority = nextThread->priority;
+		newPriority = nextPriority - threadPriority;
+	}
+	
+	previousThreadLink->nextThread = thread;
 	thread->threadQueue = threadQueue;
+	thread->nextThread = nextThread;
 	return;
+}
+
+ThreadInfo* PopNextThreadFromQueue(ThreadQueue* queue)
+{
+	ThreadInfo* ret = queue->nextThread;
+	queue->nextThread = ret->nextThread;
+	return ret;
 }
 
 void ScheduleYield( void )
 {
-	if(currentThread == NULL || currentThread->nextThread == NULL)
-		return;
-	
-	if(currentThread->threadState == Running)
-		currentThread->threadState = Ready;
-	
-	do
-	{
-		currentThread = currentThread->nextThread;
-	}
-	while(currentThread->threadState != Ready);
+	currentThread = PopNextThreadFromQueue(mainQueuePtr);
 	
 	currentThread->threadState = Running;
 	RestoreAndReturnToUserMode(0, &currentThread->registers, 0);
 	return;
 }
 
+//Called syscalls.
 void YieldThread( void )
 {
-	//TODO : add queue support. IOS requeue's the current thread back into the given queue?
-	/*if(queueToQueueIn != NULL)
-		QueueNextThread(queueToQueueIn, currentThread);*/
+	s32 state = irq_kill();
+	if(currentThread != NULL)
+		currentThread->threadState = Ready;
+	YieldCurrentThread(mainQueuePtr);
+	irq_restore(state);
+}
+
+void YieldCurrentThread( ThreadQueue* threadQueue )
+{
+	//not actually necesary, since all calls to yield should first set the threadState.
+	//if(currentThread != NULL && currentThread->threadState == Running)
+	//	currentThread->threadState = Ready;
+	
+	if(threadQueue != NULL)
+		QueueNextThread(threadQueue, currentThread);
 	
 	ScheduleYield();
 	return;
+}
+
+void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
+{
+	ThreadInfo* nextThread = PopNextThreadFromQueue(threadQueue);
+	nextThread->registers.registers[0] = returnValue;
+	nextThread->threadState = Ready;
+	
+	QueueNextThread(mainQueuePtr, nextThread);
+	nextThread = currentThread;
+	
+	if(nextThread->priority < mainQueuePtr->nextThread->priority)
+	{
+		currentThread->threadState = Ready;
+		YieldCurrentThread(&mainQueue);
+	}
 }
 
 //IOS Handlers
@@ -152,7 +179,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	}
 	
 	
-	threadInfo* selectedThread;
+	ThreadInfo* selectedThread;
 	
 	while(threadId < 100)
 	{
@@ -169,8 +196,8 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 		goto restore_and_return;
 	}
 
-	selectedThread->threadQueue = currentThread->threadQueue;
 	selectedThread->threadId = threadId;
+	selectedThread->threadQueue = currentThread->threadQueue;
 	selectedThread->processId = (currentThread == NULL) ? 0 : currentThread->processId;
 	selectedThread->threadState = Stopped;
 	selectedThread->priority = priority;
@@ -180,10 +207,13 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->registers.linkRegister = (u32)_thread_end;
 
 	//gcc works with a decreasing stack, meaning our SP should start high and go down.
-	selectedThread->registers.stackPointer = (u32)((stack_top == NULL) ? selectedThread->stackAddress : stack_top ) + stacksize;
-	//unsure what this is all about tbh, but its probably to set the thread state correctly.
+	selectedThread->registers.stackPointer = (u32)((stack_top == NULL) ? selectedThread->supervisorStackTop : (u32)stack_top ) + stacksize;
+	//unsure what this is all about tbh, but its probably to set the thread state correctly
+	//apparently it disables either FIQ&IRQ interrupts or just the IRQ interrupt
 	selectedThread->registers.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;
-	selectedThread->isDetached = detached;	
+	selectedThread->nextThread = NULL;
+	selectedThread->threadQueue = NULL;
+	selectedThread->isDetached = detached;
 	
 restore_and_return:
 	irq_restore(irq_state);
@@ -194,6 +224,7 @@ s32	StartThread(s32 threadId)
 {
 	irq_state = irq_kill();
 	s32 ret = 0;
+	ThreadQueue* threadQueue = NULL;
 
 	if(threadId > MAX_THREADS || threadId < 0)
 	{
@@ -201,7 +232,7 @@ s32	StartThread(s32 threadId)
 		goto restore_and_return;
 	}
 	
-	threadInfo* threadToStart = NULL;
+	ThreadInfo* threadToStart = NULL;
 	if( threadId == 0 )
 		threadToStart = currentThread;
 	
@@ -218,20 +249,26 @@ s32	StartThread(s32 threadId)
 	if(threadToStart->threadState != Stopped)
 		goto restore_and_return;
 	
-	//TODO : if the thread's queue is null OR the current queue = the thread's queue -> State = Ready
-	//Else State = Waiting
-	//-> followed by queue'ing it in the right queue
-	threadToStart->threadState = Ready;
-	QueueNextThread(threadQueue, threadToStart);
-	
-	currentThread->registers.registers[0] = ret;
-	threadToStart = currentThread;
-	if(threadToStart == NULL)
-		ScheduleYield();
-	else
+	threadQueue = threadToStart->threadQueue;
+	if(threadQueue == NULL || threadQueue == mainQueuePtr)
 	{
 		threadToStart->threadState = Ready;
-		YieldThread();
+		QueueNextThread(mainQueuePtr, threadToStart);
+		threadToStart = currentThread;
+	}
+	else
+	{
+		threadToStart->threadState = Waiting;
+		QueueNextThread(threadQueue, threadToStart);
+		threadToStart = currentThread;
+	}
+
+	if(threadToStart == NULL)
+		ScheduleYield();
+	else if(threadToStart->priority < mainQueuePtr->nextThread->priority)
+	{
+		threadToStart->threadState = Ready;
+		YieldCurrentThread(mainQueuePtr);
 	}
 	
 restore_and_return:
@@ -250,7 +287,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		goto restore_and_return;
 	}
 	
-	threadInfo* threadToCancel = NULL;
+	ThreadInfo* threadToCancel = NULL;
 	if( threadId == 0 )
 		threadToCancel = currentThread;
 
@@ -266,7 +303,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	
 	threadToCancel->returnValue = return_value;	
 	if(threadToCancel->threadState != Stopped)
-		UnQueueThread(threadQueue, threadToCancel);
+		UnQueueThread(mainQueuePtr, threadToCancel);
 	
 	if(!threadToCancel->isDetached)
 		threadToCancel->threadState = Dead;
@@ -279,7 +316,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	else
 	{
 		currentThread->threadState = Ready;
-		YieldThread();
+		YieldCurrentThread(mainQueuePtr);
 	}
 	
 restore_and_return:
@@ -298,7 +335,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 		goto restore_and_return;
 	}
 	
-	threadInfo* threadToJoin = NULL;
+	ThreadInfo* threadToJoin = NULL;
 	if( threadId == 0 )
 		threadToJoin = currentThread;
 
@@ -318,9 +355,8 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	ThreadState threadState = threadToJoin->threadState;	
 	if(threadState != Dead)
 	{
-		currentThread->registers.registers[0] = ret;
 		currentThread->threadState = Waiting;
-		YieldThread();
+		YieldCurrentThread(mainQueuePtr);
 		threadState = threadToJoin->threadState;
 	}
 	
@@ -350,7 +386,7 @@ s32 GetThreadPriority( u32 threadId )
 {
 	irq_state = irq_kill();
 	
-	threadInfo* thread;
+	ThreadInfo* thread;
 	s32 ret = -4;
 	
 	if(threadId == 0 && currentThread != NULL)
@@ -381,7 +417,7 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 {
 	irq_state = irq_kill();
 
-	threadInfo* thread = NULL;
+	ThreadInfo* thread = NULL;
 	s32 ret = 0;
 	
 	if(threadId > MAX_THREADS || priority >= 0x80 )
@@ -406,15 +442,14 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 	thread->priority = priority;
 	if(thread != currentThread && thread->threadState != Stopped)
 	{
-		UnQueueThread(threadQueue, thread);
-		QueueNextThread(threadQueue, thread);
+		UnQueueThread(mainQueuePtr, thread);
+		QueueNextThread(mainQueuePtr, thread);
 	}
 	
-	if( currentThread->priority < threadQueue[0]->priority )
+	if( currentThread->priority < mainQueuePtr->nextThread->priority )
 	{
-		currentThread->registers.registers[0] = ret;
 		currentThread->threadState = Ready;
-		YieldThread();
+		YieldCurrentThread(mainQueuePtr);
 	}
 	goto restore_and_return;
 	

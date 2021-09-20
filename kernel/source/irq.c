@@ -65,6 +65,10 @@ void irq_handler(Registers* regs)
 	
 	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);	
 	flags = flags & enabled;
+	
+	//TODO : once all irq handlers are threads and this works via threads, this state setting must be removed.
+	if(currentThread != NULL)
+		currentThread->threadState = Ready;
 
 	if(flags & IRQF_TIMER) 
 	{

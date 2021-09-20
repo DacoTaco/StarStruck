@@ -14,10 +14,10 @@ EXTERN(_start)
 EXTERN(__ipc_info)
 ENTRY(_start)
 
-__stack_size = 0x800;
+__stack_size = 0x200;
 __irqstack_size = 0x100;
 __excstack_size = 0x100;
-__swistack_size = 0x200;
+__swistack_size = 0x100;
 
 MEMORY {
 	sram		: ORIGIN = 0xFFFF0000, LENGTH = 64K

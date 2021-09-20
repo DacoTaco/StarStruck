@@ -37,29 +37,38 @@ typedef struct
 	u32 programCounter;
 } Registers;
 
-typedef struct threadInfo
+typedef struct ThreadInfo
 {
 	Registers registers;
-	u32 threadId;
-	u32 processId;
-	u8 threadState;
-	void* arguments;
-	u32* stackAddress;
+	struct ThreadInfo* nextThread;
 	s32 initialPriority;
 	s32 priority;
+	u8 threadState;
+	u32 processId;
+	u32 threadId;
 	s32 isDetached;	
 	u32 returnValue;
-	struct threadInfo* nextThread;
-	struct threadInfo** threadQueue;
-} threadInfo;
+	struct ThreadQueue* joinQueue;
+	struct ThreadQueue* threadQueue;
+	u32 supervisorStackPointer;
+	u32 supervisorStackTop;
+	u32 padding[3]
+} ThreadInfo ALIGNED(0x10);
 
-extern threadInfo threads[MAX_THREADS];
-extern threadInfo* threadQueue[MAX_THREADS];
-extern threadInfo* currentThread;
+typedef struct ThreadQueue
+{
+	ThreadInfo* nextThread;
+} ThreadQueue;
+
+extern ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
+extern ThreadInfo* currentThread;
+extern ThreadQueue* mainQueuePtr;
 
 void InitializeThreadContext(void);
 void ScheduleYield( void );
 void YieldThread( void );
+void YieldCurrentThread( ThreadQueue* threadQueue );
+void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
 s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(u32 threadId, u32 return_value);
 s32 JoinThread(s32 threadId, u32* returnedValue);
