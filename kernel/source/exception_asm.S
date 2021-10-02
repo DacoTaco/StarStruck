@@ -20,8 +20,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .extern __swistack_addr
 .extern exc_handler
 .extern undf_handler
-.extern SaveUserModeState
-.extern RestoreAndReturnToUserMode
 
 exc_setup_stack:
 	mrs	r0, cpsr
@@ -55,18 +53,27 @@ exc_setup_stack:
 v_undf:
 #for info : see syscall asm
 	stmdb	sp!, {lr}
-	mov		r8, lr
-	bl 		SaveUserModeState
+	stmdb	sp!, {r0-r12, sp, lr}^
+	mrs		r1, spsr
+	stmdb	sp!, {r1}
 	mov		r1, sp
-	ldr		r0,[r8,#-4]
+
+	ldr		r0,[lr,#-4]
 	bic		r0,r0,#0xFF000000
 
-	blx		undf_handler
-	
-#	mov		r0, r0
-	mov		r1, sp
-	mov		r2, #1
-	b		RestoreAndReturnToUserMode
+	msr		cpsr_c, #0x1f
+	push	{r1}
+	blx		handle_syscall
+	pop		{r1}
+	msr		cpsr_c, #0xdb
+
+	mov		sp, r1
+	ldmia	sp!, {r2}
+	msr		spsr_cxsf, r2
+	add		sp, sp, #0x04
+	ldmia	sp!, {r1-r12, sp, lr}^
+	ldmia	sp!, {lr}
+	movs	pc, lr
 
 v_instr_abrt:
 	stmfd	sp!, {lr}

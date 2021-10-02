@@ -24,15 +24,14 @@ ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread ALIGNED(0x20) = NULL;
 static s32 irq_state = 0;
 
-extern void RestoreAndReturnToUserMode(s32 returnValue, Registers* registers, u32 swi_mode);
+extern void RestoreAndReturnToUserMode(Registers* registers, u32 swi_mode);
 extern void ReturnToLr( void );
 
 void _thread_end()
 {
 	u32 ret = 0;
 	__asm__ volatile ("mov\t%0, r0" : "=l" (ret));
-	//we use a syscall here so our context switching actually does something :)
-	os_stopThread( 0, ret );
+	CancelThread( 0, ret );
 }
 
 void InitializeThreadContext()
@@ -43,8 +42,7 @@ void InitializeThreadContext()
 	for(int i = 0; i < MAX_THREADS; i++)
 	{
 		memset32(&threads[i].registers, 0 , sizeof(Registers));
-		threads[i].supervisorStackTop = BASE_STACKADDR + (STACK_SIZE*i);
-		threads[i].supervisorStackPointer = threads[i].supervisorStackTop;
+		threads[i].defaultThreadStack = BASE_STACKADDR + (STACK_SIZE*i);
 	}
 }
 
@@ -123,7 +121,7 @@ void ScheduleYield( void )
 	currentThread = PopNextThreadFromQueue(mainQueuePtr);
 	
 	currentThread->threadState = Running;
-	RestoreAndReturnToUserMode(0, &currentThread->registers, 0);
+	RestoreAndReturnToUserMode(&currentThread->registers, ((u32)currentThread->exceptionStack) + sizeof(currentThread->exceptionStack) );
 	return;
 }
 
@@ -133,21 +131,10 @@ void YieldThread( void )
 	s32 state = irq_kill();
 	if(currentThread != NULL)
 		currentThread->threadState = Ready;
-	YieldCurrentThread(mainQueuePtr);
-	irq_restore(state);
-}
 
-void YieldCurrentThread( ThreadQueue* threadQueue )
-{
-	//not actually necesary, since all calls to yield should first set the threadState.
-	//if(currentThread != NULL && currentThread->threadState == Running)
-	//	currentThread->threadState = Ready;
-	
-	if(threadQueue != NULL)
-		QueueNextThread(threadQueue, currentThread);
-	
-	ScheduleYield();
-	return;
+	YieldCurrentThread(mainQueuePtr);
+
+	irq_restore(state);
 }
 
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
@@ -207,7 +194,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->registers.linkRegister = (u32)_thread_end;
 
 	//gcc works with a decreasing stack, meaning our SP should start high and go down.
-	selectedThread->registers.stackPointer = (u32)((stack_top == NULL) ? selectedThread->supervisorStackTop : (u32)stack_top ) + stacksize;
+	selectedThread->registers.stackPointer = (u32)((stack_top == NULL) ? selectedThread->defaultThreadStack : (u32)stack_top ) + stacksize;
 	//unsure what this is all about tbh, but its probably to set the thread state correctly
 	//apparently it disables either FIQ&IRQ interrupts or just the IRQ interrupt
 	selectedThread->registers.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;

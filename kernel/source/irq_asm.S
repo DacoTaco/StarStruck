@@ -13,12 +13,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .globl v_irq
 .globl irq_setup_stack
-.globl irq_kill
-.globl irq_restore
 .extern __irqstack_addr
 .extern irq_handler
-.extern SaveUserModeState
-.extern RestoreAndReturnToUserMode
+.extern SaveThreadInfo
 .extern ScheduleYield
 
 irq_setup_stack:
@@ -31,14 +28,18 @@ irq_setup_stack:
 
 	@ Restore mode
 	msr cpsr_c, r0
-	bx	lr
-
+	bx	lr	
+	
 v_irq:
-	@load the pc from before the interrupt(which is stored in current lr)
+#load the pc from before the interrupt(which is stored in current lr)
 	subs	lr, lr, #4
 	stmdb	sp!, {lr}
-	@save the state and push the state's address to r0
-	bl 		SaveUserModeState
+#save the state and push the state's address to r0
+	stmdb	sp!, {r0-r12, sp, lr}^
+	mrs		r1, spsr
+	stmdb	sp!, {r1}
+	mov		r0, sp
+	bl		SaveThreadInfo
 	
 	@handle the irq request with r0 having the state
 	mov		r0, sp

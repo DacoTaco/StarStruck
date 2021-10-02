@@ -11,52 +11,47 @@
 .globl SaveUserModeState
 .globl ReturnToLr
 .globl RestoreAndReturnToUserMode
-.extern SaveThreadInfo
+.globl YieldCurrentThread
+.extern ScheduleYield
+.extern QueueNextThread
 .extern __irqstack_addr
-.extern __swistack_addr
-
-SaveUserModeState:
-	stmdb	sp!, {r0-r12, sp, lr}^
-	mrs		r1, spsr
-	stmdb	sp!, {r1}
-	mov		r0, sp
-	stmdb	sp!, {lr}
-	bl		SaveThreadInfo
-	ldmia	sp!, {r1}
-	mov		pc, r1
 	
 ReturnToLr:
-	bx		lr
+	mov		pc, lr
 
-#RestoreAndReturnToUserMode(return_value, registers, swi_mode)
+#RestoreAndReturnToUserMode(registers, swi_stack)
 RestoreAndReturnToUserMode:	
-#restore the status register
-	ldmia	r1!, {r4}
-	msr		spsr_cxsf, r4
-#check the mode this was called in. In SWI mode we need to skip restoring r0
-	cmp		r2, #0
-	bne		swi_restore
-thread_restore:
-	ldmia	r1!, {r0-r12, sp, lr}^
-	b		return
-swi_restore:
-	add		r1, r1, #0x04
-	ldmia	r1!, {r1-r12, sp, lr}^
-return:
-	ldmia	r1!, {lr}
-#ios loads the threads sys_stack_top back in to sp, resetting the stack
-#	add		sp, r2, #0x68
-	mrs		r2, cpsr
-	
+#ios loads the threads' state buffer back in to sp, resetting the exception's stack	
 	msr 	cpsr_c, #0xd2
 	ldr		sp, =__irqstack_addr
 
 	msr 	cpsr_c, #0xd3
-	ldr		sp, =__swistack_addr
-
+	mov		sp, r1
+	
 	msr 	cpsr_c, #0xdb
-	ldr		sp, =__swistack_addr
+	mov		sp, r1
 
-	msr 	cpsr_c, r2
-	movs	pc, lr
+#restore the status register
+	ldmia	r0!, {r4}
+	msr		spsr_cxsf, r4
+#restore the rest of the state
+	ldmia	r0!, {r0-r12, sp, lr}^
+	ldmia	r0!, {r1}
+	
+	movs	pc, r1
+
+#void YieldCurrentThread(ThreadQueue* queue)
+YieldCurrentThread:
+	ldr		r1, =currentThread
+	ldr		r1, [r1, #0x00]
+	mrs     r2, cpsr
+	str		r2, [r1, #0x00]
+	stmib	r1, {r0-r12, sp, lr}^
+	ldr		lr, =ReturnToLr
+#load in the link register, which is at 0x40 of the registers
+	str		lr, [r1, #0x40]
+
+	cmp		r0, #0
+	blne	QueueNextThread
+	b		ScheduleYield
 	

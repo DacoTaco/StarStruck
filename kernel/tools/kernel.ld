@@ -14,22 +14,27 @@ EXTERN(_start)
 EXTERN(__ipc_info)
 ENTRY(_start)
 
-__stack_size = 0x200;
+__stack_size = 0x100;
 __irqstack_size = 0x100;
 __excstack_size = 0x100;
 __swistack_size = 0x100;
 
 MEMORY {
-	sram		: ORIGIN = 0xFFFF0000, LENGTH = 64K
-	sram2		: ORIGIN = 0xFFFE0000, LENGTH = 16K
-	pagetable	: ORIGIN = 0xFFFE4000, LENGTH = 16K
-	modules		: ORIGIN = 0x13400000, LENGTH = 11M
-	mem2		: ORIGIN = 0x13F00000, LENGTH = 1M
+	sram			: ORIGIN = 0xFFFF0000, LENGTH = 62K
+	sram2			: ORIGIN = 0xFFFE0000, LENGTH = 16K
+	pagetable		: ORIGIN = 0xFFFE4000, LENGTH = 16K
+	modules			: ORIGIN = 0x13400000, LENGTH = 6912K
+	modules_stack	: ORIGIN = 0x13AC0000, LENGTH = 256K
+	mem2			: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
 __modules_area_start = ORIGIN(modules);
 __modules_area_size = LENGTH(modules);
 __modules_area_end = ORIGIN(modules) + LENGTH(modules);
+
+__modules_stack_area_start = ORIGIN(modules_stack);
+__modules_stack_area_size = LENGTH(modules_stack);
+__modules_stack_area_end = ORIGIN(modules_stack) + LENGTH(modules_stack);
 
 __mem2_area_start = ORIGIN(mem2);
 __mem2_area_size = LENGTH(mem2);

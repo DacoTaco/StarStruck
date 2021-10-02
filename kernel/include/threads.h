@@ -37,6 +37,7 @@ typedef struct
 	u32 programCounter;
 } Registers;
 
+//NOTE : DO -NOT- mess with these variables either without verifying all state code/asm.
 typedef struct ThreadInfo
 {
 	Registers registers;
@@ -45,14 +46,14 @@ typedef struct ThreadInfo
 	s32 priority;
 	u8 threadState;
 	u32 processId;
-	u32 threadId;
 	s32 isDetached;	
 	u32 returnValue;
 	struct ThreadQueue* joinQueue;
 	struct ThreadQueue* threadQueue;
-	u32 supervisorStackPointer;
-	u32 supervisorStackTop;
-	u32 padding[3]
+	u32 exceptionStack[17];
+	u32 defaultThreadStack;
+	u32 threadId;
+	u32 padding[3];
 } ThreadInfo ALIGNED(0x10);
 
 typedef struct ThreadQueue
