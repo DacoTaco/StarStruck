@@ -76,6 +76,8 @@ void kernel_main( void )
 		panic2(0, PANIC_MOUNT);
 	}
 
+	ipc_ppc_boot_title(0x000100014C554C5ALL);
+	//*(u32*)HW_RESETS &= ~1;
 	gecko_printf("Going into IPC mainloop...\n");
 	vector = ipc_main();
 	gecko_printf("IPC mainloop done! killing IPC...\n");

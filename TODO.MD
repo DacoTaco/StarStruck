@@ -3,7 +3,7 @@
 * ~~make todo list~~
 * ~~redesign starlet.mk/common.mk/module.mk to use more of devkitarm's base_tools & base_rules~~
 * ~~add nintendo syscall handling and let it call our syscall handler(swi)~~
-* add scheduler/threads
+* ~~add scheduler/threads~~
 * go through everything from mini and clean up project to fit our needs
 * verify nand irq code that is in comments
 * implement memory manager
