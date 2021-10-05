@@ -15,14 +15,13 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include <types.h>
 #include <vsprintf.h>
 #include <string.h>
-#include <utils.h>
-#include <hollywood.h>
+#include <ios/processor.h>
+
+#include "core/hollywood.h"
+#include "interrupt/irq.h"
 #include "gecko.h"
-#include "irq.h"
-#include "start.h"
 #include "elf.h"
 #include "powerpc.h"
-#include "powerpc_elf.h"
 
 // irq context
 

@@ -9,17 +9,16 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
+#include <string.h>
+#include <ios/gecko.h>
+
+#include "core/hollywood.h"
+#include "memory/memory.h"
 #include "powerpc.h"
-#include "hollywood.h"
 #include "utils.h"
-#include "start.h"
-#include "gecko.h"
 #include "ff.h"
 #include "powerpc_elf.h"
 #include "elf.h"
-#include "memory.h"
-#include "string.h"
 
 extern u8 __modules_area_start[];
 

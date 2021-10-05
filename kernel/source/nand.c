@@ -9,19 +9,18 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
+#include <string.h>
+#include <ios/processor.h>
+#include <ios/gecko.h>
 
-#include "defines.h"
-#include "hollywood.h"
+#include "core/defines.h"
+#include "core/hollywood.h"
+#include "memory/memory.h"
+#include "messaging/ipc.h"
+#include "interrupt/irq.h"
+
 #include "nand.h"
-#include "utils.h"
-#include "string.h"
-#include "start.h"
-#include "memory.h"
 #include "crypto.h"
-#include "irq.h"
-#include "ipc.h"
-#include "gecko.h"
-#include "types.h"
 
 // #define	NAND_DEBUG	1
 #define NAND_SUPPORT_WRITE 1

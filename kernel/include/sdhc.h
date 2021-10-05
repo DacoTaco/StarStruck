@@ -21,8 +21,9 @@
 #define _SDHCVAR_H_
 
 #include "bsdtypes.h"
-#include "ipc.h"
+#include "messaging/ipc.h"
 #include "sdmmc.h"
+
 struct sdhc_host {
 	bus_space_tag_t iot;		/* host register set tag */
 	bus_space_handle_t ioh;		/* host register set handle */

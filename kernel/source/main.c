@@ -11,25 +11,26 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
-#include "utils.h"
-#include "start.h"
-#include "hollywood.h"
+#include <ios/processor.h>
+#include <types.h>
+#include <string.h>
+#include <git_version.h>
+
+#include "core/hollywood.h"
+#include "memory/memory.h"
+#include "handlers/exception.h"
+#include "messaging/ipc.h"
+#include "interrupt/threads.h"
+#include "interrupt/irq.h"
+
 #include "sdhc.h"
-#include "string.h"
-#include "memory.h"
 #include "gecko.h"
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"
-#include "threads.h"
-#include "irq.h"
-#include "ipc.h"
-#include "exception.h"
 #include "crypto.h"
 #include "nand.h"
 #include "boot2.h"
-#include "git_version.h"
 
 #define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
@@ -119,7 +120,7 @@ u32 _main(void *base)
 	threads[threadId].registers.statusRegister |= 0x1f;
 	if( threadId < 0 || StartThread(threadId) < 0 )
 	{
-		gecko_printf("failed to start kernel!\n");
+		gecko_printf("failed to start kernel(%d)!\n", threadId);
 		while(1){};
 	}
 	gecko_printf("\npanic!\n");

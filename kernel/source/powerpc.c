@@ -10,15 +10,15 @@ Copyright (C) 2010			Alex Marshall <trap15@raidenii.net>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
-#include "memory.h"
+#include <string.h>
+#include <ios/gecko.h>
+#include <ios/processor.h>
+
+#include "core/hollywood.h"
+#include "memory/memory.h"
+#include "utils.h"
 #include "powerpc.h"
 #include "powerpc_elf.h"
-#include "hollywood.h"
-#include "utils.h"
-#include "string.h"
-#include "start.h"
-#include "gecko.h"
 
 void powerpc_upload_stub(u32 entry)
 {

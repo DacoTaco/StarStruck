@@ -8,11 +8,11 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
-#include "utils.h"
-#include "start.h"
-#include "hollywood.h"
 #include <stdarg.h>
+#include <ios/processor.h>
+
+#include "core/hollywood.h"
+#include "utils.h"
 
 #define PANIC_ON	200000
 #define PANIC_OFF	300000

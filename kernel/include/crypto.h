@@ -13,8 +13,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
 
-#include "types.h"
-#include "ipc.h"
+#include <types.h>
+#include "messaging/ipc.h"
 
 typedef struct
 {

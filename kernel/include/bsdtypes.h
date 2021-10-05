@@ -11,8 +11,8 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #ifndef __BSDTYPES_H__
 #define __BSDTYPES_H__
 
-#include "types.h"
-#include "errno.h"
+#include <types.h>
+#include <errno.h>
 
 typedef u32 u_int;
 typedef u32 u_int32_t;

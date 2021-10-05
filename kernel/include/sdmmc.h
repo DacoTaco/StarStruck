@@ -145,7 +145,7 @@ struct sdmmc_function {
 #define	SDMMC_ASSERT_LOCKED(sc) \
 	KASSERT(lockstatus(&((sc))->sc_lock) == LK_EXCLUSIVE)
 
-#include "ipc.h"
+#include "messaging/ipc.h"
 
 #define SDMMC_DEFAULT_CLOCK		25000
 #define SDMMC_DEFAULT_BLOCKLEN		  512

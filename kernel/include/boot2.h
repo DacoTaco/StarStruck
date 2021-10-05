@@ -12,7 +12,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #ifndef __BOOT2_H__
 #define __BOOT2_H__
 
-#include "ipc.h"
+#include "messaging/ipc.h"
 
 typedef struct {
 	u32 cid;

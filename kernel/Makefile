@@ -22,7 +22,7 @@ TARGET			:= armboot
 LDSCRIPT 		= tools/kernel.ld
 MAKEBIN 		= tools/makebin.py
 BUILD			:= build
-SOURCES			:= source
+SOURCES			:= source $(wildcard source/*/)
 INCLUDES		:= include
 DATA			:=
 
@@ -68,7 +68,7 @@ LIBDIRS	:=	../../$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export ELFLOADER 		:=	$(CURDIR)/elfloader/elfloader.bin
+export ELFLOADER        :=  $(CURDIR)/../elfloader/elfloader.bin
 export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym.elf
 export OUTPUT_STRIPPED	:=	$(CURDIR)/$(TARGET).elf
 export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET).bin
@@ -114,8 +114,14 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
-	
+
 $(BUILD):
+ifeq ($(wildcard $(ELFLOADER)),)
+	@echo "elfloader is missing (elfloader.bin)."
+	@echo "please run 'make clean' followed by 'make' in the root directory to rebuild"
+	@echo
+	@exit 1
+endif
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
 
@@ -123,7 +129,6 @@ $(BUILD):
 clean:
 	$(SILENTMSG) clean ...
 	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT) $(OUTPUT_STRIPPED) $(OUTPUT_BIN)
-	$(SILENTCMD)$(MAKE) -C elfloader clean
 
 
 #---------------------------------------------------------------------------------
@@ -133,12 +138,9 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 
-$(OUTPUT_BIN): $(OUTPUT_STRIPPED) $(ELFLOADER)
+$(OUTPUT_BIN): $(OUTPUT_STRIPPED)
 	$(SILENTMSG)  "MAKEBIN	$@"
 	$(SILENTCMD)../$(MAKEBIN) $(ELFLOADER) $< $@
-	
-$(ELFLOADER):
-	$(SILENTCMD)$(MAKE) -C $(CURDIR)/../elfloader
 
 $(OUTPUT_STRIPPED): $(OUTPUT)
 	$(SILENTMSG)  "STRIP	$@"

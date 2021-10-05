@@ -11,10 +11,10 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 */
 
 #include <types.h>
-#include "defines.h"
+#include "core/defines.h"
+#include "memory/memory.h"
 #include "elf.h"
 #include "nand.h"
-#include "memory.h"
 #include "crypto.h"
 #include "string.h"
 #include "gecko.h"

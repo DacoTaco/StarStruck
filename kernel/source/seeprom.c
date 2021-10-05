@@ -8,11 +8,11 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
+#include <ios/processor.h>
+
+#include "core/hollywood.h"
+#include "core/gpio.h"
 #include "utils.h"
-#include "hollywood.h"
-#include "start.h"
-#include "gpio.h"
 
 #define eeprom_delay() udelay(5)
 

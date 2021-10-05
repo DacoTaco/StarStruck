@@ -16,7 +16,7 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 
 #ifdef CAN_HAZ_USBGECKO
 
-#include <geckocore.h>
+#include <ios/gecko.h>
 #include "types.h"
 
 void gecko_process(void);

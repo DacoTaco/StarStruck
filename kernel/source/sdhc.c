@@ -19,18 +19,19 @@
  * SD Host Controller driver based on the SD Host Controller Standard
  * Simplified Specification Version 1.00 (www.sdcard.com).
  */
+ 
+#include <string.h>
+#include <ios/processor.h>
+#include <ios/gecko.h>
 
+#include "memory/memory.h"
+#include "messaging/ipc.h"
+#include "interrupt/irq.h"
+
+#include "utils.h"
 #include "bsdtypes.h"
 #include "sdmmc.h"
 #include "sdhc.h"
-#include "gecko.h"
-#include "string.h"
-#include "memory.h"
-#include "utils.h"
-
-
-#include "irq.h"
-#include "ipc.h"
 
 struct sdhc_host sc_host;
 
@@ -825,7 +826,7 @@ sdhc_dump_regs(struct sdhc_host *hp)
 }
 #endif
 
-#include "hollywood.h"
+#include "core/hollywood.h"
 
 void sdhc_irq(void)
 {

@@ -38,7 +38,7 @@
 #define	ENOENT		2		/* No such file or directory */
 #define	ESRCH		3		/* No such process */
 #define	EINTR		4		/* Interrupted system call */
-#define	EIO		5		/* Input/output error */
+#define	EIO			5		/* Input/output error */
 #define	ENXIO		6		/* Device not configured */
 #define	E2BIG		7		/* Argument list too long */
 #define	ENOEXEC		8		/* Exec format error */

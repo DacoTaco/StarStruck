@@ -20,7 +20,7 @@ include $(SDKDIR)/starlet.mk
 #---------------------------------------------------------------------------------
 TARGET		:= libcore
 BUILD		:= build
-SOURCES		:= source
+SOURCES		:= source $(wildcard source/*/)
 INCLUDES	:= include
 DATA		:=
 

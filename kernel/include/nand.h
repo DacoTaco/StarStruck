@@ -12,8 +12,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #ifndef __NAND_H__
 #define __NAND_H__
 
-#include "types.h"
-#include "ipc.h"
+#include "messaging/ipc.h"
 
 #define PAGE_SIZE		2048
 #define PAGE_SPARE_SIZE		64
