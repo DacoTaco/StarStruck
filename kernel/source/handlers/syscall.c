@@ -13,6 +13,7 @@
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
 #include "memory/heaps.h"
+#include "memory/ahb.h"
 #include "messaging/message_queue.h"
 
 //#define _DEBUG_SYSCALL
@@ -51,6 +52,23 @@ static u32 syscall_handlers[] = {
 	(u32)0x00000000,					//0x001D
 	(u32)0x00000000,					//0x001E
 	(u32)0x00000000,					//0x001F
+	(u32)0x00000000,					//0x0020
+	(u32)0x00000000,					//0x0021
+	(u32)0x00000000,					//0x0022
+	(u32)0x00000000,					//0x0023
+	(u32)0x00000000,					//0x0024
+	(u32)0x00000000,					//0x0025
+	(u32)0x00000000,					//0x0026
+	(u32)0x00000000,					//0x0027
+	(u32)0x00000000,					//0x0028
+	(u32)0x00000000,					//0x0029
+	(u32)0x00000000,					//0x002A
+	(u32)0x00000000,					//0x002B
+	(u32)0x00000000,					//0x002C
+	(u32)0x00000000,					//0x002D
+	(u32)0x00000000,					//0x002E
+	(u32)AhbFlushFrom,					//0x002F
+	(u32)AhbFlushTo,					//0x0030
 };
 
 //We implement syscalls using the SVC/SWI instruction. 

@@ -11,7 +11,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __AHB_H__
 #define __AHB_H__
 
-#include "types.h"
+#include <types.h>
+#include <ios/ahb.h>
 
 // TODO: move to hollywood.h once we figure out WTF
 #define		HW_100	(HW_REG_BASE + 0x100)
@@ -30,17 +31,12 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define		HW_188	(HW_REG_BASE + 0x188)
 #define		HW_18C	(HW_REG_BASE + 0x18c)
 
-enum AHBDEV {
-	AHB_STARLET = 0, //or MEM2 or some controller or bus or ??
-	AHB_1 = 1, //ppc or something else???
-	AHB_NAND = 3,
-	AHB_AES = 4,
-	AHB_SHA1 = 5,
-	AHB_SDHC = 9,
-};
+//Syscalls
+void AhbFlushFrom(AHBDEV type);
+void AhbFlushTo(AHBDEV dev);
 
-void ahb_flush_from(enum AHBDEV dev);
-void ahb_flush_to(enum AHBDEV dev);
-void _ahb_flush_to(enum AHBDEV dev);
+//Internal functions
+void _ahb_flush_from(AHBDEV dev);
+void _ahb_flush_to(AHBDEV dev);
 
 #endif

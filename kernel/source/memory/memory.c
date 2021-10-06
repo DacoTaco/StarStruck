@@ -46,7 +46,7 @@ void dc_flushrange(const void *start, u32 size)
 		_dc_flush_entries(start, (end - start) / LINESIZE);
 	}
 	_drain_write_buffer();
-	ahb_flush_from(AHB_1);
+	_ahb_flush_from(AHB_1);
 	irq_restore(cookie);
 }
 
@@ -56,7 +56,7 @@ void dc_invalidaterange(void *start, u32 size)
 	void *end = ALIGN_FORWARD(((u8*)start) + size, LINESIZE);
 	start = ALIGN_BACKWARD(start, LINESIZE);
 	_dc_inval_entries(start, (end - start) / LINESIZE);
-	ahb_flush_to(AHB_STARLET);
+	AhbFlushTo(AHB_STARLET);
 	irq_restore(cookie);
 }
 
@@ -65,7 +65,7 @@ void dc_flushall(void)
 	u32 cookie = irq_kill();
 	_dc_flush();
 	_drain_write_buffer();
-	ahb_flush_from(AHB_1);
+	_ahb_flush_from(AHB_1);
 	irq_restore(cookie);
 }
 
@@ -73,7 +73,7 @@ void ic_invalidateall(void)
 {
 	u32 cookie = irq_kill();
 	_ic_inval();
-	ahb_flush_to(AHB_STARLET);
+	AhbFlushTo(AHB_STARLET);
 	irq_restore(cookie);
 }
 

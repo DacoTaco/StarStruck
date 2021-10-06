@@ -567,7 +567,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			dc_invalidaterange(cmd->c_data, cmd->c_datalen);
 		} else {
 			dc_flushrange(cmd->c_data, cmd->c_datalen);
-			ahb_flush_to(AHB_SDHC);
+			AhbFlushTo(AHB_SDHC);
 		}
 		HWRITE4(hp, SDHC_DMA_ADDR, (u32)cmd->c_data);
 	}
@@ -638,7 +638,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		    MMC_R1(cmd->c_resp) & 0xff00);
 #endif
 	if (ISSET(cmd->c_flags, SCF_CMD_READ))
-			ahb_flush_from(AHB_SDHC);
+			_ahb_flush_from(AHB_SDHC);
 
 	if (error != 0)
 		cmd->c_error = error;

@@ -100,7 +100,7 @@ static inline void dc_flush_block_fast(void *block)
 {
 	__asm__ volatile ( "mcr\tp15, 0, %0, c7, c10, 1" :: "r" (block) );
 	__asm__ volatile ( "mcr\tp15, 0, %0, c7, c10, 4" :: "r" (0) );
-	ahb_flush_from(AHB_1); //TODO: check if really needed and if not, remove
+	_ahb_flush_from(AHB_1); //TODO: check if really needed and if not, remove
 }
 
 #endif

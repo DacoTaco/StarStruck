@@ -41,8 +41,19 @@ u32 _mc_read32(u32 addr)
 	return data;
 }
 
+// invalidate device and then starlet
+void AhbFlushTo(AHBDEV type)
+{
+	u32 cookie = irq_kill();
+	_ahb_flush_to(type);
+	if(type != AHB_STARLET)
+		_ahb_flush_to(AHB_STARLET);
+
+	irq_restore(cookie);
+}
+
 // this is ripped from IOS, because no one can figure out just WTF this thing is doing
-void _ahb_flush_to(enum AHBDEV dev) {
+void _ahb_flush_to(AHBDEV dev) {
 	u32 mask = 10;
 	switch(dev) {
 		case AHB_STARLET: mask = 0x8000; break;
@@ -114,19 +125,15 @@ void _ahb_flush_to(enum AHBDEV dev) {
 	}
 }
 
-// invalidate device and then starlet
-void ahb_flush_to(enum AHBDEV type)
+// flush device and also invalidate memory
+void AhbFlushFrom(AHBDEV type)
 {
 	u32 cookie = irq_kill();
-	_ahb_flush_to(type);
-	if(type != AHB_STARLET)
-		_ahb_flush_to(AHB_STARLET);
-
+	_ahb_flush_from(type);
 	irq_restore(cookie);
 }
 
-// flush device and also invalidate memory
-void ahb_flush_from(enum AHBDEV dev)
+void _ahb_flush_from(AHBDEV dev)
 {
 	u32 cookie = irq_kill();
 	u16 req = 0;

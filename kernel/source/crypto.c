@@ -113,10 +113,10 @@ void aes_decrypt(u8 *src, u8 *dst, u32 blocks, u8 keep_iv)
 		dc_flushrange(src, blocks * 16);
 		dc_invalidaterange(dst, blocks * 16);
 
-		ahb_flush_to(AHB_AES);
+		AhbFlushTo(AHB_AES);
 		aes_command(AES_CMD_DECRYPT, keep_iv, this_blocks);
-		ahb_flush_from(AHB_AES);
-		ahb_flush_to(AHB_STARLET);
+		_ahb_flush_from(AHB_AES);
+		AhbFlushTo(AHB_STARLET);
 
 		blocks -= this_blocks;
 		src += this_blocks<<4;
