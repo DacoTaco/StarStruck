@@ -18,41 +18,29 @@ include $(SDKDIR)/starlet.mk
 # the makefile is found
 #
 #---------------------------------------------------------------------------------
-TARGET			:= elfloader
-LDSCRIPT 		= stub.ld
-MAKEBIN 		= tools/makebin.py
-BUILD			:= build
-SOURCES			:= source
-INCLUDES		:= include
-DATA			:= data
-
+TARGET		:= libcore
+BUILD		:= build
+SOURCES		:= source $(wildcard source/*/)
+INCLUDES	:= include
+DATA		:=
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CFLAGS += -fpic
+CFLAGS 	+= -DCAN_HAZ_USBGECKO -fpie
 CFLAGS	+=	$(INCLUDE)
 ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
-
-ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(TARGET).map
-endif
-
-ifneq ($(LDSCRIPT),)
-LDFLAGS += -Wl,-T../$(LDSCRIPT)
-endif
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lcore -lgcc 
+LIBS	:= -lgcc
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../$(COREDIR)
+export LIBDIRS	:=	$(COREDIR)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -62,10 +50,10 @@ LIBDIRS	:=	../../$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT			:=	$(CURDIR)/$(TARGET)
-export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET)
-export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
+
+export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -106,15 +94,18 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
-	
-$(BUILD):
+$(BUILD): ./include/git_version.h
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
 
+./include/git_version.h: describesimple.sh
+	$(SILENTCMD)echo "  GITVER    $@"
+	$(SILENTCMD)echo 'const char git_version[] = "'`./describesimple.sh`'";' > ./include/git_version.h
+
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_BIN).bin
+	$(SILENTCMD)echo clean ...
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a
 
 
 #---------------------------------------------------------------------------------
@@ -123,12 +114,7 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-
-$(OUTPUT_BIN).bin: $(OUTPUT).elf
-	$(SILENTMSG)  "  OBJCPY    $@"
-	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
-
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).a	:	$(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)
 

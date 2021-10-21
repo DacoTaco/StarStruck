@@ -18,25 +18,31 @@ include $(SDKDIR)/starlet.mk
 # the makefile is found
 #
 #---------------------------------------------------------------------------------
-TARGET			:= elfloader
-LDSCRIPT 		= stub.ld
+TARGET			:= armboot
+LDSCRIPT 		= tools/kernel.ld
 MAKEBIN 		= tools/makebin.py
 BUILD			:= build
-SOURCES			:= source
+SOURCES			:= source $(wildcard source/*/)
 INCLUDES		:= include
-DATA			:= data
-
+DATA			:=
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS += -fpic
-CFLAGS	+=	$(INCLUDE)
+CFLAGS += -DCAN_HAZ_USBGECKO
+# disables debug spew over usbgecko
+#CFLAGS += -DNDEBUG
+# enables LFCR linefeeds for usbgecko output, useful for some terminal apps
+#CFLAGS += -DGECKO_LFCR
+# uses the 'safe' version of the usbgecko receive and send functions
+#CFLAGS += -DGECKO_SAFE
+
+CFLAGS	+= $(INCLUDE)
 ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
 
 ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(TARGET).map
+LDFLAGS += -Wl,-Map,$(notdir $@).map
 endif
 
 ifneq ($(LDSCRIPT),)
@@ -62,8 +68,10 @@ LIBDIRS	:=	../../$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT			:=	$(CURDIR)/$(TARGET)
-export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET)
+export ELFLOADER        :=  $(CURDIR)/../elfloader/elfloader.bin
+export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym.elf
+export OUTPUT_STRIPPED	:=	$(CURDIR)/$(TARGET).elf
+export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET).bin
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
@@ -106,15 +114,21 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
-	
+
 $(BUILD):
+ifeq ($(wildcard $(ELFLOADER)),)
+	@echo "elfloader is missing (elfloader.bin)."
+	@echo "please run 'make clean' followed by 'make' in the root directory to rebuild"
+	@echo
+	@exit 1
+endif
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
 
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_BIN).bin
+	$(SILENTMSG) clean ...
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT) $(OUTPUT_STRIPPED) $(OUTPUT_BIN)
 
 
 #---------------------------------------------------------------------------------
@@ -124,11 +138,15 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 
-$(OUTPUT_BIN).bin: $(OUTPUT).elf
-	$(SILENTMSG)  "  OBJCPY    $@"
-	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
+$(OUTPUT_BIN): $(OUTPUT_STRIPPED)
+	$(SILENTMSG)  "MAKEBIN	$@"
+	$(SILENTCMD)../$(MAKEBIN) $(ELFLOADER) $< $@
 
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT_STRIPPED): $(OUTPUT)
+	$(SILENTMSG)  "STRIP	$@"
+	$(SILENTCMD)$(STRIP) $< -o $@
+	
+$(OUTPUT)	:	$(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)
 
@@ -150,3 +168,5 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
+
+

@@ -6,3 +6,9 @@ git_version.h
 *~
 *.o
 .*.swp
+*.dol
+*.a
+*.lst
+*/build/*
+tools/ppcloader/build/
+

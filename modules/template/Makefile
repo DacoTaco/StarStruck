@@ -2,10 +2,10 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = ../sdk
+SDKDIR = ../../sdk
 endif
 
-include $(SDKDIR)/starlet.mk
+include $(SDKDIR)/module.mk
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -18,29 +18,26 @@ include $(SDKDIR)/starlet.mk
 # the makefile is found
 #
 #---------------------------------------------------------------------------------
-TARGET			:= elfloader
-LDSCRIPT 		= stub.ld
-MAKEBIN 		= tools/makebin.py
+TARGET			:= $(notdir $(CURDIR))
 BUILD			:= build
-SOURCES			:= source
+SOURCES			+= source
 INCLUDES		:= include
-DATA			:= data
-
-
+DATA			:=
+ENTRYPOINT		:= 0x13400000
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS += -fpic
+CFLAGS 	+= -DCAN_HAZ_USBGECKO
 CFLAGS	+=	$(INCLUDE)
 ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
 
 ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(TARGET).map
+LDFLAGS += -Wl,-Map,$(notdir $@).map
 endif
 
 ifneq ($(LDSCRIPT),)
-LDFLAGS += -Wl,-T../$(LDSCRIPT)
+LDFLAGS += -Wl,-T$(LDSCRIPT)
 endif
 
 #---------------------------------------------------------------------------------
@@ -52,7 +49,7 @@ LIBS	:= -lcore -lgcc
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../$(COREDIR)
+LIBDIRS	:=	../../../$(COREDIR)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -62,8 +59,10 @@ LIBDIRS	:=	../../$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT			:=	$(CURDIR)/$(TARGET)
+export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym
+export OUTPUT_STRIPPED	:=	$(CURDIR)/$(TARGET)
 export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET)
+export MODULE_NAME		:= 	$(TARGET)
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
@@ -113,9 +112,8 @@ $(BUILD):
 
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_BIN).bin
-
+	$(SILENTMSG) clean ...
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_STRIPPED).elf $(OUTPUT_BIN).bin
 
 #---------------------------------------------------------------------------------
 else
@@ -124,10 +122,14 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 
-$(OUTPUT_BIN).bin: $(OUTPUT).elf
-	$(SILENTMSG)  "  OBJCPY    $@"
+$(OUTPUT_BIN).bin: $(OUTPUT_STRIPPED).elf
+	$(SILENTMSG) "  LINK      $@"
 	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
 
+$(OUTPUT_STRIPPED).elf: $(OUTPUT).elf
+	$(SILENTMSG)  "  STRIP      $@"
+	$(SILENTCMD)$(STRIP) $< -o $@	
+	
 $(OUTPUT).elf	:	$(OFILES)
 
 $(OFILES_SOURCES) : $(HFILES)
