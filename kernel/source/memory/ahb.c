@@ -24,19 +24,19 @@ u32 _mc_read32(u32 addr)
 	// this seems to be a bug workaround
 	if(!(read32(HW_VERSION) & 0xF0))
 	{
-		tmp130 = read32(HW_130);
-		write32(HW_130, tmp130 | 0x400);
+		tmp130 = read32(HW_ARB_CFG_MC);
+		write32(HW_ARB_CFG_MC, tmp130 | 0x400);
 		// Dummy reads?
-		read32(HW_138);
-		read32(HW_138);
-		read32(HW_138);
-		read32(HW_138);
+		read32(HW_ARB_CFG_ME);
+		read32(HW_ARB_CFG_ME);
+		read32(HW_ARB_CFG_ME);
+		read32(HW_ARB_CFG_ME);
 	}
 	data = read32(addr);
 	read32(HW_VERSION); //???
 
 	if(!(read32(HW_VERSION) & 0xF0))
-		write32(HW_130, tmp130);
+		write32(HW_ARB_CFG_MC, tmp130);
 
 	return data;
 }
@@ -53,74 +53,83 @@ void AhbFlushTo(AHBDEV type)
 }
 
 // this is ripped from IOS, because no one can figure out just WTF this thing is doing
-void _ahb_flush_to(AHBDEV dev) {
-	u32 mask = 10;
+void _ahb_flush_to(AHBDEV dev) 
+{
+	u32 mask = 0;
 	switch(dev) {
 		case AHB_STARLET: mask = 0x8000; break;
 		case AHB_1: mask = 0x4000; break;
-		//case 2: mask = 0x0001; break;
+		case AHB_UNKN2: mask = 0x0001; break;
 		case AHB_NAND: mask = 0x0002; break;
 		case AHB_AES: mask = 0x0004; break;
 		case AHB_SHA1: mask = 0x0008; break;
-		//case 6: mask = 0x0010; break;
-		//case 7: mask = 0x0020; break;
-		//case 8: mask = 0x0040; break;
+		case AHB_UNKN6: mask = 0x0010; break;
+		case AHB_UNKN7: mask = 0x0020; break;
+		case AHB_UNKN8: mask = 0x0040; break;
 		case AHB_SDHC: mask = 0x0080; break;
-		//case 10: mask = 0x0100; break;
-		//case 11: mask = 0x1000; break;
-		//case 12: mask = 0x0000; break;
+		case AHB_UNKN10: mask = 0x0100; break;
+		case AHB_UNKN11: mask = 0x1000; break;
+		case AHB_UNKN12: mask = 0x0000; break;
 		default:
 			gecko_printf("ahb_invalidate(%d): Invalid device\n", dev);
 			return;
 	}
+	
 	//NOTE: 0xd8b000x, not 0xd8b400x!
-	u32 val = _mc_read32(0xd8b0008);
+	u32 val = _mc_read32(HW_AHB_08);
 	if(!(val & mask)) {
 		switch(dev) {
 			// 2 to 10 in IOS, add more
+			case AHB_UNKN2:
 			case AHB_NAND:
 			case AHB_AES:
 			case AHB_SHA1:
+			case AHB_UNKN6:
+			case AHB_UNKN7:
+			case AHB_UNKN8:
+			case AHB_UNKN10:
+			case AHB_UNKN11:
 			case AHB_SDHC:
-				while((read32(HW_18C) & 0xF) == 9)
-					set32(HW_188, 0x10000);
-				clear32(HW_188, 0x10000);
-				set32(HW_188, 0x2000000);
-				mask32(HW_124, 0x7c0, 0x280);
-				set32(HW_134, 0x400);
-				while((read32(HW_18C) & 0xF) != 9);
-				set32(HW_100, 0x400);
-				set32(HW_104, 0x400);
-				set32(HW_108, 0x400);
-				set32(HW_10c, 0x400);
-				set32(HW_110, 0x400);
-				set32(HW_114, 0x400);
-				set32(HW_118, 0x400);
-				set32(HW_11c, 0x400);
-				set32(HW_120, 0x400);
-				write32(0xd8b0008, _mc_read32(0xd8b0008) & (~mask));
-				write32(0xd8b0008, _mc_read32(0xd8b0008) | mask);
-				clear32(HW_134, 0x400);
-				clear32(HW_100, 0x400);
-				clear32(HW_104, 0x400);
-				clear32(HW_108, 0x400);
-				clear32(HW_10c, 0x400);
-				clear32(HW_110, 0x400);
-				clear32(HW_114, 0x400);
-				clear32(HW_118, 0x400);
-				clear32(HW_11c, 0x400);
-				clear32(HW_120, 0x400);
-				clear32(HW_188, 0x2000000);
-				mask32(HW_124, 0x7c0, 0xc0);
+				while((read32(HW_BOOT0) & 0xF) == 9)
+					set32(HW_SPARE0, 0x10000);
+				clear32(HW_SPARE0, 0x10000);
+				set32(HW_SPARE0, 0x2000000);
+				mask32(HW_ARB_CFG_M9, 0x7c0, 0x280);
+				set32(HW_ARB_CFG_MD, 0x400);
+				while((read32(HW_BOOT0) & 0xF) != 9);
+				set32(HW_ARB_CFG_M0, 0x400);
+				set32(HW_ARB_CFG_M1, 0x400);
+				set32(HW_ARB_CFG_M2, 0x400);
+				set32(HW_ARB_CFG_M3, 0x400);
+				set32(HW_ARB_CFG_M4, 0x400);
+				set32(HW_ARB_CFG_M5, 0x400);
+				set32(HW_ARB_CFG_M6, 0x400);
+				set32(HW_ARB_CFG_M7, 0x400);
+				set32(HW_ARB_CFG_M8, 0x400);
+				write32(HW_AHB_08, _mc_read32(HW_AHB_08) & (~mask));
+				write32(HW_AHB_08, _mc_read32(HW_AHB_08) | mask);
+				clear32(HW_ARB_CFG_MD, 0x400);
+				clear32(HW_ARB_CFG_M0, 0x400);
+				clear32(HW_ARB_CFG_M1, 0x400);
+				clear32(HW_ARB_CFG_M2, 0x400);
+				clear32(HW_ARB_CFG_M3, 0x400);
+				clear32(HW_ARB_CFG_M4, 0x400);
+				clear32(HW_ARB_CFG_M5, 0x400);
+				clear32(HW_ARB_CFG_M6, 0x400);
+				clear32(HW_ARB_CFG_M7, 0x400);
+				clear32(HW_ARB_CFG_M8, 0x400);
+				clear32(HW_SPARE0, 0x2000000);
+				mask32(HW_ARB_CFG_M9, 0x7c0, 0xc0);
 				break;
 			//0, 1, 11 in IOS, add more
+			case AHB_UNKN12:
 			case AHB_STARLET:
 			case AHB_1:
-				write32(0xd8b0008, val & (~mask));
+				write32(HW_AHB_08, val & (~mask));
 				// wtfux
-				write32(0xd8b0008, val | mask);
-				write32(0xd8b0008, val | mask);
-				write32(0xd8b0008, val | mask);
+				write32(HW_AHB_08, val | mask);
+				write32(HW_AHB_08, val | mask);
+				write32(HW_AHB_08, val | mask);
 		}
 	}
 }

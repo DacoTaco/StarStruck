@@ -11,17 +11,22 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include <ios/processor.h>
 #include <types.h>
 #include <string.h>
 #include <git_version.h>
+#include <ios/processor.h>
 
 #include "core/hollywood.h"
+#include "core/gpio.h"
+#include "core/pll.h"
 #include "memory/memory.h"
+#include "memory/ahb.h"
 #include "handlers/exception.h"
 #include "messaging/ipc.h"
 #include "interrupt/threads.h"
 #include "interrupt/irq.h"
+#include "storage/usb.h"
+#include "utils.h"
 
 #include "sdhc.h"
 #include "gecko.h"
@@ -95,12 +100,90 @@ shutdown:
 	asm("mov\tpc, %0": : "r" (vector));
 }
 
+void SetStarletClock()
+{
+	u32 hardwareVersion = 0;
+	u32 hardwareRevision = 0;
+	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
+	
+	if(hardwareVersion < 2)
+	{
+		set32(HW_IOSTRCTRL0, 0x65244A);
+		set32(HW_IOSTRCTRL1, 0x46A024);
+	}
+	else
+	{
+		set32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
+		set32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
+	}
+}
+
+void InitialiseSystem( void )
+{
+	u32 hardwareVersion = 0;
+	u32 hardwareRevision = 0;
+	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
+	
+	//something to do with flipper?
+	set32(HW_EXICTRL, read32(HW_EXICTRL) | EXICTRL_ENABLE_EXI);
+	
+	//enable protection on our MEM2 addresses & SRAM
+	mem_protect(1, (void*)0x13620000, (void*)0x1FFFFFFF);
+	
+	//????
+	set32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
+	
+	//set some hollywood ahb registers????
+	if(hardwareVersion == 1 && hardwareRevision == 0)
+		set32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF0F) | 1);
+	
+	// ¯\_(ツ)_/¯
+	set32(HW_AHB_10, 0);
+	
+	//Set boot0 B10 & B11? found in IOS58.
+	set32(HW_BOOT0, read32(HW_BOOT0) | 0xC00);
+	
+	//Configure PPL ( phase locked loop )
+	ConfigureAiPLL(0, 0);
+	ConfigureVideoInterfacePLL(0);
+	
+	//Configure USB Host
+	ConfigureUsbController(hardwareRevision);
+	
+	//Configure GPIO pins
+	ConfigureGPIO();
+	ResetGPIODevices();
+	
+	//Set clock speed
+	SetStarletClock();
+	
+	//reset registers
+	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
+	set32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
+	set32(HW_ALARM, 0);
+	set32(NAND_CMD, 0);
+	set32(AES_CMD, 0);
+	set32(SHA_CMD, 0);
+	
+	//Enable all ARM irq's except for 2 unknown irq's ( 0x4200 )
+	set32(HW_ARMIRQFLAG, 0xFFFFBDFF);
+	set32(HW_ARMIRQMASK, 0);
+	set32(HW_ARMFIQMASK, 0);
+	
+	//TODO : Setup MMU , translation, memory cache, ...
+}
+
 u32 _main(void *base)
 {
 	(void)base;	
 	gecko_init();
 	gecko_printf("StarStruck %s loading\n", git_version);
 
+	AhbFlushFrom(AHB_1);
+	AhbFlushTo(AHB_1);
+	
+	InitialiseSystem();
+	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
 	gecko_printf("Configuring caches and MMU...\n");
@@ -119,11 +202,10 @@ u32 _main(void *base)
 	//enable interrupts in this thread
 	threads[threadId].registers.statusRegister |= 0x1f;
 	if( threadId < 0 || StartThread(threadId) < 0 )
-	{
 		gecko_printf("failed to start kernel(%d)!\n", threadId);
-		while(1){};
-	}
+
 	gecko_printf("\npanic!\n");
+	while(1){};
 	return 0;
 }
 

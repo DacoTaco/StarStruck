@@ -21,13 +21,13 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 void udelay(u32 d)
 {
 	// should be good to max .2% error
+	// IOS does this through a method that checks the mode/clk speed
 	u32 ticks = d * 19 / 10;
 
 	if(ticks < 2)
 		ticks = 2;
 
 	u32 now = read32(HW_TIMER);
-
 	u32 then = now  + ticks;
 
 	if(then < now) {

@@ -23,6 +23,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQ_WIFI	8
 #define IRQ_GPIO1B	10
 #define IRQ_GPIO1	11
+#define IRQ_UNKN12	12
 #define IRQ_RESET	17
 #define IRQ_PPCIPC	30
 #define IRQ_IPC		31
@@ -33,6 +34,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQF_SDHC	(1<<IRQ_SDHC)
 #define IRQF_GPIO1B	(1<<IRQ_GPIO1B)
 #define IRQF_GPIO1	(1<<IRQ_GPIO1)
+#define IRQF_UNKN12	(1<<IRQ_UNKN12)
 #define IRQF_RESET	(1<<IRQ_RESET)
 #define IRQF_IPC	(1<<IRQ_IPC)
 

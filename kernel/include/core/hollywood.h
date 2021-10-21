@@ -14,6 +14,10 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #ifndef __HOLLYWOOD_H__
 #define __HOLLYWOOD_H__
 
+#ifndef _LANGUAGE_ASSEMBLY
+#include <types.h>
+#endif
+
 /* Hollywood Registers */
 
 #define		HW_PPC_REG_BASE		0xd000000
@@ -33,6 +37,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 #define		HW_ARMIRQFLAG		(HW_REG_BASE + 0x038)
 #define		HW_ARMIRQMASK		(HW_REG_BASE + 0x03c)
+#define		HW_ARMFIQMASK		(HW_REG_BASE + 0x040)
 
 #define		HW_MEMMIRR			(HW_REG_BASE + 0x060)
 #define		HW_AHBPROT			(HW_REG_BASE + 0x064)
@@ -41,6 +46,12 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 // and legacy DI it seems ?!?
 #define		HW_EXICTRL			(HW_REG_BASE + 0x070)
 #define		EXICTRL_ENABLE_EXI	1
+
+// USB controller
+#define		HW_USBDBG0			(HW_REG_BASE + 0x080)
+#define		HW_USBDBG1			(HW_REG_BASE + 0x084)
+#define		HW_USBFRCRST		(HW_REG_BASE + 0x088)
+#define		HW_USBIOTEST		(HW_REG_BASE + 0x08c)
 
 // PPC side of GPIO1 (Starlet can access this too)
 // Output state
@@ -61,10 +72,6 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 // 0xFFFFFF by default, if cleared disables respective outputs. Top bits non-settable.
 #define		HW_GPIO1ENABLE		(HW_REG_BASE + 0x0dc)
 
-#define		HW_GPIO1_SLOT		0x000020
-#define		HW_GPIO1_DEBUG		0xFF0000
-#define		HW_GPIO1_DEBUG_SH	16
-
 // Starlet side of GPIO1
 // Output state
 #define		HW_GPIO1OUT			(HW_REG_BASE + 0x0e0)
@@ -84,19 +91,80 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		HW_GPIO1OWNER		(HW_REG_BASE + 0x0fc)
 
 // ????
+#define		HW_ARB_CFG_M0		(HW_REG_BASE + 0x100)
+#define		HW_ARB_CFG_M1		(HW_REG_BASE + 0x104)
+#define		HW_ARB_CFG_M2		(HW_REG_BASE + 0x108)
+#define		HW_ARB_CFG_M3		(HW_REG_BASE + 0x10c)
+#define		HW_ARB_CFG_M4		(HW_REG_BASE + 0x110)
+#define		HW_ARB_CFG_M5		(HW_REG_BASE + 0x114)
+#define		HW_ARB_CFG_M6		(HW_REG_BASE + 0x118)
+#define		HW_ARB_CFG_M7		(HW_REG_BASE + 0x11c)
+#define		HW_ARB_CFG_M8		(HW_REG_BASE + 0x120)
+#define		HW_ARB_CFG_M9		(HW_REG_BASE + 0x124)
+#define		HW_ARB_CFG_MC		(HW_REG_BASE + 0x130)
+#define		HW_ARB_CFG_MD		(HW_REG_BASE + 0x134)
+#define		HW_ARB_CFG_ME		(HW_REG_BASE + 0x138)
+#define		HW_ARB_CFG_MF		(HW_REG_BASE + 0x13c)
+#define		HW_ARB_CFG_CPU		(HW_REG_BASE + 0x140)
+#define		HW_ARB_CFG_DMA		(HW_REG_BASE + 0x144)
+#define		HW_ARB_PCNTCFG		(HW_REG_BASE + 0x148)
+#define		HW_ARB_PCNTSTS		(HW_REG_BASE + 0x14c)
+
+// ????
 #define		HW_DIFLAGS			(HW_REG_BASE + 0x180)
+#define		HW_SPARE0			(HW_REG_BASE + 0x188)
 #define		HW_BOOT0			(HW_REG_BASE + 0x18c)
 #define		HW_CLOCKS			(HW_REG_BASE + 0x190)
 #define		DIFLAGS_BOOT_CODE	0x100000
 
-// maybe a GPIO???
+/* Hardware resets */
 #define		HW_RESETS			(HW_REG_BASE + 0x194)
+#define		RSTBINB				0x00000001
+#define		CRSTB				0x00000002
+#define		RSTB_MEMRSTB		0x00000004
+#define		RSTB_DSKPLL			0x00000008
+#define		RSTB_CPU			0x00000010
+#define		SRSTB_CPU			0x00000020
+#define		RSTB_SYSPLL			0x00000040
+#define		NLCKB_SYSPLL		0x00000080
+#define		RSTB_MEMRSTB2		0x00000100
+#define		RSTB_PI				0x00000200
+#define		RSTB_DIRSTB			0x00000400
+#define		RSTB_MEM			0x00000800
+#define		RSTB_GFXTCPE		0x00001000
+#define		RSTB_GFX			0x00002000
+#define		RSTB_AI_I2S3		0x00004000
+#define		RSTB_IOSI			0x00008000
+#define		RSTB_IOEXI			0x00010000
+#define		RSTB_IODI			0x00020000
+#define		RSTB_IOMEM			0x00040000
+#define		RSTB_IOPI			0x00080000
+#define		RSTB_VI				0x00100000
+#define		RSTB_VI1			0x00200000
+#define		RSTB_DSP			0x00400000
+#define		RSTB_IOP			0x00800000
+#define		RSTB_AHB			0x01000000
+#define		RSTB_EDRAM			0x02000000
+#define		NLCKB_EDRAM			0x04000000
+#define		HW_RST_UNKN1		0x08000000
+#define		HW_RST_UNKN2		0x10000000
+#define		HW_RST_UNKN3		0x20000000
+#define		HW_RST_UNKN4		0x40000000
+#define		HW_RST_UNKN5		0x80000000
 
+
+#define		HW_PLLAIEXT1		(HW_REG_BASE + 0x1a8)
 #define		HW_PLLSYSEXT		(HW_REG_BASE + 0x1b4)
+#define		HW_PLLVIEXT			(HW_REG_BASE + 0x1c8)
+#define		HW_PLLAI			(HW_REG_BASE + 0x1cc)
+#define		HW_PLLAIEXT			(HW_REG_BASE + 0x1d0)
+#define		HW_PLLUSB			(HW_REG_BASE + 0x1d4)
+#define		HW_PLLUSBEXT		(HW_REG_BASE + 0x1d8)
 
-#define		HW_GPIO2OUT			(HW_REG_BASE + 0x1c8)
-#define		HW_GPIO2DIR			(HW_REG_BASE + 0x1cc)
-#define		HW_GPIO2IN			(HW_REG_BASE + 0x1d0)
+/* IOSP clock speeds? */
+#define		HW_IOSTRCTRL0		(HW_REG_BASE + 0x1e0)
+#define		HW_IOSTRCTRL1		(HW_REG_BASE + 0x1e4)
+#define		HW_CLKSTRCTRL		(HW_REG_BASE + 0x1e8)
 
 #define		HW_OTPCMD			(HW_REG_BASE + 0x1ec)
 #define		HW_OTPDATA			(HW_REG_BASE + 0x1f0)
@@ -138,6 +206,10 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		SHA_H3				(SHA_REG_BASE + 0x014)
 #define		SHA_H4				(SHA_REG_BASE + 0x018)
 
+/* USB Host Controller Registers */
+
+#define		USB_REG_BASE		0xd040000
+
 /* SD Host Controller Registers */
 
 #define		SDHC_REG_BASE		0xd070000
@@ -177,5 +249,11 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		MEM_PROT_END		(MEM_REG_BASE+0x20e)
 #define		MEM_FLUSHREQ		(MEM_REG_BASE+0x228)
 #define		MEM_FLUSHACK		(MEM_REG_BASE+0x22a)
+
+#ifndef _LANGUAGE_ASSEMBLY
+
+void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision);
+
+#endif
 
 #endif

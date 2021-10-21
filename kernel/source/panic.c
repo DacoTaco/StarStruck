@@ -12,6 +12,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <ios/processor.h>
 
 #include "core/hollywood.h"
+#include "core/gpio.h"
 #include "utils.h"
 
 #define PANIC_ON	200000
@@ -25,9 +26,9 @@ void panic2(int mode, ...)
 	int arg;
 	va_list ap;
 
-	clear32(HW_GPIO1OUT, HW_GPIO1_SLOT);
-	clear32(HW_GPIO1DIR, HW_GPIO1_SLOT);
-	clear32(HW_GPIO1OWNER, HW_GPIO1_SLOT);
+	clear32(HW_GPIO1OUT, GP_SLOTLED);
+	clear32(HW_GPIO1DIR, GP_SLOTLED);
+	clear32(HW_GPIO1OWNER, GP_SLOTLED);
 
 	while(1) {
 		va_start(ap, mode);
@@ -36,9 +37,9 @@ void panic2(int mode, ...)
 			arg = va_arg(ap, int);
 			if(arg < 0)
 				break;
-			set32(HW_GPIO1OUT, HW_GPIO1_SLOT);
+			set32(HW_GPIO1OUT, GP_SLOTLED);
 			udelay(arg * PANIC_ON);
-			clear32(HW_GPIO1OUT, HW_GPIO1_SLOT);
+			clear32(HW_GPIO1OUT, GP_SLOTLED);
 			udelay(PANIC_OFF);
 		}
 		

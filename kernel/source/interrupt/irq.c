@@ -34,7 +34,7 @@ void irq_initialize(void)
 	irq_restore(CPSR_FIQDIS);
 
 	//???
-	write32(HW_ARMIRQMASK+0x04, 0);
+	write32(HW_ARMFIQMASK, 0);
 	write32(HW_ARMIRQMASK+0x20, 0);
 }
 

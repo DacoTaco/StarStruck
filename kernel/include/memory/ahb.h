@@ -14,22 +14,10 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <types.h>
 #include <ios/ahb.h>
 
-// TODO: move to hollywood.h once we figure out WTF
-#define		HW_100	(HW_REG_BASE + 0x100)
-#define		HW_104	(HW_REG_BASE + 0x104)
-#define		HW_108	(HW_REG_BASE + 0x108)
-#define		HW_10c	(HW_REG_BASE + 0x10c)
-#define		HW_110	(HW_REG_BASE + 0x110)
-#define		HW_114	(HW_REG_BASE + 0x114)
-#define		HW_118	(HW_REG_BASE + 0x118)
-#define		HW_11c	(HW_REG_BASE + 0x11c)
-#define		HW_120	(HW_REG_BASE + 0x120)
-#define		HW_124	(HW_REG_BASE + 0x124)
-#define		HW_130	(HW_REG_BASE + 0x130)
-#define		HW_134	(HW_REG_BASE + 0x134)
-#define		HW_138	(HW_REG_BASE + 0x138)
-#define		HW_188	(HW_REG_BASE + 0x188)
-#define		HW_18C	(HW_REG_BASE + 0x18c)
+//this is just pure guessing. once confirmed -> hollywood.h
+#define		HW_AHB_BASE		0xd8b0000
+#define		HW_AHB_08		(HW_AHB_BASE + 0x08)
+#define		HW_AHB_10		(HW_AHB_BASE + 0x10)
 
 //Syscalls
 void AhbFlushFrom(AHBDEV type);
