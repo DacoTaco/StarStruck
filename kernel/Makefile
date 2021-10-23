@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
 endif
 
-include $(SDKDIR)/starlet.mk
+include $(SDKDIR)/starstruck.mk
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -39,7 +39,7 @@ CFLAGS += -DCAN_HAZ_USBGECKO
 #CFLAGS += -DGECKO_SAFE
 
 CFLAGS	+= $(INCLUDE)
-ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
+ASFLAGS += $(CFLAGS)
 
 ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(notdir $@).map

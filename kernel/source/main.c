@@ -64,7 +64,7 @@ void kernel_main( void )
 
 	gecko_printf("Initializing IPC...\n");
 	ipc_initialize();
-
+	
 	/*gecko_printf("Initializing SDHC...\n");
 	sdhc_init();
 
@@ -97,7 +97,7 @@ shutdown:
 
 	gecko_printf("Vectoring to 0x%08x...\n", vector);
 	//go to whatever address we got
-	asm("mov\tpc, %0": : "r" (vector));
+	asm("bx\t%0": : "r" (vector));
 }
 
 void SetStarletClock()
@@ -201,6 +201,7 @@ u32 _main(void *base)
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//enable interrupts in this thread
 	threads[threadId].registers.statusRegister |= 0x1f;
+	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);
 

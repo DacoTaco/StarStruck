@@ -14,10 +14,6 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #ifndef __HOLLYWOOD_H__
 #define __HOLLYWOOD_H__
 
-#ifndef _LANGUAGE_ASSEMBLY
-#include <types.h>
-#endif
-
 /* Hollywood Registers */
 
 #define		HW_PPC_REG_BASE		0xd000000
@@ -250,7 +246,9 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		MEM_FLUSHREQ		(MEM_REG_BASE+0x228)
 #define		MEM_FLUSHACK		(MEM_REG_BASE+0x22a)
 
-#ifndef _LANGUAGE_ASSEMBLY
+#ifndef __ASSEMBLER__
+
+#include <types.h>
 
 void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision);
 

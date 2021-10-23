@@ -8,9 +8,11 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-.arm
+#include "asminc.h"
 
+.arm
 .globl debug_output
+.globl get_cpsr
 .globl memcpy32
 .globl memcpy16
 .globl memcpy8
@@ -19,7 +21,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl memset8
 .text
 
-debug_output:
+BEGIN_ASM_FUNC debug_output
 	@ load address of port
 	mov	r3, #0xd800000
 	@ load old value
@@ -32,8 +34,14 @@ debug_output:
 	@ store back
 	str	r2, [r3, #0xe0]
 	mov	pc, lr
+END_ASM_FUNC
+	
+BEGIN_ASM_FUNC get_cpsr
+	mrs	r0, cpsr
+	bx		lr
+END_ASM_FUNC
 
-memcpy32:
+BEGIN_ASM_FUNC memcpy32
 	bics	r2, #3
 	bxeq	lr
 1:	ldr		r3, [r1],#4
@@ -41,16 +49,18 @@ memcpy32:
 	subs	r2, #4
 	bne		1b
 	bx		lr
+END_ASM_FUNC
 
-memset32:
+BEGIN_ASM_FUNC memset32
 	bics	r2, #3
 	bxeq	lr
 1:	str		r1, [r0],#4
 	subs	r2, #4
 	bne		1b
 	bx		lr
+END_ASM_FUNC
 
-memcpy16:
+BEGIN_ASM_FUNC memcpy16
 	bics	r2, #1
 	bxeq	lr
 1:	ldrh	r3, [r1],#2
@@ -58,16 +68,18 @@ memcpy16:
 	subs	r2, #2
 	bne		1b
 	bx		lr
+END_ASM_FUNC
 
-memset16:
+BEGIN_ASM_FUNC memset16
 	bics	r2, #1
 	bxeq	lr
 1:	strh	r1, [r0],#2
 	subs	r2, #2
 	bne		1b
 	bx		lr
+END_ASM_FUNC
 
-memcpy8:
+BEGIN_ASM_FUNC memcpy8
 	cmp		r2, #0
 	bxeq	lr
 1:	ldrb	r3, [r1],#1
@@ -75,12 +87,13 @@ memcpy8:
 	subs	r2, #1
 	bne		1b
 	bx		lr
+END_ASM_FUNC
 
-memset8:
+BEGIN_ASM_FUNC memset8
 	cmp		r2, #0
 	bxeq	lr
 1:	strb	r1, [r0],#1
 	subs	r2, #1
 	bne		1b
 	bx		lr
-
+END_ASM_FUNC

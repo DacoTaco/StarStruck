@@ -33,7 +33,7 @@ DATA			:= data
 
 CFLAGS += -fpic
 CFLAGS	+=	$(INCLUDE)
-ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
+ASFLAGS += $(CFLAGS)
 
 ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(TARGET).map

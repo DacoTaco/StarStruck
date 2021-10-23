@@ -4,11 +4,11 @@ endif
 
 include $(DEVKITARM)/base_rules
 
-CFLAGS = -mbig-endian -mcpu=arm926ej-s
-CFLAGS += -fomit-frame-pointer -ffunction-sections
+ARCHFLAGS = -mbig-endian -mcpu=arm926ej-s $(THUMBPARAM)
+CFLAGS = $(ARCHFLAGS) -fomit-frame-pointer -ffunction-sections
 CFLAGS += -Wall -Wextra -Os -pipe -g
-ASFLAGS =
-LDFLAGS = -mbig-endian -n -nostartfiles -nodefaultlibs -Wl,-gc-sections
+ASFLAGS = -D__ASSEMBLER__
+LDFLAGS = $(ARCHFLAGS) -n -nostartfiles -nodefaultlibs -Wl,-gc-sections
 COREDIR = ./core
 
 ifeq ($(LD),)

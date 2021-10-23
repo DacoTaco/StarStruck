@@ -46,7 +46,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define CPSR_IRQDIS 0x80
 #define CPSR_FIQDIS 0x40
 
-#ifndef _LANGUAGE_ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <types.h>
 
@@ -61,12 +61,7 @@ void irq_disable(u32 irq);
 void irq_set_alarm(u32 ms, u8 enable);
 u32 irq_kill(void);
 void irq_restore(u32 cookie);
-
-static inline void irq_wait(void)
-{
-	u32 data = 0;
-	__asm__ volatile ( "mcr\tp15, 0, %0, c7, c0, 4" : : "r" (data) );
-}
+void irq_wait(void);
 
 u32 GetTimerValue(void);
 s32 RegisterEventHandler(u8 device, int queueid, int message);

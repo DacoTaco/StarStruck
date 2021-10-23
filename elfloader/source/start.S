@@ -19,6 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
+
+#include <asminc.h>
+
 .arm
 
 .extern _main
@@ -98,7 +101,7 @@ done_bss:
 
 .pool
 
-debug_output:
+BEGIN_ASM_FUNC debug_output
 	@ load address of port
 	mov	r3, #0xd800000
 	@ load old value
@@ -111,3 +114,4 @@ debug_output:
 	@ store back
 	str	r2, [r3, #0xe0]
 	mov	pc, lr
+END_ASM_FUNC

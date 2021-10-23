@@ -8,10 +8,13 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <asminc.h>
+
+.arm
 .extern handle_syscall
 .globl v_swi
 
-v_swi:
+BEGIN_ASM_FUNC v_swi
 #store registers from before the call. r0 = return, r1 - r12 is parameters. current lr(or pc before the call) is the return address
 	stmdb	sp!, {lr}
 #save state & load address of our state into r1 , which we will use to retrieve the state
@@ -20,9 +23,13 @@ v_swi:
 	stmdb	sp!, {r1}
 	mov		r1, sp
 #load syscall number into r0 (from r8/lr) and cut off the first few bytes of the instruction
+#ifdef _THUMBMODE_
+	ldrh	r0,[lr,#-2]
+	bic		r0,r0,#0xFFFFFF00
+#else
 	ldr		r0,[lr,#-4]
 	bic		r0,r0,#0xFF000000
-
+#endif
 #now that we have all our information saved, lets switch to system mode (which shares state with user mode, including stack and registers)
 	msr		cpsr_c, #0x1f
 	
@@ -45,3 +52,4 @@ v_swi:
 	
 #return to code
 	movs	pc, lr
+END_ASM_FUNC
