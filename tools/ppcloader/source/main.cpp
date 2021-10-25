@@ -90,6 +90,11 @@ int main(int argc, char **argv) {
 			printf("im alive!\n");
 		}
 		
+		if ( pressed & WPAD_BUTTON_2 || gcPressed & PAD_BUTTON_X ) 
+		{
+			printf("msg : 0x%08X\n", read32(0xd8000E0));
+		}
+		
 		if ( pressed & WPAD_BUTTON_1 || gcPressed & PAD_BUTTON_Y ) 
 		{
 			printf("poking MEM2\n");
@@ -171,6 +176,7 @@ int main(int argc, char **argv) {
 					printf("ES_ImportBoot():%d\n", IOS_IoctlvAsync( fd, 0x1F, 0, 0, (ioctlv*)buffer, NULL, NULL ) );
 					__IPC_Reinitialize();
 					printf("IPC reinit\n");
+					break;
 				}
 			}
 		}

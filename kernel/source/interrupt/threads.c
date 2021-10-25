@@ -24,7 +24,6 @@ ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread MEM2_BSS ALIGNED(0x10);
 
 extern void RestoreAndReturnToUserMode(Registers* registers, u32 swi_mode);
-extern void ReturnToLr( void );
 
 void _thread_end()
 {

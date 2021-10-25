@@ -8,19 +8,22 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <asminc.h>
+
+.arm
 .globl SaveUserModeState
-.globl ReturnToLr
 .globl RestoreAndReturnToUserMode
 .globl YieldCurrentThread
 .extern ScheduleYield
 .extern QueueNextThread
 .extern __irqstack_addr
 	
-ReturnToLr:
-	mov		pc, lr
+BEGIN_ASM_FUNC ReturnToLr
+	bx		lr
+END_ASM_FUNC
 
 #RestoreAndReturnToUserMode(registers, swi_stack)
-RestoreAndReturnToUserMode:	
+BEGIN_ASM_FUNC RestoreAndReturnToUserMode
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack	
 	msr 	cpsr_c, #0xd2
 	ldr		sp, =__irqstack_addr
@@ -39,9 +42,10 @@ RestoreAndReturnToUserMode:
 	ldmia	r0!, {r1}
 	
 	movs	pc, r1
+END_ASM_FUNC
 
 #void YieldCurrentThread(ThreadQueue* queue)
-YieldCurrentThread:
+BEGIN_ASM_FUNC YieldCurrentThread
 	ldr		r1, =currentThread
 	ldr		r1, [r1, #0x00]
 	mrs     r2, cpsr
@@ -52,6 +56,9 @@ YieldCurrentThread:
 	str		lr, [r1, #0x40]
 
 	cmp		r0, #0
-	blne	QueueNextThread
-	b		ScheduleYield
-	
+	bne		yield
+	_BL		QueueNextThread
+yield:
+	ldr		r0, =ScheduleYield
+	bx		r0
+END_ASM_FUNC

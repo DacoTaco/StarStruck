@@ -18,6 +18,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "core/hollywood.h"
 #include "utils.h"
 
+//no idea why this has less issues when forced as arm...
+__attribute__((target("arm")))
 void udelay(u32 d)
 {
 	// should be good to max .2% error

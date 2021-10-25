@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
 endif
 
-include $(SDKDIR)/starlet.mk
+include $(SDKDIR)/starstruck.mk
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -29,7 +29,7 @@ DATA		:=
 #---------------------------------------------------------------------------------
 CFLAGS 	+= -DCAN_HAZ_USBGECKO -fpie
 CFLAGS	+=	$(INCLUDE)
-ASFLAGS += $(CFLAGS) -D_LANGUAGE_ASSEMBLY
+ASFLAGS += $(CFLAGS)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project

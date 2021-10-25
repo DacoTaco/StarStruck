@@ -8,12 +8,14 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-.globl v_undf;
+#include <asminc.h>
 
-.extern __swistack_addr
+.arm
+
+.globl v_undf;
 .extern undf_handler
 
-v_undf:
+BEGIN_ASM_FUNC v_undf
 #for info : see syscall asm
 	stmdb	sp!, {lr}
 	stmdb	sp!, {r0-r12, sp, lr}^
@@ -21,8 +23,13 @@ v_undf:
 	stmdb	sp!, {r1}
 	mov		r1, sp
 
+#ifdef _THUMBMODE_
+	ldrh	r0,[lr,#-2]
+	bic		r0,r0,#0xFFFFFF00
+#else
 	ldr		r0,[lr,#-4]
 	bic		r0,r0,#0xFF000000
+#endif
 
 	msr		cpsr_c, #0x1f
 	push	{r1}
@@ -37,3 +44,4 @@ v_undf:
 	ldmia	sp!, {r1-r12, sp, lr}^
 	ldmia	sp!, {lr}
 	movs	pc, lr
+END_ASM_FUNC

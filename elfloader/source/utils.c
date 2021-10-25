@@ -9,14 +9,13 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 */
 
 #include <stdarg.h>
-#include <types.h>
-#include <vsprintf.h>
-#include <ios/gecko.h>
-#include <ios/processor.h>
 
+#include "types.h"
 #include "gpio.h"
 #include "hollywood.h"
 #include "utils.h"
+
+extern void debug_output(u8 byte);
 
 void udelay(u32 d)
 {

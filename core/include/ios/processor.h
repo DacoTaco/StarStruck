@@ -180,13 +180,6 @@ static inline u8 mask8(u32 addr, u8 clear, u8 set)
 	return data;
 }
 
-static inline u32 get_cpsr(void)
-{
-	u32 data;
-	__asm__ volatile ( "mrs\t%0, cpsr" : "=r" (data) );
-	return data;
-}
-
 /*
  * These functions are guaranteed to copy by reading from src and writing to dst in <n>-bit units
  * If size is not aligned, the remaining bytes are not copied
@@ -198,8 +191,8 @@ void memcpy16(void *dst, void *src, u32 size);
 void memset8(void *dst, u8 value, u32 size);
 void memcpy8(void *dst, void *src, u32 size);
 
+u32 get_cpsr(void);
 void debug_output(u8 byte);
-
 int sprintf(char *str, const char *fmt, ...);
 
 #endif

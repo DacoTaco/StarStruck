@@ -19,10 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
-#include <types.h>
-#include <string.h>
-#include <ios/processor.h>
 
+#include "types.h"
+#include "string.h"
 #include "hollywood.h"
 #include "utils.h"
 #include "elf.h"
@@ -33,6 +32,8 @@ typedef struct {
 	u32 elfsize;
 	u32 argument;
 } ioshdr;
+
+extern void debug_output(u8 byte);
 
 void *loadelf(const u8 *elf) {
 	if(memcmp("\x7F" "ELF\x01\x02\x01",elf,7)) {
@@ -82,6 +83,5 @@ void *_main(void *base)
 	entry = loadelf(elf);
 	debug_output(0xC1);
 	return entry;
-
 }
 

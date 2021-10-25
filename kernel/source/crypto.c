@@ -24,8 +24,8 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define		AES_CMD_RESET	0
 #define		AES_CMD_DECRYPT	0x9800
 
-otp_t otp ALIGNED(0x10);
-seeprom_t seeprom ALIGNED(0x10);
+otp_t otp ALIGNED(0x20);
+seeprom_t seeprom ALIGNED(0x20);
 
 void crypto_read_otp(void)
 {

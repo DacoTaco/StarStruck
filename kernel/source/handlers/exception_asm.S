@@ -8,19 +8,20 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-.globl v_undf
-.globl v_swi
+#include <asminc.h>
+
+.arm
 .globl v_instr_abrt
 .globl v_data_abrt
 .globl v_reserved
 .globl v_fiq
-
 .globl exc_setup_stack
+
 .extern __excstack_addr
 .extern __swistack_addr
 .extern exc_handler
 
-exc_setup_stack:
+BEGIN_ASM_FUNC exc_setup_stack
 	mrs	r0, cpsr
 
 	@ Switch to FIQ mode
@@ -46,10 +47,11 @@ exc_setup_stack:
 	@ Restore mode
 	msr cpsr_c, r0
 	bx	lr
+END_ASM_FUNC
 
 .pool
 	
-v_instr_abrt:
+BEGIN_ASM_FUNC v_instr_abrt
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -63,8 +65,9 @@ v_instr_abrt:
 	add		sp, sp, #8
 	ldmfd	sp!, {lr}
 	subs	pc, lr, #4
+END_ASM_FUNC
 
-v_data_abrt:
+BEGIN_ASM_FUNC v_data_abrt
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -78,8 +81,9 @@ v_data_abrt:
 	add		sp, sp, #8
 	ldmfd	sp!, {lr}
 	subs	pc, lr, #8
+END_ASM_FUNC
 
-v_reserved:
+BEGIN_ASM_FUNC v_reserved
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -93,8 +97,9 @@ v_reserved:
 	add		sp, sp, #8
 	ldmfd	sp!, {lr}
 	movs	pc, lr
+END_ASM_FUNC
 
-v_fiq:
+BEGIN_ASM_FUNC v_fiq
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -108,4 +113,4 @@ v_fiq:
 	add		sp, sp, #8
 	ldmfd	sp!, {lr}
 	subs	pc, lr, #4
-
+END_ASM_FUNC
