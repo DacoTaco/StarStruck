@@ -1,4 +1,4 @@
-### TODO's
+### TODOs
 
 * ~~make todo list~~
 * ~~redesign starlet.mk/common.mk/module.mk to use more of devkitarm's base_tools & base_rules~~

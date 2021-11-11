@@ -1,6 +1,8 @@
 StarStruck -- An IOS Reimplementation
-Copyright (c) 2008, 2009 Team Twiizers
-Copyright (c) 2021 DacoTaco
+===
+
+* Copyright (c) 2008, 2009 Team Twiizers
+* Copyright (c) 2021 DacoTaco
 
 StarStruck is an IOS reimplementation intended to learn about IOS/Starlet
 It is based on mini, a bare-bones IOS replacement by Team Twiizers.
