@@ -14,6 +14,7 @@
 #include "core/defines.h"
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
+#include "memory/memory.h"
 
 #define BASE_STACKADDR 	0x13AC0400
 #define STACK_SIZE		0x400
@@ -22,8 +23,6 @@ ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
 ThreadQueue mainQueue ALIGNED(0x10);
 ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread ALIGNED(0x10);
-
-extern void RestoreAndReturnToUserMode(Registers* registers, u32 swi_mode);
 
 void _thread_end()
 {
@@ -114,12 +113,40 @@ ThreadInfo* PopNextThreadFromQueue(ThreadQueue* queue)
 	return ret;
 }
 
+__attribute__((target("arm")))
 void ScheduleYield( void )
 {
 	currentThread = PopNextThreadFromQueue(mainQueuePtr);
-	
 	currentThread->threadState = Running;
-	RestoreAndReturnToUserMode(&currentThread->registers, ((u32)currentThread->exceptionStack) + sizeof(currentThread->exceptionStack) );
+
+	set_dacr(DomainAccessControlTable[currentThread->processId]);
+	MemoryTranslationTable[0xD0] = (u32)HardwareRegistersAccessTable[currentThread->processId];
+	tlb_invalidate();
+	flush_memory();
+
+	register void* registers	__asm__("r0") = (void*)&currentThread->registers;
+	register u32 stackPointer	__asm__("r1") = ((u32)currentThread->exceptionStack) + sizeof(currentThread->exceptionStack);
+	__asm__ volatile (
+		"\
+#ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
+		msr		cpsr_c, #0xd2\n\
+		ldr		sp, =__irqstack_addr\n\
+		msr		cpsr_c, #0xd3\n\
+		mov		sp, %[stackPointer]\n\
+		msr		cpsr_c, #0xdb\n\
+		mov		sp, %[stackPointer]\n\
+#restore the status register\n\
+		ldmia	%[registers]!, {r4}\n\
+		msr		spsr_cxsf, r4\n\
+#restore the rest of the state\n\
+		ldmia	%[registers]!, {r0-r12, sp, lr}^\n\
+		ldmia	%[registers]!, {lr}\n\
+#jump to thread\n\
+		movs	pc, lr\n"
+		:
+		: [registers] "r" (registers), [stackPointer] "r" (stackPointer)
+	);
+	
 	return;
 }
 

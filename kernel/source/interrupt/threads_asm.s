@@ -12,7 +12,6 @@
 
 .arm
 .globl SaveUserModeState
-.globl RestoreAndReturnToUserMode
 .globl YieldCurrentThread
 .extern ScheduleYield
 .extern QueueNextThread
@@ -20,29 +19,6 @@
 	
 BEGIN_ASM_FUNC ReturnToLr
 	bx		lr
-END_ASM_FUNC
-
-#todo : mark ScheduleYield as arm function, move this asm to that code
-#RestoreAndReturnToUserMode(registers, swi_stack)
-BEGIN_ASM_FUNC RestoreAndReturnToUserMode
-#ios loads the threads' state buffer back in to sp, resetting the exception's stack	
-	msr 	cpsr_c, #0xd2
-	ldr		sp, =__irqstack_addr
-
-	msr 	cpsr_c, #0xd3
-	mov		sp, r1
-	
-	msr 	cpsr_c, #0xdb
-	mov		sp, r1
-
-#restore the status register
-	ldmia	r0!, {r4}
-	msr		spsr_cxsf, r4
-#restore the rest of the state
-	ldmia	r0!, {r0-r12, sp, lr}^
-	ldmia	r0!, {r1}
-	
-	movs	pc, r1
 END_ASM_FUNC
 
 #void YieldCurrentThread(ThreadQueue* queue)

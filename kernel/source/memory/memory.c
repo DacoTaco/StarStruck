@@ -54,15 +54,11 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define CR_DCACHE					(1 << 2)
 #define CR_ICACHE					(1 << 12)
 
-#define MAX_PROCESSES				20
-
 void _dc_inval_entries(void *start, int count);
 void _dc_flush_entries(const void *start, int count);
 void _dc_flush(void);
 void _ic_inval(void);
 void _dc_inval(void);
-void _tlb_inval(void);
-void _drain_write_buffer(void);
 
 //the variables defined in the linker script are variables containing the value of the address, not a pointer to the address
 //but we need pointers, so casting the variables to an array (so its considered an array starting at the address) and then to pointer seems to work
@@ -74,9 +70,9 @@ const u8* heapEnd = (u8*)__kernel_heap_end;
 
 //the pagetable for the mmu's translation table base register MUST be 0x4000 (16KB aligned) !
 //this is (kinda) ensured by having the heap 16KB aligned and this being the first malloc
-static u32* _page_table = NULL;
-u32 _dacr_table[MAX_PROCESSES];
-u32* _ahb_table[MAX_PROCESSES];
+u32* MemoryTranslationTable = NULL;
+u32 DomainAccessControlTable[MAX_PROCESSES];
+u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 
 static MemorySection KernelMemoryMaps[] = 
 {
@@ -116,7 +112,7 @@ void dc_flushrange(const void *start, u32 size)
 		start = ALIGN_BACKWARD(start, LINESIZE);
 		_dc_flush_entries(start, (end - start) / LINESIZE);
 	}
-	_drain_write_buffer();
+	flush_memory();
 	_ahb_flush_from(AHB_1);
 	irq_restore(cookie);
 }
@@ -135,7 +131,7 @@ void dc_flushall(void)
 {
 	u32 cookie = irq_kill();
 	_dc_flush();
-	_drain_write_buffer();
+	flush_memory();
 	_ahb_flush_from(AHB_1);
 	irq_restore(cookie);
 }
@@ -181,13 +177,13 @@ void mem_shutdown(void)
 {
 	u32 cookie = irq_kill();
 	_dc_flush();
-	_drain_write_buffer();
+	flush_memory();
 	u32 cr = get_cr();
 	cr &= ~(CR_MMU | CR_DCACHE | CR_ICACHE); //disable ICACHE, DCACHE, MMU
 	set_cr(cr);
 	_ic_inval();
 	_dc_inval();
-	_tlb_inval();
+	tlb_invalidate();
 	irq_restore(cookie);
 }
 
@@ -247,7 +243,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	if(memorySection->unknown != 0)
 		translationBase |= WRITEBACK_CACHE;
 	
-	u32* page = &_page_table[PAGE_ENTRY(memorySection->virtualAddress)];
+	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
 	*page = translationBase | (memorySection->physicalAddress & 0xFFF00000) | AP_VALUE(memorySection->accessRights) | PAGE_DOMAIN(memorySection->domain);
 	dc_flushrange(page, 4);
 	
@@ -282,7 +278,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	if(memorySection == NULL)
 		return -1;
 	
-	u32** entry = (u32**)&_page_table[PAGE_ENTRY(memorySection->virtualAddress)];
+	u32** entry = (u32**)&MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
 	u32* pageValue = *entry;
 	if(pageValue == NULL)
 	{
@@ -350,14 +346,14 @@ u32 MapMemory(MemorySection* entry)
 		}
 	}
 		
-	_drain_write_buffer();
-	_tlb_inval();
+	flush_memory();
+	tlb_invalidate();
 	return ret;
 }
 
 s32 MapHardwareRegisters()
 {
-	u32** page = (u32**) &_page_table[0xD0];
+	u32** page = (u32**) &MemoryTranslationTable[0xD0];
 	u32 index = 0;
 	u32 ret = 0;
 	
@@ -370,7 +366,7 @@ s32 MapHardwareRegisters()
 		if(ret != 0)
 			break;
 		
-		_ahb_table[HWRegistersMemoryMaps[index].processId] = *page;
+		HardwareRegistersAccessTable[HWRegistersMemoryMaps[index].processId] = *page;
 		u32* pageValue = (u32*)(((u32)*page) & 0xFFFFFC00);
 		for(int i = 0; i < 0x100; i++)
 		{
@@ -385,18 +381,18 @@ s32 MapHardwareRegisters()
 	}
 	
 	//fill in some gaps?
-	_ahb_table[4] = _ahb_table[6];
-	_ahb_table[5] = _ahb_table[6];
+	HardwareRegistersAccessTable[4] = HardwareRegistersAccessTable[6];
+	HardwareRegistersAccessTable[5] = HardwareRegistersAccessTable[6];
 	
 	//set defaults to PID 0's access rights
 	for(int i = 0; i < MAX_PROCESSES; i++)
 	{
-		if(_ahb_table[i] == NULL)
-			_ahb_table[i] = _ahb_table[0];
+		if(HardwareRegistersAccessTable[i] == NULL)
+			HardwareRegistersAccessTable[i] = HardwareRegistersAccessTable[0];
 	}
 	
 	//set the access rights and return
-	*page = _ahb_table[0];	
+	*page = HardwareRegistersAccessTable[0];	
 	return ret;
 }
 
@@ -420,12 +416,12 @@ s32 InitiliseMemory(void)
 	set_cr(get_cr() & ~(CR_DCACHE | CR_MMU | CR_ICACHE));
 	_ic_inval();
 	_dc_inval();
-	_tlb_inval();
+	tlb_invalidate();
 
 	memset32(heapStart, 0, heapEnd - heapStart);
 	gecko_printf("MEM: mapping sections\n");
-	_page_table = (u32*)kmalloc(PageTable);	
-	if(_page_table == NULL)
+	MemoryTranslationTable = (u32*)kmalloc(PageTable);	
+	if(MemoryTranslationTable == NULL)
 	{
 		ret = -0x16;
 		goto ret_init;
@@ -447,33 +443,33 @@ s32 InitiliseMemory(void)
 	//init all dacr values for all processes
 	//default is domain no access besides domain 8 & 15 (client) -> 0x40010000;
 	for(s32 i = 0; i <= 0x13; i++)
-		_dacr_table[i] = DOMAIN_VALUE(8, DOMAIN_CLIENT) | DOMAIN_VALUE(15, DOMAIN_CLIENT);
+		DomainAccessControlTable[i] = DOMAIN_VALUE(8, DOMAIN_CLIENT) | DOMAIN_VALUE(15, DOMAIN_CLIENT);
 	
-	_dacr_table[0] = 0x55555555; //PID 0 = client access in all domains
+	DomainAccessControlTable[0] = 0x55555555; //PID 0 = client access in all domains
 	
 	//give a few processes client access to their own domain. PID 1 to domain 1, PID 2 to domain 2, etc etc
-	_dacr_table[1] |= DOMAIN_VALUE(1, DOMAIN_CLIENT);
-	_dacr_table[2] |= DOMAIN_VALUE(2, DOMAIN_CLIENT);
-	_dacr_table[3] |= DOMAIN_VALUE(3, DOMAIN_CLIENT);
-	_dacr_table[7] |= DOMAIN_VALUE(7, DOMAIN_CLIENT);
-	_dacr_table[14] |= DOMAIN_VALUE(14, DOMAIN_CLIENT);
+	DomainAccessControlTable[1] |= DOMAIN_VALUE(1, DOMAIN_CLIENT);
+	DomainAccessControlTable[2] |= DOMAIN_VALUE(2, DOMAIN_CLIENT);
+	DomainAccessControlTable[3] |= DOMAIN_VALUE(3, DOMAIN_CLIENT);
+	DomainAccessControlTable[7] |= DOMAIN_VALUE(7, DOMAIN_CLIENT);
+	DomainAccessControlTable[14] |= DOMAIN_VALUE(14, DOMAIN_CLIENT);
 	
 	//PID 19 is a bit different, it has access to domain 9?
-	_dacr_table[19] |= DOMAIN_VALUE(9, DOMAIN_CLIENT);
+	DomainAccessControlTable[19] |= DOMAIN_VALUE(9, DOMAIN_CLIENT);
 	
 	//PID 15 is also special, it only gets access to domain 8
-	_dacr_table[15] = DOMAIN_VALUE(8, DOMAIN_CLIENT);
+	DomainAccessControlTable[15] = DOMAIN_VALUE(8, DOMAIN_CLIENT);
 	
 	//setup memory registers
 	set_dfsr(0);
 	set_ifsr(0);
 	set_far(0);
-	set_ttbr((u32)_page_table); //configure translation table
-	set_dacr(_dacr_table[0]);
+	set_ttbr((u32)MemoryTranslationTable); //configure translation table
+	set_dacr(DomainAccessControlTable[0]);
 
 	//drain buffer & invalidate tlb
-	_drain_write_buffer();
-	_tlb_inval();
+	flush_memory();
+	tlb_invalidate();
 	
 	cr = get_cr();
 

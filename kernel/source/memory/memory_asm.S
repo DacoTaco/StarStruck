@@ -12,6 +12,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .arm
 
+.globl flush_memory
+.globl tlb_invalidate
 .globl get_cr
 .globl set_cr
 .globl get_ttbr
@@ -30,8 +32,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl _dc_flush
 .globl _dc_inval
 .globl _ic_inval
-.globl _drain_write_buffer
-.globl _tlb_inval
+
 
 .text
 
@@ -129,15 +130,15 @@ BEGIN_ASM_FUNC _ic_inval
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC _drain_write_buffer
+BEGIN_ASM_FUNC flush_memory
 	mov		r0, #0
 	mcr		p15, 0, r0, c7, c10, 4
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC _tlb_inval
+BEGIN_ASM_FUNC tlb_invalidate
 	mov		r0, #0
-	mcr		p15, 0, r0, c8, c7
+	mcr		p15, 0, r0, c8, c7, 0
 	bx		lr
 END_ASM_FUNC
 

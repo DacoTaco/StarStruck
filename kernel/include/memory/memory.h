@@ -13,6 +13,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 #include "types.h"
 #include "memory/ahb.h"
+#include "interrupt/threads.h"
 
 #define ALIGN_FORWARD(x,align) \
 	((typeof(x))((((u32)(x)) + (align) - 1) & (~(align-1))))
@@ -42,6 +43,10 @@ typedef enum
 	Unknown = 1,
 	CoursePage = 2,
 } KernelMemoryType;
+
+extern u32* MemoryTranslationTable;
+extern u32 DomainAccessControlTable[MAX_PROCESSES];
+extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 	
 s32 InitiliseMemory(void);
 void ProtectMemory(int enable, void *start, void *end);
@@ -56,6 +61,8 @@ void mem_setswap(int enable);
 void mem_shutdown(void);
 
 u32 dma_addr(void *);
+u32 tlb_invalidate(void);
+void flush_memory(void);
 
 u32 get_cr(void);
 u32 get_ttbr(void);

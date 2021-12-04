@@ -13,7 +13,8 @@
 
 #include <types.h>
 
-#define MAX_THREADS 100
+#define MAX_PROCESSES		20
+#define MAX_THREADS 		100
 
 typedef enum 
 {
