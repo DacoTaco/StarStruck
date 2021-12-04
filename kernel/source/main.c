@@ -71,7 +71,7 @@ void kernel_main( void )
 	gecko_printf("Mounting SD...\n");
 	fres = f_mount(0, &fatfs);*/
 
-	if (read32(0x0d800190) & 2) {
+	if (read32(HW_CLOCKS) & 2) {
 		gecko_printf("GameCube compatibility mode detected...\n");
 		vector = boot2_run(1, 0x101);
 		goto shutdown;

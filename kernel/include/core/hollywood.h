@@ -16,8 +16,9 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 /* Hollywood Registers */
 
-#define		HW_PPC_REG_BASE		0xd000000
-#define		HW_REG_BASE			0xd800000
+#define		HW_ADDR_REG_BASE	0x0d000000
+#define		HW_AHB_REG_BASE		0x0d800000
+#define		HW_REG_BASE			HW_AHB_REG_BASE
 
 // The PPC can only see the first three IPC registers
 #define		HW_IPC_PPCMSG		(HW_REG_BASE + 0x000)
@@ -212,7 +213,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 /* EXI Registers */
 
-#define		EXI_REG_BASE		0xd806800
+#define		EXI_REG_BASE		(HW_REG_BASE+0x6800)
 #define		EXI0_REG_BASE		(EXI_REG_BASE+0x000)
 #define		EXI1_REG_BASE		(EXI_REG_BASE+0x014)
 #define		EXI2_REG_BASE		(EXI_REG_BASE+0x028)
@@ -239,7 +240,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 /* MEMORY CONTROLLER Registers */
 
-#define		MEM_REG_BASE		0xd8b4000
+#define		MEM_REG_BASE		(HW_REG_BASE+0xb4000)
 #define		MEM_PROT			(MEM_REG_BASE+0x20a)
 #define		MEM_PROT_START		(MEM_REG_BASE+0x20c)
 #define		MEM_PROT_END		(MEM_REG_BASE+0x20e)
