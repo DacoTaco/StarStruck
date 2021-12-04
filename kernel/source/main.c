@@ -128,7 +128,7 @@ void InitialiseSystem( void )
 	set32(HW_EXICTRL, read32(HW_EXICTRL) | EXICTRL_ENABLE_EXI);
 	
 	//enable protection on our MEM2 addresses & SRAM
-	mem_protect(1, (void*)0x13620000, (void*)0x1FFFFFFF);
+	ProtectMemory(1, (void*)0x13620000, (void*)0x1FFFFFFF);
 	
 	//????
 	set32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
@@ -170,7 +170,8 @@ void InitialiseSystem( void )
 	set32(HW_ARMIRQMASK, 0);
 	set32(HW_ARMFIQMASK, 0);
 	
-	//TODO : Setup MMU , translation, memory cache, ...
+	gecko_printf("Configuring caches and MMU...\n");
+	InitiliseMemory();
 }
 
 u32 _main(void *base)
@@ -186,8 +187,6 @@ u32 _main(void *base)
 	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
-	gecko_printf("Configuring caches and MMU...\n");
-	mem_initialize();
 
 	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));

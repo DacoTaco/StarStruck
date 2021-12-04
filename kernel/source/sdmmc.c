@@ -26,7 +26,7 @@ static int sdmmcdebug = 0;
 #define DPRINTF(n,s)	do {} while(0)
 #endif
 
-static struct sdmmc_card card MEM2_BSS;
+static struct sdmmc_card card SRAM_BSS;
 
 struct sdmmc_card {
 	sdmmc_chipset_handle_t handle;

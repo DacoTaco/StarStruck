@@ -16,14 +16,14 @@
 #include "memory/heaps.h"
 
 extern u8 __modules_area_start[];
-extern u8 __mem2_area_start[];
+extern u8 __modules_area_end[];
 #define MEM_MODULES_START	((u32) __modules_area_start)
-#define MEM_MODULES_END		((u32) __mem2_area_start)
+#define MEM_MODULES_END		((u32) __modules_area_end)
 
 #define ALIGNED_BLOCK_HEADER_SIZE	((sizeof(heap_block) + 0x0F) & -0x10)
 
 #define MAX_HEAP 0x10
-static heap_info heaps[MAX_HEAP] MEM2_BSS;
+static heap_info heaps[MAX_HEAP];
 
 s32 CreateHeap(void *ptr, u32 size)
 {

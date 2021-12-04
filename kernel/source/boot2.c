@@ -23,6 +23,8 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "panic.h"
 #include "boot2.h"
 
+#define MEM2_BSS __attribute__ ((section (".bss.mem2")))
+
 static u8 boot2[0x80000] MEM2_BSS ALIGNED(64);
 static u8 boot2_key[32] MEM2_BSS ALIGNED(32);
 static u8 boot2_iv[32] MEM2_BSS ALIGNED(32);
@@ -288,7 +290,7 @@ u32 boot2_run(u32 tid_hi, u32 tid_lo) {
 	ioshdr *hdr;
 	
 	gecko_printf("booting boot2 with title %08x-%08x\n", tid_hi, tid_lo);
-	mem_protect(1, (void *)0x11000000, (void *)0x13FFFFFF);
+	ProtectMemory(1, (void *)0x11000000, (void *)0x13FFFFFF);
 
 	aes_reset();
 	aes_set_iv(boot2_iv);

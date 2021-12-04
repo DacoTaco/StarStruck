@@ -22,6 +22,7 @@ BEGIN_ASM_FUNC ReturnToLr
 	bx		lr
 END_ASM_FUNC
 
+#todo : mark ScheduleYield as arm function, move this asm to that code
 #RestoreAndReturnToUserMode(registers, swi_stack)
 BEGIN_ASM_FUNC RestoreAndReturnToUserMode
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack	

@@ -18,10 +18,10 @@
 #define BASE_STACKADDR 	0x13AC0400
 #define STACK_SIZE		0x400
 
-ThreadInfo threads[MAX_THREADS] ALIGNED(0x10) MEM2_BSS;
-ThreadQueue mainQueue ALIGNED(0x10) MEM2_BSS;
+ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
+ThreadQueue mainQueue ALIGNED(0x10);
 ThreadQueue* mainQueuePtr = &mainQueue;
-ThreadInfo* currentThread MEM2_BSS ALIGNED(0x10);
+ThreadInfo* currentThread ALIGNED(0x10);
 
 extern void RestoreAndReturnToUserMode(Registers* registers, u32 swi_mode);
 

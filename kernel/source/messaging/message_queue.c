@@ -14,13 +14,13 @@
 #include "messaging/message_queue.h"
 
 extern u8 __modules_area_start[];
-extern u8 __mem2_area_start[];
+extern u8 __modules_area_end[];
 #define MEM_MODULES_START	((u32) __modules_area_start)
-#define MEM_MODULES_END		((u32) __mem2_area_start)
+#define MEM_MODULES_END		((u32) __modules_area_end)
 
 #define MAX_QUEUE 0x100
 
-static message_queue queues[MAX_QUEUE] MEM2_BSS;
+static message_queue queues[MAX_QUEUE];
 
 s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {

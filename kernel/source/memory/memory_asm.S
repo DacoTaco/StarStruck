@@ -19,8 +19,11 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl get_dacr
 .globl set_dacr
 .globl get_dfsr
+.globl set_dfsr
 .globl get_ifsr
+.globl set_ifsr
 .globl get_far
+.globl set_far
 
 .globl _dc_inval_entries
 .globl _dc_flush_entries
@@ -67,13 +70,28 @@ BEGIN_ASM_FUNC get_dfsr
 	bx		lr
 END_ASM_FUNC
 
+BEGIN_ASM_FUNC set_dfsr
+	mcr		p15, 0, r0, c5, c0, 0
+	bx		lr
+END_ASM_FUNC
+
 BEGIN_ASM_FUNC get_ifsr
 	mrc		p15, 0, r0, c5, c0, 1
 	bx		lr
 END_ASM_FUNC
 
+BEGIN_ASM_FUNC set_ifsr
+	mcr		p15, 0, r0, c5, c0, 1
+	bx		lr
+END_ASM_FUNC
+
 BEGIN_ASM_FUNC get_far
 	mrc		p15, 0, r0, c6, c0, 0
+	bx		lr
+END_ASM_FUNC
+
+BEGIN_ASM_FUNC set_far
+	mcr		p15, 0, r0, c6, c0, 0
 	bx		lr
 END_ASM_FUNC
 
