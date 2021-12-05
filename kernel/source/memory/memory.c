@@ -24,7 +24,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define PAGE_ENTRY(x)				((x)>>0x14)
 #define PAGE_DOMAIN(x)				((x)<<5)
 #define PAGE_MASK					0x13
+#define SECTION_SECTION				0x01
 #define COURSE_SECTION				0x02
+#define PAGE_TYPE_MASK				( COURSE_SECTION | SECTION_SECTION )
 #define SECTION_PAGE				0x12
 #define COURSE_PAGE					0x11
 
@@ -394,6 +396,27 @@ s32 MapHardwareRegisters()
 	//set the access rights and return
 	*page = HardwareRegistersAccessTable[0];	
 	return ret;
+}
+
+u32 VirtualToPhysical(u32 virtualAddress)
+{
+	u32 pageEntry = MemoryTranslationTable[PAGE_ENTRY(virtualAddress)];
+	u32 physicalAddress = 0;
+	
+	if((pageEntry & PAGE_MASK) == SECTION_PAGE)
+		physicalAddress = (virtualAddress & 0xFFFFF) | ( pageEntry & 0xFFF00000);
+	else if((pageEntry & PAGE_MASK) == COURSE_PAGE)
+	{
+		u32 page = (((virtualAddress << 0x0C) >> 0x18) * 4) + (pageEntry & 0xFFFFFC00);
+		if((page & PAGE_TYPE_MASK) == COURSE_SECTION)
+			physicalAddress = (virtualAddress & 0xFFF) | (page & 0xFFFFF000);
+	}
+	
+	if(physicalAddress < 0xFFFE0000)
+		return physicalAddress;
+	
+	u32 offset = (physicalAddress < 0xFFFF0000) ? 0x0D430000 : 0x0D410000;
+	return physicalAddress + offset;
 }
 
 void ProtectMemory(int enable, void *start, void *end)

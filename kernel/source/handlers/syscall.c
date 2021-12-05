@@ -12,6 +12,7 @@
 
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
+#include "memory/memory.h"
 #include "memory/heaps.h"
 #include "memory/ahb.h"
 #include "messaging/message_queue.h"
@@ -69,6 +70,37 @@ static u32 syscall_handlers[] = {
 	(u32)0x00000000,					//0x002E
 	(u32)AhbFlushFrom,					//0x002F
 	(u32)AhbFlushTo,					//0x0030
+	(u32)0x00000000,					//0x0031
+	(u32)0x00000000,					//0x0032
+	(u32)0x00000000,					//0x0033
+	(u32)0x00000000,					//0x0034
+	(u32)0x00000000,					//0x0035
+	(u32)0x00000000,					//0x0036
+	(u32)0x00000000,					//0x0037
+	(u32)0x00000000,					//0x0038
+	(u32)0x00000000,					//0x0039
+	(u32)0x00000000,					//0x003A
+	(u32)0x00000000,					//0x003B
+	(u32)0x00000000,					//0x003C
+	(u32)0x00000000,					//0x003D
+	(u32)0x00000000,					//0x003E
+	(u32)0x00000000,					//0x003F
+	(u32)0x00000000,					//0x0040
+	(u32)0x00000000,					//0x0041
+	(u32)0x00000000,					//0x0042
+	(u32)0x00000000,					//0x0043
+	(u32)0x00000000,					//0x0044
+	(u32)0x00000000,					//0x0045
+	(u32)0x00000000,					//0x0046
+	(u32)0x00000000,					//0x0047
+	(u32)0x00000000,					//0x0048
+	(u32)0x00000000,					//0x0049
+	(u32)0x00000000,					//0x004A
+	(u32)0x00000000,					//0x004B
+	(u32)0x00000000,					//0x004C
+	(u32)0x00000000,					//0x004D
+	(u32)0x00000000,					//0x004E
+	(u32)VirtualToPhysical,				//0x004F
 };
 
 //We implement syscalls using the SVC/SWI instruction. 
