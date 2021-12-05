@@ -29,8 +29,6 @@ MEMORY {
 }
 
 __modules_area_start = ORIGIN(modules);
-__modules_area_size = LENGTH(modules);
-__modules_area_end = ORIGIN(modules) + LENGTH(modules);
 
 __kernel_heap_ptr = ORIGIN(kernel_heap);
 __kernel_heap_start = ORIGIN(kernel_heap);

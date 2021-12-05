@@ -11,12 +11,8 @@
 #include "core/defines.h"
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
+#include "memory/memory.h"
 #include "messaging/message_queue.h"
-
-extern u8 __modules_area_start[];
-extern u8 __modules_area_end[];
-#define MEM_MODULES_START	((u32) __modules_area_start)
-#define MEM_MODULES_END		((u32) __modules_area_end)
 
 #define MAX_QUEUE 0x100
 
@@ -27,19 +23,17 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 	s32 irq_state = irq_kill();
 	s16 queueId = 0;
 	
-	if(ptr == NULL || *ptr == NULL || numberOfMessages < 0x30)
+	if(ptr == NULL || *ptr == NULL)
 	{
 		queueId = -4;
 		goto restore_and_return;
 	}
 
-	u32 queue_addr = (u32)ptr;	
-	if(queue_addr < MEM_MODULES_START || queue_addr > MEM_MODULES_END || queue_addr+numberOfMessages > MEM_MODULES_END)
+	if(CheckMemoryPointer(ptr, numberOfMessages << 2, 4, currentThread->processId, 0) < 0)
 	{
 		queueId = -4;
 		goto restore_and_return;
-	}
-	
+	}	
 	
 	while(queueId < MAX_QUEUE)
 	{	
@@ -120,9 +114,7 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	queues[queueId].queueHeap[heapIndex] = message;
 	queues[queueId].used++;
 	if(queues[queueId].receiveThreadQueue == NULL || queues[queueId].receiveThreadQueue->nextThread != NULL )
-	{
 		UnblockThread((ThreadQueue*)&queues[queueId].receiveThreadQueue, 0);
-	}
   
 restore_and_return:
 	irq_restore(irq_state);
@@ -141,6 +133,10 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 		ret = -4;
 		goto restore_and_return;
 	}
+	
+	ret = CheckMemoryPointer(message, 4, 4, currentThread->processId, 0);
+	if(ret < 0)
+		goto restore_and_return;
 	
 	if(queues[queueId].processId != currentThread->processId)
 	{
@@ -169,7 +165,7 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 		used = queues[queueId].used;
 	}
 	
-	if(message != NULL && (u32)message >= MEM_MODULES_START && (u32)message <= MEM_MODULES_END)
+	if(message != NULL)
 	{
 		*message = queues[queueId].queueHeap[queues[queueId].first];
 		used = queues[queueId].used;

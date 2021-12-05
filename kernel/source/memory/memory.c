@@ -3,6 +3,7 @@
 	memory management, MMU, caches, and flushing
 
 Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
+Copyright (C) 2021			DacoTaco
 
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
@@ -22,6 +23,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define CACHESIZE 			0x4000
 
 #define PAGE_ENTRY(x)				((x)>>0x14)
+#define COURSEPAGE_ENTRY_VALUE(x)	((x << 0x0C) >> 0x18)
 #define PAGE_DOMAIN(x)				((x)<<5)
 #define PAGE_MASK					0x13
 #define SECTION_SECTION				0x01
@@ -44,7 +46,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 //Access permissions
 //we can have multiple APs per second level page, hence the formula to calculate the value for us
-#define APX_VALUE(number, access)	(access << ((2+number)*2))
+#define APX_VALUE(number, access)	((access & 0x03) << ((2+number)*2))
 #define AP_VALUE(access)			APX_VALUE(3, access)
 #define AP_ROM						0x00
 #define AP_NOUSER					0x01
@@ -87,7 +89,7 @@ static MemorySection KernelMemoryMaps[] =
 	{ 0x10000000, 0x10000000, 0x03600000, 0x00000008, AP_RWUSER, 0x00000001 }, //MEM2
 	{ 0x13870000, 0x13870000, 0x00030000, 0x0000000F, AP_RWUSER, 0x00000000 }, //    ???
 	{ 0x13600000, 0x13600000, 0x00020000, 0x0000000F, AP_RWUSER, 0x00000001 }, //    ???
-	{ 0x13C40000, 0x13C40000, 0x00080000, 0x0000000F, AP_RWUSER, 0x00000001 }, //    ???
+	{ 0x13C40000, 0x13C40000, 0x00080000, 0x0000000F, AP_RWUSER, 0x00000001 }, //IOBuf ?
 	{ 0x13850000, 0x13850000, 0x00020000, 0x0000000F, AP_ROUSER, 0x00000000 }, //Kernel heap
 	{ 0x138F0000, 0x138F0000, 0x000C0000, 0x0000000F, AP_RWUSER, 0x00000001 }, //Module elf??
 	{ 0x13F00000, 0x13F00000, 0x00100000, 0x0000000F, AP_RWUSER, 0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
@@ -303,7 +305,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		pageValue = (u32*)(0xFFFFFC00 & (u32)pageValue);
 	}
 	
-	if(mode == 0 && pageValue[(memorySection->virtualAddress << 0x0C) >> 0x18] != 0)
+	if(mode == 0 && pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] != 0)
 		return -4;
 	
 	u32 accessRights = memorySection->accessRights;
@@ -311,7 +313,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	if(memorySection->unknown != 0)
 		type |= WRITEBACK_CACHE;
 
-	pageValue[(memorySection->virtualAddress << 12) >> 24] = (memorySection->physicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
+	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] = (memorySection->physicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
 	dc_flushrange(pageValue, 0x1000);
 	memorySection->size -= 0x1000;
 	memorySection->physicalAddress += 0x1000;
@@ -407,7 +409,7 @@ u32 VirtualToPhysical(u32 virtualAddress)
 		physicalAddress = (virtualAddress & 0xFFFFF) | ( pageEntry & 0xFFF00000);
 	else if((pageEntry & PAGE_MASK) == COURSE_PAGE)
 	{
-		u32 page = (((virtualAddress << 0x0C) >> 0x18) * 4) + (pageEntry & 0xFFFFFC00);
+		u32 page = (COURSEPAGE_ENTRY_VALUE(virtualAddress) * 4) + (pageEntry & 0xFFFFFC00);
 		if((page & PAGE_TYPE_MASK) == COURSE_SECTION)
 			physicalAddress = (virtualAddress & 0xFFF) | (page & 0xFFFFF000);
 	}
@@ -417,6 +419,68 @@ u32 VirtualToPhysical(u32 virtualAddress)
 	
 	u32 offset = (physicalAddress < 0xFFFF0000) ? 0x0D430000 : 0x0D410000;
 	return physicalAddress + offset;
+}
+
+s32 CheckMemoryBlock(u8* ptr, u32 type, s32 pid, s32 domainPid, u32* blockSize)
+{
+	u32 pageEntry = MemoryTranslationTable[PAGE_ENTRY((u32)ptr)];
+	u32 pageType = pageEntry & PAGE_MASK;
+	u32 AccessPermissionsValue = 0;
+	
+	if(pageType == COURSE_PAGE)
+	{
+		*blockSize = 0x1000;
+		u32 page = (COURSEPAGE_ENTRY_VALUE((u32)ptr) * 4) + (pageEntry & 0xFFFFFC00);
+		if((page & PAGE_TYPE_MASK) != COURSE_SECTION)
+			goto return_error;
+		AccessPermissionsValue = page << 0x1A;		
+	}
+	else if(pageType == SECTION_PAGE)
+	{
+		*blockSize = 0x100000;
+		AccessPermissionsValue = pageEntry << 0x14;
+	}
+	else
+		goto return_error;
+	
+	//get the domain bits (b0000.0000.0000.0000.0000.000x.xxx0.0000) of the pageEntry and shift them left with 1 bit
+	//result:                                           ^.^^^0
+	u32 pageDomain = ((pageEntry << 0x17) >> 0x1C) << 1;
+	u32 domainAccess = (DomainAccessControlTable[pid] >> pageDomain) & 3;
+	u32 domainAccess2 = (DomainAccessControlTable[domainPid] >> pageDomain) & 3;
+	if(domainAccess != 1 || domainAccess2 != 1)
+		goto return_error;
+	
+	if(type == 4 && (AccessPermissionsValue >> 0x1E) == 3)
+		return 0;
+	else if(((AccessPermissionsValue >> 0x1E) -2) < 2)
+		return 0;
+	
+return_error:
+	gecko_printf("failed pointer check: 0x%08X\n", (u32)ptr);
+	return -1;
+}
+
+s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
+{
+	if(pid == 0)
+		return 0;
+	
+	s32 ret = 0;
+	u32 blockSize;
+	u8* startAddress = (u8*)ptr;
+	u8* endAddress = ptr + size;
+	while(startAddress < endAddress)
+	{
+		ret = CheckMemoryBlock(startAddress, type, pid, domainPid, &blockSize);
+		if(ret != 0)
+			return ret;
+		
+		//align to the next block
+		startAddress = (u8*)(((u32)startAddress + blockSize) & -blockSize);
+	}
+	
+	return ret;
 }
 
 void ProtectMemory(int enable, void *start, void *end)

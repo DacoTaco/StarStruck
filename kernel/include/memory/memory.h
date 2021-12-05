@@ -50,8 +50,10 @@ extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 	
 s32 InitiliseMemory(void);
 void ProtectMemory(int enable, void *start, void *end);
-u32 VirtualToPhysical(u32 virtualAddress);
 u32 MapMemory(MemorySection* entry);
+u32 VirtualToPhysical(u32 virtualAddress);
+s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);
+
 
 void dc_flushrange(const void *start, u32 size);
 void dc_invalidaterange(void *start, u32 size);
