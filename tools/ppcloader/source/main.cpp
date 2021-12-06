@@ -10,17 +10,21 @@
 #include <ogc/machine/processor.h>
 #include <ogc/machine/asm.h>
 
+#include "gecko.h"
+
 #include "armboot_bin.h"
 
 #define IOS_TO_LOAD 0x00000001000000FEULL
+#define SRAMADDR(x) (0x0d400000 | (x & 0x000FFFFF))
 
 static void *xfb = NULL;
 static GXRModeObj *vmode = NULL;
 
 //---------------------------------------------------------------------------------
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
 //---------------------------------------------------------------------------------
-
+{
+	CheckForGecko();
 	// Initialise the video system
 	VIDEO_Init();
 
@@ -92,7 +96,32 @@ int main(int argc, char **argv) {
 		
 		if ( pressed & WPAD_BUTTON_2 || gcPressed & PAD_BUTTON_X ) 
 		{
-			printf("msg : 0x%08X\n", read32(0xd8000E0));
+			write16(0x0d8b420a, 0);
+			//printf("msg : 0x%08X\n", read32(0xd8000E0));
+			//printf("sram : 0x%08X\n", read32(SRAMADDR(0xFFFFE010)));
+			u32* page_table = (u32*)0x93850000;
+			printf("sram : 0x%08X\n", read32(SRAMADDR(0xFFFFE010)));
+			printf("page table 0 : 0x%08X\n", page_table[0]);
+			printf("page table 1 : 0x%08X\n", page_table[1]);
+			printf("page table 2 : 0x%08X\n", page_table[2]);
+			printf("page table 0x80 : 0x%08X\n", page_table[0x4E8/4]);
+			//printf("page table entry 1 : 0x%08X\n", read32((u32)page_table));
+			
+			gprintf("dumping page table...\n");
+			for(int i = 0; i < 0x1000; i++)
+			{
+				gprintf("%08X", page_table[i]);
+			}
+			gprintf("\ndone\n");
+			
+			gprintf("dumping other page info...\n");
+			u32* other_table = (u32*)0x93854000;
+			for(int i = 0x4000; i < 0x20000; i+= 4)
+			{
+				gprintf("%08X", other_table[i]);
+			}
+			gprintf("\ndone\n");
+			//
 		}
 		
 		if ( pressed & WPAD_BUTTON_1 || gcPressed & PAD_BUTTON_Y ) 
