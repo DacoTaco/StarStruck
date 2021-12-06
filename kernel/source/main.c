@@ -179,14 +179,14 @@ u32 _main(void *base)
 	(void)base;	
 	gecko_init();
 	gecko_printf("StarStruck %s loading\n", git_version);
+	
+	gecko_printf("Initializing exceptions...\n");
+	exception_initialize();
 
 	AhbFlushFrom(AHB_1);
 	AhbFlushTo(AHB_1);
 	
-	InitialiseSystem();
-	
-	gecko_printf("Initializing exceptions...\n");
-	exception_initialize();
+	InitialiseSystem();	
 
 	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
