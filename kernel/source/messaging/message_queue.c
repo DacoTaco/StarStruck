@@ -111,7 +111,9 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	if(msgCount <= heapIndex)
 		heapIndex = heapIndex - msgCount;
 	
+	set_dacr(DomainAccessControlTable[0]);
 	queues[queueId].queueHeap[heapIndex] = message;
+	set_dacr(DomainAccessControlTable[currentThread->processId]);
 	queues[queueId].used++;
 	if(queues[queueId].receiveThreadQueue == NULL || queues[queueId].receiveThreadQueue->nextThread != NULL )
 		UnblockThread((ThreadQueue*)&queues[queueId].receiveThreadQueue, 0);

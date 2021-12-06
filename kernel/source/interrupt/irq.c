@@ -15,6 +15,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
+#include "memory/memory.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
 
@@ -62,6 +63,9 @@ s32 UnregisterEventHandler(u8 device)
 
 void irq_handler(Registers* regs)
 {
+	//set dacr so we can access everything
+	set_dacr(0x55555555);
+	
 	u32 enabled = read32(HW_ARMIRQMASK);
 	u32 flags = read32(HW_ARMIRQFLAG);
 	
