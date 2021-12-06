@@ -52,8 +52,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define NAND_FLAGS_RD	0x2000
 #define NAND_FLAGS_ECC	0x1000
 
-static u8 ipc_data[PAGE_SIZE] MEM2_BSS ALIGNED(32);
-static u8 ipc_ecc[ECC_BUFFER_ALLOC] MEM2_BSS ALIGNED(128); //128 alignment REQUIRED
+static u8 ipc_data[PAGE_SIZE] SRAM_BSS ALIGNED(32);
+static u8 ipc_ecc[ECC_BUFFER_ALLOC] SRAM_BSS ALIGNED(128); //128 alignment REQUIRED
 
 static volatile int irq_flag;
 static u32 last_page_read = 0;

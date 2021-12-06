@@ -69,13 +69,13 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 extern char __mem2_area_start[];
 static volatile u64 boot_titleID = 0;
-static volatile ipcreq* input_queue[IPC_IN_SIZE] ALIGNED(0x20) MEM2_BSS;
-static volatile ipcreq* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) MEM2_BSS;
+static volatile ipcreq* input_queue[IPC_IN_SIZE] ALIGNED(0x20) SRAM_BSS;
+static volatile ipcreq* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
 static u16 in_cnt = 0;
 static u16 out_cnt = 0;
 
 //code
-const ipc_infohdr __ipc_info ALIGNED(32) MEM2_RODATA = {
+const ipc_infohdr __ipc_info ALIGNED(32) SRAM_RODATA = {
 	.magic = "IPC",
 	.version = 1,
 	.mem2_boundary = __mem2_area_start,

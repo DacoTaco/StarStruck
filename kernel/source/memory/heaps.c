@@ -14,34 +14,34 @@
 
 #include "core/defines.h"
 #include "memory/heaps.h"
-
-extern u8 __modules_area_start[];
-extern u8 __mem2_area_start[];
-#define MEM_MODULES_START	((u32) __modules_area_start)
-#define MEM_MODULES_END		((u32) __mem2_area_start)
+#include "memory/memory.h"
+#include "interrupt/irq.h"
+#include "interrupt/threads.h"
 
 #define ALIGNED_BLOCK_HEADER_SIZE	((sizeof(heap_block) + 0x0F) & -0x10)
+#define MAX_HEAP 					0x10
 
-#define MAX_HEAP 0x10
-static heap_info heaps[MAX_HEAP] MEM2_BSS;
+static heap_info heaps[MAX_HEAP];
 
 s32 CreateHeap(void *ptr, u32 size)
 {
-	if(ptr == NULL || size < 0x30)
-		return -4;
-
-	u32 heap = (u32)ptr;
-	if(heap < MEM_MODULES_START || heap > MEM_MODULES_END || heap+size > MEM_MODULES_END)
-		return -4;
-	
+	s32 irq_state = irq_kill();
 	s8 heap_index = 0;
-	while(heap_index < MAX_HEAP && heaps[heap_index].heap != NULL)
+	
+	if(ptr == NULL || ((u32)ptr & 0x1f) != 0 || size < 0x30 || CheckMemoryPointer(ptr, size, 4, currentThread->processId, 0) < 0 )
 	{
-		heap_index++;
+		heap_index = -4;
+		goto restore_and_return;
 	}
 	
+	while(heap_index < MAX_HEAP && heaps[heap_index].heap != NULL)
+		heap_index++;
+	
 	if(heap_index >= MAX_HEAP)
-		return -5;
+	{
+		heap_index = -5;
+		goto restore_and_return;
+	}
 
 	heap_block* firstBlock = (heap_block*)ptr;
 	firstBlock->blockFlag = HEAP_INIT_FLAG;
@@ -53,13 +53,21 @@ s32 CreateHeap(void *ptr, u32 size)
 	heaps[heap_index].size = size;
 	heaps[heap_index].firstBlock = firstBlock;
 	
+restore_and_return:
+	irq_restore(irq_state);
 	return heap_index;
 }
 
 s32 DestroyHeap(s32 heapid)
 {
+	s32 irq_state = irq_kill();
+	s32 ret = 0;
+	
 	if(heapid < 0 || heapid > MAX_HEAP)
-		return -4;
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
 	
 	if(heaps[heapid].heap != NULL)
 	{
@@ -68,7 +76,9 @@ s32 DestroyHeap(s32 heapid)
 		heaps[heapid].firstBlock = NULL;
 	}
 	
-	return 0;
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
 }
 
 void* AllocateOnHeap(s32 heapid, u32 size)
@@ -78,12 +88,17 @@ void* AllocateOnHeap(s32 heapid, u32 size)
 
 void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 {
+	s32 irq_state = irq_kill();
+	u32 ret = 0;
+	
 	if(	heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].heap || 
 		size == 0 || heaps[heapid].size < size || alignment < 0x20)
-		return NULL;
+	{
+		goto restore_and_return;
+	}
 		
 	if(heaps[heapid].heap == NULL)
-		return NULL;
+		goto restore_and_return;
 	
 	//align size by 0x20
 	u32 alignedSize = (size + 0x1F) & -0x20;
@@ -108,7 +123,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	}
 	
 	if(blockToAllocate == NULL)
-		return NULL;
+		goto restore_and_return;
 	
 	heap_block* freeBlock = NULL;
 	//split up the block if its big enough to do so
@@ -151,11 +166,13 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	}
 	
 	//get pointer and clear it!
-	s8* ptr = (s8*)(currentBlock + 1);
-	if(ptr)
-		memset8(ptr, 0, size);
+	ret = (u32)(currentBlock + 1);
+	if(ret)
+		memset8((u8*)ret, 0, size);
 
-	return ptr;
+restore_and_return:
+	irq_restore(irq_state);
+	return (void*)ret;
 }
 
 int MergeNextBlockIfUnused(heap_block* parentBlock)
@@ -182,13 +199,22 @@ int MergeNextBlockIfUnused(heap_block* parentBlock)
 
 s32 FreeOnHeap(s32 heapid, void* ptr)
 {
+	s32 irq_state = irq_kill();
+	s32 ret = 0;
+	
 	//verify incoming parameters & if the heap is in use
 	if(heapid < 0 || heapid >= 0x10 || ptr == NULL || heaps[heapid].heap == NULL)
-		return -4;
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
 	
 	//verify the pointer address
 	if( ptr < (heaps[heapid].heap + sizeof(heap_block)) || ptr >= (heaps[heapid].heap + heaps[heapid].size) )
-		return -4;
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
 	
 	//verify the block that the pointer belongs to
 	heap_block* blockToFree = (heap_block*)(ptr-sizeof(heap_block));
@@ -197,7 +223,10 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		blockToFree = blockToFree->nextBlock;
 	
 	if(blockToFree == NULL || blockToFree->blockFlag != HEAP_INUSE_FLAG)
-		return -4;
+	{
+		ret = -4;
+		goto restore_and_return;
+	}
 	
 	heap_block* firstBlock = heaps[heapid].firstBlock;
 	heap_block* currBlock = firstBlock;
@@ -236,5 +265,7 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 	MergeNextBlockIfUnused(blockToFree);
 	MergeNextBlockIfUnused(blockToFree->prevBlock);
 
-	return 0;
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
 }

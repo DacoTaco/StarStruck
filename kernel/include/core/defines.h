@@ -8,6 +8,6 @@ Copyright (C) 2021		DacoTaco
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#define MEM2_BSS __attribute__ ((section (".bss.mem2")))
-#define MEM2_DATA __attribute__ ((section (".data.mem2")))
-#define MEM2_RODATA __attribute__ ((section (".rodata.mem2")))
+#define SRAM_BSS __attribute__ ((section (".bss")))
+#define SRAM_DATA __attribute__ ((section (".data")))
+#define SRAM_RODATA __attribute__ ((section (".rodata")))

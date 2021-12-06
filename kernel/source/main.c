@@ -71,7 +71,7 @@ void kernel_main( void )
 	gecko_printf("Mounting SD...\n");
 	fres = f_mount(0, &fatfs);*/
 
-	if (read32(0x0d800190) & 2) {
+	if (read32(HW_CLOCKS) & 2) {
 		gecko_printf("GameCube compatibility mode detected...\n");
 		vector = boot2_run(1, 0x101);
 		goto shutdown;
@@ -128,7 +128,7 @@ void InitialiseSystem( void )
 	set32(HW_EXICTRL, read32(HW_EXICTRL) | EXICTRL_ENABLE_EXI);
 	
 	//enable protection on our MEM2 addresses & SRAM
-	mem_protect(1, (void*)0x13620000, (void*)0x1FFFFFFF);
+	ProtectMemory(1, (void*)0x13620000, (void*)0x1FFFFFFF);
 	
 	//????
 	set32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
@@ -170,7 +170,8 @@ void InitialiseSystem( void )
 	set32(HW_ARMIRQMASK, 0);
 	set32(HW_ARMFIQMASK, 0);
 	
-	//TODO : Setup MMU , translation, memory cache, ...
+	gecko_printf("Configuring caches and MMU...\n");
+	InitiliseMemory();
 }
 
 u32 _main(void *base)
@@ -178,16 +179,14 @@ u32 _main(void *base)
 	(void)base;	
 	gecko_init();
 	gecko_printf("StarStruck %s loading\n", git_version);
+	
+	gecko_printf("Initializing exceptions...\n");
+	exception_initialize();
 
 	AhbFlushFrom(AHB_1);
 	AhbFlushTo(AHB_1);
 	
-	InitialiseSystem();
-	
-	gecko_printf("Initializing exceptions...\n");
-	exception_initialize();
-	gecko_printf("Configuring caches and MMU...\n");
-	mem_initialize();
+	InitialiseSystem();	
 
 	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));

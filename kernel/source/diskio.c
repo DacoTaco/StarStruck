@@ -13,11 +13,7 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #include "string.h"
 #include "sdmmc.h"
 
-#ifndef MEM2_BSS
-#define MEM2_BSS
-#endif
-
-static u8 buffer[512] MEM2_BSS ALIGNED(32);
+static u8 buffer[512] ALIGNED(32);
 
 // Initialize a Drive
 DSTATUS disk_initialize (BYTE drv) {

@@ -20,17 +20,20 @@ __excstack_size = 0x100;
 __swistack_size = 0x100;
 
 MEMORY {
-	sram			: ORIGIN = 0xFFFF0000, LENGTH = 62K
-	sram2			: ORIGIN = 0xFFFE0000, LENGTH = 16K
-	pagetable		: ORIGIN = 0xFFFE4000, LENGTH = 16K
-	modules			: ORIGIN = 0x13400000, LENGTH = 6912K
-	modules_stack	: ORIGIN = 0x13AC0000, LENGTH = 256K
-	mem2			: ORIGIN = 0x13F00000, LENGTH = 1M
+	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 62K
+	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
+	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
+	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K
+	modules_stack		: ORIGIN = 0x13AC0000, LENGTH = 256K
+	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
 __modules_area_start = ORIGIN(modules);
-__modules_area_size = LENGTH(modules);
-__modules_area_end = ORIGIN(modules) + LENGTH(modules);
+
+__kernel_heap_ptr = ORIGIN(kernel_heap);
+__kernel_heap_start = ORIGIN(kernel_heap);
+__kernel_heap_size = LENGTH(kernel_heap);
+__kernel_heap_end = ORIGIN(kernel_heap) + LENGTH(kernel_heap);
 
 __modules_stack_area_start = ORIGIN(modules_stack);
 __modules_stack_area_size = LENGTH(modules_stack);
@@ -40,22 +43,8 @@ __mem2_area_start = ORIGIN(mem2);
 __mem2_area_size = LENGTH(mem2);
 __mem2_area_end = ORIGIN(mem2) + LENGTH(mem2);
 
-__page_table = ORIGIN(pagetable);
-
 SECTIONS
 {
-	.rodata.mem2 :
-	{
-		*(.rodata.mem2)
-		. = ALIGN(4);
-	} >mem2
-
-	.data.mem2 :
-	{
-		*(.data.mem2)
-		. = ALIGN(4);
-	} >mem2
-
 	.bss.mem2 :
 	{
 		__bss2_start = . ;
@@ -63,11 +52,6 @@ SECTIONS
 		. = ALIGN(4);
 		__bss2_end = . ;
 	} >mem2
-	
-	.ipcinfo __mem2_area_end - 4 :
-	{
-		LONG(__ipc_info);
-	} >mem2	
 
 	.init :
 	{
@@ -94,7 +78,7 @@ SECTIONS
 		*(.rodata.*)
 		*(.gnu.linkonce.r*)
 		. = ALIGN(4);
-	} >sram2
+	} >sram_data
 
 	.data :
 	{
@@ -102,7 +86,7 @@ SECTIONS
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		. = ALIGN(4);
-	} >sram2
+	} >sram_data
 
 	.bss :
 	{
@@ -113,7 +97,7 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		__bss_end = . ;
-	} >sram2
+	} >sram_data
 
 	.stack :
 	{
@@ -134,14 +118,13 @@ SECTIONS
 		. = . +__swistack_size;
 		. = ALIGN(16);
 		__swistack_addr = .;
-	} >sram2
+	} >sram_data
 
 	/DISCARD/ :
 	{
 		*(.ARM.exidx*)
 		*(.ARM.extab*)
 	}
-
 }
 
 
