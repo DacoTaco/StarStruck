@@ -254,7 +254,7 @@ void boot2_init(void) {
 	}
 
 	// boot2 content flush would flush entire cache anyway so just do it all
-	dc_flushall();
+	DCFlushAll();
 	boot2_initialized = 1;
 }
 

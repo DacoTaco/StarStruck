@@ -70,22 +70,22 @@ void nand_irq(void)
 		switch (current_request.req) {
 			case IPC_NAND_GETID:
 				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
-				dc_flushrange((void*)current_request.args[0], 0x40);
+				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_STATUS:
 				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
-				dc_flushrange((void*)current_request.args[0], 0x40);
+				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_READ:
 				err = nand_correct(last_page_read, ipc_data, ipc_ecc);
 
 				if (current_request.args[1] != 0xFFFFFFFF) {
 					memcpy32((void*)current_request.args[1], ipc_data, PAGE_SIZE);
-					dc_flushrange((void*)current_request.args[1], PAGE_SIZE);
+					DCFlushRange((void*)current_request.args[1], PAGE_SIZE);
 				}
 				if (current_request.args[2] != 0xFFFFFFFF) {
 					memcpy32((void*)current_request.args[2], ipc_ecc, PAGE_SPARE_SIZE);
-					dc_flushrange((void*)current_request.args[2], PAGE_SPARE_SIZE);
+					DCFlushRange((void*)current_request.args[2], PAGE_SPARE_SIZE);
 				}
 				break;
 			case IPC_NAND_ERASE:
@@ -157,7 +157,7 @@ void nand_get_id(u8 *idbuf) {
 	irq_flag = 0;
 	__nand_set_address(0,0);
 
-	dc_invalidaterange(idbuf, 0x40);
+	DCInvalidateRange(idbuf, 0x40);
 
 	__nand_setup_dma(idbuf, (u8 *)-1);
 	nand_send_command(NAND_CHIPID, 1, NAND_FLAGS_IRQ | NAND_FLAGS_RD, 0x40);
@@ -167,7 +167,7 @@ void nand_get_status(u8 *status_buf) {
 	irq_flag = 0;
 	status_buf[0]=0;
 
-	dc_invalidaterange(status_buf, 0x40);
+	DCInvalidateRange(status_buf, 0x40);
 
 	__nand_setup_dma(status_buf, (u8 *)-1);
 	nand_send_command(NAND_GETSTATUS, 0, NAND_FLAGS_IRQ | NAND_FLAGS_RD, 0x40);
@@ -179,8 +179,8 @@ void nand_read_page(u32 pageno, void *data, void *ecc) {
 	__nand_set_address(0, pageno);
 	nand_send_command(NAND_READ_PRE, 0x1f, 0, 0);
 
-	if (((s32)data) != -1) dc_invalidaterange(data, PAGE_SIZE);
-	if (((s32)ecc) != -1)  dc_invalidaterange(ecc, ECC_BUFFER_SIZE);
+	if (((s32)data) != -1) DCInvalidateRange(data, PAGE_SIZE);
+	if (((s32)ecc) != -1)  DCInvalidateRange(ecc, ECC_BUFFER_SIZE);
 
 	__nand_wait();
 	__nand_setup_dma(data, ecc);
@@ -207,8 +207,8 @@ void nand_write_page(u32 pageno, void *data, void *ecc) {
 		gecko_printf("Error: nand_write to page %d forbidden\n", pageno);
 		return;
 	}
-	if (((s32)data) != -1) dc_flushrange(data, PAGE_SIZE);
-	if (((s32)ecc) != -1)  dc_flushrange(ecc, PAGE_SPARE_SIZE);
+	if (((s32)data) != -1) DCFlushRange(data, PAGE_SIZE);
+	if (((s32)ecc) != -1)  DCFlushRange(ecc, PAGE_SPARE_SIZE);
 	AhbFlushTo(AHB_NAND);
 	__nand_set_address(0, pageno);
 	__nand_setup_dma(data, ecc);

@@ -564,9 +564,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		cmd->c_buf = cmd->c_data;
 
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			dc_invalidaterange(cmd->c_data, cmd->c_datalen);
+			DCInvalidateRange(cmd->c_data, cmd->c_datalen);
 		} else {
-			dc_flushrange(cmd->c_data, cmd->c_datalen);
+			DCFlushRange(cmd->c_data, cmd->c_datalen);
 			AhbFlushTo(AHB_SDHC);
 		}
 		HWRITE4(hp, SDHC_DMA_ADDR, (u32)cmd->c_data);

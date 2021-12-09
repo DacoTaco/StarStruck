@@ -37,19 +37,8 @@ void gprintf( const char *str, ... )
 	s32 size = 0;
 	memset(astr,0,sizeof(astr));
 
-	//add time & date to string
-	time_t LeTime;
-	//time( &LeTime );
-	// Current date/time based on current system
-	LeTime = time(0);
-	struct tm * localtm;
-
-	// Convert now to tm struct for local timezone
-	localtm = localtime(&LeTime);
-	//cout << "The local date and time is: " << asctime(localtm) << endl;
 	char nstr[2048];
 	memset(nstr,0,2048);
-	//snprintf(nstr,2048, "%02d:%02d:%02d : %s\r\n",localtm->tm_hour,localtm->tm_min,localtm->tm_sec, str);
 	snprintf(nstr,2048, "%s", str);
 	
 	va_list ap;

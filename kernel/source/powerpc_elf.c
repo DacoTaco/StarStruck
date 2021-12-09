@@ -135,7 +135,7 @@ int powerpc_boot_file(const char *path)
 		phdr++;
 	}
 
-	dc_flushall();
+	DCFlushAll();
 
 	gecko_printf("ELF load done, booting PPC...\n");
 	powerpc_upload_stub(elfhdr.e_entry);
@@ -203,7 +203,7 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 		phdr++;
 	}
 
-	dc_flushall();
+	DCFlushAll();
 
 	gecko_printf("ELF load done, booting PPC...\n");
 	powerpc_upload_stub(ehdr->e_entry);

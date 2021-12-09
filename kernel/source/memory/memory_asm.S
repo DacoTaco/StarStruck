@@ -118,13 +118,13 @@ BEGIN_ASM_FUNC _dc_flush
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC _dc_inval
-	mov		r0, #0
-	mcr		p15, 0, r0, c7, c6, 0
+BEGIN_ASM_FUNC _dc_invalidate
+	mrc		p15, 0, pc, c7, c14, 3
+	bne		_dc_invalidate
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC _ic_inval
+BEGIN_ASM_FUNC _ic_invalidate
 	mov		r0, #0
 	mcr		p15, 0, r0, c7, c5, 0
 	bx		lr

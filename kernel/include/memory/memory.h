@@ -15,12 +15,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "memory/ahb.h"
 #include "interrupt/threads.h"
 
-#define ALIGN_FORWARD(x,align) \
-	((typeof(x))((((u32)(x)) + (align) - 1) & (~(align-1))))
-
-#define ALIGN_BACKWARD(x,align) \
-	((typeof(x))(((u32)(x)) & (~(align-1))))
-
 typedef struct
 {
 	u32 physicalAddress;
@@ -53,14 +47,11 @@ void ProtectMemory(int enable, void *start, void *end);
 u32 MapMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
 s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);
+void DCInvalidateRange(void* start, u32 size);
+void DCFlushRange(void *start, u32 size);
+void DCFlushAll(void);
+void ICInvalidateAll(void);
 
-
-void dc_flushrange(const void *start, u32 size);
-void dc_invalidaterange(void *start, u32 size);
-void dc_flushall(void);
-void ic_invalidateall(void);
-
-void mem_setswap(int enable);
 void mem_shutdown(void);
 
 u32 dma_addr(void *);

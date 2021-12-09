@@ -144,8 +144,8 @@ void ipc_process_input(void)
 	s32 return_value = IOS_EINVAL;	
 	u8 reply = 1;
 	/*ios_module* module = NULL;
-	dc_flushrange((u32*)req, sizeof(ipcreq));
-	dc_invalidaterange((u32*)req, sizeof(ipcreq));
+	DCFlushRange((u32*)req, sizeof(ipcreq));
+	DCInvalidateRange((u32*)req, sizeof(ipcreq));
 	
 	if(req->cmd == IOS_OPEN)
 	{
@@ -192,9 +192,9 @@ void ipc_process_input(void)
 	}*/
 	
 	write32((u32)&req->result, return_value);
-	dc_flushrange((void*)req, sizeof(ipcreq));
-	dc_invalidaterange((void*)req, sizeof(ipcreq));
-	ic_invalidateall();
+	DCFlushRange((void*)req, sizeof(ipcreq));
+	DCInvalidateRange((void*)req, sizeof(ipcreq));
+	ICInvalidateAll();
 
 	if(reply)
 		ipc_reply((ipcreq*)req);

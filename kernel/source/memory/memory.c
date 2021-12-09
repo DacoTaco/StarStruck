@@ -58,11 +58,15 @@ Copyright (C) 2021			DacoTaco
 #define CR_DCACHE					(1 << 2)
 #define CR_ICACHE					(1 << 12)
 
+#define MEMBLOCK_COUNT(start, end)	( (end - start) / LINESIZE)
+#define ALIGN_FORWARD(addr)			((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(LINESIZE-1))))
+#define ALIGN_BACKWARD(addr)		((typeof(addr))(((u32)(addr)) & (~(LINESIZE-1))))
+
 void _dc_inval_entries(void *start, int count);
 void _dc_flush_entries(const void *start, int count);
 void _dc_flush(void);
-void _ic_inval(void);
-void _dc_inval(void);
+void _ic_invalidate(void);
+void _dc_invalidate(void);
 
 //the variables defined in the linker script are variables containing the value of the address, not a pointer to the address
 //but we need pointers, so casting the variables to an array (so its considered an array starting at the address) and then to pointer seems to work
@@ -106,32 +110,27 @@ static ProcessMemorySection HWRegistersMemoryMaps[] =
 	{0x0B,	{ 0x0D080000, 0x0D080000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 };
 
-void dc_flushrange(const void *start, u32 size)
+void DCFlushRange(void *start, u32 size)
 {
+	if(size == 0)
+		return;
+	
 	u32 cookie = irq_kill();
-	if(size > 0x4000) {
-		_dc_flush();
-	} else {
-		void *end = ALIGN_FORWARD(((u8*)start) + size, LINESIZE);
-		start = ALIGN_BACKWARD(start, LINESIZE);
-		_dc_flush_entries(start, (end - start) / LINESIZE);
+	if(size <= 0x4000)
+	{
+		start = ALIGN_BACKWARD(start);
+		void* end = ALIGN_FORWARD(((u8*)start) + size);
+		_dc_flush_entries(start, MEMBLOCK_COUNT(start, end) );
 	}
+	else
+		_dc_flush();
+	
 	flush_memory();
 	_ahb_flush_from(AHB_1);
 	irq_restore(cookie);
 }
 
-void dc_invalidaterange(void *start, u32 size)
-{
-	u32 cookie = irq_kill();
-	void *end = ALIGN_FORWARD(((u8*)start) + size, LINESIZE);
-	start = ALIGN_BACKWARD(start, LINESIZE);
-	_dc_inval_entries(start, (end - start) / LINESIZE);
-	AhbFlushTo(AHB_STARLET);
-	irq_restore(cookie);
-}
-
-void dc_flushall(void)
+void DCFlushAll(void)
 {
 	u32 cookie = irq_kill();
 	_dc_flush();
@@ -140,22 +139,38 @@ void dc_flushall(void)
 	irq_restore(cookie);
 }
 
-void ic_invalidateall(void)
+void DCInvalidateRange(void* start, u32 size)
 {
+	u32 pid = currentThread->processId;
+	if(CheckMemoryPointer(start, size, 4, pid, 0) != 0)
+	{
+		gecko_printf("bad invalidate requested: %08x (%d)\n", (u32)start, size);
+		return;
+	}
+
+	if(size == 0)
+		return;
+	
 	u32 cookie = irq_kill();
-	_ic_inval();
+	if(size <= 0x4000)
+	{
+		start = ALIGN_BACKWARD(start);
+		void* end = ALIGN_FORWARD(((u8*)start) + size);
+		_dc_inval_entries(start, MEMBLOCK_COUNT(start, end) );
+	}
+	else
+		_dc_invalidate();
+	
 	AhbFlushTo(AHB_STARLET);
 	irq_restore(cookie);
 }
 
-void mem_setswap(int enable)
+void ICInvalidateAll(void)
 {
-	u32 d = read32(HW_MEMMIRR);
-
-	if((d & 0x20) && !enable)
-		write32(HW_MEMMIRR, d & ~0x20);
-	if((!(d & 0x20)) && enable)
-		write32(HW_MEMMIRR, d | 0x20);
+	u32 cookie = irq_kill();
+	_ic_invalidate();
+	AhbFlushTo(AHB_STARLET);
+	irq_restore(cookie);
 }
 
 u32 dma_addr(void *p)
@@ -185,8 +200,8 @@ void mem_shutdown(void)
 	u32 cr = get_cr();
 	cr &= ~(CR_MMU | CR_DCACHE | CR_ICACHE); //disable ICACHE, DCACHE, MMU
 	set_cr(cr);
-	_ic_inval();
-	_dc_inval();
+	_ic_invalidate();
+	_dc_invalidate();
 	tlb_invalidate();
 	irq_restore(cookie);
 }
@@ -249,7 +264,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	
 	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
 	*page = translationBase | (memorySection->physicalAddress & 0xFFF00000) | AP_VALUE(memorySection->accessRights) | PAGE_DOMAIN(memorySection->domain);
-	dc_flushrange(page, 4);
+	DCFlushRange(page, 4);
 	
 	memorySection->size = memorySection->size - 0x100000;
 	memorySection->physicalAddress = memorySection->physicalAddress + 0x100000;
@@ -314,7 +329,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		type |= WRITEBACK_CACHE;
 
 	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] = (memorySection->physicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
-	dc_flushrange(pageValue, 0x1000);
+	DCFlushRange(pageValue, 0x1000);
 	memorySection->size -= 0x1000;
 	memorySection->physicalAddress += 0x1000;
 	memorySection->virtualAddress += 0x1000;
@@ -501,8 +516,8 @@ s32 InitiliseMemory(void)
 
 	//Disable MMU+Cache & invalidate all caches & tlb
 	set_cr(get_cr() & ~(CR_DCACHE | CR_MMU | CR_ICACHE));
-	_ic_inval();
-	_dc_inval();
+	_ic_invalidate();
+	_dc_invalidate();
 	tlb_invalidate();
 
 	memset32(heapStart, 0, heapEnd - heapStart);
