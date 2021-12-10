@@ -193,6 +193,22 @@ u32 _main(void *base)
 	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 	
+	//currently unknown if these values are used in the kernel itself.
+	//if they are, these need to be replaced with actual stuff from the linker script!
+	write32(MEM1_MEM2PHYSICALSIZE, 0x4000000);
+	write32(MEM1_MEM2SIMULATESIZE, 0x4000000);
+	write32(MEM1_MEM2INITLOW, MEM2_PHY2VIRT(0x800));
+	write32(MEM1_MEM2INITHIGH, MEM2_PHY2VIRT(0x135e0000));
+	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT(0x135e0000));
+	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT(0x13600000));
+	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT(0x13600000));
+	write32(MEM1_3148, MEM2_PHY2VIRT(0x13600000));
+	write32(MEM1_314C, MEM2_PHY2VIRT(0x13620000));
+	DCFlushRange((void*)0x00003100, 0x68);
+	gecko_printf("Updated DDR settings in lomem for current map\n");
+	
+	//init&start main code next : 
+	//-------------------------------
 	//init thread context handles
 	InitializeThreadContext();
 	

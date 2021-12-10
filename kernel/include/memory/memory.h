@@ -11,6 +11,19 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
+#define MEM2_PHY2VIRT(addr)		( addr | 0x80000000 )
+#define MEM1_BASE				0x00000000
+
+#define MEM1_MEM2PHYSICALSIZE	( MEM1_BASE | 0x3118 )
+#define MEM1_MEM2SIMULATESIZE	( MEM1_BASE | 0x311C )
+#define MEM1_MEM2BAT			( MEM1_BASE | 0x3120 )
+#define MEM1_MEM2INITLOW		( MEM1_BASE | 0x3124 )
+#define MEM1_MEM2INITHIGH		( MEM1_BASE | 0x3128 )
+#define MEM1_IOSHEAPLOW			( MEM1_BASE | 0x3130 )
+#define MEM1_IOSHEAPHIGH		( MEM1_BASE | 0x3134 )
+#define MEM1_3148				( MEM1_BASE | 0x3148 )
+#define MEM1_314C				( MEM1_BASE | 0x314C )
+
 #include "types.h"
 #include "memory/ahb.h"
 #include "interrupt/threads.h"
