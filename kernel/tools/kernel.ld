@@ -24,20 +24,19 @@ MEMORY {
 	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
 	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
 	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K
-	modules_stack		: ORIGIN = 0x13AC0000, LENGTH = 256K
+	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
 	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
 __modules_area_start = ORIGIN(modules);
 
-__kernel_heap_ptr = ORIGIN(kernel_heap);
 __kernel_heap_start = ORIGIN(kernel_heap);
 __kernel_heap_size = LENGTH(kernel_heap);
 __kernel_heap_end = ORIGIN(kernel_heap) + LENGTH(kernel_heap);
 
-__modules_stack_area_start = ORIGIN(modules_stack);
-__modules_stack_area_size = LENGTH(modules_stack);
-__modules_stack_area_end = ORIGIN(modules_stack) + LENGTH(modules_stack);
+__thread_stacks_area_start = ORIGIN(thread_stacks);
+__thread_stacks_area_size = LENGTH(thread_stacks);
+__thread_stacks_area_end = ORIGIN(thread_stacks) + LENGTH(thread_stacks);
 
 __mem2_area_start = ORIGIN(mem2);
 __mem2_area_size = LENGTH(mem2);

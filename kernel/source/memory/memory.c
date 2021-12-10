@@ -68,13 +68,12 @@ void _dc_flush(void);
 void _ic_invalidate(void);
 void _dc_invalidate(void);
 
-//the variables defined in the linker script are variables containing the value of the address, not a pointer to the address
-//but we need pointers, so casting the variables to an array (so its considered an array starting at the address) and then to pointer seems to work
-extern const u32 __kernel_heap_end[];
-extern const u32 __kernel_heap_ptr[];
+//the variables defined in the linker script are variables containing the value of the address
 extern const u32 __kernel_heap_size;
-u8* heapStart = (u8*)__kernel_heap_ptr;
-const u8* heapEnd = (u8*)__kernel_heap_end;
+extern const void* __kernel_heap_start;
+extern const void* __kernel_heap_end;
+u8* heapCurrent = (u8*)&__kernel_heap_start;
+const u8* heapEnd = (u8*)&__kernel_heap_end;
 
 //the pagetable for the mmu's translation table base register MUST be 0x4000 (16KB aligned) !
 //this is (kinda) ensured by having the heap 16KB aligned and this being the first malloc
@@ -89,7 +88,7 @@ static MemorySection KernelMemoryMaps[] =
 	{ 0x13A70000, 0x13A70000, 0x00020000, 0x0000000F, AP_NOUSER, 0x00000001 }, //    ???
 	{ 0x13AC0000, 0x13AC0000, 0x00020000, 0x0000000F, AP_NOUSER, 0x00000001 }, //Thread stacks
 	{ 0x0D800000, 0x0D800000, 0x000D0000, 0x0000000F, AP_ROUSER, 0x00000000 }, //Hardware registers(AHB mirror)
-	{ 0x00000000, 0x00000000, 0x04000000, 0x00000008, AP_RWUSER, 0x00000001 }, //    ???
+	{ 0x00000000, 0x00000000, 0x04000000, 0x00000008, AP_RWUSER, 0x00000001 }, //MEM1 + ???
 	{ 0x10000000, 0x10000000, 0x03600000, 0x00000008, AP_RWUSER, 0x00000001 }, //MEM2
 	{ 0x13870000, 0x13870000, 0x00030000, 0x0000000F, AP_RWUSER, 0x00000000 }, //    ???
 	{ 0x13600000, 0x13600000, 0x00020000, 0x0000000F, AP_RWUSER, 0x00000001 }, //    ???
@@ -208,7 +207,7 @@ void mem_shutdown(void)
 
 void* kmalloc(KernelMemoryType type)
 {
-	u8* ptr = heapStart;
+	u8* ptr = heapCurrent;
 	u32 size = 0;
 	
 	switch(type)
@@ -230,12 +229,12 @@ void* kmalloc(KernelMemoryType type)
 	
 	if(ptrEnd > heapEnd)
 	{
-		heapStart = ptrEnd;
+		heapCurrent = ptrEnd;
 		return NULL;
 	}
 	
 	size = (ptrEnd - ptr);
-	heapStart = ptrEnd;
+	heapCurrent = ptrEnd;
 	memset8(ptr, 0, size);
 	return ptr;
 }
@@ -520,7 +519,7 @@ s32 InitiliseMemory(void)
 	_dc_invalidate();
 	tlb_invalidate();
 
-	memset32(heapStart, 0, heapEnd - heapStart);
+	memset32(heapCurrent, 0, heapEnd - heapCurrent);
 	gecko_printf("MEM: mapping sections\n");
 	MemoryTranslationTable = (u32*)kmalloc(PageTable);	
 	if(MemoryTranslationTable == NULL)

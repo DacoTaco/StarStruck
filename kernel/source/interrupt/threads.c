@@ -16,11 +16,15 @@
 #include "interrupt/threads.h"
 #include "memory/memory.h"
 
-#define BASE_STACKADDR 	0x13AC0400
+extern const void* __thread_stacks_area_start;
+extern const void* __thread_stacks_area_end;
+extern const u32 __kernel_heap_size;
 #define STACK_SIZE		0x400
 
+u32 ProcessUID[MAX_PROCESSES] = { 0 };
+u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
-ThreadQueue mainQueue ALIGNED(0x10);
+ThreadQueue mainQueue ALIGNED(0x10) = { &threads[0] };
 ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread ALIGNED(0x10);
 
@@ -34,12 +38,19 @@ void _thread_end()
 void InitializeThreadContext()
 {
 	//Initilize thread structures & set stack pointers
-	
-	mainQueuePtr->nextThread = &threads[0];
-	for(int i = 0; i < MAX_THREADS; i++)
+	for(s16 i = 0; i < MAX_PROCESSES; i++)
 	{
+		ProcessUID[i] = i;
+		ProcessGID[i] = i;
+	}
+
+	memset8((u8*)&__thread_stacks_area_start, 0xA5, (u32)&__thread_stacks_area_end - (u32)&__thread_stacks_area_start);
+
+	for(s16 i = 0; i < MAX_THREADS; i++)
+	{
+		//IOS clears the thread structure on startup, we do it on initalize
 		memset32(&threads[i], 0 , sizeof(ThreadInfo));
-		threads[i].defaultThreadStack = BASE_STACKADDR + (STACK_SIZE*i);
+		threads[i].defaultThreadStack = ((u32)&__thread_stacks_area_start) + (STACK_SIZE*(i+1));
 	}
 }
 
