@@ -192,6 +192,9 @@ u32 _main(void *base)
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
 	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
+
+	IrqInit();
+	IpcInit();
 	
 	//currently unknown if these values are used in the kernel itself.
 	//if they are, these need to be replaced with actual stuff from the linker script!

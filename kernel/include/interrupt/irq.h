@@ -31,6 +31,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQF_TIMER	(1<<IRQ_TIMER)
 #define IRQF_NAND	(1<<IRQ_NAND)
 #define IRQF_AES	(1<<IRQ_AES)
+#define IRQF_SHA1	(1<<IRQ_SHA1)
 #define IRQF_SDHC	(1<<IRQ_SDHC)
 #define IRQF_GPIO1B	(1<<IRQ_GPIO1B)
 #define IRQF_GPIO1	(1<<IRQ_GPIO1)
@@ -53,6 +54,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQ_ALARM_MS2REG(x)	(1898 * x)
 #define MAX_DEVICE			0x20
 
+void IrqInit(void);
 void irq_initialize(void);
 void irq_shutdown(void);
 

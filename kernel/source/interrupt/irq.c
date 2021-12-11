@@ -27,6 +27,13 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 static u32 _alarm_frequency = 0;
 void irq_setup_stack(void);
 
+void IrqInit(void)
+{
+	//enable timer, nand, aes, sha1, reset & unknown12 interrupts
+	write32(HW_ARMIRQMASK, IRQF_TIMER | IRQF_NAND | IRQF_AES | IRQF_SHA1 | IRQF_UNKN12 | IRQF_RESET);
+	set32(HW_DIFLAGS, 6);
+}
+
 void irq_initialize(void)
 {
 	irq_setup_stack();

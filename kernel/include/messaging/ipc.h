@@ -55,6 +55,8 @@ typedef const struct {
 	u32 ipc_out_size;
 } ipc_infohdr;
 
+void IpcInit(void);
+
 void ipc_irq(void);
 void ipc_send_ack(void);
 void ipc_reply(ipcreq* req);

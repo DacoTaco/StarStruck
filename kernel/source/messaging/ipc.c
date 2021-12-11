@@ -228,6 +228,11 @@ void ipc_irq(void)
 		gecko_printf("IPC: IRQ but no bell!\n");
 }
 
+void IpcInit(void)
+{
+	//init ipc interrupts
+	write32(HW_IPC_ARMCTRL, ( IPC_ARM_IX1 | IPC_ARM_IX2 ));
+}
 void ipc_initialize(void)
 {
 	write32(HW_IPC_ARMMSG, 0);
