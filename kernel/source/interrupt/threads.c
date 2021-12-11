@@ -10,6 +10,7 @@
 
 #include <ios/processor.h>
 #include <ios/gecko.h>
+#include <ios/errno.h>
 
 #include "core/defines.h"
 #include "interrupt/irq.h"
@@ -476,6 +477,64 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 	
 return_error:
 	ret = -4;
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
+}
+
+s32 GetUID(void)
+{
+	return ProcessUID[currentThread->processId];
+}
+
+s32 SetUID(u32 pid, u32 uid)
+{
+	s32 ret = IPC_SUCCESS;
+	s32 irq_state = irq_kill();
+	
+	if(pid >= MAX_PROCESSES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;
+	}
+	
+	if(currentThread->processId >= 2)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+	
+	ProcessUID[pid] = uid;
+	
+restore_and_return:
+	irq_restore(irq_state);
+	return ret;
+}
+
+s32 GetGID(void)
+{
+	return ProcessGID[currentThread->processId];
+}
+
+s32 SetGID(u32 pid, u32 gid)
+{
+	s32 ret = IPC_SUCCESS;
+	s32 irq_state = irq_kill();
+	
+	if(pid >= MAX_PROCESSES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;
+	}
+	
+	if(currentThread->processId >= 2)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+	
+	ProcessGID[pid] = gid;
+	
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;

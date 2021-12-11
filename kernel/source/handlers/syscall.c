@@ -64,10 +64,10 @@ static u32 syscall_handlers[] = {
 	(u32)0x00000000,					//0x0028
 	(u32)0x00000000,					//0x0029
 	(u32)0x00000000,					//0x002A
-	(u32)0x00000000,					//0x002B
-	(u32)0x00000000,					//0x002C
-	(u32)0x00000000,					//0x002D
-	(u32)0x00000000,					//0x002E
+	(u32)SetUID,						//0x002B
+	(u32)GetUID,						//0x002C
+	(u32)SetGID,						//0x002D
+	(u32)GetGID,						//0x002E
 	(u32)AhbFlushFrom,					//0x002F
 	(u32)AhbFlushTo,					//0x0030
 	(u32)0x00000000,					//0x0031

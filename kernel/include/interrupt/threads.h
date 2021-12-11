@@ -79,5 +79,8 @@ s32 GetThreadID(void);
 s32 GetProcessID(void);
 s32 GetThreadPriority(u32 threadId);
 s32 SetThreadPriority(u32 threadId, s32 priority);
-
+s32 GetUID(void);
+s32 SetUID(u32 pid, u32 uid);
+s32 GetGID(void);
+s32 SetGID(u32 pid, u32 gid);
 #endif
