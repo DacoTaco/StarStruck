@@ -13,18 +13,24 @@
 #include "handlers/exception.h"
 #include "handlers/syscall.h"
 
-void undf_handler(unsigned instruction, unsigned *regs)
+s32 undf_handler(unsigned instruction, unsigned *regs)
 {
 	//Nintendo's implementation of a syscall is actually an invalid instruction. 
 	//the instruction is 0xE6000010 | (syscall_num << 5).
 	//so if we do the reverse, we have a syscall
 	u16 syscall = (instruction & 0xE6007FE0) >> 5;
-	if( syscall > 0 )
+	if( syscall < 0xFF )
 	{
 		gecko_printf("Nintendo syscall detected\n");
-		return handle_syscall(syscall & 0xFF, regs);
+		s32 ret = handle_syscall(syscall & 0xFF, (Registers*)regs);
+		
+		if(ret != -666)
+			return ret;
+		else
+			gecko_printf("syscall handle failed, handling exception...\n");
 	}
 			
 	//actual invalid instruction lol.
 	exc_handler(1, 0, regs);
+	return 0;
 }

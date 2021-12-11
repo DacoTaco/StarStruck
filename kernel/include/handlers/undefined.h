@@ -12,7 +12,7 @@
 #define __UNDEFINED_H__
 
 void undf_setup_stack(void);
-void undf_handler(unsigned instruction, unsigned *regs);
+s32 undf_handler(unsigned instruction, unsigned *regs);
 
 #endif
 

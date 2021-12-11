@@ -11,6 +11,8 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
-void handle_syscall(u16 syscall, unsigned *parameters);
+#include "interrupt/threads.h"
+
+s32 handle_syscall(u16 syscall, Registers* registers);
 
 #endif
