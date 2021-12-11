@@ -12,6 +12,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 
 #include <ios/processor.h>
 #include <ios/gecko.h>
+#include <ios/errno.h>
 
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
@@ -53,12 +54,12 @@ u32 GetTimerValue(void)
 
 s32 RegisterEventHandler(u8 device, int queueid, int message)
 {
-	return -4;
+	return IPC_EINVAL;
 }
 
 s32 UnregisterEventHandler(u8 device)
 {
-	return -4;
+	return IPC_EINVAL;
 }
 
 void irq_handler(Registers* regs)

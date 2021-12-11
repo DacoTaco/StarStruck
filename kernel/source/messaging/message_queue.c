@@ -8,6 +8,8 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <ios/errno.h>
+
 #include "core/defines.h"
 #include "interrupt/irq.h"
 #include "interrupt/threads.h"
@@ -25,13 +27,13 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 	
 	if(ptr == NULL || *ptr == NULL)
 	{
-		queueId = -4;
+		queueId = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
 	if(CheckMemoryPointer(ptr, numberOfMessages << 2, 4, currentThread->processId, 0) < 0)
 	{
-		queueId = -4;
+		queueId = IPC_EINVAL;
 		goto restore_and_return;
 	}	
 	
@@ -44,7 +46,7 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 	
 	if(queueId >= MAX_QUEUE)
 	{
-		queueId = -5;
+		queueId = IPC_EMAX;
 		goto restore_and_return;
 	}
 	
@@ -71,13 +73,13 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	
 	if(queueId >= MAX_QUEUE || flags > 2)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
 	if(queues[queueId].processId != currentThread->processId)
 	{
-		ret = -1;
+		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	
@@ -87,7 +89,7 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	{
 		if (flags != BlockThread) 
 		{
-			ret = -8;
+			ret = IPC_EQUEUEFULL;
 			goto restore_and_return;
 		}
 				
@@ -132,7 +134,7 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 
 	if(queueId >= MAX_QUEUE || flags > 2)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -142,7 +144,7 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 	
 	if(queues[queueId].processId != currentThread->processId)
 	{
-		ret = -1;
+		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	
@@ -195,13 +197,13 @@ s32 DestroyMessageQueue(s32 queueId)
 	
 	if(queueId < 0 || queueId > MAX_QUEUE)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
 	if(queues[queueId].processId != currentThread->processId)
 	{
-		ret = -1;
+		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <ios/processor.h>
 #include <ios/gecko.h>
+#include <ios/errno.h>
 
 #include "core/defines.h"
 #include "memory/heaps.h"
@@ -30,7 +31,7 @@ s32 CreateHeap(void *ptr, u32 size)
 	
 	if(ptr == NULL || ((u32)ptr & 0x1f) != 0 || size < 0x30 || CheckMemoryPointer(ptr, size, 4, currentThread->processId, 0) < 0 )
 	{
-		heap_index = -4;
+		heap_index = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -39,7 +40,7 @@ s32 CreateHeap(void *ptr, u32 size)
 	
 	if(heap_index >= MAX_HEAP)
 	{
-		heap_index = -5;
+		heap_index = IPC_EMAX;
 		goto restore_and_return;
 	}
 
@@ -65,7 +66,7 @@ s32 DestroyHeap(s32 heapid)
 	
 	if(heapid < 0 || heapid > MAX_HEAP)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -205,14 +206,14 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 	//verify incoming parameters & if the heap is in use
 	if(heapid < 0 || heapid >= 0x10 || ptr == NULL || heaps[heapid].heap == NULL)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
 	//verify the pointer address
 	if( ptr < (heaps[heapid].heap + sizeof(heap_block)) || ptr >= (heaps[heapid].heap + heaps[heapid].size) )
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -224,7 +225,7 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 	
 	if(blockToFree == NULL || blockToFree->blockFlag != HEAP_INUSE_FLAG)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	

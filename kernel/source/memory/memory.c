@@ -11,6 +11,7 @@ Copyright (C) 2021			DacoTaco
 
 #include <ios/processor.h>
 #include <ios/gecko.h>
+#include <ios/errno.h>
 
 #include "core/hollywood.h"
 #include "memory/memory.h"
@@ -254,7 +255,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	*/
 	
 	if(memorySection == NULL)
-		return -1;
+		return IPC_EINVAL;
 	
 	//either map section as regular section, or section with writeback cache & buffer enabled
 	u32 translationBase = SECTION_PAGE;
@@ -294,7 +295,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	*/
 	
 	if(memorySection == NULL)
-		return -1;
+		return IPC_EINVAL;
 	
 	u32** entry = (u32**)&MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
 	u32* pageValue = *entry;
@@ -302,14 +303,14 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	{
 		pageValue = (u32*)kmalloc(CoursePage);
 		if(pageValue == NULL)
-			return -22;
+			return IPC_ENOMEM;
 		
 		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->domain) | COURSE_PAGE);
 	}
 	else
 	{
 		if(mode == 0 && (PAGE_MASK & (u32)pageValue) != COURSE_PAGE)
-			return -4;
+			return IPC_EINVAL;
 		else if (mode != 0)
 		{
 			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->domain) | COURSE_PAGE);
@@ -320,7 +321,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	}
 	
 	if(mode == 0 && pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] != 0)
-		return -4;
+		return IPC_EINVAL;
 	
 	u32 accessRights = memorySection->accessRights;
 	u32 type = COURSE_SECTION;
@@ -339,7 +340,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 u32 MapMemory(MemorySection* entry)
 {
 	if(entry == NULL)
-		return -1;
+		return IPC_EINVAL;
 	
 	MemorySection memorySection;
 	memcpy32(&memorySection, entry, sizeof(MemorySection));
@@ -355,7 +356,7 @@ u32 MapMemory(MemorySection* entry)
 			ret = MapMemoryAsSection(&memorySection);
 		else if( ((memorySection.virtualAddress & 0xFFF) != 0 || (memorySection.physicalAddress & 0xFFF) != 0) || memorySection.size < 0x1000)
 		{
-			ret = -4;
+			ret = IPC_EINVAL;
 			break;
 		}
 		else
@@ -472,7 +473,7 @@ s32 CheckMemoryBlock(u8* ptr, u32 type, s32 pid, s32 domainPid, u32* blockSize)
 	
 return_error:
 	gecko_printf("failed pointer check: 0x%08X\n", (u32)ptr);
-	return -1;
+	return IPC_EACCES;
 }
 
 s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
@@ -524,7 +525,7 @@ s32 InitiliseMemory(void)
 	MemoryTranslationTable = (u32*)kmalloc(PageTable);	
 	if(MemoryTranslationTable == NULL)
 	{
-		ret = -0x16;
+		ret = IPC_ENOMEM;
 		goto ret_init;
 	}
 	

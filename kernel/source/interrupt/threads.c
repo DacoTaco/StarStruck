@@ -198,12 +198,12 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	
 	if(priority >= 0x80 || (currentThread != NULL && priority > currentThread->initialPriority))
 	{
-		threadId = -4;
+		threadId = IPC_EINVAL;
 		goto restore_and_return;
 	}
 		
 	ThreadInfo* selectedThread;	
-	while(threadId < 100)
+	while(threadId < MAX_THREADS)
 	{
 		selectedThread = &threads[threadId];
 		if(selectedThread->threadState == Unset)
@@ -212,9 +212,9 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 		threadId++;
 	}
 	
-	if(threadId >= 100)
+	if(threadId >= MAX_THREADS)
 	{
-		threadId = -5;
+		threadId = IPC_EMAX;
 		goto restore_and_return;
 	}
 
@@ -250,7 +250,7 @@ s32	StartThread(s32 threadId)
 
 	if(threadId > MAX_THREADS || threadId < 0)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -264,7 +264,7 @@ s32	StartThread(s32 threadId)
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToStart->processId != currentThread->processId)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -303,9 +303,9 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	s32 irq_state = irq_kill();
 	s32 ret = 0;
 	
-	if(threadId > 100)
+	if(threadId > MAX_THREADS)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -319,7 +319,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToCancel->processId != currentThread->processId)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -351,9 +351,9 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	s32 irq_state = irq_kill();
 	s32 ret = 0;
 	
-	if(threadId > 100)
+	if(threadId > MAX_THREADS)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -367,7 +367,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToJoin->processId != currentThread->processId)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
@@ -409,7 +409,7 @@ s32 GetThreadPriority( u32 threadId )
 	s32 irq_state = irq_kill();
 	
 	ThreadInfo* thread;
-	s32 ret = -4;
+	s32 ret;
 	
 	if(threadId == 0 && currentThread != NULL)
 	{
@@ -429,7 +429,7 @@ s32 GetThreadPriority( u32 threadId )
 	goto restore_and_return;
 	
 return_error:
-	ret = -4;
+	ret = IPC_EINVAL;
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;
@@ -476,7 +476,7 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 	goto restore_and_return;
 	
 return_error:
-	ret = -4;
+	ret = IPC_EINVAL;
 restore_and_return:
 	irq_restore(irq_state);
 	return ret;
