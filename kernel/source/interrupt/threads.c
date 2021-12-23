@@ -60,6 +60,8 @@ void InitializeThreadContext()
 	{
 		//IOS clears the thread structure on startup, we do it on initalize
 		memset32(&threads[i], 0 , sizeof(ThreadInfo));
+
+		//gcc works by having a downwards stack, hence setting the stack to the upper limit
 		threads[i].defaultThreadStack = ((u32)&__thread_stacks_area_start) + (STACK_SIZE*(i+1));
 	}
 }
@@ -205,7 +207,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	int threadId = 0;
 	s32 irq_state = irq_kill();
 	
-	if(priority >= 0x80 || (currentThread != NULL && priority > currentThread->initialPriority))
+	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (currentThread != NULL && priority > currentThread->initialPriority))
 	{
 		threadId = IPC_EINVAL;
 		goto restore_and_return;
@@ -235,11 +237,11 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->threadContext.programCounter = main;
 	selectedThread->threadContext.registers[0] = (u32)arg;
 	selectedThread->threadContext.linkRegister = (u32)_thread_end;
-
-	//gcc works with a decreasing stack, meaning our SP should start high and go down.
-	selectedThread->threadContext.stackPointer = (u32)((stack_top == NULL) ? selectedThread->defaultThreadStack : (u32)stack_top ) + stacksize;
-	//unsure what this is all about tbh, but its probably to set the thread state correctly
-	//apparently it disables either FIQ&IRQ interrupts or just the IRQ interrupt
+	selectedThread->threadContext.stackPointer = stack_top == NULL
+		? selectedThread->defaultThreadStack 
+		: (u32)stack_top;
+		
+	//set thread state correctly: things like arm or thumb mode etc
 	selectedThread->threadContext.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;
 	selectedThread->nextThread = NULL;
 	selectedThread->threadQueue = NULL;
