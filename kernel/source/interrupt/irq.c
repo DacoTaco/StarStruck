@@ -69,7 +69,7 @@ s32 UnregisterEventHandler(u8 device)
 	return IPC_EINVAL;
 }
 
-void irq_handler(Registers* regs)
+void irq_handler(ThreadContext* context)
 {
 	//set dacr so we can access everything
 	set_dacr(0x55555555);
@@ -90,15 +90,15 @@ void irq_handler(Registers* regs)
 		write32(HW_ALARM, 0);
 		
 		// Do Work
-		//gecko_printf("Registers Init (%p):\n", regs);
-		/*gecko_printf("    R0-R3: %08x %08x %08x %08x\n", regs->registers[0], regs->registers[1], regs->registers[2], regs->registers[3]);
-		gecko_printf("    R4-R7: %08x %08x %08x %08x\n", regs->registers[4], regs->registers[5], regs->registers[6], regs->registers[7]);
-		gecko_printf("   R8-R11: %08x %08x %08x %08x\n", regs->registers[8], regs->registers[9], regs->registers[10], regs->registers[11]);
-		gecko_printf("      R12: %08x\n", regs->registers[12]);
-		gecko_printf("       SP: %08x\n", regs->stackPointer);
-		gecko_printf("       LR: %08x\n", regs->linkRegister);
-		gecko_printf("       PC: %08x\n", regs->programCounter);
-		gecko_printf("     SPSR: %08x\n", regs->statusRegister);
+		//gecko_printf("Registers Init (%p):\n", context);
+		/*gecko_printf("    R0-R3: %08x %08x %08x %08x\n", context->registers[0], context->registers[1], context->registers[2], context->registers[3]);
+		gecko_printf("    R4-R7: %08x %08x %08x %08x\n", context->registers[4], context->registers[5], context->registers[6], context->registers[7]);
+		gecko_printf("   R8-R11: %08x %08x %08x %08x\n", context->registers[8], context->registers[9], context->registers[10], context->registers[11]);
+		gecko_printf("      R12: %08x\n", context->registers[12]);
+		gecko_printf("       SP: %08x\n", context->stackPointer);
+		gecko_printf("       LR: %08x\n", context->linkRegister);
+		gecko_printf("       PC: %08x\n", context->programCounter);
+		gecko_printf("     SPSR: %08x\n", context->statusRegister);
 		*/
 
 		//change thread queue? 

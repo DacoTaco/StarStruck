@@ -24,7 +24,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_3148				( MEM1_BASE | 0x3148 )
 #define MEM1_314C				( MEM1_BASE | 0x314C )
 
-#include "types.h"
+#include <types.h>
+
 #include "memory/ahb.h"
 #include "interrupt/threads.h"
 
@@ -38,11 +39,23 @@ typedef struct
 	u32 unknown;
 } MemorySection;
 
+CHECK_OFFSET(MemorySection, 0x00, physicalAddress);
+CHECK_OFFSET(MemorySection, 0x04, virtualAddress);
+CHECK_OFFSET(MemorySection, 0x08, size);
+CHECK_OFFSET(MemorySection, 0x0C, domain);
+CHECK_OFFSET(MemorySection, 0x10, accessRights);
+CHECK_OFFSET(MemorySection, 0x14, unknown);
+CHECK_SIZE(MemorySection, 0x18);
+
 typedef struct
 {
 	u32 processId;
 	MemorySection memorySection;
 } ProcessMemorySection;
+
+CHECK_OFFSET(ProcessMemorySection, 0x00, processId);
+CHECK_OFFSET(ProcessMemorySection, 0x04, memorySection);
+CHECK_SIZE(ProcessMemorySection, 0x1C);
 
 typedef enum
 {

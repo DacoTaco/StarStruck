@@ -8,6 +8,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <types.h>
 #include <ios/processor.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
@@ -28,6 +29,14 @@ ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
 ThreadQueue mainQueue ALIGNED(0x10) = { &threads[0] };
 ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread ALIGNED(0x10);
+
+static inline s32 _GetThreadID(ThreadInfo* thread)
+{
+	u32 offset = (u32)thread - (u32)(&threads[0]);
+	return offset == 0 
+		? 0 
+		: offset / sizeof(ThreadInfo);
+}
 
 void _thread_end()
 {
@@ -56,12 +65,12 @@ void InitializeThreadContext()
 }
 
 //save current thread state. called by the IRQ, SVC/SWI & UDF handlers
-void SaveThreadInfo(Registers* input)
+void SaveThreadInfo(ThreadContext* input)
 {
 	if(currentThread == NULL || input == NULL)
 		return;
 	
-	memcpy32(&currentThread->registers, input, sizeof(Registers));
+	memcpy32(&currentThread->threadContext, input, sizeof(ThreadContext));
 }
 
 //Scheduler
@@ -136,8 +145,8 @@ void ScheduleYield( void )
 	tlb_invalidate();
 	flush_memory();
 
-	register void* registers	__asm__("r0") = (void*)&currentThread->registers;
-	register u32 stackPointer	__asm__("r1") = ((u32)currentThread->exceptionStack) + sizeof(currentThread->exceptionStack);
+	register void* threadContext	__asm__("r0") = (void*)&currentThread->threadContext;
+	register u32 stackPointer	__asm__("r1") = ((u32)&currentThread->userContext) + sizeof(ThreadContext);
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
@@ -148,15 +157,15 @@ void ScheduleYield( void )
 		msr		cpsr_c, #0xdb\n\
 		mov		sp, %[stackPointer]\n\
 #restore the status register\n\
-		ldmia	%[registers]!, {r4}\n\
+		ldmia	%[threadContext]!, {r4}\n\
 		msr		spsr_cxsf, r4\n\
 #restore the rest of the state\n\
-		ldmia	%[registers]!, {r0-r12, sp, lr}^\n\
-		ldmia	%[registers]!, {lr}\n\
+		ldmia	%[threadContext]!, {r0-r12, sp, lr}^\n\
+		ldmia	%[threadContext]!, {lr}\n\
 #jump to thread\n\
 		movs	pc, lr\n"
 		:
-		: [registers] "r" (registers), [stackPointer] "r" (stackPointer)
+		: [threadContext] "r" (threadContext), [stackPointer] "r" (stackPointer)
 	);
 	
 	return;
@@ -177,7 +186,7 @@ void YieldThread( void )
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 {
 	ThreadInfo* nextThread = PopNextThreadFromQueue(threadQueue);
-	nextThread->registers.registers[0] = returnValue;
+	nextThread->threadContext.registers[0] = returnValue;
 	nextThread->threadState = Ready;
 	
 	QueueNextThread(mainQueuePtr, nextThread);
@@ -218,21 +227,20 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 		goto restore_and_return;
 	}
 
-	selectedThread->threadId = threadId;
 	selectedThread->threadQueue = currentThread->threadQueue;
 	selectedThread->processId = (currentThread == NULL) ? 0 : currentThread->processId;
 	selectedThread->threadState = Stopped;
 	selectedThread->priority = priority;
 	selectedThread->initialPriority = priority;
-	selectedThread->registers.programCounter = main;
-	selectedThread->registers.registers[0] = (u32)arg;
-	selectedThread->registers.linkRegister = (u32)_thread_end;
+	selectedThread->threadContext.programCounter = main;
+	selectedThread->threadContext.registers[0] = (u32)arg;
+	selectedThread->threadContext.linkRegister = (u32)_thread_end;
 
 	//gcc works with a decreasing stack, meaning our SP should start high and go down.
-	selectedThread->registers.stackPointer = (u32)((stack_top == NULL) ? selectedThread->defaultThreadStack : (u32)stack_top ) + stacksize;
+	selectedThread->threadContext.stackPointer = (u32)((stack_top == NULL) ? selectedThread->defaultThreadStack : (u32)stack_top ) + stacksize;
 	//unsure what this is all about tbh, but its probably to set the thread state correctly
 	//apparently it disables either FIQ&IRQ interrupts or just the IRQ interrupt
-	selectedThread->registers.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;
+	selectedThread->threadContext.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;
 	selectedThread->nextThread = NULL;
 	selectedThread->threadQueue = NULL;
 	selectedThread->isDetached = detached;
@@ -332,7 +340,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	else
 		threadToCancel->threadState = Unset;
 	
-	currentThread->registers.registers[0] = ret;
+	currentThread->threadContext.registers[0] = ret;
 	if(threadToCancel == currentThread)
 		ScheduleYield();
 	else
@@ -386,7 +394,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 		*returnedValue = threadToJoin->returnValue;
 	
 	if(threadState != Dead)
-		gecko_printf("thread %d is not dead, but join from %d resumed\n", threadToJoin->threadId, currentThread->threadId );
+		gecko_printf("thread %d is not dead, but join from %d resumed\n", _GetThreadID(threadToJoin), _GetThreadID(currentThread) );
 
 	threadToJoin->threadState = Unset;	
 restore_and_return:
@@ -396,7 +404,7 @@ restore_and_return:
 
 s32 GetThreadID()
 {
-	return currentThread->threadId;
+	return _GetThreadID(currentThread);
 }
 
 s32 GetProcessID()

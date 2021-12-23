@@ -11,6 +11,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <stddef.h>
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -33,6 +35,12 @@ typedef volatile signed long long vs64;
 
 typedef u32 size_t;
 
+#ifdef __cplusplus
+#define StaticAssert static_assert
+#else
+#define StaticAssert _Static_assert
+#endif
+
 #define NULL ((void *)0)
 #define ALIGNED(x) __attribute__((aligned(x)))
 
@@ -52,6 +60,10 @@ typedef u32 size_t;
 
 #define LLONG_MAX 0x7fffffffffffffffLL
 #define ULLONG_MAX 0xffffffffffffffffULL
+
+#define CHECK_SIZE(Type, Size) StaticAssert(sizeof(Type) == Size, #Type " must be " #Size " bytes")
+
+#define CHECK_OFFSET(Type, Offset, Field) StaticAssert(offsetof(Type, Field) == Offset, #Type "::" #Field " must be at offset " #Offset)
 
 #endif
 

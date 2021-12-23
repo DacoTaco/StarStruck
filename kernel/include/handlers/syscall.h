@@ -13,6 +13,6 @@
 
 #include "interrupt/threads.h"
 
-s32 handle_syscall(u16 syscall, Registers* registers);
+s32 handle_syscall(u16 syscall, ThreadContext* threadContext);
 
 #endif

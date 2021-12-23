@@ -27,7 +27,7 @@ typedef enum
 	Faulted = 6
 } ThreadState;
 
-//Note : do -NOT- mess with these variables. this is the order of the registers and how the irq asm code pushes them on the stack
+//Note : do -NOT- mess with these types. this is the order of the registers and how the irq asm code pushes them on the stack
 //messing with these without the asm WILL break everything.
 typedef struct 
 {	
@@ -36,26 +36,44 @@ typedef struct
 	u32 stackPointer;
 	u32 linkRegister;
 	u32 programCounter;
-} Registers;
+} ThreadContext;
 
-//NOTE : DO -NOT- mess with these variables either without verifying all state code/asm.
+CHECK_OFFSET(ThreadContext, 0x00, statusRegister);
+CHECK_OFFSET(ThreadContext, 0x04, registers);
+CHECK_OFFSET(ThreadContext, 0x38, stackPointer);
+CHECK_OFFSET(ThreadContext, 0x3C, linkRegister);
+CHECK_OFFSET(ThreadContext, 0x40, programCounter);
+CHECK_SIZE(ThreadContext, 0x44);
+
 typedef struct ThreadInfo
 {
-	Registers registers;
+	ThreadContext threadContext;
 	struct ThreadInfo* nextThread;
 	s32 initialPriority;
 	s32 priority;
-	u8 threadState;
+	u32 threadState;
 	u32 processId;
 	s32 isDetached;	
 	u32 returnValue;
 	struct ThreadQueue* joinQueue;
 	struct ThreadQueue* threadQueue;
-	u32 exceptionStack[17];
+	ThreadContext userContext;
 	u32 defaultThreadStack;
-	u32 threadId;
-	u32 padding[3];
 } ThreadInfo ALIGNED(0x10);
+
+CHECK_OFFSET(ThreadInfo, 0x00, threadContext);
+CHECK_OFFSET(ThreadInfo, 0x44, nextThread);
+CHECK_OFFSET(ThreadInfo, 0x48, initialPriority);
+CHECK_OFFSET(ThreadInfo, 0x4C, priority);
+CHECK_OFFSET(ThreadInfo, 0x50, threadState);
+CHECK_OFFSET(ThreadInfo, 0x54, processId);
+CHECK_OFFSET(ThreadInfo, 0x58, isDetached);
+CHECK_OFFSET(ThreadInfo, 0x5C, returnValue);
+CHECK_OFFSET(ThreadInfo, 0x60, joinQueue);
+CHECK_OFFSET(ThreadInfo, 0x64, threadQueue);
+CHECK_OFFSET(ThreadInfo, 0x68, userContext);
+CHECK_OFFSET(ThreadInfo, 0xAC, defaultThreadStack);
+CHECK_SIZE(ThreadInfo, 0xB0);
 
 typedef struct ThreadQueue
 {

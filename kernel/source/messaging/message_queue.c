@@ -160,9 +160,9 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 	{
 		currentThread->threadState = Waiting;
 		YieldCurrentThread((ThreadQueue*)&queues[queueId].receiveThreadQueue);
-		if(currentThread->registers.registers[0] != 0)
+		if(currentThread->threadContext.registers[0] != 0)
 		{
-			ret = currentThread->registers.registers[0];
+			ret = currentThread->threadContext.registers[0];
 			goto restore_and_return;
 		}
 		
