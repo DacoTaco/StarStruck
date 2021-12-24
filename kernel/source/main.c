@@ -217,8 +217,8 @@ u32 _main(void *base)
 	
 	//create main kernel thread
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
-	//enable interrupts in this thread
-	threads[threadId].threadContext.statusRegister |= 0x1f;
+	//set thread to run as a system thread
+	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);

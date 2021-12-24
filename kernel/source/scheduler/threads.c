@@ -241,8 +241,10 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 		? selectedThread->defaultThreadStack 
 		: (u32)stack_top;
 		
-	//set thread state correctly: things like arm or thumb mode etc
-	selectedThread->threadContext.statusRegister = (((s32)(main << 0x1f)) < 0) ? 0x30 : 0x10;
+	//set thread state correctly
+	selectedThread->threadContext.statusRegister = (((s32)(main << 0x1f)) < 0) 
+	? (SPSR_USER_MODE | SPSR_THUMB_MODE)
+	: SPSR_USER_MODE ;
 	selectedThread->nextThread = NULL;
 	selectedThread->threadQueue = NULL;
 	selectedThread->isDetached = detached;

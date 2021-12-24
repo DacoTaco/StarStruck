@@ -9,6 +9,7 @@
 */
 
 #include <asminc.h>
+#include <ios/processor.h>
 
 .arm
 .extern handle_syscall
@@ -31,7 +32,7 @@ BEGIN_ASM_FUNC v_swi
 	bic		r0,r0,#0xFF000000
 #endif
 #now that we have all our information saved, lets switch to system mode (which shares state with user mode, including stack and registers)
-	msr		cpsr_c, #0x1f
+	msr		cpsr_c, #SPSR_SYSTEM_MODE
 	
 #syscall handler. we save r1 as it contains the address of where the pre-syscall state is saved
 	push	{r1}

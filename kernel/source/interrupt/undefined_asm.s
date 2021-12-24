@@ -9,6 +9,7 @@
 */
 
 #include <asminc.h>
+#include <ios/processor.h>
 
 .arm
 
@@ -31,7 +32,7 @@ BEGIN_ASM_FUNC v_undf
 	bic		r0,r0,#0xFF000000
 #endif
 
-	msr		cpsr_c, #0x1f
+	msr		cpsr_c, #SPSR_SYSTEM_MODE
 	push	{r1}
 	blx		undf_handler
 	pop		{r1}
