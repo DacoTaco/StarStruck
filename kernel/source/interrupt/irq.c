@@ -15,7 +15,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include <ios/errno.h>
 
 #include "interrupt/irq.h"
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
 #include "memory/memory.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"

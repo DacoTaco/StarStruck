@@ -14,7 +14,7 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 
 #include "core/hollywood.h"
 #include "memory/memory.h"
-#include "handlers/undefined.h"
+#include "interrupt/undefined.h"
 #include "panic.h"
 
 const char *exceptions[] = {

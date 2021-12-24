@@ -11,7 +11,7 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
 
 s32 handle_syscall(u16 syscall, ThreadContext* threadContext);
 

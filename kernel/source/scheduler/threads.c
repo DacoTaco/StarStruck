@@ -15,7 +15,7 @@
 
 #include "core/defines.h"
 #include "interrupt/irq.h"
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
 #include "memory/memory.h"
 
 extern const void* __thread_stacks_area_start;

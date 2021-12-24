@@ -27,7 +27,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <types.h>
 
 #include "memory/ahb.h"
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
 
 typedef struct
 {

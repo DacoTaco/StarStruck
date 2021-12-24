@@ -11,7 +11,7 @@
 #include <ios/gecko.h>
 
 #include "interrupt/irq.h"
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "memory/ahb.h"

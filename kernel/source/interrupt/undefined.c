@@ -10,8 +10,8 @@
 
 #include <ios/gecko.h>
 
-#include "handlers/exception.h"
-#include "handlers/syscall.h"
+#include "interrupt/exception.h"
+#include "interrupt/syscall.h"
 
 s32 undf_handler(unsigned instruction, ThreadContext* regs)
 {
