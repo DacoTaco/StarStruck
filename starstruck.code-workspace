@@ -1,0 +1,63 @@
+{
+	"folders": [
+		{
+			"name": "root",
+			"path": "."
+		},
+		{
+			"name": "core",
+			"path": "core"
+		},
+		{
+			"name": "kernel",
+			"path": "kernel",
+		},
+		{
+			"name": "elfloader",
+			"path": "elfloader"
+		},
+		{
+			"name": "tools",
+			"path": "tools"
+		},
+		{
+			"path": "sdk"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true,
+			"**/build": true,
+			"*.elf": true,
+			"*.bin": true,
+			"*.a": true,
+		},
+		"C_Cpp.default.cStandard": "c17",
+		"C_Cpp.default.cppStandard": "gnu++17",
+		"C_Cpp.default.intelliSenseMode": "linux-gcc-arm",
+		"C_Cpp.default.compilerPath": "${DKP_HOME}/devkitARM/bin/arm-none-eabi-gcc.exe",
+		"C_Cpp.default.includePath": [
+			"${DKP_HOME}/devkitARM/**",
+			"${workspaceFolder}/../core/include",
+			"${workspaceFolder}/include"
+		],
+		"files.associations": {
+			"*.h": "c",
+			"*.hpp": "cpp",
+		},
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+			"dan-c-underwood.arm",
+			"trond-snekvik.gnu-mapfiles",
+			"metalcode-eu.linux-arm-none-eabi",
+			"metalcode-eu.windows-arm-none-eabi"
+		]
+	}
+}
