@@ -45,16 +45,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 
-typedef const struct {
-	char magic[3];
-	char version;
-	void *mem2_boundary;
-	volatile ipcreq **ipc_in;
-	u32 ipc_in_size;
-	volatile ipcreq **ipc_out;
-	u32 ipc_out_size;
-} ipc_infohdr;
-
 void IpcInit(void);
 
 void ipc_irq(void);

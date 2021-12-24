@@ -74,17 +74,6 @@ static volatile ipcreq* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
 static u16 in_cnt = 0;
 static u16 out_cnt = 0;
 
-//code
-const ipc_infohdr __ipc_info ALIGNED(32) SRAM_RODATA = {
-	.magic = "IPC",
-	.version = 1,
-	.mem2_boundary = __mem2_area_start,
-	.ipc_in = input_queue,
-	.ipc_in_size = IPC_IN_SIZE,
-	.ipc_out = output_queue,
-	.ipc_out_size = IPC_OUT_SIZE,
-};
-
 void ipc_send_ack(void)
 {
 	u32 ppc_regs = read32(HW_IPC_PPCCTRL);
