@@ -15,7 +15,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <stdarg.h>
 #include <string.h>
 #include <types.h>
-#include <ios/module.h>
+#include <ios/errno.h>
 #include <ios/processor.h>
 #include <ios/gecko.h>
 

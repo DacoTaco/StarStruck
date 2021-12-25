@@ -65,3 +65,8 @@
 #define IOSC_INVALID_ALIGN			-2016
 
 #define USB_ECANCELED				-7022
+
+#define IOS_EINVAL					-0x3004
+#define IOS_EBADVERSION				-0x3100
+#define IOS_ETOOMANYVIEWS			-0x3101
+#define IOS_EMISMATCH				-0x3102

@@ -30,11 +30,6 @@ Copyright (C) 2021	DacoTaco
 #define RELNCH_RELAUNCH 	0x01
 #define RELNCH_BACKGROUND 	0x02
 
-#define IOS_EINVAL			-0x3004
-#define IOS_EBADVERSION		-0x3100
-#define IOS_ETOOMANYVIEWS	-0x3101
-#define IOS_EMISMATCH		-0x3102
-
 typedef struct _ioctlv
 {
 	void *data;
