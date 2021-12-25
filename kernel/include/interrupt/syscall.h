@@ -13,6 +13,6 @@
 
 #include "scheduler/threads.h"
 
-s32 handle_syscall(u16 syscall, ThreadContext* threadContext);
+s32 HandleSyscall(u16 syscall, ThreadContext* threadContext);
 
 #endif

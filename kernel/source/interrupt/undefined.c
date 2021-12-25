@@ -22,7 +22,7 @@ s32 undf_handler(unsigned instruction, ThreadContext* regs)
 	if( syscall < 0xFF )
 	{
 		gecko_printf("Nintendo syscall detected\n");
-		s32 ret = handle_syscall(syscall & 0xFF, regs);
+		s32 ret = HandleSyscall(syscall & 0xFF, regs);
 		
 		if(ret != -666)
 			return ret;

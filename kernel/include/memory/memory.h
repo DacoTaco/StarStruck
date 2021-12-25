@@ -77,26 +77,23 @@ void DCInvalidateRange(void* start, u32 size);
 void DCFlushRange(void *start, u32 size);
 void DCFlushAll(void);
 void ICInvalidateAll(void);
+u32 TlbInvalidate(void);
+void FlushMemory(void);
+
+u32 GetControlRegister(void);
+void SetControlRegister(u32 data);
+u32 GetTranslationTableBaseRegister(void);
+void SetTranslationTableBaseRegister(u32 data);
+u32 GetDomainAccessControlRegister(void);
+void SetDomainAccessControlRegister(u32 data);
+u32 GetDataFaultStatusRegister(void);
+void SetDataFaultStatusRegister(u32 data);
+u32 GetInstructionFaultStatusRegister(void);
+void SetInstructionFaultStatusRegister(u32 data);
+u32 GetFaultAddressRegister(void);
+void SetFaultAddressRegister(u32 data);
 
 void mem_shutdown(void);
-
 u32 dma_addr(void *);
-u32 tlb_invalidate(void);
-void flush_memory(void);
-
-u32 get_cr(void);
-u32 get_ttbr(void);
-u32 get_dacr(void);
-u32 get_dfsr(void);
-u32 get_ifsr(void);
-u32 get_far(void);
-
-void set_cr(u32 data);
-void set_ttbr(u32 data);
-void set_dacr(u32 data);
-void set_dfsr(u32 data);
-void set_ifsr(u32 data);
-void set_far(u32 data);
 
 #endif
-

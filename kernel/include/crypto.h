@@ -16,6 +16,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <types.h>
 #include "messaging/ipc.h"
 
+//OTP structure. the ng private key & nand_hmac overlap, wtf?
 typedef struct
 {
 	u8 boot1_hash[20];
@@ -24,10 +25,10 @@ typedef struct
 	union {
 		 struct {
 			 u8 ng_priv[30];
-			 u8 _wtf1[18];
+			 u8 _overlap1[18];
 		 };
 		 struct {
-			 u8 _wtf2[28];
+			 u8 _overlap2[28];
 			 u8 nand_hmac[20];
 		 };
 	};

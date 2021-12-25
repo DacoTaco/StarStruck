@@ -12,7 +12,7 @@
 #include <ios/processor.h>
 
 .arm
-.extern handle_syscall
+.extern HandleSyscall
 .globl v_swi
 
 BEGIN_ASM_FUNC v_swi
@@ -36,7 +36,7 @@ BEGIN_ASM_FUNC v_swi
 	
 #syscall handler. we save r1 as it contains the address of where the pre-syscall state is saved
 	push	{r1}
-	blx		handle_syscall
+	blx		HandleSyscall
 	pop		{r1}
 
 #syscall done, return to swi mode

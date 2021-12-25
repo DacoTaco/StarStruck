@@ -44,12 +44,12 @@ u32 _mc_read32(u32 addr)
 // invalidate device and then starlet
 void AhbFlushTo(AHBDEV type)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	_ahb_flush_to(type);
 	if(type != AHB_STARLET)
 		_ahb_flush_to(AHB_STARLET);
 
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 // this is ripped from IOS, because no one can figure out just WTF this thing is doing
@@ -137,14 +137,14 @@ void _ahb_flush_to(AHBDEV dev)
 // flush device and also invalidate memory
 void AhbFlushFrom(AHBDEV type)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	_ahb_flush_from(type);
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 void _ahb_flush_from(AHBDEV dev)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	u16 req = 0;
 	u16 ack;
 	int i;
@@ -181,5 +181,5 @@ void _ahb_flush_from(AHBDEV dev)
 		gecko_printf("ahb_flush(%d): Flush (0x%x) did not ack!\n", dev, req);
 	}
 done:
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }

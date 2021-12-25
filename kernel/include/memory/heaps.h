@@ -13,24 +13,32 @@
 
 #include <types.h>
 
-#define HEAP_INIT_FLAG		0xBABE0000
-#define HEAP_INUSE_FLAG		0xBABE0001
-#define HEAP_ALIGNED_FLAG	0xBABE0002
-
-typedef struct heap_block
+typedef enum HeapBlockState
 {
-	u32 blockFlag;
-	struct heap_block* prevBlock;
+	HeapBlockInit = 0xBABE0000,
+	HeapBlockInUse = 0xBABE0001,
+	HeapBlockAligned = 0xBABE0002
+} HeapBlockState;
+
+typedef struct HeapBlock
+{
+	HeapBlockState blockState;
 	u32 size;
-	struct heap_block* nextBlock;
-} heap_block;
+	struct HeapBlock* prevBlock;
+	struct HeapBlock* nextBlock;
+} HeapBlock;
+CHECK_SIZE(HeapBlock, 0x10);
+CHECK_OFFSET(HeapBlock, 0x00, blockState);
+CHECK_OFFSET(HeapBlock, 0x04, size);
+CHECK_OFFSET(HeapBlock, 0x08, prevBlock);
+CHECK_OFFSET(HeapBlock, 0x0C, nextBlock);
 
 typedef struct
 {
 	void* heap;
 	u32 size;
-	heap_block* firstBlock;
-} heap_info;
+	HeapBlock* firstBlock;
+} HeapInfo;
 
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);

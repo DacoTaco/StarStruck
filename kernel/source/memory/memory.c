@@ -115,7 +115,7 @@ void DCFlushRange(void *start, u32 size)
 	if(size == 0)
 		return;
 	
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	if(size <= 0x4000)
 	{
 		start = ALIGN_BACKWARD(start);
@@ -125,18 +125,18 @@ void DCFlushRange(void *start, u32 size)
 	else
 		_dc_flush();
 	
-	flush_memory();
+	FlushMemory();
 	_ahb_flush_from(AHB_1);
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 void DCFlushAll(void)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	_dc_flush();
-	flush_memory();
+	FlushMemory();
 	_ahb_flush_from(AHB_1);
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 void DCInvalidateRange(void* start, u32 size)
@@ -151,7 +151,7 @@ void DCInvalidateRange(void* start, u32 size)
 	if(size == 0)
 		return;
 	
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	if(size <= 0x4000)
 	{
 		start = ALIGN_BACKWARD(start);
@@ -162,15 +162,15 @@ void DCInvalidateRange(void* start, u32 size)
 		_dc_invalidate();
 	
 	AhbFlushTo(AHB_STARLET);
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 void ICInvalidateAll(void)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	_ic_invalidate();
 	AhbFlushTo(AHB_STARLET);
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 }
 
 u32 dma_addr(void *p)
@@ -194,16 +194,16 @@ u32 dma_addr(void *p)
 
 void mem_shutdown(void)
 {
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 	_dc_flush();
-	flush_memory();
-	u32 cr = get_cr();
+	FlushMemory();
+	u32 cr = GetControlRegister();
 	cr &= ~(CR_MMU | CR_DCACHE | CR_ICACHE); //disable ICACHE, DCACHE, MMU
-	set_cr(cr);
+	SetControlRegister(cr);
 	_ic_invalidate();
 	_dc_invalidate();
-	tlb_invalidate();
-	irq_restore(cookie);
+	TlbInvalidate();
+	RestoreInterrupts(cookie);
 }
 
 void* kmalloc(KernelMemoryType type)
@@ -365,8 +365,8 @@ u32 MapMemory(MemorySection* entry)
 		}
 	}
 		
-	flush_memory();
-	tlb_invalidate();
+	FlushMemory();
+	TlbInvalidate();
 	return ret;
 }
 
@@ -510,15 +510,15 @@ s32 InitiliseMemory(void)
 {
 	u32 cr;
 	s32 ret = 0;
-	u32 cookie = irq_kill();
+	u32 cookie = DisableInterrupts();
 
 	gecko_printf("MEM: cleaning up\n");
 
 	//Disable MMU+Cache & invalidate all caches & tlb
-	set_cr(get_cr() & ~(CR_DCACHE | CR_MMU | CR_ICACHE));
+	SetControlRegister(GetControlRegister() & ~(CR_DCACHE | CR_MMU | CR_ICACHE));
 	_ic_invalidate();
 	_dc_invalidate();
-	tlb_invalidate();
+	TlbInvalidate();
 
 	memset32(heapCurrent, 0, heapEnd - heapCurrent);
 	gecko_printf("MEM: mapping sections\n");
@@ -563,17 +563,17 @@ s32 InitiliseMemory(void)
 	DomainAccessControlTable[15] = DOMAIN_VALUE(8, DOMAIN_CLIENT);
 	
 	//setup memory registers
-	set_dfsr(0);
-	set_ifsr(0);
-	set_far(0);
-	set_ttbr((u32)MemoryTranslationTable); //configure translation table
-	set_dacr(DomainAccessControlTable[0]);
+	SetDataFaultStatusRegister(0);
+	SetInstructionFaultStatusRegister(0);
+	SetFaultAddressRegister(0);
+	SetTranslationTableBaseRegister((u32)MemoryTranslationTable); //configure translation table
+	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
 
 	//drain buffer & invalidate tlb
-	flush_memory();
-	tlb_invalidate();
+	FlushMemory();
+	TlbInvalidate();
 	
-	cr = get_cr();
+	cr = GetControlRegister();
 
 #ifndef NO_CACHES
 	gecko_printf("MEM: enabling caches & MMU\n");
@@ -583,12 +583,12 @@ s32 InitiliseMemory(void)
 	cr |= CR_MMU;
 #endif
 
-	set_cr(cr);
+	SetControlRegister(cr);
 	gecko_printf("MEM: init done\n");
 ret_init:
 	if(ret < 0)
 		gecko_printf("failed to init memory : %d\n", ret);
 
-	irq_restore(cookie);
+	RestoreInterrupts(cookie);
 	return ret;
 }

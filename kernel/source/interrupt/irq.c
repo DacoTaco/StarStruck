@@ -34,26 +34,6 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
-void irq_initialize(void)
-{
-	irq_setup_stack();
-	write32(HW_ALARM, 0);
-	write32(HW_ARMIRQMASK, 0);
-	write32(HW_ARMIRQFLAG, 0xffffffff);
-	irq_restore(CPSR_FIQDIS);
-
-	//???
-	write32(HW_ARMFIQMASK, 0);
-	write32(HW_ARMIRQMASK+0x20, 0);
-}
-
-void irq_shutdown(void)
-{
-	write32(HW_ARMIRQMASK, 0);
-	write32(HW_ARMIRQFLAG, 0xffffffff);
-	irq_kill();
-}
-
 u32 GetTimerValue(void)
 {
 	return read32(HW_TIMER);
@@ -69,10 +49,31 @@ s32 UnregisterEventHandler(u8 device)
 	return IPC_EINVAL;
 }
 
+
+void irq_initialize(void)
+{
+	irq_setup_stack();
+	write32(HW_ALARM, 0);
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xffffffff);
+	RestoreInterrupts(CPSR_FIQDIS);
+
+	//???
+	write32(HW_ARMFIQMASK, 0);
+	write32(HW_ARMIRQMASK+0x20, 0);
+}
+
+void irq_shutdown(void)
+{
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xffffffff);
+	DisableInterrupts();
+}
+
 void irq_handler(ThreadContext* context)
 {
 	//set dacr so we can access everything
-	set_dacr(0x55555555);
+	SetDomainAccessControlRegister(0x55555555);
 	
 	u32 enabled = read32(HW_ARMIRQMASK);
 	u32 flags = read32(HW_ARMIRQFLAG);

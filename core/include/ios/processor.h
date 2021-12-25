@@ -211,7 +211,8 @@ void memcpy16(void *dst, void *src, u32 size);
 void memset8(void *dst, u8 value, u32 size);
 void memcpy8(void *dst, void *src, u32 size);
 
-u32 get_cpsr(void);
+u32 GetCurrentStatusRegister(void);
+u32 GetSavedStatusRegister();
 void debug_output(u8 byte);
 int sprintf(char *str, const char *fmt, ...);
 

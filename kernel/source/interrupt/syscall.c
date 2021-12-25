@@ -19,7 +19,7 @@
 
 //#define _DEBUG_SYSCALL
 
-typedef u32 (*syscall_handler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6);
+typedef u32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6);
 static u32 syscall_handlers[] = {
 	(u32)CreateThread,					//0x0000
 	(u32)JoinThread,					//0x0001
@@ -106,7 +106,7 @@ static u32 syscall_handlers[] = {
 //We implement syscalls using the SVC/SWI instruction. 
 //Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
 //Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
-s32 handle_syscall(u16 syscall, ThreadContext* threadContext)
+s32 HandleSyscall(u16 syscall, ThreadContext* threadContext)
 {
 #ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
@@ -128,7 +128,7 @@ s32 handle_syscall(u16 syscall, ThreadContext* threadContext)
 		return -666;
 	}
 	
-	syscall_handler handler = (syscall_handler)syscall_handlers[syscall];
+	SyscallHandler handler = (SyscallHandler)syscall_handlers[syscall];
 	u32* reg = threadContext->registers;
 	
 	if(handler == NULL)
@@ -144,7 +144,7 @@ s32 handle_syscall(u16 syscall, ThreadContext* threadContext)
 /*	
 	This is how to implement the SWI handler in C++/GCC.
 	However, it overwrites our return register(r0) when restoring the registers to their original state...
-	Hence we use our own asm to store the state, get the parameters and call the handle_syscall function
+	Hence we use our own asm to store the state, get the parameters and call the HandleSyscall function
 */
 
 /*__attribute__ ((interrupt ("SWI"))) int syscall_handler(u32 r0, u32 r1, u32 r2, u32 r3)
@@ -154,6 +154,6 @@ s32 handle_syscall(u16 syscall, ThreadContext* threadContext)
 	__asm__ volatile ("ldr\t%0, [lr,#-4]" : "=r" (syscall));
 	unsigned* parameters;
 	__asm__ volatile ("mov\t%0, sp " : "=r" (parameters));
-	return handle_syscall(syscall & 0xFFFF, parameters);
+	return HandleSyscall(syscall & 0xFFFF, parameters);
 }*/
 

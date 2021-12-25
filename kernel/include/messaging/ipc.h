@@ -16,7 +16,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define __IPC_H__
 
 #include "types.h"
-#include "ios/module.h"
+#include "ios/ipc.h"
 
 /* For the sake of interface compatibility between mini and powerpc code,
    you should try to commit any enhancements you make back upstream so
@@ -49,8 +49,8 @@ void IpcInit(void);
 
 void ipc_irq(void);
 void ipc_send_ack(void);
-void ipc_reply(ipcreq* req);
-void ipc_enqueue_reuqest(ipcreq* req);
+void ipc_reply(IpcMessage* req);
+void ipc_enqueue_reuqest(IpcMessage* req);
 void ipc_initialize(void);
 void ipc_shutdown(void);
 void ipc_post(u32 code, u32 tag, u32 num_args, ...);

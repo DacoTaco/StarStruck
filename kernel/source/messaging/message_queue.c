@@ -18,11 +18,11 @@
 
 #define MAX_QUEUE 0x100
 
-static message_queue queues[MAX_QUEUE];
+static MessageQueue queues[MAX_QUEUE];
 
 s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s16 queueId = 0;
 	
 	if(ptr == NULL || *ptr == NULL)
@@ -59,13 +59,13 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 	queues[queueId].processId = currentThread->processId;
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return queueId;
 }
 
 s32 SendMessage(s32 queueId, void* message, u32 flags)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	s32 used = 0;
 	s32 msgCount = 0;
@@ -113,21 +113,21 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	if(msgCount <= heapIndex)
 		heapIndex = heapIndex - msgCount;
 	
-	set_dacr(DomainAccessControlTable[0]);
+	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
 	queues[queueId].queueHeap[heapIndex] = message;
-	set_dacr(DomainAccessControlTable[currentThread->processId]);
+	SetDomainAccessControlRegister(DomainAccessControlTable[currentThread->processId]);
 	queues[queueId].used++;
 	if(queues[queueId].receiveThreadQueue == NULL || queues[queueId].receiveThreadQueue->nextThread != NULL )
 		UnblockThread((ThreadQueue*)&queues[queueId].receiveThreadQueue, 0);
   
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
 s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	s32 used = 0;
 	s32 first = 0;
@@ -186,13 +186,13 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 		UnblockThread((ThreadQueue*)&queues[queueId].sendThreadQueue, 0);
 
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
 s32 DestroyMessageQueue(s32 queueId)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(queueId < 0 || queueId > MAX_QUEUE)
@@ -216,6 +216,6 @@ s32 DestroyMessageQueue(s32 queueId)
 	queues[queueId].queueSize = 0;
 
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }

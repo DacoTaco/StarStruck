@@ -69,8 +69,8 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 extern char __mem2_area_start[];
 static volatile u64 boot_titleID = 0;
-static volatile ipcreq* input_queue[IPC_IN_SIZE] ALIGNED(0x20) SRAM_BSS;
-static volatile ipcreq* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
+static volatile IpcMessage* input_queue[IPC_IN_SIZE] ALIGNED(0x20) SRAM_BSS;
+static volatile IpcMessage* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
 static u16 in_cnt = 0;
 static u16 out_cnt = 0;
 
@@ -88,7 +88,7 @@ void ipc_send_ack(void)
 	write32(HW_IPC_ARMCTRL, arm_regs );
 }
 
-void ipc_reply(ipcreq* req)
+void ipc_reply(IpcMessage* req)
 {
 	//Send Reply
 	u32 regs = read32(HW_IPC_ARMCTRL);
@@ -97,7 +97,7 @@ void ipc_reply(ipcreq* req)
 	write32(HW_IPC_ARMCTRL, regs | IPC_ARM_OUTGOING );	
 }
 
-void enqueue_reply(ipcreq* req)
+void enqueue_reply(IpcMessage* req)
 {
 	if(out_cnt >= IPC_OUT_SIZE)
 	{
@@ -109,7 +109,7 @@ void enqueue_reply(ipcreq* req)
 	out_cnt++;
 }
 
-void ipc_enqueue_reuqest(ipcreq* req)
+void ipc_enqueue_reuqest(IpcMessage* req)
 {
 	if(in_cnt >= IPC_IN_SIZE)
 	{
@@ -126,15 +126,15 @@ void ipc_process_input(void)
 	if(in_cnt == 0)
 		return;
 	
-	volatile ipcreq* req = input_queue[in_cnt-1];
+	volatile IpcMessage* req = input_queue[in_cnt-1];
 	if(req == NULL)
 		goto exit_process;
 	
 	s32 return_value = IOS_EINVAL;	
 	u8 reply = 1;
 	/*ios_module* module = NULL;
-	DCFlushRange((u32*)req, sizeof(ipcreq));
-	DCInvalidateRange((u32*)req, sizeof(ipcreq));
+	DCFlushRange((u32*)req, sizeof(IpcMessage));
+	DCInvalidateRange((u32*)req, sizeof(IpcMessage));
 	
 	if(req->cmd == IOS_OPEN)
 	{
@@ -165,7 +165,7 @@ void ipc_process_input(void)
 		{
 			case IOS_IOCTLV:
 			case IOS_IOCTL:
-				return_value = module->request_handler((ipcreq*)req, &reply);
+				return_value = module->request_handler((IpcMessage*)req, &reply);
 				break;
 			case IOS_OPEN:
 				return_value = module->open_handler(req->open.filepath, req->open.mode, &reply);
@@ -181,12 +181,12 @@ void ipc_process_input(void)
 	}*/
 	
 	write32((u32)&req->result, return_value);
-	DCFlushRange((void*)req, sizeof(ipcreq));
-	DCInvalidateRange((void*)req, sizeof(ipcreq));
+	DCFlushRange((void*)req, sizeof(IpcMessage));
+	DCInvalidateRange((void*)req, sizeof(IpcMessage));
 	ICInvalidateAll();
 
 	if(reply)
-		ipc_reply((ipcreq*)req);
+		ipc_reply((IpcMessage*)req);
 	else //only ack
 		ipc_send_ack();
 
@@ -204,7 +204,7 @@ void ipc_irq(void)
 		ipc_send_ack();
 
 		//enqueue command
-		ipc_enqueue_reuqest((ipcreq*)read32(HW_IPC_PPCMSG));
+		ipc_enqueue_reuqest((IpcMessage*)read32(HW_IPC_PPCMSG));
 		
 		//disable interrupt
 		//this has to be done seperatly as the registers might have changed by now
@@ -255,12 +255,12 @@ u32 ipc_main(void)
 {
 	while (boot_titleID == 0) 
 	{
-		u32 cookie = irq_kill();		
+		u32 cookie = DisableInterrupts();		
 		if(in_cnt > 0)
 			ipc_process_input();
-		irq_restore(cookie);
+		RestoreInterrupts(cookie);
 	}
-	irq_kill();
+	DisableInterrupts();
 	
 	return boot2_run(boot_titleID >> 32, boot_titleID & 0xFFFFFFFF);
 }

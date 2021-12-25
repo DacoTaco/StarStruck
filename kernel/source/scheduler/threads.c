@@ -142,22 +142,23 @@ void ScheduleYield( void )
 	currentThread = PopNextThreadFromQueue(mainQueuePtr);
 	currentThread->threadState = Running;
 
-	set_dacr(DomainAccessControlTable[currentThread->processId]);
+	SetDomainAccessControlRegister(DomainAccessControlTable[currentThread->processId]);
 	MemoryTranslationTable[0xD0] = (u32)HardwareRegistersAccessTable[currentThread->processId];
-	tlb_invalidate();
-	flush_memory();
+	TlbInvalidate();
+	FlushMemory();
 
-	register void* threadContext	__asm__("r0") = (void*)&currentThread->threadContext;
-	register u32 stackPointer	__asm__("r1") = ((u32)&currentThread->userContext) + sizeof(ThreadContext);
+	register void* threadContext	__asm__("r0") = (void*)currentThread;
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
 		msr		cpsr_c, #0xd2\n\
 		ldr		sp, =__irqstack_addr\n\
 		msr		cpsr_c, #0xd3\n\
-		mov		sp, %[stackPointer]\n\
+		add		sp, %[threadContext], %[stackOffset]\n\
 		msr		cpsr_c, #0xdb\n\
-		mov		sp, %[stackPointer]\n\
+		add		sp, %[threadContext], %[stackOffset]\n\
+#move pointer to the context\n\
+		add		%[threadContext], %[threadContext], %[threadContextOffset]\n\
 #restore the status register\n\
 		ldmia	%[threadContext]!, {r4}\n\
 		msr		spsr_cxsf, r4\n\
@@ -167,7 +168,9 @@ void ScheduleYield( void )
 #jump to thread\n\
 		movs	pc, lr\n"
 		:
-		: [threadContext] "r" (threadContext), [stackPointer] "r" (stackPointer)
+		: [threadContext] "r" (threadContext), 
+		  [threadContextOffset] "J" (offsetof(ThreadInfo, threadContext)),
+		  [stackOffset] "J" (offsetof(ThreadInfo, userContext) + sizeof(ThreadContext))
 	);
 	
 	return;
@@ -176,13 +179,13 @@ void ScheduleYield( void )
 //Called syscalls.
 void YieldThread( void )
 {
-	s32 state = irq_kill();
+	s32 state = DisableInterrupts();
 	if(currentThread != NULL)
 		currentThread->threadState = Ready;
 
 	YieldCurrentThread(mainQueuePtr);
 
-	irq_restore(state);
+	RestoreInterrupts(state);
 }
 
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
@@ -205,7 +208,7 @@ void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
 {
 	int threadId = 0;
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	
 	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (currentThread != NULL && priority > currentThread->initialPriority))
 	{
@@ -250,13 +253,13 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->isDetached = detached;
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return threadId;	
 }
 
 s32	StartThread(s32 threadId)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	ThreadQueue* threadQueue = NULL;
 
@@ -306,13 +309,13 @@ s32	StartThread(s32 threadId)
 	}
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;	
 }
 
 s32 CancelThread(u32 threadId, u32 return_value)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(threadId > MAX_THREADS)
@@ -354,13 +357,13 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	}
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
 s32 JoinThread(s32 threadId, u32* returnedValue)
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(threadId > MAX_THREADS)
@@ -402,7 +405,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 
 	threadToJoin->threadState = Unset;	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
@@ -418,7 +421,7 @@ s32 GetProcessID()
 
 s32 GetThreadPriority( u32 threadId )
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	
 	ThreadInfo* thread;
 	s32 ret;
@@ -443,13 +446,13 @@ s32 GetThreadPriority( u32 threadId )
 return_error:
 	ret = IPC_EINVAL;
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
 s32 SetThreadPriority( u32 threadId, s32 priority )
 {
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 
 	ThreadInfo* thread = NULL;
 	s32 ret = 0;
@@ -490,7 +493,7 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 return_error:
 	ret = IPC_EINVAL;
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
@@ -502,7 +505,7 @@ s32 GetUID(void)
 s32 SetUID(u32 pid, u32 uid)
 {
 	s32 ret = IPC_SUCCESS;
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	
 	if(pid >= MAX_PROCESSES)
 	{
@@ -519,7 +522,7 @@ s32 SetUID(u32 pid, u32 uid)
 	ProcessUID[pid] = uid;
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
 
@@ -531,7 +534,7 @@ s32 GetGID(void)
 s32 SetGID(u32 pid, u32 gid)
 {
 	s32 ret = IPC_SUCCESS;
-	s32 irq_state = irq_kill();
+	s32 irqState = DisableInterrupts();
 	
 	if(pid >= MAX_PROCESSES)
 	{
@@ -548,6 +551,6 @@ s32 SetGID(u32 pid, u32 gid)
 	ProcessGID[pid] = gid;
 	
 restore_and_return:
-	irq_restore(irq_state);
+	RestoreInterrupts(irqState);
 	return ret;
 }
