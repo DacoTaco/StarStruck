@@ -23,6 +23,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "memory/ahb.h"
 #include "interrupt/exception.h"
 #include "messaging/ipc.h"
+#include "scheduler/timer.h"
 #include "scheduler/threads.h"
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
@@ -51,7 +52,7 @@ void kernel_main( void )
 	irq_enable(IRQ_GPIO1);
 	irq_enable(IRQ_RESET);
 	irq_enable(IRQ_TIMER);
-	irq_set_alarm(20, 1);
+	SetTimerAlarm(20, 1);
 	gecko_printf("Interrupts initialized\n");
 	
 	crypto_initialize();
