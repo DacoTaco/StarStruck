@@ -51,6 +51,7 @@ s32 CreateHeap(void *ptr, u32 size)
 	firstBlock->nextBlock = NULL;
 	
 	heaps[heap_index].heap = ptr;
+	heaps[heap_index].processId = currentThread->processId;
 	heaps[heap_index].size = size;
 	heaps[heap_index].firstBlock = firstBlock;
 	
@@ -64,18 +65,22 @@ s32 DestroyHeap(s32 heapid)
 	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(heapid < 0 || heapid > MAX_HEAP)
+	if(heapid < 0 || heapid >= MAX_HEAP || heaps[heapid].heap == NULL)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
-	
-	if(heaps[heapid].heap != NULL)
+
+	if(heaps[heapid].processId != currentThread->processId)
 	{
-		heaps[heapid].heap = NULL;
-		heaps[heapid].size = 0;
-		heaps[heapid].firstBlock = NULL;
+		ret = IPC_EACCES;
+		goto restore_and_return;
 	}
+	
+	heaps[heapid].heap = NULL;
+	heaps[heapid].size = 0;
+	heaps[heapid].processId = 0;
+	heaps[heapid].firstBlock = NULL;
 	
 restore_and_return:
 	RestoreInterrupts(irqState);

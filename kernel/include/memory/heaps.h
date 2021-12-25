@@ -36,9 +36,15 @@ CHECK_OFFSET(HeapBlock, 0x0C, nextBlock);
 typedef struct
 {
 	void* heap;
+	u32 processId;
 	u32 size;
 	HeapBlock* firstBlock;
 } HeapInfo;
+CHECK_SIZE(HeapInfo, 0x10);
+CHECK_OFFSET(HeapInfo, 0x00, heap);
+CHECK_OFFSET(HeapInfo, 0x04, processId);
+CHECK_OFFSET(HeapInfo, 0x08, size);
+CHECK_OFFSET(HeapInfo, 0x0C, firstBlock);
 
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);
