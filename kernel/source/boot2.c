@@ -17,7 +17,7 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "nand.h"
 #include "crypto.h"
 #include "string.h"
-#include "gecko.h"
+#include "peripherals/gecko.h"
 #include "powerpc.h"
 #include "utils.h"
 #include "panic.h"

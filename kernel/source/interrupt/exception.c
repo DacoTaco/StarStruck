@@ -14,7 +14,7 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 
 #include "core/hollywood.h"
 #include "memory/memory.h"
-#include "handlers/undefined.h"
+#include "interrupt/undefined.h"
 #include "panic.h"
 
 const char *exceptions[] = {
@@ -48,9 +48,9 @@ void exc_setup_stack(void);
 void exception_initialize(void)
 {
 	exc_setup_stack();
-	u32 cr = get_cr();
+	u32 cr = GetControlRegister();
 	cr |= 0x2; // Data alignment fault checking enable
-	set_cr(cr);
+	SetControlRegister(cr);
 }
 
 void exc_handler(u32 type, u32 spsr, u32 *regs)
@@ -84,23 +84,23 @@ void exc_handler(u32 type, u32 spsr, u32 *regs)
 	gecko_printf("R12-R15: %08x %08x %08x %08x\n", regs[12], regs[13], regs[14], pc);
 
 	gecko_printf("SPSR: %08x\n", spsr);
-	gecko_printf("CPSR: %08x\n", get_cpsr());
-	gecko_printf("CR:   %08x\n", get_cr());
-	gecko_printf("TTBR: %08x\n", get_ttbr());
-	gecko_printf("DACR: %08x\n", get_dacr());
+	gecko_printf("CPSR: %08x\n", GetCurrentStatusRegister());
+	gecko_printf("CR:   %08x\n", GetControlRegister());
+	gecko_printf("TTBR: %08x\n", GetTranslationTableBaseRegister());
+	gecko_printf("DACR: %08x\n", GetDomainAccessControlRegister());
 
 	switch (type) {
 		case 3: // INSTR ABORT
 		case 4: // DATA ABORT 
 			if(type == 3)
-				fsr = get_ifsr();
+				fsr = GetInstructionFaultStatusRegister();
 			else
-				fsr = get_dfsr();
+				fsr = GetDataFaultStatusRegister();
 			gecko_printf("Abort type: %s\n", aborts[fsr&0xf]);
 			if(domvalid[fsr&0xf])
 				gecko_printf("Domain: %d\n", (fsr>>4)&0xf);
 			if(type == 4)
-				gecko_printf("Address: 0x%08x\n", get_far());
+				gecko_printf("Address: 0x%08x\n", GetFaultAddressRegister());
 		break;
 		default: break;
 	}

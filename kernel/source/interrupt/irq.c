@@ -15,7 +15,8 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include <ios/errno.h>
 
 #include "interrupt/irq.h"
-#include "interrupt/threads.h"
+#include "scheduler/threads.h"
+#include "scheduler/timer.h"
 #include "memory/memory.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
@@ -24,7 +25,6 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "nand.h"
 #include "sdhc.h"
 
-static u32 _alarm_frequency = 0;
 void irq_setup_stack(void);
 
 void IrqInit(void)
@@ -32,31 +32,6 @@ void IrqInit(void)
 	//enable timer, nand, aes, sha1, reset & unknown12 interrupts
 	write32(HW_ARMIRQMASK, IRQF_TIMER | IRQF_NAND | IRQF_AES | IRQF_SHA1 | IRQF_UNKN12 | IRQF_RESET);
 	set32(HW_DIFLAGS, 6);
-}
-
-void irq_initialize(void)
-{
-	irq_setup_stack();
-	write32(HW_ALARM, 0);
-	write32(HW_ARMIRQMASK, 0);
-	write32(HW_ARMIRQFLAG, 0xffffffff);
-	irq_restore(CPSR_FIQDIS);
-
-	//???
-	write32(HW_ARMFIQMASK, 0);
-	write32(HW_ARMIRQMASK+0x20, 0);
-}
-
-void irq_shutdown(void)
-{
-	write32(HW_ARMIRQMASK, 0);
-	write32(HW_ARMIRQFLAG, 0xffffffff);
-	irq_kill();
-}
-
-u32 GetTimerValue(void)
-{
-	return read32(HW_TIMER);
 }
 
 s32 RegisterEventHandler(u8 device, int queueid, int message)
@@ -69,10 +44,31 @@ s32 UnregisterEventHandler(u8 device)
 	return IPC_EINVAL;
 }
 
+
+void irq_initialize(void)
+{
+	irq_setup_stack();
+	write32(HW_ALARM, 0);
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xffffffff);
+	RestoreInterrupts(CPSR_FIQDIS);
+
+	//???
+	write32(HW_ARMFIQMASK, 0);
+	write32(HW_ARMIRQMASK+0x20, 0);
+}
+
+void irq_shutdown(void)
+{
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xffffffff);
+	DisableInterrupts();
+}
+
 void irq_handler(ThreadContext* context)
 {
 	//set dacr so we can access everything
-	set_dacr(0x55555555);
+	SetDomainAccessControlRegister(0x55555555);
 	
 	u32 enabled = read32(HW_ARMIRQMASK);
 	u32 flags = read32(HW_ARMIRQFLAG);
@@ -86,28 +82,7 @@ void irq_handler(ThreadContext* context)
 
 	if(flags & IRQF_TIMER) 
 	{
-		//clear Timer
-		write32(HW_ALARM, 0);
-		
-		// Do Work
-		//gecko_printf("Registers Init (%p):\n", context);
-		/*gecko_printf("    R0-R3: %08x %08x %08x %08x\n", context->registers[0], context->registers[1], context->registers[2], context->registers[3]);
-		gecko_printf("    R4-R7: %08x %08x %08x %08x\n", context->registers[4], context->registers[5], context->registers[6], context->registers[7]);
-		gecko_printf("   R8-R11: %08x %08x %08x %08x\n", context->registers[8], context->registers[9], context->registers[10], context->registers[11]);
-		gecko_printf("      R12: %08x\n", context->registers[12]);
-		gecko_printf("       SP: %08x\n", context->stackPointer);
-		gecko_printf("       LR: %08x\n", context->linkRegister);
-		gecko_printf("       PC: %08x\n", context->programCounter);
-		gecko_printf("     SPSR: %08x\n", context->statusRegister);
-		*/
-
-		//change thread queue? 
-		//TODO : check with IOS
-		
-		//Reset Timer
-		if (_alarm_frequency)
-			write32(HW_ALARM, read32(HW_TIMER) + _alarm_frequency);
-
+		HandleTimerInterrupt();
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}
 	if(flags & IRQF_NAND) {
@@ -161,12 +136,3 @@ void irq_disable(u32 irq)
 {
 	clear32(HW_ARMIRQMASK, 1<<irq);
 }
-
-void irq_set_alarm(u32 ms, u8 enable)
-{
-	_alarm_frequency = IRQ_ALARM_MS2REG(ms);
-
-	if (enable)
-		write32(HW_ALARM, read32(HW_TIMER) + _alarm_frequency);
-}
-

@@ -12,20 +12,20 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .arm
 
-.globl flush_memory
-.globl tlb_invalidate
-.globl get_cr
-.globl set_cr
-.globl get_ttbr
-.globl set_ttbr
-.globl get_dacr
-.globl set_dacr
-.globl get_dfsr
-.globl set_dfsr
-.globl get_ifsr
-.globl set_ifsr
-.globl get_far
-.globl set_far
+.globl FlushMemory
+.globl TlbInvalidate
+.globl GetControlRegister
+.globl SetControlRegister
+.globl GetTranslationTableBaseRegister
+.globl SetTranslationTableBaseRegister
+.globl GetDomainAccessControlRegister
+.globl SetDomainAccessControlRegister
+.globl GetDataFaultStatusRegister
+.globl SetDataFaultStatusRegister
+.globl GetInstructionFaultStatusRegister
+.globl SetInstructionFaultStatusRegister
+.globl GetFaultAddressRegister
+.globl SetFaultAddressRegister
 
 .globl _dc_inval_entries
 .globl _dc_flush_entries
@@ -36,62 +36,62 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .text
 
-BEGIN_ASM_FUNC get_cr
+BEGIN_ASM_FUNC GetControlRegister
 	mrc		p15, 0, r0, c1, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_cr
+BEGIN_ASM_FUNC SetControlRegister
 	mcr		p15, 0, r0, c1, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC get_ttbr
+BEGIN_ASM_FUNC GetTranslationTableBaseRegister
 	mrc		p15, 0, r0, c2, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_ttbr
+BEGIN_ASM_FUNC SetTranslationTableBaseRegister
 	mcr		p15, 0, r0, c2, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC get_dacr
+BEGIN_ASM_FUNC GetDomainAccessControlRegister
 	mrc		p15, 0, r0, c3, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_dacr
+BEGIN_ASM_FUNC SetDomainAccessControlRegister
 	mcr		p15, 0, r0, c3, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC get_dfsr
+BEGIN_ASM_FUNC GetDataFaultStatusRegister
 	mrc		p15, 0, r0, c5, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_dfsr
+BEGIN_ASM_FUNC SetDataFaultStatusRegister
 	mcr		p15, 0, r0, c5, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC get_ifsr
+BEGIN_ASM_FUNC GetInstructionFaultStatusRegister
 	mrc		p15, 0, r0, c5, c0, 1
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_ifsr
+BEGIN_ASM_FUNC SetInstructionFaultStatusRegister
 	mcr		p15, 0, r0, c5, c0, 1
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC get_far
+BEGIN_ASM_FUNC GetFaultAddressRegister
 	mrc		p15, 0, r0, c6, c0, 0
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC set_far
+BEGIN_ASM_FUNC SetFaultAddressRegister
 	mcr		p15, 0, r0, c6, c0, 0
 	bx		lr
 END_ASM_FUNC
@@ -130,13 +130,13 @@ BEGIN_ASM_FUNC _ic_invalidate
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC flush_memory
+BEGIN_ASM_FUNC FlushMemory
 	mov		r0, #0
 	mcr		p15, 0, r0, c7, c10, 4
 	bx		lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC tlb_invalidate
+BEGIN_ASM_FUNC TlbInvalidate
 	mov		r0, #0
 	mcr		p15, 0, r0, c8, c7, 0
 	bx		lr

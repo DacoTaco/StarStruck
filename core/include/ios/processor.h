@@ -11,8 +11,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __PROCESSOR_H__
 #define __PROCESSOR_H__
 
-#include "types.h"
-
 #ifndef STR_HELPER
 #define STR_HELPER(x) 	#x
 #endif
@@ -20,6 +18,28 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef STR
 #define STR(x) 			STR_HELPER(x)
 #endif
+
+#define SPSR_USER_MODE			0x10
+#define SPSR_FIQ_MODE			0x11
+#define SPSR_IRQ_MODE			0x12
+#define SPSR_SUPERVISOR_MODE	0x13
+#define SPSR_ABORT_MODE			0x17
+#define SPSR_UNDEFINED_MODE		0x1B
+#define SPSR_SYSTEM_MODE		0x1F
+#define SPSR_MODE_MASK(spsr)	(spsr & 0x1F)
+
+#define SPSR_THUMB_MODE			0x20
+#define SPSR_THUMB_MASK(spsr)	(spsr & SPSR_THUMB_MODE)
+
+#define SPSR_FIQ_ENABLE			0x40
+#define SPSR_FIQ_MASK(spsr)		(spsr & SPSR_FIQ_ENABLE)
+
+#define SPSR_IRQ_ENABLE			0x80
+#define SPSR_IRQ_MASK(spsr)		(spsr & SPSR_IRQ_ENABLE)
+
+#if !__ASSEMBLER__
+
+#include "types.h"
 
 static inline u32 read32(u32 addr)
 {
@@ -191,8 +211,10 @@ void memcpy16(void *dst, void *src, u32 size);
 void memset8(void *dst, u8 value, u32 size);
 void memcpy8(void *dst, void *src, u32 size);
 
-u32 get_cpsr(void);
+u32 GetCurrentStatusRegister(void);
+u32 GetSavedStatusRegister();
 void debug_output(u8 byte);
 int sprintf(char *str, const char *fmt, ...);
 
+#endif
 #endif

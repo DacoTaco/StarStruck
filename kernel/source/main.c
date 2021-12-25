@@ -21,15 +21,16 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "core/pll.h"
 #include "memory/memory.h"
 #include "memory/ahb.h"
-#include "handlers/exception.h"
+#include "interrupt/exception.h"
 #include "messaging/ipc.h"
-#include "interrupt/threads.h"
+#include "scheduler/timer.h"
+#include "scheduler/threads.h"
 #include "interrupt/irq.h"
-#include "storage/usb.h"
+#include "peripherals/usb.h"
+#include "peripherals/gecko.h"
 #include "utils.h"
 
 #include "sdhc.h"
-#include "gecko.h"
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"
@@ -51,7 +52,7 @@ void kernel_main( void )
 	irq_enable(IRQ_GPIO1);
 	irq_enable(IRQ_RESET);
 	irq_enable(IRQ_TIMER);
-	irq_set_alarm(20, 1);
+	SetTimerAlarm(20, 1);
 	gecko_printf("Interrupts initialized\n");
 	
 	crypto_initialize();
@@ -217,8 +218,8 @@ u32 _main(void *base)
 	
 	//create main kernel thread
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
-	//enable interrupts in this thread
-	threads[threadId].threadContext.statusRegister |= 0x1f;
+	//set thread to run as a system thread
+	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);

@@ -27,7 +27,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define NAND_SUPPORT_ERASE 1
 
 #ifdef NAND_DEBUG
-#	include "gecko.h"
+#	include "peripherals/gecko.h"
 #	define	NAND_debug(f, arg...) gecko_printf("NAND: " f, ##arg);
 #else
 #	define	NAND_debug(f, arg...)
@@ -190,10 +190,10 @@ void nand_read_page(u32 pageno, void *data, void *ecc) {
 void nand_wait(void) {
 // power-saving IRQ wait
 	while(!irq_flag) {
-		u32 cookie = irq_kill();
+		u32 cookie = DisableInterrupts();
 		if(!irq_flag)
 			irq_wait();
-		irq_restore(cookie);
+		RestoreInterrupts(cookie);
 	}
 }
 

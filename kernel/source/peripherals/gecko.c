@@ -19,7 +19,7 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 
 #include "core/hollywood.h"
 #include "interrupt/irq.h"
-#include "gecko.h"
+#include "peripherals/gecko.h"
 #include "elf.h"
 #include "powerpc.h"
 

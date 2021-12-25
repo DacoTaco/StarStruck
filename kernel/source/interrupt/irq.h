@@ -55,19 +55,16 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define MAX_DEVICE			0x20
 
 void IrqInit(void);
-void irq_initialize(void);
-void irq_shutdown(void);
-
-void irq_enable(u32 irq);
-void irq_disable(u32 irq);
-void irq_set_alarm(u32 ms, u8 enable);
-u32 irq_kill(void);
-void irq_restore(u32 cookie);
-void irq_wait(void);
-
-u32 GetTimerValue(void);
+u32 DisableInterrupts(void);
+void RestoreInterrupts(u32 cookie);
 s32 RegisterEventHandler(u8 device, int queueid, int message);
 s32 UnregisterEventHandler(u8 device);
+
+void irq_initialize(void);
+void irq_shutdown(void);
+void irq_enable(u32 irq);
+void irq_disable(u32 irq);
+void irq_wait(void);
 
 #endif
 #endif

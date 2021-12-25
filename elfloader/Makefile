@@ -23,7 +23,7 @@ LDSCRIPT 		= stub.ld
 MAKEBIN 		= tools/makebin.py
 BUILD			:= build
 SOURCES			:= source
-INCLUDES		:= include
+INCLUDES		:= source
 DATA			:= data
 
 

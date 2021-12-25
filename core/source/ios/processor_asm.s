@@ -12,7 +12,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .arm
 .globl debug_output
-.globl get_cpsr
+.globl GetCurrentStatusRegister
+.globl GetSavedStatusRegister
 .globl memcpy32
 .globl memcpy16
 .globl memcpy8
@@ -36,8 +37,13 @@ BEGIN_ASM_FUNC debug_output
 	mov	pc, lr
 END_ASM_FUNC
 	
-BEGIN_ASM_FUNC get_cpsr
-	mrs	r0, cpsr
+BEGIN_ASM_FUNC GetCurrentStatusRegister
+	mrs		r0, cpsr
+	bx		lr
+END_ASM_FUNC
+
+BEGIN_ASM_FUNC GetSavedStatusRegister
+	mrs		r0, spsr
 	bx		lr
 END_ASM_FUNC
 

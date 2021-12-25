@@ -22,7 +22,7 @@ typedef struct
 	u32 processId;
 	ThreadInfo* receiveThreadQueue;
 	ThreadInfo* sendThreadQueue;
-} message_queue;
+} MessageQueue;
 
 typedef enum
 {

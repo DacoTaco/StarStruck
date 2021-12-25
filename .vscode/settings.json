@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+      "kernel" : true,
+      "core" : true,
+      "elfloader" : true,
+      "tools" : true,
+      "sdk" : true
+	},
+}
