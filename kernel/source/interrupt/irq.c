@@ -18,6 +18,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "scheduler/threads.h"
 #include "scheduler/timer.h"
 #include "memory/memory.h"
+#include "messaging/message_queue.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
 
@@ -25,6 +26,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "nand.h"
 #include "sdhc.h"
 
+EventHandler eventHandlers[MAX_DEVICES];
 void irq_setup_stack(void);
 
 void IrqInit(void)
@@ -34,14 +36,53 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
-s32 RegisterEventHandler(u8 device, int queueid, int message)
+s32 RegisterEventHandler(u8 device, int queueid, void* message)
 {
-	return IPC_EINVAL;
+	u32 irqState = DisableInterrupts();
+	s32 ret = 0;
+	if(device >= MAX_DEVICES || queueid >= MAX_MESSAGEQUEUES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;	
+	}
+
+	if(messageQueues[queueid].processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+
+	eventHandlers[device].message = message;
+	eventHandlers[device].processId = currentThread->processId;
+	eventHandlers[device].messageQueue = &messageQueues[queueid];
+
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
 }
 
 s32 UnregisterEventHandler(u8 device)
 {
-	return IPC_EINVAL;
+	u32 irqState = DisableInterrupts();
+	s32 ret = 0;
+	if(device >= MAX_DEVICES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;	
+	}
+
+	if(eventHandlers[device].processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+
+	eventHandlers[device].messageQueue = NULL;
+	eventHandlers[device].message = NULL;
+
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
 }
 
 
