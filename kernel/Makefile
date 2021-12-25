@@ -23,7 +23,7 @@ LDSCRIPT 		= tools/kernel.ld
 MAKEBIN 		= tools/makebin.py
 BUILD			:= build
 SOURCES			:= source $(wildcard source/*/)
-INCLUDES		:= include
+INCLUDES		:= source
 DATA			:=
 
 #---------------------------------------------------------------------------------

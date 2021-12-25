@@ -12,6 +12,8 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #ifndef __EXCEPTION_H__
 #define __EXCEPTION_H__
 
+#include <types.h>
+
 void exception_initialize(void);
 void exc_handler(u32 type, u32 spsr, u32 *regs);
 

@@ -26,10 +26,10 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "scheduler/threads.h"
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
+#include "peripherals/gecko.h"
 #include "utils.h"
 
 #include "sdhc.h"
-#include "gecko.h"
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"

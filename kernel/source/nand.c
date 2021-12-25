@@ -27,7 +27,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define NAND_SUPPORT_ERASE 1
 
 #ifdef NAND_DEBUG
-#	include "gecko.h"
+#	include "peripherals/gecko.h"
 #	define	NAND_debug(f, arg...) gecko_printf("NAND: " f, ##arg);
 #else
 #	define	NAND_debug(f, arg...)
