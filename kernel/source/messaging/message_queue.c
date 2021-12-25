@@ -16,9 +16,7 @@
 #include "memory/memory.h"
 #include "messaging/message_queue.h"
 
-#define MAX_QUEUE 0x100
-
-static MessageQueue queues[MAX_QUEUE];
+MessageQueue messageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {
@@ -37,26 +35,26 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 		goto restore_and_return;
 	}	
 	
-	while(queueId < MAX_QUEUE)
+	while(queueId < MAX_MESSAGEQUEUES)
 	{	
-		if(queues[queueId].queueSize == 0)
+		if(messageQueues[queueId].queueSize == 0)
 			break;
 		queueId++;
 	}
 	
-	if(queueId >= MAX_QUEUE)
+	if(queueId >= MAX_MESSAGEQUEUES)
 	{
 		queueId = IPC_EMAX;
 		goto restore_and_return;
 	}
 	
-	queues[queueId].receiveThreadQueue = mainQueuePtr->nextThread;
-	queues[queueId].sendThreadQueue = mainQueuePtr->nextThread;
-	queues[queueId].queueHeap = ptr;
-	queues[queueId].queueSize = numberOfMessages;
-	queues[queueId].used = 0;
-	queues[queueId].first = 0;
-	queues[queueId].processId = currentThread->processId;
+	messageQueues[queueId].receiveThreadQueue = mainQueuePtr;
+	messageQueues[queueId].sendThreadQueue = mainQueuePtr;
+	messageQueues[queueId].queueHeap = ptr;
+	messageQueues[queueId].queueSize = numberOfMessages;
+	messageQueues[queueId].used = 0;
+	messageQueues[queueId].first = 0;
+	messageQueues[queueId].processId = currentThread->processId;
 	
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -68,24 +66,24 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	s32 used = 0;
-	s32 msgCount = 0;
+	s32 queueSize = 0;
 	s32 heapIndex = 0;
 	
-	if(queueId >= MAX_QUEUE || flags > 2)
+	if(queueId >= MAX_MESSAGEQUEUES || flags > 2)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
-	if(queues[queueId].processId != currentThread->processId)
+	if(messageQueues[queueId].processId != currentThread->processId)
 	{
 		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	
-	used = queues[queueId].used;
-	msgCount = queues[queueId].queueSize;
-	if (msgCount <= used) 
+	used = messageQueues[queueId].used;
+	queueSize = messageQueues[queueId].queueSize;
+	if (queueSize <= used) 
 	{
 		if (flags != BlockThread) 
 		{
@@ -93,32 +91,31 @@ s32 SendMessage(s32 queueId, void* message, u32 flags)
 			goto restore_and_return;
 		}
 				
-		while(msgCount <= used)
+		while(queueSize <= used)
 		{
 			currentThread->threadState = Waiting;
-			ThreadQueue* threadQueue = (queues[queueId].sendThreadQueue == NULL)
-				? NULL
-				: (ThreadQueue*)&queues[queueId].sendThreadQueue;
+			ThreadQueue* threadQueue = messageQueues[queueId].sendThreadQueue;
 			YieldCurrentThread(threadQueue);
 			
-			if(threadQueue == NULL)
+			if(threadQueue != NULL)
 				goto restore_and_return;
 			
-			used = queues[queueId].used;
-			msgCount = queues[queueId].queueSize;
+			used = messageQueues[queueId].used;
+			queueSize = messageQueues[queueId].queueSize;
 		}
 	}
 	
-	heapIndex = queues[queueId].first + used;
-	if(msgCount <= heapIndex)
-		heapIndex = heapIndex - msgCount;
+	heapIndex = messageQueues[queueId].first + used;
+	if(queueSize <= heapIndex)
+		heapIndex = heapIndex - queueSize;
 	
 	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
-	queues[queueId].queueHeap[heapIndex] = message;
+	messageQueues[queueId].queueHeap[heapIndex] = message;
+	DCFlushRange(&messageQueues[queueId].queueHeap[heapIndex], 4);
+	messageQueues[queueId].used++;
 	SetDomainAccessControlRegister(DomainAccessControlTable[currentThread->processId]);
-	queues[queueId].used++;
-	if(queues[queueId].receiveThreadQueue == NULL || queues[queueId].receiveThreadQueue->nextThread != NULL )
-		UnblockThread((ThreadQueue*)&queues[queueId].receiveThreadQueue, 0);
+	if(messageQueues[queueId].receiveThreadQueue == NULL || messageQueues[queueId].receiveThreadQueue->nextThread != NULL )
+		UnblockThread(messageQueues[queueId].receiveThreadQueue, 0);
   
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -132,7 +129,7 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 	s32 used = 0;
 	s32 first = 0;
 
-	if(queueId >= MAX_QUEUE || flags > 2)
+	if(queueId >= MAX_MESSAGEQUEUES || flags > 2)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -142,14 +139,14 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 	if(ret < 0)
 		goto restore_and_return;
 	
-	if(queues[queueId].processId != currentThread->processId)
+	if(messageQueues[queueId].processId != currentThread->processId)
 	{
 		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	
 	//_Receive_Message itself
-	used = queues[queueId].used;
+	used = messageQueues[queueId].used;
 	if(used == 0 && flags != BlockThread)
 	{
 		ret = -7;
@@ -159,31 +156,31 @@ s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
 	while(used == 0)
 	{
 		currentThread->threadState = Waiting;
-		YieldCurrentThread((ThreadQueue*)&queues[queueId].receiveThreadQueue);
+		YieldCurrentThread(messageQueues[queueId].receiveThreadQueue);
 		if(currentThread->threadContext.registers[0] != 0)
 		{
 			ret = currentThread->threadContext.registers[0];
 			goto restore_and_return;
 		}
 		
-		used = queues[queueId].used;
+		used = messageQueues[queueId].used;
 	}
 	
 	if(message != NULL)
 	{
-		*message = queues[queueId].queueHeap[queues[queueId].first];
-		used = queues[queueId].used;
+		*message = messageQueues[queueId].queueHeap[messageQueues[queueId].first];
+		used = messageQueues[queueId].used;
 	}
 	
-	first = queues[queueId].first + 1;
-	if(queues[queueId].queueSize <= first)
-		first = first - queues[queueId].queueSize;
+	first = messageQueues[queueId].first + 1;
+	if(messageQueues[queueId].queueSize <= first)
+		first = first - messageQueues[queueId].queueSize;
 	
-	queues[queueId].first = first;
-	queues[queueId].used = used-1;
+	messageQueues[queueId].first = first;
+	messageQueues[queueId].used = used-1;
 	
-	if(queues[queueId].sendThreadQueue == NULL || queues[queueId].sendThreadQueue->nextThread != NULL )
-		UnblockThread((ThreadQueue*)&queues[queueId].sendThreadQueue, 0);
+	if(messageQueues[queueId].sendThreadQueue == NULL || messageQueues[queueId].sendThreadQueue->nextThread != NULL )
+		UnblockThread(messageQueues[queueId].sendThreadQueue, 0);
 
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -195,25 +192,25 @@ s32 DestroyMessageQueue(s32 queueId)
 	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(queueId < 0 || queueId > MAX_QUEUE)
+	if(queueId < 0 || queueId > MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
-	if(queues[queueId].processId != currentThread->processId)
+	if(messageQueues[queueId].processId != currentThread->processId)
 	{
 		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 	
-	while(queues[queueId].sendThreadQueue != NULL && queues[queueId].sendThreadQueue->nextThread != NULL )
-		UnblockThread((ThreadQueue*)&queues[queueId].sendThreadQueue, -3);
+	while(messageQueues[queueId].sendThreadQueue != NULL && messageQueues[queueId].sendThreadQueue->nextThread != NULL )
+		UnblockThread(messageQueues[queueId].sendThreadQueue, -3);
 	
-	while(queues[queueId].receiveThreadQueue != NULL && queues[queueId].receiveThreadQueue->nextThread != NULL )
-		UnblockThread((ThreadQueue*)&queues[queueId].receiveThreadQueue, -3);
+	while(messageQueues[queueId].receiveThreadQueue != NULL && messageQueues[queueId].receiveThreadQueue->nextThread != NULL )
+		UnblockThread(messageQueues[queueId].receiveThreadQueue, -3);
 	
-	queues[queueId].queueSize = 0;
+	messageQueues[queueId].queueSize = 0;
 
 restore_and_return:
 	RestoreInterrupts(irqState);
