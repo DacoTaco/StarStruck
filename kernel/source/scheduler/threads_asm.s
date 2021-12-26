@@ -15,7 +15,6 @@
 .globl YieldCurrentThread
 .extern ScheduleYield
 .extern QueueNextThread
-.extern __irqstack_addr
 	
 BEGIN_ASM_FUNC ReturnToLr
 	bx		lr

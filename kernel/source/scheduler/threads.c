@@ -151,8 +151,6 @@ void ScheduleYield( void )
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
-		msr		cpsr_c, #0xd2\n\
-		ldr		sp, =__irqstack_addr\n\
 		msr		cpsr_c, #0xd3\n\
 		add		sp, %[threadContext], %[stackOffset]\n\
 		msr		cpsr_c, #0xdb\n\

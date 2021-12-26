@@ -85,6 +85,30 @@ restore_and_return:
 	return ret;
 }
 
+void EnqueueEventHandler(s32 device)
+{
+	MessageQueue* queue = eventHandlers[device].messageQueue;
+
+	if(queue == NULL)
+		return;
+	
+	if(queue->used >= queue->queueSize)
+		return;
+
+	s32 messageIndex = queue->used + queue->first;
+	queue->used += 1;
+	if(messageIndex > queue->queueSize)
+		messageIndex -= queue->queueSize;
+
+	queue->queueHeap[messageIndex] = eventHandlers[device].message;
+	if(queue->receiveThreadQueue != NULL && queue->receiveThreadQueue->nextThread != NULL)
+	{
+		ThreadInfo* handlerThread = PopNextThreadFromQueue(queue->receiveThreadQueue);
+		handlerThread->threadState = Ready;
+		handlerThread->userContext.registers[0] = 0;
+		QueueNextThread(mainQueuePtr, handlerThread);
+	}
+}
 
 void irq_initialize(void)
 {
@@ -108,21 +132,17 @@ void irq_shutdown(void)
 
 void irq_handler(ThreadContext* context)
 {
+	//Enqueue current thread
+	QueueNextThread(mainQueuePtr, currentThread);
 	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
-	
-	u32 enabled = read32(HW_ARMIRQMASK);
-	u32 flags = read32(HW_ARMIRQFLAG);
-	
+
 	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);	
-	flags = flags & enabled;
-	
-	//TODO : once all irq handlers are threads and this works via threads, this state setting must be removed.
-	if(currentThread != NULL)
-		currentThread->threadState = Ready;
+	u32 flags = read32(HW_ARMIRQFLAG) & read32(HW_ARMIRQMASK);
 
 	if(flags & IRQF_TIMER) 
 	{
+		EnqueueEventHandler(IRQ_TIMER);
 		HandleTimerInterrupt();
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}

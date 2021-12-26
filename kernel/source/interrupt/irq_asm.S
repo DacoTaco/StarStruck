@@ -63,6 +63,8 @@ BEGIN_ASM_FUNC irq_setup_stack
 END_ASM_FUNC
 	
 BEGIN_ASM_FUNC v_irq
+#reset the stackpointer
+	ldr		sp, =__irqstack_addr
 #load the pc from before the interrupt(which is stored in current lr)
 	subs	lr, lr, #4
 	stmdb	sp!, {lr}
@@ -73,7 +75,7 @@ BEGIN_ASM_FUNC v_irq
 	mov		r0, sp
 	_BL		SaveThreadInfo
 	
-	@handle the irq request with r0 having the state
+#handle the irq request with r0 having the state
 	mov		r0, sp
 	blx		irq_handler
 
