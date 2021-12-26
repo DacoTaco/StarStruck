@@ -43,57 +43,57 @@
 #define _syscall_base_asm6 "r"  (par1), "r"  (par2), "r"  (par3), "r"  (par4), "r"  (par5), "r"  (par6)
 #define _syscall6(syscall, returnType, pType1, parameter1, pType2, parameter2, pType3, parameter3, pType4, parameter4, pType5, parameter5, pType6, parameter6) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
-	register pType2 par2		__asm__("r2") = parameter2; \
-	register pType3 par3		__asm__("r3") = parameter3; \
-	register pType4 par4		__asm__("r4") = parameter4; \
-	register pType5 par5		__asm__("r5") = parameter5; \
-	register pType6 par6		__asm__("r6") = parameter6; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
+	register pType2 par2		__asm__("r1") = parameter2; \
+	register pType3 par3		__asm__("r2") = parameter3; \
+	register pType4 par4		__asm__("r3") = parameter4; \
+	register pType5 par5		__asm__("r4") = parameter5; \
+	register pType6 par6		__asm__("r5") = parameter6; \
 	\
 	_syscall_base(syscall, _syscall_base_asm6);
 	
 #define _syscall_base_asm5 "r"  (par1), "r"  (par2), "r"  (par3), "r"  (par4), "r"  (par5)
 #define _syscall5(syscall, returnType, pType1, parameter1, pType2, parameter2, pType3, parameter3, pType4, parameter4, pType5, parameter5) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
-	register pType2 par2		__asm__("r2") = parameter2; \
-	register pType3 par3		__asm__("r3") = parameter3; \
-	register pType4 par4		__asm__("r4") = parameter4; \
-	register pType5 par5		__asm__("r5") = parameter5; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
+	register pType2 par2		__asm__("r1") = parameter2; \
+	register pType3 par3		__asm__("r2") = parameter3; \
+	register pType4 par4		__asm__("r3") = parameter4; \
+	register pType5 par5		__asm__("r4") = parameter5; \
 	\
 	_syscall_base(syscall, _syscall_base_asm5);
 	
 #define _syscall_base_asm4 "r"  (par1), "r"  (par2), "r"  (par3), "r"  (par4)
 #define _syscall4(syscall, returnType, pType1, parameter1, pType2, parameter2, pType3, parameter3, pType4, parameter4) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
-	register pType2 par2		__asm__("r2") = parameter2; \
-	register pType3 par3		__asm__("r3") = parameter3; \
-	register pType4 par4		__asm__("r4") = parameter4; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
+	register pType2 par2		__asm__("r1") = parameter2; \
+	register pType3 par3		__asm__("r2") = parameter3; \
+	register pType4 par4		__asm__("r3") = parameter4; \
 	\
 	_syscall_base(syscall, _syscall_base_asm4);
 
 #define _syscall_base_asm3 "r"  (par1), "r"  (par2), "r"  (par3)
 #define _syscall3(syscall, returnType, pType1, parameter1, pType2, parameter2, pType3, parameter3) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
-	register pType2 par2		__asm__("r2") = parameter2; \
-	register pType3 par3		__asm__("r3") = parameter3; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
+	register pType2 par2		__asm__("r1") = parameter2; \
+	register pType3 par3		__asm__("r2") = parameter3; \
 	\
 	_syscall_base(syscall, _syscall_base_asm3);
 
 #define _syscall_base_asm2 "r"  (par1), "r"  (par2)
 #define _syscall2(syscall, returnType, pType1, parameter1, pType2, parameter2) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
-	register pType2 par2		__asm__("r2") = parameter2; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
+	register pType2 par2		__asm__("r1") = parameter2; \
 	\
 	_syscall_base(syscall, _syscall_base_asm2);
 
 #define _syscall_base_asm1 "r"  (par1)
 #define _syscall1(syscall, returnType, pType1, parameter1) \
 	register returnType ret	 	__asm__("r0"); \
-	register pType1 par1	 	__asm__("r1") = parameter1; \
+	register pType1 par1	 	__asm__("r0") = parameter1; \
 	\
 	_syscall_base(syscall, _syscall_base_asm1);
 		
