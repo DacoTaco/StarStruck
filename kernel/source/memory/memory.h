@@ -70,6 +70,7 @@ extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 	
 s32 InitiliseMemory(void);
 void ProtectMemory(int enable, void *start, void *end);
+void* KMalloc(u32 size);
 u32 MapMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
 s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);

@@ -23,6 +23,7 @@ void HandleTimerInterrupt(void)
 
     //change thread queue? 
     //TODO : check with IOS
+    PopNextThreadFromQueue(mainQueuePtr);
     
     //Reset Timer
     if (_alarm_frequency)

@@ -13,11 +13,20 @@
 .arm
 .globl SaveUserModeState
 .globl YieldCurrentThread
+.globl EndThread
 .extern ScheduleYield
 .extern QueueNextThread
 	
 BEGIN_ASM_FUNC ReturnToLr
 	bx		lr
+END_ASM_FUNC
+
+BEGIN_ASM_FUNC EndThread
+	mov		r1, r0
+	mov		r0, #0x00
+#execute syscall CancelThread
+	.long	0xE6000050
+	mov		r0, r0
 END_ASM_FUNC
 
 #void YieldCurrentThread(ThreadQueue* queue)

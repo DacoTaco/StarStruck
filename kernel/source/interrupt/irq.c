@@ -133,12 +133,13 @@ void irq_shutdown(void)
 void irq_handler(ThreadContext* context)
 {
 	//Enqueue current thread
+	currentThread->threadState = Ready;
 	QueueNextThread(mainQueuePtr, currentThread);
 	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
-
-	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);	
+	
 	u32 flags = read32(HW_ARMIRQFLAG) & read32(HW_ARMIRQMASK);
+	//gecko_printf("In IRQ handler: 0x%08x\n", flags);
 
 	if(flags & IRQF_TIMER) 
 	{

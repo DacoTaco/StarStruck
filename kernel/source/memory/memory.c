@@ -206,7 +206,15 @@ void mem_shutdown(void)
 	RestoreInterrupts(cookie);
 }
 
-void* kmalloc(KernelMemoryType type)
+void* KMalloc(u32 size)
+{
+	void* ptr = heapEnd;
+	heapEnd -= size;
+
+	return ptr;
+}
+
+void* _kmallocMemorySection(KernelMemoryType type)
 {
 	u8* ptr = heapCurrent;
 	u32 size = 0;
@@ -284,7 +292,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		accessRights : 0x01;
 		unknown : 0x01;
 		
-		first the page is allocated using kmalloc (mem range > 0x13854000)
+		first the page is allocated using _kmallocMemorySection (mem range > 0x13854000)
 		after that its saved as a course page in our translation table :
 			page[0x13A] = ( 0x13854000 & 0xFFFFFC00 ) | domain << 5 (0x01E0) | COURSE_PAGE(0x11)
 			page[0x13A] = 0x138541F1
@@ -301,7 +309,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	u32* pageValue = *entry;
 	if(pageValue == NULL)
 	{
-		pageValue = (u32*)kmalloc(CoursePage);
+		pageValue = (u32*)_kmallocMemorySection(CoursePage);
 		if(pageValue == NULL)
 			return IPC_ENOMEM;
 		
@@ -522,7 +530,7 @@ s32 InitiliseMemory(void)
 
 	memset32(heapCurrent, 0, heapEnd - heapCurrent);
 	gecko_printf("MEM: mapping sections\n");
-	MemoryTranslationTable = (u32*)kmalloc(PageTable);	
+	MemoryTranslationTable = (u32*)_kmallocMemorySection(PageTable);	
 	if(MemoryTranslationTable == NULL)
 	{
 		ret = IPC_ENOMEM;
