@@ -120,7 +120,7 @@ void irq_initialize(void)
 
 	//???
 	write32(HW_ARMFIQMASK, 0);
-	write32(HW_ARMIRQMASK+0x20, 0);
+	write32(HW_DBGINTEN, 0);
 }
 
 void irq_shutdown(void)

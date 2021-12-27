@@ -35,6 +35,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		HW_ARMIRQFLAG		(HW_REG_BASE + 0x038)
 #define		HW_ARMIRQMASK		(HW_REG_BASE + 0x03c)
 #define		HW_ARMFIQMASK		(HW_REG_BASE + 0x040)
+#define		HW_DBGINTEN			(HW_REG_BASE + 0x05c)
 
 #define		HW_MEMMIRR			(HW_REG_BASE + 0x060)
 #define		HW_AHBPROT			(HW_REG_BASE + 0x064)
@@ -151,6 +152,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 
 #define		HW_PLLAIEXT1		(HW_REG_BASE + 0x1a8)
+#define		HW_PLLSYS			(HW_REG_BASE + 0x1b0)
 #define		HW_PLLSYSEXT		(HW_REG_BASE + 0x1b4)
 #define		HW_PLLVIEXT			(HW_REG_BASE + 0x1c8)
 #define		HW_PLLAI			(HW_REG_BASE + 0x1cc)
@@ -166,6 +168,20 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		HW_OTPCMD			(HW_REG_BASE + 0x1ec)
 #define		HW_OTPDATA			(HW_REG_BASE + 0x1f0)
 #define		HW_VERSION			(HW_REG_BASE + 0x214)
+
+/* Drive Interface */
+
+#define		HW_DI_BASE			(HW_REG_BASE + 0x6000)
+#define		HW_DI_STATUS		(HW_DI_BASE + 0x00)
+#define		HW_DI_COVER			(HW_DI_BASE + 0x04)
+#define		HW_DI_CMDBUF0		(HW_DI_BASE + 0x08)
+#define		HW_DI_CMDBUF1		(HW_DI_BASE + 0x0C)
+#define		HW_DI_CMDBUF2		(HW_DI_BASE + 0x10)
+#define		HW_DI_MEM_ADDR		(HW_DI_BASE + 0x14)
+#define		HW_DI_LENGTH		(HW_DI_BASE + 0x18)
+#define		HW_DI_CONTROL		(HW_DI_BASE + 0x1C)
+#define		HW_DI_IMM_BUF		(HW_DI_BASE + 0x20)
+#define		HW_DI_CFG			(HW_DI_BASE + 0x24)
 
 /* NAND Registers */
 
@@ -252,6 +268,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #include <types.h>
 
 void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision);
+u32 GetCoreClock(void);
 
 #endif
 

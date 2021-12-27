@@ -10,6 +10,7 @@
 
 #include <ios/gecko.h>
 
+#include "core/hollywood.h"
 #include "interrupt/irq.h"
 #include "scheduler/timer.h"
 #include "scheduler/threads.h"
@@ -102,6 +103,12 @@ static u32 syscall_handlers[] = {
 	(u32)0x00000000,					//0x004D
 	(u32)0x00000000,					//0x004E
 	(u32)VirtualToPhysical,				//0x004F
+	(u32)0x00000000,					//0x0050
+	(u32)0x00000000,					//0x0051
+	(u32)0x00000000,					//0x0052
+	(u32)0x00000000,					//0x0053
+	(u32)0x00000000,					//0x0054
+	(u32)GetCoreClock					//0x0055
 };
 
 //We implement syscalls using the SVC/SWI instruction. 
