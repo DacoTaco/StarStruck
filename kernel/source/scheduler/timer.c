@@ -15,6 +15,23 @@
 #include "scheduler/timer.h"
 
 static u32 _alarm_frequency = 0;
+u32 ConvertDelayToTicks(u32 delay)
+{
+	u32 clk = GetCoreClock();
+
+	//from what i gather, it uses the clk values (which are mode & hardware rev depended) to decide the formula
+	if(clk == 0x51)
+		return (delay >> 1) + (delay >> 3) + (delay >> 7);
+	else if(clk == 0x36)
+		return (delay >> 2) + (delay >> 3) + (delay >> 5) + (delay >> 6);
+	else if(clk == 0x6C)
+		return (delay >> 1) + (delay >> 2) + (delay >> 4) + (delay >> 5);
+	else if(clk == 0xA2) //Gamecube mode clk
+		return (delay >> 2) + (delay >> 6) + delay;
+
+	//fallback
+	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 7);
+}
 
 void HandleTimerInterrupt(void)
 {

@@ -13,3 +13,4 @@
 void HandleTimerInterrupt(void);
 u32 GetTimerValue(void);
 void SetTimerAlarm(u32 ms, u8 enable);
+u32 ConvertDelayToTicks(u32 delay);
