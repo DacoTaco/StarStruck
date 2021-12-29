@@ -44,6 +44,17 @@ FATFS fatfs;
 
 void kernel_main( void )
 {
+	//create IRQ Timer handler thread
+	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7F, 1);
+	//set thread to run as a system thread
+	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+	
+	if( threadId < 0 || StartThread(threadId) < 0 )
+	{
+		gecko_printf("failed to start IRQ thread!\n");
+		while(1);
+	}
+
 	u32 vector;
 	FRESULT fres = 0;
 
@@ -51,9 +62,10 @@ void kernel_main( void )
 //	irq_enable(IRQ_GPIO1B);
 	irq_enable(IRQ_GPIO1);
 	irq_enable(IRQ_RESET);
-	irq_enable(IRQ_TIMER);
-	SetTimerAlarm(20, 1);
+	SetTimerAlarm(ConvertDelayToTicks(20000));
 	gecko_printf("Interrupts initialized\n");
+	SetThreadPriority(0, 0);
+	udelay(20000);
 	
 	crypto_initialize();
 	gecko_printf("crypto support initialized\n");

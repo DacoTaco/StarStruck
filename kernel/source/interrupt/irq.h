@@ -50,8 +50,6 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #include <types.h>
 #include "messaging/message_queue.h"
 
-#define IRQ_ALARM_MS2REG(x)	(1898 * x)
-
 typedef struct
 {
 	MessageQueue* messageQueue;

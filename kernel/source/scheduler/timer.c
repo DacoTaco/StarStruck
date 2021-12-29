@@ -13,8 +13,13 @@
 #include "core/hollywood.h"
 #include "interrupt/irq.h"
 #include "scheduler/timer.h"
+#include "scheduler/threads.h"
 
-static u32 _alarm_frequency = 0;
+static u32 timerFrequency = 0;
+static TimerInfo timers[MAX_TIMERS];
+static TimerInfo* currentTimer = timers;
+static u32 previousTimerValue = 0;
+
 u32 ConvertDelayToTicks(u32 delay)
 {
 	u32 clk = GetCoreClock();
@@ -35,16 +40,25 @@ u32 ConvertDelayToTicks(u32 delay)
 
 void HandleTimerInterrupt(void)
 {
-    //clear Timer
-    write32(HW_ALARM, 0);
+	//clear Timer
+	write32(HW_ALARM, 0);
 
-    //change thread queue? 
-    //TODO : check with IOS
-    PopNextThreadFromQueue(mainQueuePtr);
-    
-    //Reset Timer
-    if (_alarm_frequency)
-        write32(HW_ALARM, read32(HW_TIMER) + _alarm_frequency);
+	//change thread queue? 
+	//TODO : check with IOS
+	PopNextThreadFromQueue(mainQueuePtr);
+
+	//Reset Timer
+	if (timerFrequency)
+		write32(HW_ALARM, read32(HW_TIMER) + timerFrequency);
+}
+
+void TimerHandler(void)
+{
+	gecko_printf("hello from TimerHandler\n");
+
+	//when thread is done init'ing : execute function
+	//HandleTimerInterrupt
+	return;
 }
 
 u32 GetTimerValue(void)
@@ -52,10 +66,12 @@ u32 GetTimerValue(void)
 	return read32(HW_TIMER);
 }
 
-void SetTimerAlarm(u32 ms, u8 enable)
+void SetTimerAlarm(u32 ticks)
 {
-    _alarm_frequency = IRQ_ALARM_MS2REG(ms);
+	if (ticks < 2)
+		ticks = 2;
 
-	if (enable)
-		write32(HW_ALARM, read32(HW_TIMER) + _alarm_frequency);
+	set32(HW_ALARM, read32(HW_ALARM) + ticks);
+	previousTimerValue = read32(HW_ALARM);
+	return;
 }
