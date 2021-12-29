@@ -51,6 +51,8 @@
 			"*.h": "c",
 			"*.hpp": "cpp",
 		},
+		"editor.insertSpaces": false,
+		"editor.detectIndentation": false,
 	},
 	"extensions": {
 		"recommendations": [
