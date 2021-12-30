@@ -31,40 +31,44 @@ u32 NumberMagic(u32 param_1, u32 param_2)
 
 	while(param_2 < 0x10000000 && (param_2 < param_1)) 
 	{
-      param_2 = param_2 << 4;
-      unknwn = unknwn << 4;
-    }
+		param_2 = param_2 << 4;
+		unknwn = unknwn << 4;
+	}
 
 	while (param_2 < 0x80000000 && (param_2 < param_1))
 	{
-      param_2 = param_2 << 1;
-      unknwn = unknwn << 1;
-    }
+		param_2 = param_2 << 1;
+		unknwn = unknwn << 1;
+	}
 
 	while(1) 
 	{
-      if (param_2 <= param_1) {
-        param_1 -= param_2;
-        ret |= unknwn;
-      }
-      if (param_2 >> 1 <= param_1) {
-        param_1 -= param_2 >> 1;
-        ret |= unknwn >> 1;
-      }
-      if (param_2 >> 2 <= param_1) {
-        param_1 -= param_2 >> 2;
-        ret |= unknwn >> 2;
-      }
-      if (param_2 >> 3 <= param_1) {
-        param_1 -= param_2 >> 3;
-        ret |= unknwn >> 3;
-      }
+		if (param_2 <= param_1) 
+		{
+			param_1 -= param_2;
+			ret |= unknwn;
+		}
+		if (param_2 >> 1 <= param_1) 
+		{
+			param_1 -= param_2 >> 1;
+			ret |= unknwn >> 1;
+		}
+		if (param_2 >> 2 <= param_1) 
+		{
+			param_1 -= param_2 >> 2;
+			ret |= unknwn >> 2;
+		}
+		if (param_2 >> 3 <= param_1)
+		{
+			param_1 -= param_2 >> 3;
+			ret |= unknwn >> 3;
+		}
 
-	  unknwn = unknwn >> 4;
-      if (param_1 == 0 || unknwn == 0)
-	  	break;
-      param_2 = param_2 >> 4;
-    }
+		unknwn = unknwn >> 4;
+		if (param_1 == 0 || unknwn == 0)
+			break;
+		param_2 = param_2 >> 4;
+	}
 
 	return ret;
 }
