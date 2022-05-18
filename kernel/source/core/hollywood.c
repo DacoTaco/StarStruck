@@ -87,14 +87,14 @@ u32 GetCoreClock(void)
 
 	if(hwVer < 2)
 	{
-		if(read32(HW_CLOCKS) & 1 != 0)
+		if((read32(HW_CLOCKS) & 1) != 0)
 			return NumberMagic(0xF30, read32(HW_PLLSYSEXT) & 0x1FF);
 
 		clk = 0xF30;
 	}
 	else
 	{
-		if(read32(HW_CLOCKS) & 1 != 0)
+		if((read32(HW_CLOCKS) & 1) != 0)
 			return NumberMagic(0x798, read32(HW_PLLSYSEXT) & 0x1FF);
 		
 		clk = 0x798;

@@ -13,7 +13,6 @@ Copyright (C) 2021	DacoTaco
 
 #include "ios/gecko.h"
 #include "ios/syscalls.h"
-#include "ios/module.h"
 
 #include "types.h"
 #endif

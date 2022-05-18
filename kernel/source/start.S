@@ -11,10 +11,10 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .arm
 
 .extern _main
-.extern __got_start
-.extern __got_end
 .extern __bss_start
 .extern __bss_end
+.extern __data_sram_start
+.extern __data_sram_end
 .extern __bss2_start
 .extern __bss2_end
 .extern __stack_addr
@@ -56,6 +56,22 @@ v_reset:
 	mov	r0, #0x42
 	bl	debug_output
 
+	@ invalidate ic & dc cache
+    mcr p15, 0, r0, cr7, cr5, 0x0
+    mcr p15, 0, r0, cr7, cr6, 0x0
+
+	@ set IC & DC cache
+    mrc p15, 0, r0, cr1, cr0, 0
+    orr r0, r0, #0x1000
+    orr r0, r0, #0x2
+    mcr p15, 0, r0, cr1, cr0, 0
+
+	@ hide boot0
+	ldr r0, =#0x0D80018C
+    ldr r1,[r0, #0]
+    orr r1, r1, #0x1000
+    str r1, [r0, #0]
+
 	@ Set up a stack
 	ldr	sp, =__stack_addr
 
@@ -87,6 +103,20 @@ bss_loop:
 	b	bss_loop
 
 done_bss:
+	@ clear BSS structs
+	ldr	r1, =__data_sram_start
+	ldr	r2, =__data_sram_end
+	mov	r3, #0
+sram_data_loop:
+	@ check for the end
+	cmp	r1, r2
+	beq	done_sram_data
+	@ clear the word and move on
+	str	r3, [r1]
+	add	r1, r1, #4
+	b	sram_data_loop
+
+done_sram_data:
 	@ clear BSS2
 	ldr	r1, =__bss2_start
 	ldr	r2, =__bss2_end

@@ -21,94 +21,94 @@
 
 //#define _DEBUG_SYSCALL
 
-typedef u32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6);
-static u32 syscall_handlers[] = {
-	(u32)CreateThread,					//0x0000
-	(u32)JoinThread,					//0x0001
-	(u32)CancelThread,					//0x0002
-	(u32)GetThreadID,					//0x0003
-	(u32)GetProcessID,					//0x0004
-	(u32)StartThread,					//0x0005
-	(u32)0x00000000,					//0x0006
-	(u32)YieldThread,					//0x0007
-	(u32)GetThreadPriority,				//0x0008
-	(u32)SetThreadPriority,				//0x0009
-	(u32)CreateMessageQueue,			//0x000A
-	(u32)DestroyMessageQueue,			//0x000B
-	(u32)SendMessage,					//0x000C
-	(u32)0x00000000,					//0x000D
-	(u32)ReceiveMessage,				//0x000E
-	(u32)RegisterEventHandler,			//0x000F
-	(u32)UnregisterEventHandler,		//0x0010
-	(u32)0x00000000,					//0x0011
-	(u32)0x00000000,					//0x0012
-	(u32)0x00000000,					//0x0013
-	(u32)0x00000000,					//0x0014
-	(u32)GetTimerValue,					//0x0015
-	(u32)CreateHeap,					//0x0016
-	(u32)DestroyHeap,					//0x0017
-	(u32)AllocateOnHeap,				//0x0018
-	(u32)MallocateOnHeap,				//0x0019
-	(u32)FreeOnHeap,					//0x001A
-	(u32)0x00000000,					//0x001B
-	(u32)0x00000000,					//0x001C
-	(u32)0x00000000,					//0x001D
-	(u32)0x00000000,					//0x001E
-	(u32)0x00000000,					//0x001F
-	(u32)0x00000000,					//0x0020
-	(u32)0x00000000,					//0x0021
-	(u32)0x00000000,					//0x0022
-	(u32)0x00000000,					//0x0023
-	(u32)0x00000000,					//0x0024
-	(u32)0x00000000,					//0x0025
-	(u32)0x00000000,					//0x0026
-	(u32)0x00000000,					//0x0027
-	(u32)0x00000000,					//0x0028
-	(u32)0x00000000,					//0x0029
-	(u32)0x00000000,					//0x002A
-	(u32)SetUID,						//0x002B
-	(u32)GetUID,						//0x002C
-	(u32)SetGID,						//0x002D
-	(u32)GetGID,						//0x002E
-	(u32)AhbFlushFrom,					//0x002F
-	(u32)AhbFlushTo,					//0x0030
-	(u32)0x00000000,					//0x0031
-	(u32)0x00000000,					//0x0032
-	(u32)0x00000000,					//0x0033
-	(u32)0x00000000,					//0x0034
-	(u32)0x00000000,					//0x0035
-	(u32)0x00000000,					//0x0036
-	(u32)0x00000000,					//0x0037
-	(u32)0x00000000,					//0x0038
-	(u32)0x00000000,					//0x0039
-	(u32)0x00000000,					//0x003A
-	(u32)0x00000000,					//0x003B
-	(u32)0x00000000,					//0x003C
-	(u32)0x00000000,					//0x003D
-	(u32)0x00000000,					//0x003E
-	(u32)DCInvalidateRange,				//0x003F
-	(u32)DCFlushRange,					//0x0040
-	(u32)0x00000000,					//0x0041
-	(u32)0x00000000,					//0x0042
-	(u32)0x00000000,					//0x0043
-	(u32)0x00000000,					//0x0044
-	(u32)0x00000000,					//0x0045
-	(u32)0x00000000,					//0x0046
-	(u32)0x00000000,					//0x0047
-	(u32)0x00000000,					//0x0048
-	(u32)0x00000000,					//0x0049
-	(u32)0x00000000,					//0x004A
-	(u32)0x00000000,					//0x004B
-	(u32)0x00000000,					//0x004C
-	(u32)0x00000000,					//0x004D
-	(u32)0x00000000,					//0x004E
-	(u32)VirtualToPhysical,				//0x004F
-	(u32)0x00000000,					//0x0050
-	(u32)0x00000000,					//0x0051
-	(u32)0x00000000,					//0x0052
-	(u32)0x00000000,					//0x0053
-	(u32)0x00000000,					//0x0054
-	(u32)GetCoreClock					//0x0055
+typedef u32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8, u32 r9);
+static const void* syscall_handlers[] = {
+	CreateThread,				//0x0000
+	JoinThread,					//0x0001
+	CancelThread,				//0x0002
+	GetThreadID,				//0x0003
+	GetProcessID,				//0x0004
+	StartThread,				//0x0005
+	0x00000000,					//0x0006
+	YieldThread,				//0x0007
+	GetThreadPriority,			//0x0008
+	SetThreadPriority,			//0x0009
+	CreateMessageQueue,			//0x000A
+	DestroyMessageQueue,		//0x000B
+	SendMessage,				//0x000C
+	0x00000000,					//0x000D
+	ReceiveMessage,				//0x000E
+	RegisterEventHandler,		//0x000F
+	UnregisterEventHandler,		//0x0010
+	0x00000000,					//0x0011
+	0x00000000,					//0x0012
+	0x00000000,					//0x0013
+	0x00000000,					//0x0014
+	GetTimerValue,				//0x0015
+	CreateHeap,					//0x0016
+	DestroyHeap,				//0x0017
+	AllocateOnHeap,				//0x0018
+	MallocateOnHeap,			//0x0019
+	FreeOnHeap,					//0x001A
+	0x00000000,					//0x001B
+	0x00000000,					//0x001C
+	0x00000000,					//0x001D
+	0x00000000,					//0x001E
+	0x00000000,					//0x001F
+	0x00000000,					//0x0020
+	0x00000000,					//0x0021
+	0x00000000,					//0x0022
+	0x00000000,					//0x0023
+	0x00000000,					//0x0024
+	0x00000000,					//0x0025
+	0x00000000,					//0x0026
+	0x00000000,					//0x0027
+	0x00000000,					//0x0028
+	0x00000000,					//0x0029
+	0x00000000,					//0x002A
+	SetUID,						//0x002B
+	GetUID,						//0x002C
+	SetGID,						//0x002D
+	GetGID,						//0x002E
+	AhbFlushFrom,				//0x002F
+	AhbFlushTo,					//0x0030
+	0x00000000,					//0x0031
+	0x00000000,					//0x0032
+	0x00000000,					//0x0033
+	0x00000000,					//0x0034
+	0x00000000,					//0x0035
+	0x00000000,					//0x0036
+	0x00000000,					//0x0037
+	0x00000000,					//0x0038
+	0x00000000,					//0x0039
+	0x00000000,					//0x003A
+	0x00000000,					//0x003B
+	0x00000000,					//0x003C
+	0x00000000,					//0x003D
+	0x00000000,					//0x003E
+	DCInvalidateRange,			//0x003F
+	DCFlushRange,				//0x0040
+	0x00000000,					//0x0041
+	0x00000000,					//0x0042
+	0x00000000,					//0x0043
+	0x00000000,					//0x0044
+	0x00000000,					//0x0045
+	0x00000000,					//0x0046
+	0x00000000,					//0x0047
+	0x00000000,					//0x0048
+	0x00000000,					//0x0049
+	0x00000000,					//0x004A
+	0x00000000,					//0x004B
+	0x00000000,					//0x004C
+	0x00000000,					//0x004D
+	0x00000000,					//0x004E
+	VirtualToPhysical,			//0x004F
+	0x00000000,					//0x0050
+	0x00000000,					//0x0051
+	0x00000000,					//0x0052
+	0x00000000,					//0x0053
+	0x00000000,					//0x0054
+	GetCoreClock				//0x0055
 };
 
 //We implement syscalls using the SVC/SWI instruction. 
@@ -146,7 +146,7 @@ s32 HandleSyscall(u16 syscall, ThreadContext* threadContext)
 	}
 	
 	//dive into the handler
-	return handler(reg[0], reg[1], reg[2], reg[3], reg[4], reg[5], reg[6]);
+	return handler(reg[0], reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7], reg[8], reg[9]);
 }
 
 /*	

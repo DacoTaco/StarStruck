@@ -19,7 +19,8 @@
 BEGIN_ASM_FUNC v_undf
 #for info : see syscall asm
 	stmdb	sp!, {lr}
-	stmdb	sp!, {r0-r12, sp, lr}^
+	stmdb	sp, {r0-r12, sp, lr}^
+	sub		sp, sp, #0x3C
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
 	mov		r1, sp
@@ -33,16 +34,13 @@ BEGIN_ASM_FUNC v_undf
 #endif
 
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
-	push	{r1}
 	blx		undf_handler
-	pop		{r1}
 	msr		cpsr_c, #0xdb
 
-	mov		sp, r1
 	ldmia	sp!, {r2}
 	msr		spsr_cxsf, r2
 	add		sp, sp, #0x04
-	ldmia	sp!, {r1-r12, sp, lr}^
-	ldmia	sp!, {lr}
-	movs	pc, lr
+	ldmia	sp, {r1-r12, sp, lr}^
+	add		sp, sp, #0x38
+	ldmia	sp!, {pc}^	
 END_ASM_FUNC

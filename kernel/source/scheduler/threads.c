@@ -26,7 +26,7 @@ void EndThread();
 
 u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
-ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
+ThreadInfo threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10);
 ThreadQueue mainQueue ALIGNED(0x10) = { &threads[0] };
 ThreadQueue* mainQueuePtr = &mainQueue;
 ThreadInfo* currentThread ALIGNED(0x10);
@@ -158,17 +158,16 @@ void ScheduleYield( void )
 		ldmia	%[threadContext]!, {r4}\n\
 		msr		spsr_cxsf, r4\n\
 #restore the rest of the state\n\
-		ldmia	%[threadContext]!, {r0-r12, sp, lr}^\n\
-		ldmia	%[threadContext]!, {lr}\n\
+		mov		lr, %[threadContext] \n\
+		ldmia	lr, {r0-r12, sp, lr}^\n\
+		add		lr, lr, #0x3C\n\
 #jump to thread\n\
-		movs	pc, lr\n"
+		ldmia	lr, {pc}^\n"
 		:
 		: [threadContext] "r" (threadContext), 
 		  [threadContextOffset] "J" (offsetof(ThreadInfo, threadContext)),
 		  [stackOffset] "J" (offsetof(ThreadInfo, userContext) + sizeof(ThreadContext))
 	);
-	
-	return;
 }
 
 //Called syscalls.
@@ -203,7 +202,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 {
 	int threadId = 0;
 	s32 irqState = DisableInterrupts();
-	
+
 	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (currentThread != NULL && priority > currentThread->initialPriority))
 	{
 		threadId = IPC_EINVAL;

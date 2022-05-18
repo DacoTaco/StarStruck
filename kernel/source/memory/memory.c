@@ -74,7 +74,7 @@ extern const u32 __kernel_heap_size;
 extern const void* __kernel_heap_start;
 extern const void* __kernel_heap_end;
 u8* heapCurrent = (u8*)&__kernel_heap_start;
-const u8* heapEnd = (u8*)&__kernel_heap_end;
+u8* heapEnd = (u8*)&__kernel_heap_end;
 
 //the pagetable for the mmu's translation table base register MUST be 0x4000 (16KB aligned) !
 //this is (kinda) ensured by having the heap 16KB aligned and this being the first malloc

@@ -187,12 +187,10 @@ void InitialiseSystem( void )
 	InitiliseMemory();
 }
 
-u32 _main(void *base)
+u32 _main(void)
 {
-	(void)base;	
 	gecko_init();
 	gecko_printf("StarStruck %s loading\n", git_version);
-	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
 
@@ -236,8 +234,7 @@ u32 _main(void *base)
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);
 
-	gecko_printf("\npanic!\n");
-	while(1){};
+	panic("\npanic!\n");
 	return 0;
 }
 

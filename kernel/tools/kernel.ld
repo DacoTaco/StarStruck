@@ -13,11 +13,12 @@ OUTPUT_ARCH(arm)
 EXTERN(_start)
 ENTRY(_start)
 
-__stack_size = 0x100;
+__stack_size = 0x300;
 __irqstack_size = 0x100;
 __excstack_size = 0x100;
 __swistack_size = 0x100;
 
+/*Sram is split up in several parts lol. FFFE0000 = 32K available. then there is 32K of unusable crap, followed by 64K of memory*/
 MEMORY {
 	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 62K
 	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
@@ -51,6 +52,14 @@ SECTIONS
 		__bss2_end = . ;
 	} >mem2
 
+	.data.sram (NOLOAD):
+	{
+		__data_sram_start = . ;
+		*(.data.sram)
+		. = ALIGN(4);
+		__data_sram_end = . ;
+	} >sram_data
+
 	.init :
 	{
 		*(.init)
@@ -76,7 +85,7 @@ SECTIONS
 		*(.rodata.*)
 		*(.gnu.linkonce.r*)
 		. = ALIGN(4);
-	} >sram_data
+	} >sram
 
 	.data :
 	{
@@ -95,7 +104,7 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		__bss_end = . ;
-	} >sram_data
+	} >sram
 
 	.stack :
 	{
@@ -116,7 +125,7 @@ SECTIONS
 		. = . +__swistack_size;
 		. = ALIGN(16);
 		__swistack_addr = .;
-	} >sram_data
+	} >sram
 
 	/DISCARD/ :
 	{

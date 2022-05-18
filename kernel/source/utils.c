@@ -43,16 +43,3 @@ void udelay(u32 delay)
 		while(read32(HW_TIMER) < then);
 	}
 }
-
-void panic(u8 v)
-{
-	while(1) {
-		debug_output(v);
-		set32(HW_GPIO1BOUT, GP_SLOTLED);
-		udelay(500000);
-		debug_output(0);
-		clear32(HW_GPIO1BOUT, GP_SLOTLED);
-		udelay(500000);
-	}
-}
-

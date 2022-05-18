@@ -9,18 +9,35 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 */
 
 #include <stdarg.h>
+#include <vsprintf.h>
 #include <ios/processor.h>
+#include <ios/gecko.h>
 
 #include "core/hollywood.h"
 #include "core/gpio.h"
+#include "interrupt/irq.h"
 #include "utils.h"
+#include "panic.h"
 
 #define PANIC_ON	200000
 #define PANIC_OFF	300000
 #define PANIC_INTER	1000000
 
-// figure out a use for mode...
+void panic(const char *fmt, ...)
+{
+	va_list args;
+	char buffer[256];
 
+	va_start(args, fmt);
+	vsprintf(buffer, fmt, args);
+	va_end(args);
+	gecko_printf(buffer);
+
+	DisableInterrupts();
+	panic2(0, PANIC_EXCEPTION);
+}
+
+// figure out a use for mode...
 void panic2(int mode, ...)
 {
 	int arg;

@@ -16,14 +16,14 @@
 #include "memory/memory.h"
 #include "messaging/message_queue.h"
 
-MessageQueue messageQueues[MAX_MESSAGEQUEUES];
+MessageQueue messageQueues[MAX_MESSAGEQUEUES] SRAM_DATA;
 
 s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {
 	s32 irqState = DisableInterrupts();
 	s16 queueId = 0;
 	
-	if(ptr == NULL || *ptr == NULL)
+	if(ptr == NULL)
 	{
 		queueId = IPC_EINVAL;
 		goto restore_and_return;
