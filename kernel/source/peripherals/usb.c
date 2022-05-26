@@ -36,50 +36,50 @@ void _configureUsbController(u32 hardwareRevision)
 	u8 subValue = _usbConfigurations[index+1] & 0x0F;
 
 	//yay, usb controller magic values!
-	set32(USB_REG_B0, ((((value * 5) -4) & 0xFF) << 8) | 0x20000);	
-	set32(USB_REG_B4, value << 8 | subValue << 0x17 | 0x2014);
+	write32(USB_REG_B0, ((((value * 5) -4) & 0xFF) << 8) | 0x20000);	
+	write32(USB_REG_B4, value << 8 | subValue << 0x17 | 0x2014);
 }
 
 void ConfigureUsbController(u32 hardwareRevision)
 {
-	set8(HW_USBFRCRST, 0xFE);
+	write32(HW_USBFRCRST, 0xFE);
 	udelay(2);
 	
 	ConfigureUsbHostPLL();
 	
-	set8(HW_USBFRCRST, 0xF6);
+	write32(HW_USBFRCRST, 0xF6);
 	udelay(50);
-	set8(HW_USBFRCRST, 0xF4);
+	write32(HW_USBFRCRST, 0xF4);
 	udelay(1);
-	set8(HW_USBFRCRST, 0xF0);
+	write32(HW_USBFRCRST, 0xF0);
 	udelay(1);
-	set8(HW_USBFRCRST, 0x70);
+	write32(HW_USBFRCRST, 0x70);
 	udelay(1);
-	set8(HW_USBFRCRST, 0x60);
+	write32(HW_USBFRCRST, 0x60);
 	udelay(1);
-	set8(HW_USBFRCRST, 0x40);
+	write32(HW_USBFRCRST, 0x40);
 	udelay(1);
-	set8(HW_USBFRCRST, 0x00);
+	write32(HW_USBFRCRST, 0x00);
 	udelay(1);
 
 	_configureUsbController(hardwareRevision);
 	if(hardwareRevision < 2)
 	{
-		set8(USB_REG_A4, 0x26);
+		write32(USB_REG_A4, 0x26);
 		udelay(1);
-		set16(USB_REG_A4, 0x2026);
+		write32(USB_REG_A4, 0x2026);
 		udelay(1);
-		set16(USB_REG_A4, 0x4026);
+		write32(USB_REG_A4, 0x4026);
 	}
 	else
 	{
-		set8(USB_REG_A4, 0x23);
+		write32(USB_REG_A4, 0x23);
 		udelay(1);
-		set16(USB_REG_A4, 0x2023);
+		write32(USB_REG_A4, 0x2023);
 		udelay(1);
-		set16(USB_REG_A4, 0x4023);
+		write32(USB_REG_A4, 0x4023);
 	}
 	
 	udelay(20);
-	set16(USB_REG_CC, 0x111);
+	write32(USB_REG_CC, 0x111);
 }

@@ -20,7 +20,7 @@ __swistack_size = 0x100;
 
 /*Sram is split up in several parts lol. FFFE0000 = 32K available. then there is 32K of unusable crap, followed by 64K of memory*/
 MEMORY {
-	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 62K
+	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 32K
 	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
 	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
 	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K

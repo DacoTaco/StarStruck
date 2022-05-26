@@ -91,14 +91,14 @@ void ConfigureVideoInterfacePLL(u8 forceInit)
 void ConfigureUsbHostPLL()
 {
 	u32 value = read32(HW_PLLUSBEXT);
-	set32(HW_PLLUSBEXT, value & 0x7FFFFFFF);
+	write32(HW_PLLUSBEXT, value & 0x7FFFFFFF);
 	udelay(2);
-	set32(HW_PLLUSBEXT, value & 0x3FFFFFFF);
+	write32(HW_PLLUSBEXT, value & 0x3FFFFFFF);
 	udelay(10);
 	
-	set32(HW_PLLUSBEXT, (read32(HW_PLLUSBEXT) & 0xBFFFFFFF) | 0x40000000);
+	write32(HW_PLLUSBEXT, (read32(HW_PLLUSBEXT) & 0xBFFFFFFF) | 0x40000000);
 	udelay(50);
 	
-	set32(HW_PLLUSBEXT, (read32(HW_PLLUSBEXT) & 0x7FFFFFFF) | 0x80000000);
+	write32(HW_PLLUSBEXT, (read32(HW_PLLUSBEXT) & 0x7FFFFFFF) | 0x80000000);
 	udelay(2);
 }

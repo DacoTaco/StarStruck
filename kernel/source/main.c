@@ -121,13 +121,13 @@ void SetStarletClock()
 	
 	if(hardwareVersion < 2)
 	{
-		set32(HW_IOSTRCTRL0, 0x65244A);
-		set32(HW_IOSTRCTRL1, 0x46A024);
+		write32(HW_IOSTRCTRL0, 0x65244A);
+		write32(HW_IOSTRCTRL1, 0x46A024);
 	}
 	else
 	{
-		set32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
-		set32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
+		write32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
+		write32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
 	}
 }
 
@@ -136,25 +136,24 @@ void InitialiseSystem( void )
 	u32 hardwareVersion = 0;
 	u32 hardwareRevision = 0;
 	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
-	
 	//something to do with flipper?
-	set32(HW_EXICTRL, read32(HW_EXICTRL) | EXICTRL_ENABLE_EXI);
+	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 	
 	//enable protection on our MEM2 addresses & SRAM
 	ProtectMemory(1, (void*)0x13620000, (void*)0x1FFFFFFF);
 	
 	//????
-	set32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
+	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
 	
 	//set some hollywood ahb registers????
 	if(hardwareVersion == 1 && hardwareRevision == 0)
-		set32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF0F) | 1);
+		write32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF000F) | 1);
 	
 	// ¯\_(ツ)_/¯
-	set32(HW_AHB_10, 0);
+	write32(HW_AHB_10, 0);
 	
 	//Set boot0 B10 & B11? found in IOS58.
-	set32(HW_BOOT0, read32(HW_BOOT0) | 0xC00);
+	set32(HW_BOOT0, 0xC00);
 	
 	//Configure PPL ( phase locked loop )
 	ConfigureAiPLL(0, 0);
@@ -171,17 +170,17 @@ void InitialiseSystem( void )
 	SetStarletClock();
 	
 	//reset registers
-	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
-	set32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
-	set32(HW_ALARM, 0);
-	set32(NAND_CMD, 0);
-	set32(AES_CMD, 0);
-	set32(SHA_CMD, 0);
+	write32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
+	write32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
+	write32(HW_ALARM, 0);
+	write32(NAND_CMD, 0);
+	write32(AES_CMD, 0);
+	write32(SHA_CMD, 0);
 	
 	//Enable all ARM irq's except for 2 unknown irq's ( 0x4200 )
-	set32(HW_ARMIRQFLAG, 0xFFFFBDFF);
-	set32(HW_ARMIRQMASK, 0);
-	set32(HW_ARMFIQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xFFFFBDFF);
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMFIQMASK, 0);
 	
 	gecko_printf("Configuring caches and MMU...\n");
 	InitiliseMemory();
