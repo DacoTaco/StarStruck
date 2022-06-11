@@ -180,7 +180,6 @@ u32 _main(void *base)
 	(void)base;	
 	gecko_init();
 	gecko_printf("StarStruck %s loading\n", git_version);
-	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
 

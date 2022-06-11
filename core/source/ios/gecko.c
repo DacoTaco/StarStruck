@@ -262,10 +262,11 @@ int gecko_printf(const char *fmt, ...)
 
 	va_list args;
 	char buffer[256];
+	memset(buffer, 0, sizeof(buffer));
 	int i;
 
 	va_start(args, fmt);
-	i = vsprintf(buffer, fmt, args);
+	i = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 
 #ifdef GECKO_SAFE
