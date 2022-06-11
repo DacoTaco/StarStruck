@@ -101,12 +101,12 @@ void EnqueueEventHandler(s32 device)
 		messageIndex -= queue->queueSize;
 
 	queue->queueHeap[messageIndex] = eventHandlers[device].message;
-	if(queue->receiveThreadQueue != NULL && queue->receiveThreadQueue->nextThread != NULL)
+	if(queue->receiveThreadQueue.nextThread != NULL)
 	{
-		ThreadInfo* handlerThread = PopNextThreadFromQueue(queue->receiveThreadQueue);
+		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->receiveThreadQueue);
 		handlerThread->threadState = Ready;
 		handlerThread->userContext.registers[0] = 0;
-		QueueNextThread(mainQueuePtr, handlerThread);
+		ThreadQueue_PushThread(&runningQueue, handlerThread);
 	}
 }
 
@@ -134,7 +134,7 @@ void irq_handler(ThreadContext* context)
 {
 	//Enqueue current thread
 	currentThread->threadState = Ready;
-	QueueNextThread(mainQueuePtr, currentThread);
+	ThreadQueue_PushThread(&runningQueue, currentThread);
 	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
 	

@@ -85,11 +85,11 @@ void ThreadQueue_RemoveThread( ThreadQueue* threadQueue, ThreadInfo* threadToRem
 	{		
 		if(thread == threadToRemove)
 		{
-			*removeAt = threadToRemove->nextThread;
+			*removeAt = (u32)threadToRemove->nextThread;
 			break;
 		}
 		
-		*removeAt = thread->nextThread;
+		*removeAt = (u32)thread->nextThread;
 		thread = thread->nextThread;
 	}
 
@@ -113,7 +113,7 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 
 	while(threadPriority < nextPriority)
 	{
-		previousThread = &nextThread->nextThread;
+		previousThread = (ThreadQueue*)nextThread->nextThread;
 		nextThread = nextThread->nextThread;
 		nextPriority = nextThread->priority;
 	}
