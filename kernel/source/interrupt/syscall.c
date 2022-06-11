@@ -102,6 +102,54 @@ static u32 syscall_handlers[] = {
 	(u32)0x00000000,					//0x004D
 	(u32)0x00000000,					//0x004E
 	(u32)VirtualToPhysical,				//0x004F
+	(u32)0x00000000,					//0x0050
+	(u32)0x00000000,					//0x0051
+	(u32)0x00000000,					//0x0052
+	(u32)0x00000000,					//0x0053
+	(u32)0x00000000,					//0x0054
+	(u32)0x00000000,					//0x0055
+	(u32)0x00000000,					//0x0056
+	(u32)0x00000000,					//0x0057
+	(u32)0x00000000,					//0x0058
+	(u32)0x00000000,					//0x0059
+	(u32)0x00000000,					//0x005A
+	(u32)0x00000000,					//0x005B
+	(u32)0x00000000,					//0x005C
+	(u32)0x00000000,					//0x005D
+	(u32)0x00000000,					//0x005E
+	(u32)0x00000000,					//0x005F
+	(u32)0x00000000,					//0x0060
+	(u32)0x00000000,					//0x0061
+	(u32)0x00000000,					//0x0062
+	(u32)0x00000000,					//0x0063
+	(u32)0x00000000,					//0x0064
+	(u32)0x00000000,					//0x0065
+	(u32)0x00000000,					//0x0066
+	(u32)0x00000000,					//0x0067
+	(u32)0x00000000,					//0x0068
+	(u32)0x00000000,					//0x0069
+	(u32)0x00000000,					//0x006A
+	(u32)0x00000000,					//0x006B
+	(u32)0x00000000,					//0x006C
+	(u32)0x00000000,					//0x006D
+	(u32)0x00000000,					//0x006E
+	(u32)0x00000000,					//0x006F
+	(u32)0x00000000,					//0x0070
+	(u32)0x00000000,					//0x0071
+	(u32)0x00000000,					//0x0072
+	(u32)0x00000000,					//0x0073
+	(u32)0x00000000,					//0x0074
+	(u32)0x00000000,					//0x0075
+	(u32)0x00000000,					//0x0076
+	(u32)0x00000000,					//0x0077
+	(u32)0x00000000,					//0x0078
+	(u32)0x00000000,					//0x0079
+	(u32)0x00000000,					//0x007A
+	(u32)0x00000000,					//0x007B
+	(u32)0x00000000,					//0x007C
+	(u32)0x00000000,					//0x007D
+	(u32)0x00000000,					//0x007E
+	(u32)0x00000000,					//0x007F
 };
 
 //We implement syscalls using the SVC/SWI instruction. 
@@ -119,6 +167,13 @@ s32 HandleSyscall(u16 syscall, ThreadContext* threadContext)
 	else
 		gecko_printf("threadContext == NULL");
 #endif	
+
+	//is this the special IOS syscall?
+	if(syscall == 0xAB && threadContext->registers[0] == 0x04)
+	{
+		gecko_printf((char*)threadContext->registers[1]);
+		return 0;
+	}
 
 	//is the syscall within our range ?
 	//sizeof(syscall) = the amout of bytes, so /4 since its 4 bytes per address

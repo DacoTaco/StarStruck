@@ -13,7 +13,7 @@ OUTPUT_ARCH(arm)
 EXTERN(_start)
 ENTRY(_start)
 
-__stack_size = 0x100;
+__stack_size = 0x300;
 __irqstack_size = 0x100;
 __excstack_size = 0x100;
 __swistack_size = 0x100;
