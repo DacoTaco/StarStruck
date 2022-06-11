@@ -15,7 +15,7 @@
 .globl YieldCurrentThread
 .globl EndThread
 .extern ScheduleYield
-.extern QueueNextThread
+.extern ThreadQueue_PushThread
 	
 BEGIN_ASM_FUNC ReturnToLr
 	bx		lr
@@ -42,7 +42,7 @@ BEGIN_ASM_FUNC YieldCurrentThread
 
 	cmp		r0, #0
 	bne		yield
-	_BL		QueueNextThread
+	_BL		ThreadQueue_PushThread
 yield:
 	ldr		r0, =ScheduleYield
 	bx		r0

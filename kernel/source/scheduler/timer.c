@@ -45,7 +45,7 @@ void HandleTimerInterrupt(void)
 
 	//change thread queue? 
 	//TODO : check with IOS
-	PopNextThreadFromQueue(mainQueuePtr);
+	ThreadQueue_PopThread(&runningQueue);
 
 	//Reset Timer
 	if (timerFrequency)
