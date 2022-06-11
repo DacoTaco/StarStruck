@@ -30,3 +30,6 @@ s32 os_unregisterEventHandler(u8 device);
 void* os_allocateMemory(s32 heapid, u32 size);
 void* os_alignedAllocateMemory(s32 heapid, u32 size, u32 align);
 s32 os_freeMemory(s32 heapid, void *ptr);
+
+//special IOS syscall to print something to debug device
+void os_printk(const char* str);

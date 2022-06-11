@@ -15,6 +15,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <string.h>
 #include <git_version.h>
 #include <ios/processor.h>
+#include <ios/printk.h>
 
 #include "core/hollywood.h"
 #include "core/gpio.h"
@@ -51,7 +52,7 @@ void kernel_main( void )
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 	{
-		gecko_printf("failed to start IRQ thread!\n");
+		printk("failed to start IRQ thread!\n");
 		while(1);
 	}
 
@@ -63,52 +64,52 @@ void kernel_main( void )
 	irq_enable(IRQ_GPIO1);
 	irq_enable(IRQ_RESET);
 	SetTimerAlarm(ConvertDelayToTicks(20000));
-	gecko_printf("Interrupts initialized\n");
+	printk("Interrupts initialized\n");
 	SetThreadPriority(0, 0);
 	udelay(20000);
 	
 	crypto_initialize();
-	gecko_printf("crypto support initialized\n");
+	printk("crypto support initialized\n");
 
 	nand_initialize();
-	gecko_printf("NAND initialized.\n");
+	printk("NAND initialized.\n");
 
 	boot2_init();
 
-	gecko_printf("Initializing IPC...\n");
+	printk("Initializing IPC...\n");
 	ipc_initialize();
 	
-	/*gecko_printf("Initializing SDHC...\n");
+	/*printk("Initializing SDHC...\n");
 	sdhc_init();
 
-	gecko_printf("Mounting SD...\n");
+	printk("Mounting SD...\n");
 	fres = f_mount(0, &fatfs);*/
 
 	if (read32(HW_CLOCKS) & 2) {
-		gecko_printf("GameCube compatibility mode detected...\n");
+		printk("GameCube compatibility mode detected...\n");
 		vector = boot2_run(1, 0x101);
 		goto shutdown;
 	}
 
 	if(fres != FR_OK) {
-		gecko_printf("Error %d while trying to mount SD\n", fres);
+		printk("Error %d while trying to mount SD\n", fres);
 		panic2(0, PANIC_MOUNT);
 	}
 
 	ipc_ppc_boot_title(0x000100014C554C5ALL);
 	//*(u32*)HW_RESETS &= ~1;
-	gecko_printf("Going into IPC mainloop...\n");
+	printk("Going into IPC mainloop...\n");
 	vector = ipc_main();
-	gecko_printf("IPC mainloop done! killing IPC...\n");
+	printk("IPC mainloop done! killing IPC...\n");
 	ipc_shutdown();
 
 shutdown:
-	gecko_printf("Shutting down...\ninterrupts...\n");
+	printk("Shutting down...\ninterrupts...\n");
 	irq_shutdown();
-	gecko_printf("caches and MMU...\n");
+	printk("caches and MMU...\n");
 	mem_shutdown();
 
-	gecko_printf("Vectoring to 0x%08x...\n", vector);
+	printk("Vectoring to 0x%08x...\n", vector);
 	//go to whatever address we got
 	asm("bx\t%0": : "r" (vector));
 }
@@ -182,14 +183,15 @@ void InitialiseSystem( void )
 	write32(HW_ARMIRQMASK, 0);
 	write32(HW_ARMFIQMASK, 0);
 	
-	gecko_printf("Configuring caches and MMU...\n");
+	printk("Configuring caches and MMU...\n");
 	InitiliseMemory();
 }
 
 u32 _main(void)
 {
 	gecko_init();
-	gecko_printf("StarStruck %s loading\n", git_version);
+	//don't use printk before our exceptions are init. our stackpointers are god knows were at that point.
+	gecko_printf("StarStruck %s loading\n", git_version);	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
 
@@ -198,9 +200,9 @@ u32 _main(void)
 	
 	InitialiseSystem();	
 
-	gecko_printf("IOSflags: %08x %08x %08x\n",
+	printk("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
-	gecko_printf("          %08x %08x %08x\n",
+	printk("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 
 	IrqInit();
@@ -218,7 +220,7 @@ u32 _main(void)
 	write32(MEM1_3148, MEM2_PHY2VIRT(0x13600000));
 	write32(MEM1_314C, MEM2_PHY2VIRT(0x13620000));
 	DCFlushRange((void*)0x00003100, 0x68);
-	gecko_printf("Updated DDR settings in lomem for current map\n");
+	printk("Updated DDR settings in lomem for current map\n");
 	
 	//init&start main code next : 
 	//-------------------------------
@@ -231,7 +233,7 @@ u32 _main(void)
 	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		gecko_printf("failed to start kernel(%d)!\n", threadId);
+		printk("failed to start kernel(%d)!\n", threadId);
 
 	panic("\npanic!\n");
 	return 0;

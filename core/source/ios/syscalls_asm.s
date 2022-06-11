@@ -42,3 +42,13 @@ _SYSCALL os_destroyHeap,			0x0017
 _SYSCALL os_allocateMemory,			0x0018
 _SYSCALL os_alignedAllocateMemory,	0x0019
 _SYSCALL os_freeMemory,				0x001A
+
+/* this is a special svc syscall. its the only syscall left in IOS. only used for printk too */
+.thumb
+.globl os_printk
+BEGIN_ASM_FUNC os_printk
+	mov		r1, r0
+	movs	r0, #4
+	svc		0xAB
+	bx		lr
+END_ASM_FUNC
