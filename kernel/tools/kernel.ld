@@ -25,6 +25,7 @@ MEMORY {
 	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
 	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K
 	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
+	iobuf_heap			: ORIGIN = 0x13C40000, LENGTH = 512K
 	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 

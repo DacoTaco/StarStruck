@@ -34,7 +34,7 @@ BEGIN_ASM_FUNC debug_output
 	orr	r2, r2, r0, LSL #16
 	@ store back
 	str	r2, [r3, #0xe0]
-	mov	pc, lr
+	bx lr
 END_ASM_FUNC
 	
 BEGIN_ASM_FUNC GetCurrentStatusRegister
