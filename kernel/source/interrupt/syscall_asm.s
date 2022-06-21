@@ -18,12 +18,10 @@
 BEGIN_ASM_FUNC v_swi
 #store registers from before the call. r0 = return, r1 - r12 is parameters. current lr(or pc before the call) is the return address
 	stmdb	sp!, {lr}
-#save state & load address of our state into r1 , which we will use to retrieve the state
-	stmdb	sp, {r0-r12, sp, lr}^
-	sub		sp, sp, #0x3C
+#save state & load address of our state into the stack , which we will use to retrieve the state
+	stmdb	sp!, {r0-r12, sp, lr}^
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
-	mov		r1, sp
 #load syscall number into r0 (from r8/lr) and cut off the first few bytes of the instruction
 #ifdef _THUMBMODE_
 	ldrh	r0,[lr,#-2]
@@ -46,8 +44,7 @@ BEGIN_ASM_FUNC v_swi
 	msr		spsr_cxsf, r2
 #skip restoring r0 (return value)
 	add		sp, sp, #0x04
-	ldmia	sp, {r1-r12, sp, lr}^
-	add		sp, sp, #0x38
+	ldmia	sp!, {r1-r12, sp, lr}^
 #return to code
 #this also resets sp to the starting point, as its the last data to be loaded
 	ldmia	sp!, {pc}^	

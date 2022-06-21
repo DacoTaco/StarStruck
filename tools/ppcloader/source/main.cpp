@@ -15,7 +15,7 @@
 #include "armboot_bin.h"
 
 #define IOS_TO_LOAD 0x00000001000000FEULL
-#define SRAMADDR(x) (0x0d400000 | (x & 0x000FFFFF))
+#define SRAMADDR(x) (0x0d400000 | ((x) & 0x000FFFFF))
 
 static void *xfb = NULL;
 static GXRModeObj *vmode = NULL;

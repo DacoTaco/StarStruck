@@ -19,8 +19,7 @@
 BEGIN_ASM_FUNC v_undf
 #for info : see syscall asm
 	stmdb	sp!, {lr}
-	stmdb	sp, {r0-r12, sp, lr}^
-	sub		sp, sp, #0x3C
+	stmdb	sp!, {r0-r12, sp, lr}^
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
 	mov		r1, sp
@@ -40,7 +39,6 @@ BEGIN_ASM_FUNC v_undf
 	ldmia	sp!, {r2}
 	msr		spsr_cxsf, r2
 	add		sp, sp, #0x04
-	ldmia	sp, {r1-r12, sp, lr}^
-	add		sp, sp, #0x38
+	ldmia	sp!, {r1-r12, sp, lr}^
 	ldmia	sp!, {pc}^	
 END_ASM_FUNC

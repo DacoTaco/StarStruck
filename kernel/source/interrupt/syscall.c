@@ -156,14 +156,19 @@ static const void* syscall_handlers[] = {
 //We implement syscalls using the SVC/SWI instruction. 
 //Nintendo/IOS however was using undefined instructions and just caught those in their exception handler lol
 //Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
-s32 HandleSyscall(u16 syscall, ThreadContext* threadContext)
+s32 HandleSyscall(u16 syscall)
 {
+	ThreadContext* threadContext = &currentThread->userContext;
+
 #ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
 	if(threadContext != NULL)
 	{
-		gecko_printf("Context (%p):\n", threadContext);
+		gecko_printf("Context (%p / SPSR %08x):\n", threadContext, threadContext->statusRegister);
 		gecko_printf("  R0-R3: %08x %08x %08x %08x\n", threadContext->registers[0], threadContext->registers[1], threadContext->registers[2], threadContext->registers[3]);
+		gecko_printf("  R4-R7: %08x %08x %08x %08x\n", threadContext->registers[4], threadContext->registers[5], threadContext->registers[6], threadContext->registers[7]);
+		gecko_printf("  R8-R11: %08x %08x %08x %08x\n", threadContext->registers[8], threadContext->registers[9], threadContext->registers[10], threadContext->registers[11]);
+		gecko_printf("  R12-R15: %08x %08x %08x %08x\n", threadContext->registers[12], threadContext->registers[13], threadContext->registers[14], threadContext->registers[15]);
 	}
 	else
 		gecko_printf("threadContext == NULL");
@@ -184,10 +189,9 @@ s32 HandleSyscall(u16 syscall, ThreadContext* threadContext)
 		gecko_printf("unknown syscall 0x%04X\n", syscall);
 		return -666;
 	}
-	
-	SyscallHandler handler = (SyscallHandler)syscall_handlers[syscall];
+
 	u32* reg = threadContext->registers;
-	
+	SyscallHandler handler = (SyscallHandler)syscall_handlers[syscall];		
 	if(handler == NULL)
 	{
 		gecko_printf("unimplemented syscall 0x%04X\n", syscall);
