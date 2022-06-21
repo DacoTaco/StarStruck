@@ -82,6 +82,7 @@ typedef struct ThreadQueue
 
 extern ThreadInfo threads[MAX_THREADS];
 extern ThreadInfo* currentThread;
+extern ThreadInfo threadStartingState;
 extern ThreadQueue runningQueue;
 
 void InitializeThreadContext(void);

@@ -27,7 +27,8 @@ void EndThread();
 u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10);
-ThreadQueue runningQueue ALIGNED(0x10);
+ThreadQueue runningQueue ALIGNED(0x04) = { &threadStartingState };
+ThreadInfo threadStartingState ALIGNED(0x04) = {.priority = -1};
 ThreadInfo* currentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
@@ -79,17 +80,16 @@ void ThreadQueue_RemoveThread( ThreadQueue* threadQueue, ThreadInfo* threadToRem
 	if(threadQueue == NULL || threadToRemove == NULL)
 		return;
 	
-	u32* removeAt = (u32*)threadQueue->nextThread;
 	ThreadInfo* thread = threadQueue->nextThread;
 	while(thread)
-	{		
+	{
 		if(thread == threadToRemove)
 		{
-			*removeAt = (u32)threadToRemove->nextThread;
+			threadQueue->nextThread = threadToRemove->nextThread;
 			break;
 		}
-		
-		*removeAt = (u32)thread->nextThread;
+
+		threadQueue = (ThreadQueue*)thread->nextThread;
 		thread = thread->nextThread;
 	}
 
@@ -103,17 +103,14 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 	if(threadQueue == NULL || thread == NULL)
 		return;
 
-	ThreadInfo* nextThread = threadQueue->nextThread;
-	if(nextThread == NULL)
-		nextThread = thread;
-	
+	ThreadInfo* nextThread = threadQueue->nextThread;	
 	s16 threadPriority = thread->priority;
 	s16 nextPriority = nextThread->priority;
 	ThreadQueue* previousThread = threadQueue;
 
 	while(threadPriority < nextPriority)
 	{
-		previousThread = (ThreadQueue*)nextThread->nextThread;
+		previousThread = (ThreadQueue*)&nextThread->nextThread;
 		nextThread = nextThread->nextThread;
 		nextPriority = nextThread->priority;
 	}
@@ -344,7 +341,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	currentThread->threadContext.registers[0] = ret;
 	if(threadToCancel == currentThread)
 		ScheduleYield();
-	else
+	else if(currentThread->priority < runningQueue.nextThread->priority)
 	{
 		currentThread->threadState = Ready;
 		YieldCurrentThread(&runningQueue);

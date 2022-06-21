@@ -48,9 +48,9 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 		goto restore_and_return;
 	}
 
-	//ios assigns &runningQueue ? that makes no sense, but it somehow got the value of the thread the message queue belongs too.
-	messageQueues[queueId].receiveThreadQueue.nextThread = currentThread;
-	messageQueues[queueId].sendThreadQueue.nextThread = currentThread;
+	//ios assigns &threadStartingState ? that makes no sense, but it somehow got the value of the thread the message queue belongs too.
+	messageQueues[queueId].receiveThreadQueue.nextThread = &threadStartingState;
+	messageQueues[queueId].sendThreadQueue.nextThread = &threadStartingState;
 	messageQueues[queueId].queueHeap = ptr;
 	messageQueues[queueId].queueSize = numberOfMessages;
 	messageQueues[queueId].used = 0;
