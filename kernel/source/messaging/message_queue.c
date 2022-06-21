@@ -29,7 +29,7 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 		goto restore_and_return;
 	}
 
-	if(CheckMemoryPointer(ptr, numberOfMessages << 2, 4, currentThread->processId, 0) < 0)
+	if(CheckMemoryPointer(ptr, numberOfMessages*sizeof(u32), 4, currentThread->processId, 0) < 0)
 	{
 		queueId = IPC_EINVAL;
 		goto restore_and_return;
@@ -163,7 +163,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	
 	s32 used = messageQueue->used;
 	if(used == 0 && flags != None)
-		return -7;
+		return IPC_EQUEUEEMPTY;
 
 	while(used == 0)
 	{
@@ -213,10 +213,10 @@ s32 DestroyMessageQueue(s32 queueId)
 	}
 	
 	while(messageQueues[queueId].sendThreadQueue.nextThread != NULL )
-		UnblockThread(&messageQueues[queueId].sendThreadQueue, -3);
+		UnblockThread(&messageQueues[queueId].sendThreadQueue, IPC_EINTR);
 	
 	while(messageQueues[queueId].receiveThreadQueue.nextThread != NULL )
-		UnblockThread(&messageQueues[queueId].receiveThreadQueue, -3);
+		UnblockThread(&messageQueues[queueId].receiveThreadQueue, IPC_EINTR);
 	
 	messageQueues[queueId].queueSize = 0;
 
