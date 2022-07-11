@@ -170,6 +170,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 		currentThread->threadState = Waiting;
 		YieldCurrentThread(&messageQueue->receiveThreadQueue);
 
+		//IOS returns currentThread->threadContext.registers[0] here, but that sounds weird?
 		if(currentThread->threadContext.registers[0] != 0)
 			return 0;
 

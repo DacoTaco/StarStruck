@@ -40,10 +40,10 @@ static const void* syscall_handlers[] = {
 	ReceiveMessage,				//0x000E
 	RegisterEventHandler,		//0x000F
 	UnregisterEventHandler,		//0x0010
-	0x00000000,					//0x0011
+	CreateTimer,				//0x0011
 	0x00000000,					//0x0012
-	0x00000000,					//0x0013
-	0x00000000,					//0x0014
+	StopTimer,					//0x0013
+	DestroyTimer,				//0x0014
 	GetTimerValue,				//0x0015
 	CreateHeap,					//0x0016
 	DestroyHeap,				//0x0017

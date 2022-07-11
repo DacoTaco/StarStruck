@@ -11,7 +11,7 @@
 #include <types.h>
 #include "messaging/message_queue.h"
 
-#define MAX_TIMERS		100
+#define MAX_TIMERS		0x100
 
 typedef struct TimerInfo
 {
@@ -32,9 +32,15 @@ CHECK_OFFSET(TimerInfo, 0x14, previousTimer);
 CHECK_OFFSET(TimerInfo, 0x18, nextTimer);
 CHECK_SIZE(TimerInfo, 0x1C);
 
+extern TimerInfo* currentTimer;
+extern u32 PreviousTimerValue;
 
 void HandleTimerInterrupt(void);
 void TimerHandler(void);
+void QueueTimer(TimerInfo* timerInfo);
+u32 ConvertDelayToTicks(u32 delay);
+s32 CreateTimer(u32 delayUs, u32 periodUs, u32 queueid, void *message);
+s32 StopTimer(s32 timerId);
+s32 DestroyTimer(s32 timerId);
 u32 GetTimerValue(void);
 void SetTimerAlarm(u32 ticks);
-u32 ConvertDelayToTicks(u32 delay);

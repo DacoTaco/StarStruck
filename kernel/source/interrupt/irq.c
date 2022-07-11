@@ -88,10 +88,9 @@ restore_and_return:
 void EnqueueEventHandler(s32 device)
 {
 	MessageQueue* queue = eventHandlers[device].messageQueue;
-
 	if(queue == NULL)
 		return;
-	
+
 	if(queue->used >= queue->queueSize)
 		return;
 
@@ -104,6 +103,7 @@ void EnqueueEventHandler(s32 device)
 	if(queue->receiveThreadQueue.nextThread != NULL)
 	{
 		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->receiveThreadQueue);
+		gecko_printf("eventhandler exists y0 - %p - %p!\n", handlerThread, currentThread);
 		handlerThread->threadState = Ready;
 		handlerThread->userContext.registers[0] = 0;
 		ThreadQueue_PushThread(&runningQueue, handlerThread);
@@ -144,7 +144,8 @@ void irq_handler(ThreadContext* context)
 	if(flags & IRQF_TIMER) 
 	{
 		EnqueueEventHandler(IRQ_TIMER);
-		HandleTimerInterrupt();
+		//HandleTimerInterrupt();
+		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}
 	if(flags & IRQF_NAND) {

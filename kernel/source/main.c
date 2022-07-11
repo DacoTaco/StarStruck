@@ -43,29 +43,90 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 FATFS fatfs;
 
+void DiThread()
+{
+	u32 messages[1];
+	u32 msg;
+	s32 queueId = 0;
+
+	queueId = CreateMessageQueue((void**)&messages, 1);
+	if(queueId < 0)
+		panic("Unable to create DI thread message queue: %d\n", queueId);
+
+	u32 timerId = CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
+
+	while(1)
+	{
+		//don't ask. i have no idea why this is here haha
+		for(u32 i = 0; i < 0x1800000; i += 0x80000)
+		{
+			for(u32 y = 0; y < 6; y++){}
+		}
+		s32 r = ReceiveMessage(queueId, (void **)&msg, None);
+
+		//lets not get interrupted while processing the timer message
+		u32 interupts = DisableInterrupts();
+		RestoreInterrupts(interupts);
+	}
+}
+
 void kernel_main( void )
 {
 	//create IRQ Timer handler thread
 	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
-	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+	if(threadId >= 0)
+		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start IRQ thread!\n");
+
+	//not sure what this is about, if you know please let us know.
+	u32 hardwareVersion, hardwareRevision;
+	GetHollywoodVersion(&hardwareVersion,&hardwareRevision);
+	if (hardwareVersion == 0) 
 	{
-		printk("failed to start IRQ thread!\n");
-		while(1);
+		u32 dvdConfig = read32(HW_DI_CFG);
+		u32 unknownConfig = dvdConfig >> 2 & 1;
+		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
+		{
+			threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+			StartThread(threadId);
+		}
 	}
+
+	
 
 	u32 vector;
 	FRESULT fres = 0;
 
-	irq_initialize();
-//	irq_enable(IRQ_GPIO1B);
+	//irq_initialize();
+	
+	/*this is what mini used to do*/
+	/*irq_setup_stack();
+	//write32(HW_ALARM, 0);
+	//write32(HW_ARMIRQMASK, 0);
+	//write32(HW_ARMIRQFLAG, 0xffffffff);
+	//RestoreInterrupts(CPSR_FIQDIS);
+
+	//???
+	//write32(HW_ARMFIQMASK, 0);
+	//write32(HW_DBGINTEN, 0);	
+	
+	//	irq_enable(IRQ_GPIO1B);
 	irq_enable(IRQ_GPIO1);
 	irq_enable(IRQ_RESET);
+	//create dummy timer to test it
 	SetTimerAlarm(ConvertDelayToTicks(20000));
-	printk("Interrupts initialized\n");
-	SetThreadPriority(0, 0);
+	printk("Interrupts initialized\n");*/
+
+	threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x7e, 1);
+	if(threadId >= 0)
+		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+
+	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start testThread thread!\n");
 	udelay(20000);
 	
 	crypto_initialize();
@@ -110,6 +171,7 @@ shutdown:
 	mem_shutdown();
 
 	printk("Vectoring to 0x%08x...\n", vector);
+	debug_output(0x69);
 	//go to whatever address we got
 	asm("bx\t%0": : "r" (vector));
 }
@@ -183,14 +245,14 @@ void InitialiseSystem( void )
 	write32(HW_ARMIRQMASK, 0);
 	write32(HW_ARMFIQMASK, 0);
 	
-	printk("Configuring caches and MMU...\n");
+	gecko_printf("Configuring caches and MMU...\n");
 	InitiliseMemory();
 }
 
 u32 _main(void)
 {
 	gecko_init();
-	//don't use printk before our exceptions are init. our stackpointers are god knows were at that point.
+	//don't use printk before our main thread started. our stackpointers are god knows were at that point & thread context isn't init yet
 	gecko_printf("StarStruck %s loading\n", git_version);	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
@@ -200,9 +262,9 @@ u32 _main(void)
 	
 	InitialiseSystem();	
 
-	printk("IOSflags: %08x %08x %08x\n",
+	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
-	printk("          %08x %08x %08x\n",
+	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 
 	IrqInit();
@@ -220,7 +282,7 @@ u32 _main(void)
 	write32(MEM1_3148, MEM2_PHY2VIRT(0x13600000));
 	write32(MEM1_314C, MEM2_PHY2VIRT(0x13620000));
 	DCFlushRange((void*)0x00003100, 0x68);
-	printk("Updated DDR settings in lomem for current map\n");
+	gecko_printf("Updated DDR settings in lomem for current map\n");
 	
 	//init&start main code next : 
 	//-------------------------------
@@ -233,7 +295,7 @@ u32 _main(void)
 	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		printk("failed to start kernel(%d)!\n", threadId);
+		gecko_printf("failed to start kernel(%d)!\n", threadId);
 
 	panic("\npanic!\n");
 	return 0;

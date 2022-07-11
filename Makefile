@@ -10,5 +10,5 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C tools/ppcloader clean
 	
-run:
+run: all
 	$(MAKE) -C tools/ppcloader run
