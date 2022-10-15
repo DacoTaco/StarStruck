@@ -118,7 +118,6 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 	previousThread->nextThread = thread;
 	thread->threadQueue = threadQueue;
 	thread->nextThread = nextThread;
-
 	return;
 }
 
@@ -253,7 +252,7 @@ s32	StartThread(s32 threadId)
 	s32 ret = 0;
 	ThreadQueue* threadQueue = NULL;
 
-	if(threadId > MAX_THREADS || threadId < 0)
+	if(threadId >= MAX_THREADS || threadId < 0)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;

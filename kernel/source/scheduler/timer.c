@@ -21,7 +21,8 @@
 
 u32 timerFrequency = 0;
 TimerInfo timers[MAX_TIMERS] SRAM_DATA ALIGNED(0x10);
-TimerInfo* currentTimer ALIGNED(0x10);
+TimerInfo initialTimer = { 0, 0, NULL, NULL, 0, &initialTimer, &initialTimer };
+TimerInfo* currentTimer ALIGNED(0x10) = &initialTimer;
 u32 PreviousTimerValue = 0;
 
 u32 ConvertDelayToTicks(u32 delay)
@@ -77,13 +78,13 @@ void QueueTimer(TimerInfo* timerInfo)
 
 	while(1)
 	{
-		if(nextTimer == currentTimer || nextTimer->intervalInTicks > intervalInTicks)
+		if(nextTimer == currentTimer || nextTimer->intervalInTicks >= intervalInTicks)
 			break;
 		
-		intervalInTicks = intervalInTicks - nextTimer->intervalInTicks;
+		intervalInTicks -= nextTimer->intervalInTicks;
 		nextTimer = nextTimer->nextTimer;
 	}
-
+	
 	//set timer interval that is left & fix next thread interval
 	timerInfo->intervalInTicks = intervalInTicks;
 	if(nextTimer != currentTimer)
@@ -113,14 +114,13 @@ void TimerHandler(void)
 	TimerInfo* previousTimer = NULL;
 	TimerInfo* nextTimer = NULL;
 
-	currentTimer->intervalInTicks = 0;
+	//IOS sets up the timer here, but we've set it up in the intial timer setup
+	/*currentTimer->intervalInTicks = 0;
 	currentTimer->intervalInµs = 0;
 	currentTimer->message = NULL;
 	currentTimer->previousTimer = currentTimer;
 	currentTimer->nextTimer = currentTimer;
-	currentTimer->messageQueue = NULL;
-
-	return;
+	currentTimer->messageQueue = NULL;*/
 
 	timerQueueId = CreateMessageQueue((void**)&timer_messages, 1);
 	if(timerQueueId < 0)
@@ -133,11 +133,10 @@ void TimerHandler(void)
 	while(1)
 	{
 		//wait for an irq message, which signals us to do our work
-		u32 r = 1;
-		while(r)
+		do
 		{
-			r = ReceiveMessage(timerQueueId, (void **)0x0, None);
-		}
+			ret = ReceiveMessage(timerQueueId, (void **)0x0, None);
+		} while (ret != 0);
 
 		//lets not get interrupted while processing the timer message
 		interupts = DisableInterrupts();

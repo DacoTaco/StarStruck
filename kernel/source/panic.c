@@ -58,6 +58,9 @@ void panic2(int mode, ...)
 			udelay(arg * PANIC_ON);
 			clear32(HW_GPIO1OUT, GP_SLOTLED);
 			udelay(PANIC_OFF);
+
+			gecko_printf("PANIIIIIIIIC!!!");
+			write32(HW_RESETS, read32(HW_RESETS) & ~(RSTBINB));
 		}
 		
 		va_end(ap);
