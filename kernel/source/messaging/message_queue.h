@@ -44,6 +44,7 @@ extern MessageQueue messageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
 s32 DestroyMessageQueue(s32 queueId);
+s32 JamMessage(s32 queueId, void* message, u32 flags);
 s32 SendMessage(s32 queueId, void* message, u32 flags);
 s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags);
 s32 ReceiveMessage(s32 queueid, void **message, u32 flags);

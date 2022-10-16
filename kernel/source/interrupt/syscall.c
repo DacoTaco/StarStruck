@@ -36,7 +36,7 @@ static const void* syscall_handlers[] = {
 	CreateMessageQueue,			//0x000A
 	DestroyMessageQueue,		//0x000B
 	SendMessage,				//0x000C
-	0x00000000,					//0x000D
+	JamMessage,					//0x000D
 	ReceiveMessage,				//0x000E
 	RegisterEventHandler,		//0x000F
 	UnregisterEventHandler,		//0x0010

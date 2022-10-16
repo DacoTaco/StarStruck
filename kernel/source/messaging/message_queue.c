@@ -62,6 +62,62 @@ restore_and_return:
 	return queueId;
 }
 
+s32 JamMessage(s32 queueId, void* message, u32 flags)
+{
+	s32 irqState = DisableInterrupts();
+	s32 ret = 0;
+	MessageQueue* messageQueue;
+
+	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;
+	}
+
+	messageQueue = &messageQueues[queueId];
+	if(messageQueue->processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+
+	if(messageQueue->queueSize <= messageQueue->used)
+	{
+		if(flags != None)
+		{
+			ret = IPC_EQUEUEFULL;
+			goto restore_and_return;
+		}
+
+		do
+		{
+			currentThread->threadState = Waiting;
+			//wth ios?
+			ret = (s32)&messageQueue->sendThreadQueue;
+			YieldCurrentThread((ThreadQueue*)ret);
+			if(ret != 0)
+				goto restore_and_return;
+		} while (messageQueue->queueSize <= messageQueue->used);		
+	}
+
+	if (messageQueue->first == 0) 
+		messageQueue->first = messageQueue->queueSize - 1;
+   	else
+		messageQueue->first--;
+
+	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
+	messageQueue->queueHeap[messageQueue->first] = message;
+	DCFlushRange(messageQueue->queueHeap[messageQueue->first], 4);
+	SetDomainAccessControlRegister(DomainAccessControlTable[currentThread->processId]);
+	messageQueue->used++;
+	if(messageQueue->receiveThreadQueue.nextThread != NULL )
+		UnblockThread(&messageQueue->receiveThreadQueue, 0);
+
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
+}
+
 s32 SendMessage(s32 queueId, void* message, u32 flags)
 {
 	s32 irqState = DisableInterrupts();
