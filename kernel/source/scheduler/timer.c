@@ -250,6 +250,40 @@ return_create_timer:
 	RestoreInterrupts(interupts);
 	return ret;
 }
+s32 RestartTimer(s32 timerId, s32 timeUs, int repeatTimeUs)
+{
+	u32 interupts = DisableInterrupts();
+	s32 ret = 0;
+
+	if(timerId >= MAX_TIMERS)
+	{
+		ret = IPC_EINVAL;
+		goto return_restart_timer;
+	}
+
+	if(timers[timerId].processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto return_restart_timer;
+	}
+
+	if( timers[timerId].intervalInµs != 0 || timers[timerId].intervalInTicks != 0 || 
+		timers[timerId].nextTimer != NULL || timers[timerId].previousTimer != NULL)
+		goto return_restart_timer;
+
+	timers[timerId].intervalInµs = repeatTimeUs;
+	if(timeUs != 0)
+		repeatTimeUs = timeUs;
+		
+	u32 ticks = ConvertDelayToTicks(repeatTimeUs);
+	timers[timerId].intervalInTicks = ticks;
+	if(ticks != 0)
+		QueueTimer(&timers[timerId]);
+
+return_restart_timer:
+	RestoreInterrupts(interupts);
+	return ret;
+}
 s32 StopOrDestroyTimer(s32 timerId, s32 destroyTimer)
 {
 	s32 ret = 0;

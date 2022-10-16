@@ -39,6 +39,7 @@ void TimerHandler(void);
 void QueueTimer(TimerInfo* timerInfo);
 u32 ConvertDelayToTicks(u32 delay);
 s32 CreateTimer(u32 delayUs, u32 periodUs, u32 queueid, void *message);
+s32 RestartTimer(s32 timerId, s32 timeUs, int repeatTimeUs);
 s32 StopTimer(s32 timerId);
 s32 DestroyTimer(s32 timerId);
 u32 GetTimerValue(void);
