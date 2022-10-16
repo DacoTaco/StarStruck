@@ -8,7 +8,7 @@ ARCHFLAGS = -mbig-endian -mcpu=arm926ej-s $(THUMBPARAM)
 CFLAGS = $(ARCHFLAGS) -fomit-frame-pointer -ffunction-sections
 CFLAGS += -Wall -Wextra -Os -pipe -g
 ASFLAGS = -D__ASSEMBLER__
-LDFLAGS = $(ARCHFLAGS) -n -nostartfiles -nodefaultlibs -Wl,-gc-sections
+LDFLAGS = $(ARCHFLAGS) -n -nostartfiles -nodefaultlibs -Wl,-gc-sections -Wl,--use-blx
 COREDIR = ./core
 
 ifeq ($(LD),)

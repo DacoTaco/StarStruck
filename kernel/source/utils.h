@@ -12,6 +12,5 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define __UTILS_H__
 
 void udelay(u32 d);
-void panic(u8 v);
 
 #endif

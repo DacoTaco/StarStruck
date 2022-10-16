@@ -34,6 +34,8 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #define GECKO_CMD_BIN_ARM 0x4241524d
 #define GECKO_CMD_BIN_PPC 0x42505043
 
+#define IRQ_ALARM_MS2REG(x)	(1898 * x)
+
 static u32 _gecko_cmd = 0;
 static u32 _gecko_cmd_start_time = 0;
 static u32 _gecko_state = GECKO_STATE_NONE;

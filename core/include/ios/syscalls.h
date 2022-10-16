@@ -10,6 +10,10 @@
 
 #include "types.h"
 
+//required pragma to make GCC not optimize out our parameters/calls
+#pragma GCC push_options
+#pragma GCC optimize ("O1")
+
 s32 os_createThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 os_joinThread(s32 threadId, u32* returnedValue);
 s32 os_stopThread(s32 threadid, u32 returnValue);
@@ -33,3 +37,5 @@ s32 os_freeMemory(s32 heapid, void *ptr);
 
 //special IOS syscall to print something to debug device
 void os_printk(const char* str);
+
+#pragma GCC pop_options

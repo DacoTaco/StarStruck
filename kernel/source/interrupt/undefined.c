@@ -19,9 +19,9 @@ s32 undf_handler(unsigned instruction, ThreadContext* regs)
 	//the instruction is 0xE6000010 | (syscall_num << 5).
 	//so if we do the reverse, we have a syscall
 	u16 syscall = (instruction & 0xE6007FE0) >> 5;
-	if( syscall < 0xFF )
+	if( instruction > 0xE6007FE0 && syscall < 0xFF )
 	{
-		gecko_printf("Nintendo syscall detected ( 0x%08X - %04X )\n", instruction, syscall);
+		gecko_printf("Nintendo syscall detected ( 0x%08X - %04X ) @ 0x%08X\n", instruction, syscall, regs->programCounter);
 		s32 ret = HandleSyscall(syscall & 0xFF, regs);
 		
 		if(ret != -666)

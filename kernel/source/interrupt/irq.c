@@ -18,6 +18,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "scheduler/threads.h"
 #include "scheduler/timer.h"
 #include "memory/memory.h"
+#include "messaging/message_queue.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
 
@@ -25,6 +26,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "nand.h"
 #include "sdhc.h"
 
+EventHandler eventHandlers[MAX_DEVICES];
 void irq_setup_stack(void);
 
 void IrqInit(void)
@@ -34,16 +36,78 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
-s32 RegisterEventHandler(u8 device, int queueid, int message)
+s32 RegisterEventHandler(u8 device, int queueid, void* message)
 {
-	return IPC_EINVAL;
+	u32 irqState = DisableInterrupts();
+	s32 ret = 0;
+	if(device >= MAX_DEVICES || queueid >= MAX_MESSAGEQUEUES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;	
+	}
+
+	if(messageQueues[queueid].processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+
+	eventHandlers[device].message = message;
+	eventHandlers[device].processId = currentThread->processId;
+	eventHandlers[device].messageQueue = &messageQueues[queueid];
+
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
 }
 
 s32 UnregisterEventHandler(u8 device)
 {
-	return IPC_EINVAL;
+	u32 irqState = DisableInterrupts();
+	s32 ret = 0;
+	if(device >= MAX_DEVICES)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;	
+	}
+
+	if(eventHandlers[device].processId != currentThread->processId)
+	{
+		ret = IPC_EACCES;
+		goto restore_and_return;
+	}
+
+	eventHandlers[device].messageQueue = NULL;
+	eventHandlers[device].message = NULL;
+
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
 }
 
+void EnqueueEventHandler(s32 device)
+{
+	MessageQueue* queue = eventHandlers[device].messageQueue;
+	if(queue == NULL)
+		return;
+
+	if(queue->used >= queue->queueSize)
+		return;
+
+	s32 messageIndex = queue->used + queue->first;
+	queue->used += 1;
+	if(messageIndex > queue->queueSize)
+		messageIndex -= queue->queueSize;
+
+	queue->queueHeap[messageIndex] = eventHandlers[device].message;
+	if(queue->receiveThreadQueue.nextThread != NULL)
+	{
+		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->receiveThreadQueue);
+		handlerThread->threadState = Ready;
+		handlerThread->userContext.registers[0] = 0;
+		ThreadQueue_PushThread(&runningQueue, handlerThread);
+	}
+}
 
 void irq_initialize(void)
 {
@@ -55,7 +119,7 @@ void irq_initialize(void)
 
 	//???
 	write32(HW_ARMFIQMASK, 0);
-	write32(HW_ARMIRQMASK+0x20, 0);
+	write32(HW_DBGINTEN, 0);
 }
 
 void irq_shutdown(void)
@@ -67,22 +131,19 @@ void irq_shutdown(void)
 
 void irq_handler(ThreadContext* context)
 {
+	//Enqueue current thread
+	currentThread->threadState = Ready;
+	ThreadQueue_PushThread(&runningQueue, currentThread);
 	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
 	
-	u32 enabled = read32(HW_ARMIRQMASK);
-	u32 flags = read32(HW_ARMIRQFLAG);
-	
-	//gecko_printf("In IRQ handler: 0x%08x 0x%08x 0x%08x\n", enabled, flags, flags & enabled);	
-	flags = flags & enabled;
-	
-	//TODO : once all irq handlers are threads and this works via threads, this state setting must be removed.
-	if(currentThread != NULL)
-		currentThread->threadState = Ready;
+	u32 flags = read32(HW_ARMIRQFLAG) & read32(HW_ARMIRQMASK);
+	//gecko_printf("In IRQ handler: 0x%08x\n", flags);
 
 	if(flags & IRQF_TIMER) 
 	{
-		HandleTimerInterrupt();
+		EnqueueEventHandler(IRQ_TIMER);
+		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}
 	if(flags & IRQF_NAND) {

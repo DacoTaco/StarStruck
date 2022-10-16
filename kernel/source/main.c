@@ -43,18 +43,56 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 FATFS fatfs;
 
+void DiThread()
+{
+	u32 messages[1];
+	u32 msg;
+	s32 queueId = 0;
+
+	queueId = CreateMessageQueue((void**)&messages, 1);
+	if(queueId < 0)
+		panic("Unable to create DI thread message queue: %d\n", queueId);
+
+	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
+	while(1)
+	{
+		//don't ask. i have no idea why this is here haha
+		for(u32 i = 0; i < 0x1800000; i += 0x80000)
+		{
+			for(u32 y = 0; y < 6; y++){}
+		}
+		ReceiveMessage(queueId, (void **)&msg, None);
+	}
+}
+
 void kernel_main( void )
 {
+	//create IRQ Timer handler thread
+	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
+	//set thread to run as a system thread
+	if(threadId >= 0)
+		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+	
+	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start IRQ thread!\n");
+
+	//not sure what this is about, if you know please let us know.
+	u32 hardwareVersion, hardwareRevision;
+	GetHollywoodVersion(&hardwareVersion,&hardwareRevision);
+	if (hardwareVersion == 0) 
+	{
+		u32 dvdConfig = read32(HW_DI_CFG);
+		u32 unknownConfig = dvdConfig >> 2 & 1;
+		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
+		{
+			threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+			StartThread(threadId);
+		}
+	}
+
 	u32 vector;
 	FRESULT fres = 0;
-
-	irq_initialize();
-//	irq_enable(IRQ_GPIO1B);
-	irq_enable(IRQ_GPIO1);
-	irq_enable(IRQ_RESET);
-	irq_enable(IRQ_TIMER);
-	SetTimerAlarm(20, 1);
-	printk("Interrupts initialized\n");
 	
 	crypto_initialize();
 	printk("crypto support initialized\n");
@@ -85,7 +123,6 @@ void kernel_main( void )
 	}
 
 	ipc_ppc_boot_title(0x000100014C554C5ALL);
-	//*(u32*)HW_RESETS &= ~1;
 	printk("Going into IPC mainloop...\n");
 	vector = ipc_main();
 	printk("IPC mainloop done! killing IPC...\n");
@@ -110,13 +147,13 @@ void SetStarletClock()
 	
 	if(hardwareVersion < 2)
 	{
-		set32(HW_IOSTRCTRL0, 0x65244A);
-		set32(HW_IOSTRCTRL1, 0x46A024);
+		write32(HW_IOSTRCTRL0, 0x65244A);
+		write32(HW_IOSTRCTRL1, 0x46A024);
 	}
 	else
 	{
-		set32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
-		set32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
+		write32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
+		write32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
 	}
 }
 
@@ -125,25 +162,24 @@ void InitialiseSystem( void )
 	u32 hardwareVersion = 0;
 	u32 hardwareRevision = 0;
 	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
-	
 	//something to do with flipper?
-	set32(HW_EXICTRL, read32(HW_EXICTRL) | EXICTRL_ENABLE_EXI);
+	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 	
 	//enable protection on our MEM2 addresses & SRAM
 	ProtectMemory(1, (void*)0x13620000, (void*)0x1FFFFFFF);
 	
 	//????
-	set32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
+	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
 	
 	//set some hollywood ahb registers????
 	if(hardwareVersion == 1 && hardwareRevision == 0)
-		set32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF0F) | 1);
+		write32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF000F) | 1);
 	
 	// ¯\_(ツ)_/¯
-	set32(HW_AHB_10, 0);
+	write32(HW_AHB_10, 0);
 	
 	//Set boot0 B10 & B11? found in IOS58.
-	set32(HW_BOOT0, read32(HW_BOOT0) | 0xC00);
+	set32(HW_BOOT0, 0xC00);
 	
 	//Configure PPL ( phase locked loop )
 	ConfigureAiPLL(0, 0);
@@ -160,27 +196,26 @@ void InitialiseSystem( void )
 	SetStarletClock();
 	
 	//reset registers
-	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
-	set32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
-	set32(HW_ALARM, 0);
-	set32(NAND_CMD, 0);
-	set32(AES_CMD, 0);
-	set32(SHA_CMD, 0);
+	write32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
+	write32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
+	write32(HW_ALARM, 0);
+	write32(NAND_CMD, 0);
+	write32(AES_CMD, 0);
+	write32(SHA_CMD, 0);
 	
 	//Enable all ARM irq's except for 2 unknown irq's ( 0x4200 )
-	set32(HW_ARMIRQFLAG, 0xFFFFBDFF);
-	set32(HW_ARMIRQMASK, 0);
-	set32(HW_ARMFIQMASK, 0);
+	write32(HW_ARMIRQFLAG, 0xFFFFBDFF);
+	write32(HW_ARMIRQMASK, 0);
+	write32(HW_ARMFIQMASK, 0);
 	
-	printk("Configuring caches and MMU...\n");
+	gecko_printf("Configuring caches and MMU...\n");
 	InitiliseMemory();
 }
 
-u32 _main(void *base)
+u32 _main(void)
 {
-	(void)base;	
 	gecko_init();
-	//don't use printk before our exceptions are init. our stackpointers are god knows were at that point.
+	//don't use printk before our main thread started. our stackpointers are god knows were at that point & thread context isn't init yet
 	gecko_printf("StarStruck %s loading\n", git_version);	
 	gecko_printf("Initializing exceptions...\n");
 	exception_initialize();
@@ -190,9 +225,9 @@ u32 _main(void *base)
 	
 	InitialiseSystem();	
 
-	printk("IOSflags: %08x %08x %08x\n",
+	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
-	printk("          %08x %08x %08x\n",
+	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 
 	IrqInit();
@@ -210,23 +245,22 @@ u32 _main(void *base)
 	write32(MEM1_3148, MEM2_PHY2VIRT(0x13600000));
 	write32(MEM1_314C, MEM2_PHY2VIRT(0x13620000));
 	DCFlushRange((void*)0x00003100, 0x68);
-	printk("Updated DDR settings in lomem for current map\n");
+	gecko_printf("Updated DDR settings in lomem for current map\n");
 	
 	//init&start main code next : 
 	//-------------------------------
 	//init thread context handles
 	InitializeThreadContext();
-	
+
 	//create main kernel thread
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
 	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		printk("failed to start kernel(%d)!\n", threadId);
+		gecko_printf("failed to start kernel(%d)!\n", threadId);
 
-	printk("\npanic!\n");
-	while(1){};
+	panic("\npanic!\n");
 	return 0;
 }
 

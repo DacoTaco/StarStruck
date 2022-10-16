@@ -11,9 +11,11 @@
 #define IPC_SUCCESS					0					// Success
 #define IPC_EACCES					-1					// Permission denied
 #define IPC_EEXIST					-2					// File exists
+#define IPC_EINTR					-3					// Waiting operation was interrupted
 #define IPC_EINVAL					-4					// Invalid argument or fd
 #define IPC_EMAX					-5  				// Too many file descriptors open
 #define IPC_ENOENT					-6					// File not found
+#define IPC_EQUEUEEMPTY				-7					// Queue Empty
 #define IPC_EQUEUEFULL				-8					// Queue full
 #define IPC_EIO						-12					// ECC error
 #define IPC_ENOMEM					-22					// Alloc failed during request

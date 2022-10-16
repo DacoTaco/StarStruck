@@ -9,6 +9,8 @@
 */
 
 #include "asminc.h"
+#pragma GCC push_options
+#pragma GCC optimize ("O1")
 
 .arm
 #our syscall macro. all syscalls are basically the same hehe
@@ -52,3 +54,5 @@ BEGIN_ASM_FUNC os_printk
 	svc		0xAB
 	bx		lr
 END_ASM_FUNC
+
+#pragma GCC pop_options

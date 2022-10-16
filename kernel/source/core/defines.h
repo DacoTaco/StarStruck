@@ -9,5 +9,6 @@ Copyright (C) 2021		DacoTaco
 */
 
 #define SRAM_BSS __attribute__ ((section (".bss")))
-#define SRAM_DATA __attribute__ ((section (".data")))
+#define SRAM_DATA __attribute__ ((section (".data.sram")))
 #define SRAM_RODATA __attribute__ ((section (".rodata")))
+

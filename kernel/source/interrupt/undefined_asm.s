@@ -33,16 +33,12 @@ BEGIN_ASM_FUNC v_undf
 #endif
 
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
-	push	{r1}
 	blx		undf_handler
-	pop		{r1}
 	msr		cpsr_c, #0xdb
 
-	mov		sp, r1
 	ldmia	sp!, {r2}
 	msr		spsr_cxsf, r2
 	add		sp, sp, #0x04
 	ldmia	sp!, {r1-r12, sp, lr}^
-	ldmia	sp!, {lr}
-	movs	pc, lr
+	ldmia	sp!, {pc}^	
 END_ASM_FUNC

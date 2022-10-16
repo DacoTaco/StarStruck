@@ -21,14 +21,16 @@
 extern const void* __thread_stacks_area_start;
 extern const void* __thread_stacks_area_end;
 extern const u32 __kernel_heap_size;
+void EndThread();
 #define STACK_SIZE		0x400
 
 u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
-ThreadInfo threads[MAX_THREADS] ALIGNED(0x10);
-ThreadQueue mainQueue ALIGNED(0x10) = { &threads[0] };
-ThreadQueue* mainQueuePtr = &mainQueue;
-ThreadInfo* currentThread ALIGNED(0x10);
+ThreadInfo threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10);
+ThreadQueue runningQueue ALIGNED(0x04) = { &threadStartingState };
+ThreadInfo threadStartingState ALIGNED(0x04) = {.priority = -1};
+ThreadInfo* currentThread ALIGNED(0x10) = NULL;
+void* ThreadEndFunction = NULL;
 
 static inline s32 _GetThreadID(ThreadInfo* thread)
 {
@@ -38,15 +40,12 @@ static inline s32 _GetThreadID(ThreadInfo* thread)
 		: offset / sizeof(ThreadInfo);
 }
 
-void _thread_end()
-{
-	u32 ret = 0;
-	__asm__ volatile ("mov\t%0, r0" : "=l" (ret));
-	CancelThread( 0, ret );
-}
-
 void InitializeThreadContext()
 {
+	//copy function to mem2 where everything can access it
+	ThreadEndFunction = KMalloc(0x10);
+	memcpy32(ThreadEndFunction, EndThread, 0x10);
+
 	//Initilize thread structures & set stack pointers
 	for(s16 i = 0; i < MAX_PROCESSES; i++)
 	{
@@ -76,70 +75,64 @@ void SaveThreadInfo(ThreadContext* input)
 }
 
 //Scheduler
-void UnQueueThread( ThreadQueue* threadQueue, ThreadInfo* thread )
+void ThreadQueue_RemoveThread( ThreadQueue* threadQueue, ThreadInfo* threadToRemove )
 {
-	ThreadInfo* nextThread = (threadQueue == NULL)
-		? NULL
-		: threadQueue->nextThread;
+	if(threadQueue == NULL || threadToRemove == NULL)
+		return;
 	
-	while(1)
+	ThreadInfo* thread = threadQueue->nextThread;
+	while(thread)
 	{
-		if(nextThread == NULL)
-			return;
-		
-		if(nextThread == thread)
+		if(thread == threadToRemove)
+		{
+			threadQueue->nextThread = threadToRemove->nextThread;
 			break;
-		
-		//place pointer to the next thread pointer into the queue variable.
-		//since threadQueue starts with a pointer this... works.
-		//wtf nintendo? :)
-		threadQueue = (ThreadQueue*)&nextThread->nextThread;
-		nextThread = nextThread->nextThread;
+		}
+
+		threadQueue = (ThreadQueue*)thread->nextThread;
+		thread = thread->nextThread;
 	}
-	
-	threadQueue->nextThread = thread->nextThread;
+
 	return;
 }
 
-void QueueNextThread( ThreadQueue* threadQueue, ThreadInfo* thread )
+void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 {
-	ThreadInfo* nextThread = threadQueue->nextThread;
+	//not sure if this is correct. it works, and seems to be what the asm in ios kinda looks like
+	//however, looking in ghidra it looks completely different. what is ghidra thinking, and why?
+	if(threadQueue == NULL || thread == NULL)
+		return;
+
+	ThreadInfo* nextThread = threadQueue->nextThread;	
 	s16 threadPriority = thread->priority;
 	s16 nextPriority = nextThread->priority;
-	s16 newPriority = nextPriority - threadPriority;
-	ThreadQueue* previousThreadLink = threadQueue;
+	ThreadQueue* previousThread = threadQueue;
 
-	while((newPriority <= 0) == ( threadPriority > nextPriority ) )
+	while(threadPriority < nextPriority)
 	{
-		if(nextThread->nextThread == NULL || nextThread == nextThread->nextThread)
-			break;
-		
-		//place pointer to the next thread pointer into the queue variable.
-		//since threadQueue starts with a pointer this... works.
-		//wtf nintendo? :)
-		previousThreadLink = (ThreadQueue*)&nextThread->nextThread;
+		previousThread = (ThreadQueue*)&nextThread->nextThread;
 		nextThread = nextThread->nextThread;
 		nextPriority = nextThread->priority;
-		newPriority = nextPriority - threadPriority;
 	}
-	
-	previousThreadLink->nextThread = thread;
+
+	previousThread->nextThread = thread;
 	thread->threadQueue = threadQueue;
 	thread->nextThread = nextThread;
 	return;
 }
 
-ThreadInfo* PopNextThreadFromQueue(ThreadQueue* queue)
+ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue)
 {
 	ThreadInfo* ret = queue->nextThread;
 	queue->nextThread = ret->nextThread;
+
 	return ret;
 }
 
 __attribute__((target("arm")))
 void ScheduleYield( void )
 {
-	currentThread = PopNextThreadFromQueue(mainQueuePtr);
+	currentThread = ThreadQueue_PopThread(&runningQueue);
 	currentThread->threadState = Running;
 
 	SetDomainAccessControlRegister(DomainAccessControlTable[currentThread->processId]);
@@ -151,8 +144,6 @@ void ScheduleYield( void )
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
-		msr		cpsr_c, #0xd2\n\
-		ldr		sp, =__irqstack_addr\n\
 		msr		cpsr_c, #0xd3\n\
 		add		sp, %[threadContext], %[stackOffset]\n\
 		msr		cpsr_c, #0xdb\n\
@@ -163,44 +154,42 @@ void ScheduleYield( void )
 		ldmia	%[threadContext]!, {r4}\n\
 		msr		spsr_cxsf, r4\n\
 #restore the rest of the state\n\
-		ldmia	%[threadContext]!, {r0-r12, sp, lr}^\n\
-		ldmia	%[threadContext]!, {lr}\n\
+		mov		lr, %[threadContext] \n\
+		ldmia	lr, {r0-r12, sp, lr}^\n\
+		add		lr, lr, #0x3C\n\
 #jump to thread\n\
-		movs	pc, lr\n"
+		ldmia	lr, {pc}^\n"
 		:
 		: [threadContext] "r" (threadContext), 
 		  [threadContextOffset] "J" (offsetof(ThreadInfo, threadContext)),
 		  [stackOffset] "J" (offsetof(ThreadInfo, userContext) + sizeof(ThreadContext))
 	);
-	
-	return;
 }
 
 //Called syscalls.
 void YieldThread( void )
 {
 	s32 state = DisableInterrupts();
-	if(currentThread != NULL)
-		currentThread->threadState = Ready;
+	currentThread->threadState = Ready;
 
-	YieldCurrentThread(mainQueuePtr);
+	YieldCurrentThread(&runningQueue);
 
 	RestoreInterrupts(state);
 }
 
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 {
-	ThreadInfo* nextThread = PopNextThreadFromQueue(threadQueue);
+	ThreadInfo* nextThread = ThreadQueue_PopThread(threadQueue);
 	nextThread->threadContext.registers[0] = returnValue;
 	nextThread->threadState = Ready;
 	
-	QueueNextThread(mainQueuePtr, nextThread);
+	ThreadQueue_PushThread(&runningQueue, nextThread);
 	nextThread = currentThread;
 	
-	if(nextThread->priority < mainQueuePtr->nextThread->priority)
+	if(nextThread->priority < runningQueue.nextThread->priority)
 	{
 		currentThread->threadState = Ready;
-		YieldCurrentThread(&mainQueue);
+		YieldCurrentThread(&runningQueue);
 	}
 }
 
@@ -209,7 +198,7 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 {
 	int threadId = 0;
 	s32 irqState = DisableInterrupts();
-	
+
 	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (currentThread != NULL && priority > currentThread->initialPriority))
 	{
 		threadId = IPC_EINVAL;
@@ -232,24 +221,24 @@ s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 		goto restore_and_return;
 	}
 
-	selectedThread->threadQueue = currentThread->threadQueue;
 	selectedThread->processId = (currentThread == NULL) ? 0 : currentThread->processId;
 	selectedThread->threadState = Stopped;
 	selectedThread->priority = priority;
 	selectedThread->initialPriority = priority;
 	selectedThread->threadContext.programCounter = main;
 	selectedThread->threadContext.registers[0] = (u32)arg;
-	selectedThread->threadContext.linkRegister = (u32)_thread_end;
+	selectedThread->threadContext.linkRegister = (u32)ThreadEndFunction;
 	selectedThread->threadContext.stackPointer = stack_top == NULL
 		? selectedThread->defaultThreadStack 
 		: (u32)stack_top;
 		
 	//set thread state correctly
-	selectedThread->threadContext.statusRegister = (((s32)(main << 0x1f)) < 0) 
-	? (SPSR_USER_MODE | SPSR_THUMB_MODE)
-	: SPSR_USER_MODE ;
+	selectedThread->threadContext.statusRegister = ((main & 0x01) == 1)
+		? (SPSR_USER_MODE | SPSR_THUMB_MODE)
+		: SPSR_USER_MODE ;
 	selectedThread->nextThread = NULL;
 	selectedThread->threadQueue = NULL;
+	selectedThread->joinQueue = NULL;
 	selectedThread->isDetached = detached;
 	
 restore_and_return:
@@ -263,7 +252,7 @@ s32	StartThread(s32 threadId)
 	s32 ret = 0;
 	ThreadQueue* threadQueue = NULL;
 
-	if(threadId > MAX_THREADS || threadId < 0)
+	if(threadId >= MAX_THREADS || threadId < 0)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -284,28 +273,29 @@ s32	StartThread(s32 threadId)
 	}
 	
 	if(threadToStart->threadState != Stopped)
+	{
+		ret = IPC_EINVAL;
 		goto restore_and_return;
+	}
 	
 	threadQueue = threadToStart->threadQueue;
-	if(threadQueue == NULL || threadQueue == mainQueuePtr)
+	if(threadQueue == NULL || threadQueue == &runningQueue)
 	{
 		threadToStart->threadState = Ready;
-		QueueNextThread(mainQueuePtr, threadToStart);
-		threadToStart = currentThread;
+		ThreadQueue_PushThread(&runningQueue, threadToStart);
 	}
 	else
 	{
 		threadToStart->threadState = Waiting;
-		QueueNextThread(threadQueue, threadToStart);
-		threadToStart = currentThread;
+		ThreadQueue_PushThread(threadQueue, threadToStart);
 	}
 
-	if(threadToStart == NULL)
+	if(currentThread == NULL)
 		ScheduleYield();
-	else if(threadToStart->priority < mainQueuePtr->nextThread->priority)
+	else if(currentThread->priority < runningQueue.nextThread->priority)
 	{
-		threadToStart->threadState = Ready;
-		YieldCurrentThread(mainQueuePtr);
+		currentThread->threadState = Ready;
+		YieldCurrentThread(&runningQueue);
 	}
 	
 restore_and_return:
@@ -340,7 +330,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	
 	threadToCancel->returnValue = return_value;	
 	if(threadToCancel->threadState != Stopped)
-		UnQueueThread(mainQueuePtr, threadToCancel);
+		ThreadQueue_RemoveThread(&runningQueue, threadToCancel);		
 	
 	if(!threadToCancel->isDetached)
 		threadToCancel->threadState = Dead;
@@ -350,10 +340,10 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	currentThread->threadContext.registers[0] = ret;
 	if(threadToCancel == currentThread)
 		ScheduleYield();
-	else
+	else if(currentThread->priority < runningQueue.nextThread->priority)
 	{
 		currentThread->threadState = Ready;
-		YieldCurrentThread(mainQueuePtr);
+		YieldCurrentThread(&runningQueue);
 	}
 	
 restore_and_return:
@@ -393,7 +383,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	if(threadState != Dead)
 	{
 		currentThread->threadState = Waiting;
-		YieldCurrentThread(mainQueuePtr);
+		YieldCurrentThread(&runningQueue);
 		threadState = threadToJoin->threadState;
 	}
 	
@@ -479,14 +469,14 @@ s32 SetThreadPriority( u32 threadId, s32 priority )
 	thread->priority = priority;
 	if(thread != currentThread && thread->threadState != Stopped)
 	{
-		UnQueueThread(mainQueuePtr, thread);
-		QueueNextThread(mainQueuePtr, thread);
+		ThreadQueue_RemoveThread(&runningQueue, thread);
+		ThreadQueue_PushThread(&runningQueue, thread);
 	}
 	
-	if( currentThread->priority < mainQueuePtr->nextThread->priority )
+	if( currentThread->priority < runningQueue.nextThread->priority )
 	{
 		currentThread->threadState = Ready;
-		YieldCurrentThread(mainQueuePtr);
+		YieldCurrentThread(&runningQueue);
 	}
 	goto restore_and_return;
 	

@@ -18,8 +18,9 @@ __irqstack_size = 0x100;
 __excstack_size = 0x100;
 __swistack_size = 0x100;
 
+/*Sram is split up in several parts lol. FFFE0000 = 32K available. then there is 32K of unusable crap, followed by 64K of memory*/
 MEMORY {
-	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 62K
+	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 32K
 	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
 	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
 	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K
@@ -52,6 +53,14 @@ SECTIONS
 		__bss2_end = . ;
 	} >mem2
 
+	.data.sram (NOLOAD):
+	{
+		__data_sram_start = . ;
+		*(.data.sram)
+		. = ALIGN(4);
+		__data_sram_end = . ;
+	} >sram_data
+
 	.init :
 	{
 		*(.init)
@@ -77,7 +86,7 @@ SECTIONS
 		*(.rodata.*)
 		*(.gnu.linkonce.r*)
 		. = ALIGN(4);
-	} >sram_data
+	} >sram
 
 	.data :
 	{
@@ -85,7 +94,7 @@ SECTIONS
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		. = ALIGN(4);
-	} >sram_data
+	} >sram
 
 	.bss :
 	{
@@ -96,7 +105,7 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		__bss_end = . ;
-	} >sram_data
+	} >sram
 
 	.stack :
 	{
@@ -117,7 +126,7 @@ SECTIONS
 		. = . +__swistack_size;
 		. = ALIGN(16);
 		__swistack_addr = .;
-	} >sram_data
+	} >sram
 
 	/DISCARD/ :
 	{
