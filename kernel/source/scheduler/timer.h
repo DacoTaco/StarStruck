@@ -35,7 +35,6 @@ CHECK_SIZE(TimerInfo, 0x1C);
 extern TimerInfo* currentTimer;
 extern u32 PreviousTimerValue;
 
-void HandleTimerInterrupt(void);
 void TimerHandler(void);
 void QueueTimer(TimerInfo* timerInfo);
 u32 ConvertDelayToTicks(u32 delay);

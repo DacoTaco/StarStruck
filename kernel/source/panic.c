@@ -60,7 +60,7 @@ void panic2(int mode, ...)
 			udelay(PANIC_OFF);
 
 			gecko_printf("PANIIIIIIIIC!!!");
-			write32(HW_RESETS, read32(HW_RESETS) & ~(RSTBINB));
+			*(u32*)HW_RESETS &= ~RSTBINB;
 		}
 		
 		va_end(ap);

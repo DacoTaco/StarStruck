@@ -53,8 +53,7 @@ void DiThread()
 	if(queueId < 0)
 		panic("Unable to create DI thread message queue: %d\n", queueId);
 
-	u32 timerId = CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
-
+	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
 	while(1)
 	{
 		//don't ask. i have no idea why this is here haha
@@ -62,18 +61,14 @@ void DiThread()
 		{
 			for(u32 y = 0; y < 6; y++){}
 		}
-		s32 r = ReceiveMessage(queueId, (void **)&msg, None);
-
-		//lets not get interrupted while processing the timer message
-		u32 interupts = DisableInterrupts();
-		RestoreInterrupts(interupts);
+		ReceiveMessage(queueId, (void **)&msg, None);
 	}
 }
 
 void kernel_main( void )
 {
 	//create IRQ Timer handler thread
-	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7F, 1);
+	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
 	//set thread to run as a system thread
 	if(threadId >= 0)
 		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
@@ -96,38 +91,8 @@ void kernel_main( void )
 		}
 	}
 
-	
-
 	u32 vector;
 	FRESULT fres = 0;
-
-	//irq_initialize();
-	
-	/*this is what mini used to do*/
-	/*irq_setup_stack();
-	//write32(HW_ALARM, 0);
-	//write32(HW_ARMIRQMASK, 0);
-	//write32(HW_ARMIRQFLAG, 0xffffffff);
-	//RestoreInterrupts(CPSR_FIQDIS);
-
-	//???
-	//write32(HW_ARMFIQMASK, 0);
-	//write32(HW_DBGINTEN, 0);	
-	
-	//	irq_enable(IRQ_GPIO1B);
-	irq_enable(IRQ_GPIO1);
-	irq_enable(IRQ_RESET);
-	//create dummy timer to test it
-	SetTimerAlarm(ConvertDelayToTicks(20000));
-	printk("Interrupts initialized\n");*/
-
-	threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x7e, 1);
-	if(threadId >= 0)
-		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
-
-	if( threadId < 0 || StartThread(threadId) < 0 )
-		panic("failed to start testThread thread!\n");
-	udelay(20000);
 	
 	crypto_initialize();
 	printk("crypto support initialized\n");
@@ -158,7 +123,6 @@ void kernel_main( void )
 	}
 
 	ipc_ppc_boot_title(0x000100014C554C5ALL);
-	//*(u32*)HW_RESETS &= ~1;
 	printk("Going into IPC mainloop...\n");
 	vector = ipc_main();
 	printk("IPC mainloop done! killing IPC...\n");
@@ -171,7 +135,6 @@ shutdown:
 	mem_shutdown();
 
 	printk("Vectoring to 0x%08x...\n", vector);
-	debug_output(0x69);
 	//go to whatever address we got
 	asm("bx\t%0": : "r" (vector));
 }
@@ -288,7 +251,7 @@ u32 _main(void)
 	//-------------------------------
 	//init thread context handles
 	InitializeThreadContext();
-	
+
 	//create main kernel thread
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread

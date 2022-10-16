@@ -94,7 +94,7 @@ SECTIONS
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		. = ALIGN(4);
-	} >sram_data
+	} >sram
 
 	.bss :
 	{

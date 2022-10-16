@@ -43,20 +43,6 @@ u32 ConvertDelayToTicks(u32 delay)
 	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 7);
 }
 
-void HandleTimerInterrupt(void)
-{
-	//clear Timer
-	write32(HW_ALARM, 0);
-
-	//change thread queue? 
-	//TODO : check with IOS
-	ThreadQueue_PopThread(&runningQueue);
-
-	//Reset Timer
-	if (timerFrequency)
-		write32(HW_ALARM, read32(HW_TIMER) + timerFrequency);
-}
-
 void QueueTimer(TimerInfo* timerInfo)
 {
 	if(timerInfo == NULL)
@@ -104,7 +90,6 @@ void QueueTimer(TimerInfo* timerInfo)
 
 void TimerHandler(void)
 {
-	currentTimer = timers;
 
 	u32 timer_messages[1];
 	s32 timerQueueId = 0;

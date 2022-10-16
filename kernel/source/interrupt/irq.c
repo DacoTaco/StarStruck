@@ -103,7 +103,6 @@ void EnqueueEventHandler(s32 device)
 	if(queue->receiveThreadQueue.nextThread != NULL)
 	{
 		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->receiveThreadQueue);
-		gecko_printf("eventhandler exists y0 - %p - %p!\n", handlerThread, currentThread);
 		handlerThread->threadState = Ready;
 		handlerThread->userContext.registers[0] = 0;
 		ThreadQueue_PushThread(&runningQueue, handlerThread);
@@ -144,7 +143,6 @@ void irq_handler(ThreadContext* context)
 	if(flags & IRQF_TIMER) 
 	{
 		EnqueueEventHandler(IRQ_TIMER);
-		//HandleTimerInterrupt();
 		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}
