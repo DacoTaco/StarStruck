@@ -41,7 +41,7 @@ BEGIN_ASM_FUNC YieldCurrentThread
 	str		lr, [r1, #0x40]
 
 	cmp		r0, #0
-	bne		yield
+	beq		yield
 	_BL		ThreadQueue_PushThread
 yield:
 	ldr		r0, =ScheduleYield
