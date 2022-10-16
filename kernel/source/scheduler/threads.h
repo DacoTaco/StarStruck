@@ -95,6 +95,7 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread );
 s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(u32 threadId, u32 return_value);
 s32 JoinThread(s32 threadId, u32* returnedValue);
+s32 SuspendThread(s32 threadId);
 s32 StartThread(s32 threadId);
 s32 GetThreadID(void);
 s32 GetProcessID(void);

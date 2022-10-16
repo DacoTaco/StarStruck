@@ -258,12 +258,9 @@ s32	StartThread(s32 threadId)
 		goto restore_and_return;
 	}
 	
-	ThreadInfo* threadToStart = NULL;
-	if( threadId == 0 )
-		threadToStart = currentThread;
-	
-	if(threadToStart == NULL)
-		threadToStart = &threads[threadId];
+	ThreadInfo* threadToStart = (threadId == 0)
+		? currentThread
+		: &threads[threadId];
 
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToStart->processId != currentThread->processId)
@@ -314,12 +311,9 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		goto restore_and_return;
 	}
 	
-	ThreadInfo* threadToCancel = NULL;
-	if( threadId == 0 )
-		threadToCancel = currentThread;
-
-	if(threadToCancel == NULL)
-		threadToCancel = &threads[threadId];
+	ThreadInfo* threadToCancel = (threadId == 0)
+		? currentThread
+		: &threads[threadId];
 
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToCancel->processId != currentThread->processId)
@@ -356,18 +350,15 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 	s32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(threadId > MAX_THREADS)
+	if(threadId >= MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 	
-	ThreadInfo* threadToJoin = NULL;
-	if( threadId == 0 )
-		threadToJoin = currentThread;
-
-	if(threadToJoin == NULL)
-		threadToJoin = &threads[threadId];
+	ThreadInfo* threadToJoin = (threadId == 0)
+		? currentThread
+		: &threads[threadId];
 
 	//does the current thread even own the thread?
 	if( currentThread != NULL && currentThread->processId != 0 && threadToJoin->processId != currentThread->processId)
@@ -394,6 +385,51 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 		gecko_printf("thread %d is not dead, but join from %d resumed\n", _GetThreadID(threadToJoin), _GetThreadID(currentThread) );
 
 	threadToJoin->threadState = Unset;	
+restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
+}
+
+s32 SuspendThread(s32 threadId)
+{
+	s32 irqState = DisableInterrupts();
+	s32 ret = 0;
+
+	if(threadId >= MAX_THREADS)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;
+	}
+	
+	ThreadInfo* threadToSuspend = (threadId == 0)
+		? currentThread
+		: &threads[threadId];
+
+	//does the current thread even own the thread?
+	if( currentThread != NULL && currentThread->processId != 0 && threadToSuspend->processId != currentThread->processId)
+	{
+		ret = IPC_EINVAL;
+		goto restore_and_return;
+	}
+	
+	switch (threadToSuspend->threadState)
+	{
+		case Running:
+			threadToSuspend->threadState = Stopped;
+			YieldCurrentThread(NULL);
+			break;
+		case Ready:
+		case Waiting:
+			threadToSuspend->threadState = Stopped;
+			ThreadQueue_RemoveThread(threadToSuspend->threadQueue, threadToSuspend);
+			break;
+		case Unset:
+			break;
+		default:
+			ret = IPC_EINVAL;
+			break;
+	}
+
 restore_and_return:
 	RestoreInterrupts(irqState);
 	return ret;

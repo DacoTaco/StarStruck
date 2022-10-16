@@ -29,7 +29,7 @@ static const void* syscall_handlers[] = {
 	GetThreadID,				//0x0003
 	GetProcessID,				//0x0004
 	StartThread,				//0x0005
-	0x00000000,					//0x0006
+	SuspendThread,				//0x0006
 	YieldThread,				//0x0007
 	GetThreadPriority,			//0x0008
 	SetThreadPriority,			//0x0009
