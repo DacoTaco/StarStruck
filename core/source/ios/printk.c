@@ -24,7 +24,7 @@ int printk(const char *fmt, ...)
 	va_start(args, fmt);
 	int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
-
+	
 	//nintendo's debug interface is super fun
 	//it expects data to be sent in chunks of 16 bytes
 	//it buffers this untill a newline is sent.
@@ -39,13 +39,13 @@ int printk(const char *fmt, ...)
 			: len - index;
 		memset(syscallBuffer, 0, 16);
 		memcpy(syscallBuffer, &buffer[index], chuckSize);
-		os_printk(syscallBuffer);
+		OSPrintk(syscallBuffer);
 
 		index += chuckSize;
 	}
 
 	if(len > 0 && buffer[len-1] != '\n')
-		os_printk("\n\0");
+		OSPrintk("\n\0");
 	
 	return len;
 }

@@ -105,7 +105,7 @@ $(BUILD): ./include/git_version.h
 #---------------------------------------------------------------------------------
 clean:
 	$(SILENTCMD)echo clean ...
-	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a ./include/git_version.h 
 
 
 #---------------------------------------------------------------------------------

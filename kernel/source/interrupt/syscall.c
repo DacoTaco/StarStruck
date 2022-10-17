@@ -158,26 +158,26 @@ static const void* syscall_handlers[] = {
 //Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
 s32 HandleSyscall(u16 syscall)
 {
-	ThreadContext* threadContext = &currentThread->userContext;
+	ThreadContext* threadContext = &CurrentThread->UserContext;
 
 #ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
 	if(threadContext != NULL)
 	{
-		gecko_printf("Context (%p / SPSR %08x):\n", threadContext, threadContext->statusRegister);
-		gecko_printf("  R0-R3: %08x %08x %08x %08x\n", threadContext->registers[0], threadContext->registers[1], threadContext->registers[2], threadContext->registers[3]);
-		gecko_printf("  R4-R7: %08x %08x %08x %08x\n", threadContext->registers[4], threadContext->registers[5], threadContext->registers[6], threadContext->registers[7]);
-		gecko_printf("  R8-R11: %08x %08x %08x %08x\n", threadContext->registers[8], threadContext->registers[9], threadContext->registers[10], threadContext->registers[11]);
-		gecko_printf("  R12-R15: %08x %08x %08x %08x\n", threadContext->registers[12], threadContext->registers[13], threadContext->registers[14], threadContext->registers[15]);
+		gecko_printf("Context (%p / SPSR %08x):\n", threadContext, threadContext->StatusRegister);
+		gecko_printf("  R0-R3: %08x %08x %08x %08x\n", threadContext->Registers[0], threadContext->Registers[1], threadContext->Registers[2], threadContext->Registers[3]);
+		gecko_printf("  R4-R7: %08x %08x %08x %08x\n", threadContext->Registers[4], threadContext->Registers[5], threadContext->Registers[6], threadContext->Registers[7]);
+		gecko_printf("  R8-R11: %08x %08x %08x %08x\n", threadContext->Registers[8], threadContext->Registers[9], threadContext->Registers[10], threadContext->Registers[11]);
+		gecko_printf("  R12-R15: %08x %08x %08x %08x\n", threadContext->Registers[12], threadContext->Registers[13], threadContext->Registers[14], threadContext->Registers[15]);
 	}
 	else
 		gecko_printf("threadContext == NULL");
 #endif	
 
 	//is this the special IOS syscall?
-	if(syscall == 0xAB && threadContext->registers[0] == 0x04)
+	if(syscall == 0xAB && threadContext->Registers[0] == 0x04)
 	{
-		gecko_printf((char*)threadContext->registers[1]);
+		gecko_printf((char*)threadContext->Registers[1]);
 		return 0;
 	}
 
@@ -190,7 +190,7 @@ s32 HandleSyscall(u16 syscall)
 		return -666;
 	}
 
-	u32* reg = threadContext->registers;
+	u32* reg = threadContext->Registers;
 	SyscallHandler handler = (SyscallHandler)syscall_handlers[syscall];		
 	if(handler == NULL)
 	{

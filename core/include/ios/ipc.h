@@ -32,107 +32,107 @@ Copyright (C) 2021	DacoTaco
 
 typedef struct 
 {
-	char *filepath;
-	u32 mode;
+	char *Filepath;
+	u32 Mode;
 } OpenMessage;
 CHECK_SIZE(OpenMessage, 0x08);
-CHECK_OFFSET(OpenMessage, 0x00, filepath);
-CHECK_OFFSET(OpenMessage, 0x04, mode);
+CHECK_OFFSET(OpenMessage, 0x00, Filepath);
+CHECK_OFFSET(OpenMessage, 0x04, Mode);
 
 typedef struct {
-	void *data;
-	u32 length;
+	void *Data;
+	u32 Length;
 } ReadWriteMessage;
 CHECK_SIZE(ReadWriteMessage, 0x08);
-CHECK_OFFSET(ReadWriteMessage, 0x00, data);
-CHECK_OFFSET(ReadWriteMessage, 0x04, length);
+CHECK_OFFSET(ReadWriteMessage, 0x00, Data);
+CHECK_OFFSET(ReadWriteMessage, 0x04, Length);
 
 typedef struct {
-	s32 where;
-	s32 whence;
+	s32 Where;
+	s32 Whence;
 } SeekMessage;
 CHECK_SIZE(SeekMessage, 0x08);
-CHECK_OFFSET(SeekMessage, 0x00, where);
-CHECK_OFFSET(SeekMessage, 0x04, whence);
+CHECK_OFFSET(SeekMessage, 0x00, Where);
+CHECK_OFFSET(SeekMessage, 0x04, Whence);
 
 typedef struct
 {
-	u32 ioctl;
-	void *inputBuffer;
-	u32 inputLength;
-	void *ioBuffer;
-	u32 ioLength;
+	u32 Ioctl;
+	void *InputBuffer;
+	u32 InputLength;
+	void *IoBuffer;
+	u32 IoLength;
 } IoctlMessage;
-CHECK_OFFSET(IoctlMessage, 0x00, ioctl);
-CHECK_OFFSET(IoctlMessage, 0x04, inputBuffer);
-CHECK_OFFSET(IoctlMessage, 0x08, inputLength);
-CHECK_OFFSET(IoctlMessage, 0x0C, ioBuffer);
-CHECK_OFFSET(IoctlMessage, 0x10, ioLength);
+CHECK_OFFSET(IoctlMessage, 0x00, Ioctl);
+CHECK_OFFSET(IoctlMessage, 0x04, InputBuffer);
+CHECK_OFFSET(IoctlMessage, 0x08, InputLength);
+CHECK_OFFSET(IoctlMessage, 0x0C, IoBuffer);
+CHECK_OFFSET(IoctlMessage, 0x10, IoLength);
 CHECK_SIZE(IoctlMessage, 0x14);
 
 typedef struct
 {
-	void *data;
-	u32 length;
+	void *Data;
+	u32 Length;
 } IoctlvMessageData;
-CHECK_OFFSET(IoctlvMessageData, 0x00, data);
-CHECK_OFFSET(IoctlvMessageData, 0x04, length);
+CHECK_OFFSET(IoctlvMessageData, 0x00, Data);
+CHECK_OFFSET(IoctlvMessageData, 0x04, Length);
 CHECK_SIZE(IoctlvMessageData, 0x08);
 
 typedef struct
 {
-	u32 ioctl;
-	u32 inputArgc;
-	u32 ioArgc;
-	IoctlvMessageData *data;
+	u32 Ioctl;
+	u32 InputArgc;
+	u32 IoArgc;
+	IoctlvMessageData *Data;
 } IoctlvMessage;
-CHECK_OFFSET(IoctlvMessage, 0x00, ioctl);
-CHECK_OFFSET(IoctlvMessage, 0x04, inputArgc);
-CHECK_OFFSET(IoctlvMessage, 0x08, ioArgc);
-CHECK_OFFSET(IoctlvMessage, 0x0C, data);
+CHECK_OFFSET(IoctlvMessage, 0x00, Ioctl);
+CHECK_OFFSET(IoctlvMessage, 0x04, InputArgc);
+CHECK_OFFSET(IoctlvMessage, 0x08, IoArgc);
+CHECK_OFFSET(IoctlvMessage, 0x0C, Data);
 CHECK_SIZE(IoctlvMessage, 0x10);
 
 typedef struct
 {
-	u32 cmd;
-	s32 result;
+	u32 Command;
+	s32 Result;
 	union {
-		s32 fileDescriptor;
-		u32 requestCommand;
+		s32 FileDescriptor;
+		u32 RequestCommand;
 	};
 	union {
-		OpenMessage open;
-		ReadWriteMessage read;
-		ReadWriteMessage write;
-		SeekMessage seek;
-		IoctlMessage ioctl;
-		IoctlvMessage ioctlv;
-		u32 args[5];
+		OpenMessage Open;
+		ReadWriteMessage Read;
+		ReadWriteMessage Write;
+		SeekMessage Seek;
+		IoctlMessage Ioctl;
+		IoctlvMessage Ioctlv;
+		u32 Arguments[5];
 	};
-	void *callback;
-	u32 callerData;
-	u32 relaunch;
+	void *Callback;
+	u32 CallerData;
+	u32 Relaunch;
 } IpcMessage;
 CHECK_SIZE(IpcMessage, 0x2C);
-CHECK_OFFSET(IpcMessage, 0x00, cmd);
-CHECK_OFFSET(IpcMessage, 0x04, result);
-CHECK_OFFSET(IpcMessage, 0x08, fileDescriptor);
-CHECK_OFFSET(IpcMessage, 0x08, requestCommand);
-CHECK_OFFSET(IpcMessage, 0x20, callback);
-CHECK_OFFSET(IpcMessage, 0x24, callerData);
-CHECK_OFFSET(IpcMessage, 0x28, relaunch);
+CHECK_OFFSET(IpcMessage, 0x00, Command);
+CHECK_OFFSET(IpcMessage, 0x04, Result);
+CHECK_OFFSET(IpcMessage, 0x08, FileDescriptor);
+CHECK_OFFSET(IpcMessage, 0x08, RequestCommand);
+CHECK_OFFSET(IpcMessage, 0x20, Callback);
+CHECK_OFFSET(IpcMessage, 0x24, CallerData);
+CHECK_OFFSET(IpcMessage, 0x28, Relaunch);
 
 //all message types and their data
-CHECK_OFFSET(IpcMessage, 0x0C, open);
-CHECK_OFFSET(IpcMessage, 0x0C, read);
-CHECK_OFFSET(IpcMessage, 0x0C, write);
-CHECK_OFFSET(IpcMessage, 0x0C, seek);
-CHECK_OFFSET(IpcMessage, 0x0C, ioctl);
-CHECK_OFFSET(IpcMessage, 0x0C, ioctlv);
-CHECK_OFFSET(IpcMessage, 0x0C, args[0]);
-CHECK_OFFSET(IpcMessage, 0x10, args[1]);
-CHECK_OFFSET(IpcMessage, 0x14, args[2]);
-CHECK_OFFSET(IpcMessage, 0x18, args[3]);
-CHECK_OFFSET(IpcMessage, 0x1C, args[4]);
+CHECK_OFFSET(IpcMessage, 0x0C, Open);
+CHECK_OFFSET(IpcMessage, 0x0C, Read);
+CHECK_OFFSET(IpcMessage, 0x0C, Write);
+CHECK_OFFSET(IpcMessage, 0x0C, Seek);
+CHECK_OFFSET(IpcMessage, 0x0C, Ioctl);
+CHECK_OFFSET(IpcMessage, 0x0C, Ioctlv);
+CHECK_OFFSET(IpcMessage, 0x0C, Arguments[0]);
+CHECK_OFFSET(IpcMessage, 0x10, Arguments[1]);
+CHECK_OFFSET(IpcMessage, 0x14, Arguments[2]);
+CHECK_OFFSET(IpcMessage, 0x18, Arguments[3]);
+CHECK_OFFSET(IpcMessage, 0x1C, Arguments[4]);
 
 #endif

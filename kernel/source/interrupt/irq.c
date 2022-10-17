@@ -46,15 +46,15 @@ s32 RegisterEventHandler(u8 device, int queueid, void* message)
 		goto restore_and_return;	
 	}
 
-	if(messageQueues[queueid].processId != currentThread->processId)
+	if(MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 
-	eventHandlers[device].message = message;
-	eventHandlers[device].processId = currentThread->processId;
-	eventHandlers[device].messageQueue = &messageQueues[queueid];
+	eventHandlers[device].Message = message;
+	eventHandlers[device].ProcessId = CurrentThread->ProcessId;
+	eventHandlers[device].MessageQueue = &MessageQueues[queueid];
 
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -71,14 +71,14 @@ s32 UnregisterEventHandler(u8 device)
 		goto restore_and_return;	
 	}
 
-	if(eventHandlers[device].processId != currentThread->processId)
+	if(eventHandlers[device].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto restore_and_return;
 	}
 
-	eventHandlers[device].messageQueue = NULL;
-	eventHandlers[device].message = NULL;
+	eventHandlers[device].MessageQueue = NULL;
+	eventHandlers[device].Message = NULL;
 
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -87,25 +87,25 @@ restore_and_return:
 
 void EnqueueEventHandler(s32 device)
 {
-	MessageQueue* queue = eventHandlers[device].messageQueue;
+	MessageQueue* queue = eventHandlers[device].MessageQueue;
 	if(queue == NULL)
 		return;
 
-	if(queue->used >= queue->queueSize)
+	if(queue->Used >= queue->QueueSize)
 		return;
 
-	s32 messageIndex = queue->used + queue->first;
-	queue->used += 1;
-	if(messageIndex > queue->queueSize)
-		messageIndex -= queue->queueSize;
+	s32 messageIndex = queue->Used + queue->First;
+	queue->Used += 1;
+	if(messageIndex > queue->QueueSize)
+		messageIndex -= queue->QueueSize;
 
-	queue->queueHeap[messageIndex] = eventHandlers[device].message;
-	if(queue->receiveThreadQueue.nextThread != NULL)
+	queue->QueueHeap[messageIndex] = eventHandlers[device].Message;
+	if(queue->ReceiveThreadQueue.NextThread != NULL)
 	{
-		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->receiveThreadQueue);
-		handlerThread->threadState = Ready;
-		handlerThread->userContext.registers[0] = 0;
-		ThreadQueue_PushThread(&runningQueue, handlerThread);
+		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->ReceiveThreadQueue);
+		handlerThread->ThreadState = Ready;
+		handlerThread->UserContext.Registers[0] = 0;
+		ThreadQueue_PushThread(&SchedulerQueue, handlerThread);
 	}
 }
 
@@ -132,8 +132,8 @@ void irq_shutdown(void)
 void irq_handler(ThreadContext* context)
 {
 	//Enqueue current thread
-	currentThread->threadState = Ready;
-	ThreadQueue_PushThread(&runningQueue, currentThread);
+	CurrentThread->ThreadState = Ready;
+	ThreadQueue_PushThread(&SchedulerQueue, CurrentThread);
 	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
 	

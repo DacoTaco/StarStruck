@@ -15,13 +15,13 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl v_data_abrt
 .globl v_reserved
 .globl v_fiq
-.globl exc_setup_stack
+.globl SetupExceptionsStack
 
 .extern __excstack_addr
 .extern __swistack_addr
-.extern exc_handler
+.extern ExceptionHandler
 
-BEGIN_ASM_FUNC exc_setup_stack
+BEGIN_ASM_FUNC SetupExceptionsStack
 	mrs	r0, cpsr
 
 	@ Switch to FIQ mode
@@ -59,7 +59,7 @@ BEGIN_ASM_FUNC v_instr_abrt
 	mrs		r1, spsr
 	mov		r0, #3
 
-	blx		exc_handler
+	blx		ExceptionHandler
 
 	ldmfd	sp!, {r0-r12}
 	add		sp, sp, #8
@@ -75,7 +75,7 @@ BEGIN_ASM_FUNC v_data_abrt
 	mrs		r1, spsr
 	mov		r0, #4
 
-	blx		exc_handler
+	blx		ExceptionHandler
 
 	ldmfd	sp!, {r0-r12}
 	add		sp, sp, #8
@@ -91,7 +91,7 @@ BEGIN_ASM_FUNC v_reserved
 	mrs		r1, spsr
 	mov		r0, #5
 
-	blx		exc_handler
+	blx		ExceptionHandler
 
 	ldmfd	sp!, {r0-r12}
 	add		sp, sp, #8
@@ -107,7 +107,7 @@ BEGIN_ASM_FUNC v_fiq
 	mrs		r1, spsr
 	mov		r0, #7
 
-	blx		exc_handler
+	blx		ExceptionHandler
 
 	ldmfd	sp!, {r0-r12}
 	add		sp, sp, #8

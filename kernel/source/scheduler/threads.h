@@ -31,59 +31,59 @@ typedef enum
 //messing with these without the asm WILL break everything.
 typedef struct 
 {	
-	u32 statusRegister;
-	u32 registers[13];
-	u32 stackPointer;
-	u32 linkRegister;
-	u32 programCounter;
+	u32 StatusRegister;
+	u32 Registers[13];
+	u32 StackPointer;
+	u32 LinkRegister;
+	u32 ProgramCounter;
 } ThreadContext;
 
-CHECK_OFFSET(ThreadContext, 0x00, statusRegister);
-CHECK_OFFSET(ThreadContext, 0x04, registers);
-CHECK_OFFSET(ThreadContext, 0x38, stackPointer);
-CHECK_OFFSET(ThreadContext, 0x3C, linkRegister);
-CHECK_OFFSET(ThreadContext, 0x40, programCounter);
+CHECK_OFFSET(ThreadContext, 0x00, StatusRegister);
+CHECK_OFFSET(ThreadContext, 0x04, Registers);
+CHECK_OFFSET(ThreadContext, 0x38, StackPointer);
+CHECK_OFFSET(ThreadContext, 0x3C, LinkRegister);
+CHECK_OFFSET(ThreadContext, 0x40, ProgramCounter);
 CHECK_SIZE(ThreadContext, 0x44);
 
 typedef struct ThreadInfo
 {
-	ThreadContext threadContext;
-	struct ThreadInfo* nextThread;
-	s32 initialPriority;
-	s32 priority;
-	u32 threadState;
-	u32 processId;
-	s32 isDetached;	
-	u32 returnValue;
-	struct ThreadQueue* joinQueue;
-	struct ThreadQueue* threadQueue;
-	ThreadContext userContext;
-	u32 defaultThreadStack;
+	ThreadContext ThreadContext;
+	struct ThreadInfo* NextThread;
+	s32 InitialPriority;
+	s32 Priority;
+	u32 ThreadState;
+	u32 ProcessId;
+	s32 IsDetached;	
+	u32 ReturnValue;
+	struct ThreadQueue* JoinQueue;
+	struct ThreadQueue* ThreadQueue;
+	ThreadContext UserContext;
+	u32 DefaultThreadStack;
 } ThreadInfo ALIGNED(0x10);
 
-CHECK_OFFSET(ThreadInfo, 0x00, threadContext);
-CHECK_OFFSET(ThreadInfo, 0x44, nextThread);
-CHECK_OFFSET(ThreadInfo, 0x48, initialPriority);
-CHECK_OFFSET(ThreadInfo, 0x4C, priority);
-CHECK_OFFSET(ThreadInfo, 0x50, threadState);
-CHECK_OFFSET(ThreadInfo, 0x54, processId);
-CHECK_OFFSET(ThreadInfo, 0x58, isDetached);
-CHECK_OFFSET(ThreadInfo, 0x5C, returnValue);
-CHECK_OFFSET(ThreadInfo, 0x60, joinQueue);
-CHECK_OFFSET(ThreadInfo, 0x64, threadQueue);
-CHECK_OFFSET(ThreadInfo, 0x68, userContext);
-CHECK_OFFSET(ThreadInfo, 0xAC, defaultThreadStack);
+CHECK_OFFSET(ThreadInfo, 0x00, ThreadContext);
+CHECK_OFFSET(ThreadInfo, 0x44, NextThread);
+CHECK_OFFSET(ThreadInfo, 0x48, InitialPriority);
+CHECK_OFFSET(ThreadInfo, 0x4C, Priority);
+CHECK_OFFSET(ThreadInfo, 0x50, ThreadState);
+CHECK_OFFSET(ThreadInfo, 0x54, ProcessId);
+CHECK_OFFSET(ThreadInfo, 0x58, IsDetached);
+CHECK_OFFSET(ThreadInfo, 0x5C, ReturnValue);
+CHECK_OFFSET(ThreadInfo, 0x60, JoinQueue);
+CHECK_OFFSET(ThreadInfo, 0x64, ThreadQueue);
+CHECK_OFFSET(ThreadInfo, 0x68, UserContext);
+CHECK_OFFSET(ThreadInfo, 0xAC, DefaultThreadStack);
 CHECK_SIZE(ThreadInfo, 0xB0);
 
 typedef struct ThreadQueue
 {
-	ThreadInfo* nextThread;
+	ThreadInfo* NextThread;
 } ThreadQueue;
 
-extern ThreadInfo threads[MAX_THREADS];
-extern ThreadInfo* currentThread;
-extern ThreadInfo threadStartingState;
-extern ThreadQueue runningQueue;
+extern ThreadInfo Threads[MAX_THREADS];
+extern ThreadInfo* CurrentThread;
+extern ThreadInfo ThreadStartingState;
+extern ThreadQueue SchedulerQueue;
 
 void InitializeThreadContext(void);
 void ScheduleYield( void );

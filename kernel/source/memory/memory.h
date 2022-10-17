@@ -31,30 +31,30 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 typedef struct
 {
-	u32 physicalAddress;
-	u32 virtualAddress;
-	u32 size;
-	u32 domain;
-	u32 accessRights;
-	u32 unknown;
+	u32 PhysicalAddress;
+	u32 VirtualAddress;
+	u32 Size;
+	u32 Domain;
+	u32 AccessRights;
+	u32 Unknown;
 } MemorySection;
 
-CHECK_OFFSET(MemorySection, 0x00, physicalAddress);
-CHECK_OFFSET(MemorySection, 0x04, virtualAddress);
-CHECK_OFFSET(MemorySection, 0x08, size);
-CHECK_OFFSET(MemorySection, 0x0C, domain);
-CHECK_OFFSET(MemorySection, 0x10, accessRights);
-CHECK_OFFSET(MemorySection, 0x14, unknown);
+CHECK_OFFSET(MemorySection, 0x00, PhysicalAddress);
+CHECK_OFFSET(MemorySection, 0x04, VirtualAddress);
+CHECK_OFFSET(MemorySection, 0x08, Size);
+CHECK_OFFSET(MemorySection, 0x0C, Domain);
+CHECK_OFFSET(MemorySection, 0x10, AccessRights);
+CHECK_OFFSET(MemorySection, 0x14, Unknown);
 CHECK_SIZE(MemorySection, 0x18);
 
 typedef struct
 {
-	u32 processId;
-	MemorySection memorySection;
+	u32 ProcessId;
+	MemorySection MemorySection;
 } ProcessMemorySection;
 
-CHECK_OFFSET(ProcessMemorySection, 0x00, processId);
-CHECK_OFFSET(ProcessMemorySection, 0x04, memorySection);
+CHECK_OFFSET(ProcessMemorySection, 0x00, ProcessId);
+CHECK_OFFSET(ProcessMemorySection, 0x04, MemorySection);
 CHECK_SIZE(ProcessMemorySection, 0x1C);
 
 typedef enum
@@ -63,12 +63,8 @@ typedef enum
 	Unknown = 1,
 	CoursePage = 2,
 } KernelMemoryType;
-
-extern u32* MemoryTranslationTable;
-extern u32 DomainAccessControlTable[MAX_PROCESSES];
-extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 	
-s32 InitiliseMemory(void);
+s32 InitializeMemory(void);
 void ProtectMemory(int enable, void *start, void *end);
 void* KMalloc(u32 size);
 u32 MapMemory(MemorySection* entry);

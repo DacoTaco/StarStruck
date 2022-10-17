@@ -145,22 +145,6 @@ void gecko_flush(void)
 	while(_gecko_recvbyte(&tmp));
 }
 
-#if 0
-static int gecko_recvbuffer(void *buffer, u32 size)
-{
-	u32 left = size;
-	char *ptr = (char*)buffer;
-
-	while(left>0) {
-		if(!_gecko_recvbyte(ptr))
-			break;
-		ptr++;
-		left--;
-	}
-	return (size - left);
-}
-#endif
-
 #if !defined(NDEBUG) && !defined(GECKO_SAFE)
 static int gecko_sendbuffer(const void *buffer, u32 size)
 {
@@ -178,24 +162,6 @@ static int gecko_sendbuffer(const void *buffer, u32 size)
 		}
 		ptr++;
 		left--;
-	}
-	return (size - left);
-}
-#endif
-
-#if 0
-static int gecko_recvbuffer_safe(void *buffer, u32 size)
-{
-	u32 left = size;
-	char *ptr = (char*)buffer;
-	
-	while(left>0) {
-		if(_gecko_checkrecv()) {
-			if(!_gecko_recvbyte(ptr))
-				break;
-			ptr++;
-			left--;
-		}
 	}
 	return (size - left);
 }

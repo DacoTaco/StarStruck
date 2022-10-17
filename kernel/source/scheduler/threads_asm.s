@@ -31,7 +31,7 @@ END_ASM_FUNC
 
 #void YieldCurrentThread(ThreadQueue* queue)
 BEGIN_ASM_FUNC YieldCurrentThread
-	ldr		r1, =currentThread
+	ldr		r1, =CurrentThread
 	ldr		r1, [r1, #0x00]
 	mrs     r2, cpsr
 	str		r2, [r1, #0x00]
