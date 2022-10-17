@@ -258,7 +258,7 @@ s32	StartThread(s32 threadId)
 		goto restore_and_return;
 	}
 	
-	ThreadInfo* threadToStart = (threadId == 0)
+	ThreadInfo* threadToStart = (threadId == 0 && currentThread != NULL)
 		? currentThread
 		: &threads[threadId];
 
@@ -310,8 +310,8 @@ s32 CancelThread(u32 threadId, u32 return_value)
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
-	
-	ThreadInfo* threadToCancel = (threadId == 0)
+
+	ThreadInfo* threadToCancel = (threadId == 0 && currentThread != NULL)
 		? currentThread
 		: &threads[threadId];
 
@@ -355,8 +355,8 @@ s32 JoinThread(s32 threadId, u32* returnedValue)
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
-	
-	ThreadInfo* threadToJoin = (threadId == 0)
+
+	ThreadInfo* threadToJoin = (threadId == 0 && currentThread != NULL)
 		? currentThread
 		: &threads[threadId];
 
@@ -400,8 +400,8 @@ s32 SuspendThread(s32 threadId)
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
-	
-	ThreadInfo* threadToSuspend = (threadId == 0)
+
+	ThreadInfo* threadToSuspend = (threadId == 0 && currentThread != NULL)
 		? currentThread
 		: &threads[threadId];
 
