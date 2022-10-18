@@ -25,6 +25,27 @@ int printk(const char *fmt, ...)
 	int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 
-	os_printk(buffer);
+	//nintendo's debug interface is super fun
+	//it expects data to be sent in chunks of 16 bytes
+	//it buffers this untill a newline is sent.
+	//since we are sending a string, we will send 15 bytes + null byte.
+	//in the end, we will end it all with a newline + null byte, if our string did not have any
+	s32 index = 0;
+	char syscallBuffer[16] = { 0 };
+	while(index < len)
+	{
+		s32 chuckSize = index+15 <= len
+			? 15
+			: len - index;
+		memset(syscallBuffer, 0, 16);
+		memcpy(syscallBuffer, &buffer[index], chuckSize);
+		os_printk(syscallBuffer);
+
+		index += chuckSize;
+	}
+
+	if(len > 0 && buffer[len-1] != '\n')
+		os_printk("\n\0");
+	
 	return len;
 }
