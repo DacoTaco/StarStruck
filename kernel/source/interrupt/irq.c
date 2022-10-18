@@ -27,7 +27,6 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "sdhc.h"
 
 EventHandler eventHandlers[MAX_DEVICES];
-void irq_setup_stack(void);
 
 void IrqInit(void)
 {
@@ -107,19 +106,6 @@ void EnqueueEventHandler(s32 device)
 		handlerThread->UserContext.Registers[0] = 0;
 		ThreadQueue_PushThread(&SchedulerQueue, handlerThread);
 	}
-}
-
-void irq_initialize(void)
-{
-	irq_setup_stack();
-	write32(HW_ALARM, 0);
-	write32(HW_ARMIRQMASK, 0);
-	write32(HW_ARMIRQFLAG, 0xffffffff);
-	RestoreInterrupts(CPSR_FIQDIS);
-
-	//???
-	write32(HW_ARMFIQMASK, 0);
-	write32(HW_DBGINTEN, 0);
 }
 
 void irq_shutdown(void)

@@ -70,8 +70,6 @@ void RestoreInterrupts(u32 cookie);
 s32 RegisterEventHandler(u8 device, int queueid, void* message);
 s32 UnregisterEventHandler(u8 device);
 
-void irq_initialize(void);
-void irq_setup_stack(void);
 void irq_shutdown(void);
 void irq_enable(u32 irq);
 void irq_disable(u32 irq);

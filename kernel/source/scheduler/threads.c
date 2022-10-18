@@ -68,15 +68,6 @@ void InitializeThreadContext()
 	}
 }
 
-//save current thread state. called by the IRQ, SVC/SWI & UDF handlers
-void SaveThreadInfo(ThreadContext* input)
-{
-	if(CurrentThread == NULL || input == NULL)
-		return;
-	
-	memcpy32(&CurrentThread->ThreadContext, input, sizeof(ThreadContext));
-}
-
 //Scheduler
 void ThreadQueue_RemoveThread( ThreadQueue* threadQueue, ThreadInfo* threadToRemove )
 {
