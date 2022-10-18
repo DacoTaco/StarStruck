@@ -22,7 +22,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl irq_wait
 
 .extern __irqstack_addr
-.extern irq_handler
+.extern IrqHandler
 .extern ScheduleYield
 
 BEGIN_ASM_FUNC DisableInterrupts
@@ -47,7 +47,7 @@ BEGIN_ASM_FUNC irq_wait
 	bx	lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC v_irq
+BEGIN_ASM_FUNC InterruptVector
 #set the stackpointer & save the thread state
 	ldr		sp, =CurrentThread
 	ldr		sp, [sp]
@@ -63,7 +63,7 @@ BEGIN_ASM_FUNC v_irq
 #handle the irq request with r0 having the state
 	mov		r0, sp
 	ldr		sp, =__irqstack_addr
-	blx		irq_handler
+	blx		IrqHandler
 
 #yield execution to the next thread
 	_BL		ScheduleYield

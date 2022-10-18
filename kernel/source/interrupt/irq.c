@@ -115,7 +115,7 @@ void irq_shutdown(void)
 	DisableInterrupts();
 }
 
-void irq_handler(ThreadContext* context)
+void IrqHandler(ThreadContext* context)
 {
 	//Enqueue current thread
 	CurrentThread->ThreadState = Ready;

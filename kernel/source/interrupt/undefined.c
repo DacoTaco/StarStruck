@@ -13,7 +13,7 @@
 #include "interrupt/exception.h"
 #include "interrupt/syscall.h"
 
-s32 undf_handler(unsigned instruction, ThreadContext* regs)
+s32 UndefinedInstructionHandler(unsigned instruction, ThreadContext* regs)
 {
 	//Nintendo's implementation of a syscall is actually an invalid instruction. 
 	//the instruction is 0xE6000010 | (syscall_num << 5).

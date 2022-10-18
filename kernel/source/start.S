@@ -22,30 +22,30 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 .globl _start
 
-.extern v_undf
-.extern v_swi
-.extern v_instr_abrt
-.extern v_data_abrt
-.extern v_reserved
-.extern v_irq
-.extern v_fiq
+.extern UndefinedInstructionVector
+.extern SupervisorCallVector
+.extern InstructionAbortVector
+.extern DataAbortVector
+.extern ReservedExceptionVector
+.extern InterruptVector
+.extern FastIrqVector
 
 .section .init
 
 _vectors:
 _start:
-	ldr	pc, =v_reset
-	ldr	pc, =v_undf
-	ldr	pc, =v_swi
-	ldr	pc, =v_instr_abrt
-	ldr	pc, =v_data_abrt
-	ldr	pc, =v_reserved
-	ldr	pc, =v_irq
-	ldr	pc, =v_fiq
+	ldr	pc, =ResetVector
+	ldr	pc, =UndefinedInstructionVector
+	ldr	pc, =SupervisorCallVector
+	ldr	pc, =InstructionAbortVector
+	ldr	pc, =DataAbortVector
+	ldr	pc, =ReservedExceptionVector
+	ldr	pc, =InterruptVector
+	ldr	pc, =FastIrqVector
 
 .pool
 
-v_reset:
+ResetVector:
 	@ Switch to System mode
 	msr cpsr_c, #0xdf
 

@@ -13,10 +13,10 @@
 
 .arm
 
-.globl v_undf;
-.extern undf_handler
+.globl UndefinedInstructionVector;
+.extern UndefinedInstructionHandler
 
-BEGIN_ASM_FUNC v_undf
+BEGIN_ASM_FUNC UndefinedInstructionVector
 #for info : see syscall asm
 	stmdb	sp!, {lr}
 	stmdb	sp!, {r0-r12, sp, lr}^
@@ -33,7 +33,7 @@ BEGIN_ASM_FUNC v_undf
 #endif
 
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
-	blx		undf_handler
+	blx		UndefinedInstructionHandler
 	msr		cpsr_c, #0xdb
 
 	ldmia	sp!, {r2}

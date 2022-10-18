@@ -11,10 +11,10 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <asminc.h>
 
 .arm
-.globl v_instr_abrt
-.globl v_data_abrt
-.globl v_reserved
-.globl v_fiq
+.globl InstructionAbortVector
+.globl DataAbortVector
+.globl ReservedExceptionVector
+.globl FastIrqVector
 .globl SetupExceptionsStack
 
 .extern __excstack_addr
@@ -51,7 +51,7 @@ END_ASM_FUNC
 
 .pool
 	
-BEGIN_ASM_FUNC v_instr_abrt
+BEGIN_ASM_FUNC InstructionAbortVector
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -67,7 +67,7 @@ BEGIN_ASM_FUNC v_instr_abrt
 	subs	pc, lr, #4
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC v_data_abrt
+BEGIN_ASM_FUNC DataAbortVector
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -83,7 +83,7 @@ BEGIN_ASM_FUNC v_data_abrt
 	subs	pc, lr, #8
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC v_reserved
+BEGIN_ASM_FUNC ReservedExceptionVector
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c
@@ -99,7 +99,7 @@ BEGIN_ASM_FUNC v_reserved
 	movs	pc, lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC v_fiq
+BEGIN_ASM_FUNC FastIrqVector
 	stmfd	sp!, {lr}
 	stmfd	sp, {r0-lr}^
 	sub		sp, sp, #0x3c

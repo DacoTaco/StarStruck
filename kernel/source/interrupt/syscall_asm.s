@@ -13,9 +13,9 @@
 
 .arm
 .extern HandleSyscall
-.globl v_swi
+.globl SupervisorCallVector
 
-BEGIN_ASM_FUNC v_swi
+BEGIN_ASM_FUNC SupervisorCallVector
 #store registers from before the call. r0 = return, r1 - r12 is parameters. current lr(or pc before the call) is the return address
 	stmdb	sp!, {lr}
 #save state & load address of our state into the stack , which we will use to retrieve the state
