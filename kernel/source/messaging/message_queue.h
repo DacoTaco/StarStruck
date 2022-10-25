@@ -16,22 +16,22 @@
 
 typedef struct
 {
-	ThreadQueue receiveThreadQueue;
-	ThreadQueue sendThreadQueue;
-	u32 processId;
-	s32 used;
-	s32 first;
-	s32 queueSize;
-	void** queueHeap;
+	ThreadQueue ReceiveThreadQueue;
+	ThreadQueue SendThreadQueue;
+	u32 ProcessId;
+	s32 Used;
+	s32 First;
+	s32 QueueSize;
+	void** QueueHeap;
 } MessageQueue;
 CHECK_SIZE(MessageQueue, 0x1C);
-CHECK_OFFSET(MessageQueue, 0x00, receiveThreadQueue);
-CHECK_OFFSET(MessageQueue, 0x04, sendThreadQueue);
-CHECK_OFFSET(MessageQueue, 0x08, processId);
-CHECK_OFFSET(MessageQueue, 0x0C, used);
-CHECK_OFFSET(MessageQueue, 0x10, first);
-CHECK_OFFSET(MessageQueue, 0x14, queueSize);
-CHECK_OFFSET(MessageQueue, 0x18, queueHeap);
+CHECK_OFFSET(MessageQueue, 0x00, ReceiveThreadQueue);
+CHECK_OFFSET(MessageQueue, 0x04, SendThreadQueue);
+CHECK_OFFSET(MessageQueue, 0x08, ProcessId);
+CHECK_OFFSET(MessageQueue, 0x0C, Used);
+CHECK_OFFSET(MessageQueue, 0x10, First);
+CHECK_OFFSET(MessageQueue, 0x14, QueueSize);
+CHECK_OFFSET(MessageQueue, 0x18, QueueHeap);
 typedef enum
 {
 	None = 0,
@@ -40,7 +40,7 @@ typedef enum
 } MessageQueueFlags;
 
 #define MAX_MESSAGEQUEUES 0x100
-extern MessageQueue messageQueues[MAX_MESSAGEQUEUES];
+extern MessageQueue MessageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
 s32 DestroyMessageQueue(s32 queueId);

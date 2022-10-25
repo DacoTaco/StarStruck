@@ -52,15 +52,16 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 typedef struct
 {
-	MessageQueue* messageQueue;
-	void* message;
-	u32 processId;
-	u32 unknown;
+	MessageQueue* MessageQueue;
+	void* Message;
+	u32 ProcessId;
+	u32 Unknown;
 } EventHandler;
 CHECK_SIZE(EventHandler, 0x10);
-CHECK_OFFSET(EventHandler, 0x00, messageQueue);
-CHECK_OFFSET(EventHandler, 0x04, message);
-CHECK_OFFSET(EventHandler, 0x08, processId);
+CHECK_OFFSET(EventHandler, 0x00, MessageQueue);
+CHECK_OFFSET(EventHandler, 0x04, Message);
+CHECK_OFFSET(EventHandler, 0x08, ProcessId);
+CHECK_OFFSET(EventHandler, 0x0C, Unknown);
 
 
 void IrqInit(void);
@@ -69,8 +70,6 @@ void RestoreInterrupts(u32 cookie);
 s32 RegisterEventHandler(u8 device, int queueid, void* message);
 s32 UnregisterEventHandler(u8 device);
 
-void irq_initialize(void);
-void irq_setup_stack(void);
 void irq_shutdown(void);
 void irq_enable(u32 irq);
 void irq_disable(u32 irq);

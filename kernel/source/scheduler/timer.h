@@ -15,24 +15,24 @@
 
 typedef struct TimerInfo
 {
-	u32 intervalInTicks;
-	u32 intervalInµs;
-	MessageQueue* messageQueue;
-	void* message;
-	u32 processId;
-	struct TimerInfo* previousTimer;
-	struct TimerInfo* nextTimer;
+	u32 IntervalInTicks;
+	u32 IntervalInµs;
+	MessageQueue* MessageQueue;
+	void* Message;
+	u32 ProcessId;
+	struct TimerInfo* PreviousTimer;
+	struct TimerInfo* NextTimer;
 } TimerInfo;
-CHECK_OFFSET(TimerInfo, 0x00, intervalInTicks);
-CHECK_OFFSET(TimerInfo, 0x04, intervalInµs);
-CHECK_OFFSET(TimerInfo, 0x08, messageQueue);
-CHECK_OFFSET(TimerInfo, 0x0C, message);
-CHECK_OFFSET(TimerInfo, 0x10, processId);
-CHECK_OFFSET(TimerInfo, 0x14, previousTimer);
-CHECK_OFFSET(TimerInfo, 0x18, nextTimer);
+CHECK_OFFSET(TimerInfo, 0x00, IntervalInTicks);
+CHECK_OFFSET(TimerInfo, 0x04, IntervalInµs);
+CHECK_OFFSET(TimerInfo, 0x08, MessageQueue);
+CHECK_OFFSET(TimerInfo, 0x0C, Message);
+CHECK_OFFSET(TimerInfo, 0x10, ProcessId);
+CHECK_OFFSET(TimerInfo, 0x14, PreviousTimer);
+CHECK_OFFSET(TimerInfo, 0x18, NextTimer);
 CHECK_SIZE(TimerInfo, 0x1C);
 
-extern TimerInfo* currentTimer;
+extern TimerInfo* CurrentTimer;
 extern u32 PreviousTimerValue;
 
 void TimerHandler(void);

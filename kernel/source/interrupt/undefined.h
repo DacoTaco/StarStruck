@@ -11,8 +11,7 @@
 #ifndef __UNDEFINED_H__
 #define __UNDEFINED_H__
 
-void undf_setup_stack(void);
-s32 undf_handler(unsigned instruction, unsigned *regs);
+s32 UndefinedInstructionHandler(unsigned instruction, unsigned *regs);
 
 #endif
 

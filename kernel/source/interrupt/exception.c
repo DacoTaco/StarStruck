@@ -43,17 +43,17 @@ const char *aborts[] = {
 
 u8 domvalid[] = {0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1};
 
-void exc_setup_stack(void);
+void SetupExceptionsStack(void);
 
-void exception_initialize(void)
+void initializeExceptions(void)
 {
-	exc_setup_stack();
+	SetupExceptionsStack();
 	u32 cr = GetControlRegister();
 	cr |= 0x2; // Data alignment fault checking enable
 	SetControlRegister(cr);
 }
 
-void exc_handler(u32 type, u32 spsr, u32 *regs)
+void ExceptionHandler(u32 type, u32 spsr, u32 *regs)
 {
 	(void) spsr;
 

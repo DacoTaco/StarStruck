@@ -16,6 +16,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <git_version.h>
 #include <ios/processor.h>
 #include <ios/printk.h>
+#include <ios/gecko.h>
 
 #include "core/hollywood.h"
 #include "core/gpio.h"
@@ -28,7 +29,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "scheduler/threads.h"
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
-#include "peripherals/gecko.h"
 #include "utils.h"
 
 #include "sdhc.h"
@@ -71,7 +71,7 @@ void kernel_main( void )
 	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
 	//set thread to run as a system thread
 	if(threadId >= 0)
-		threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		panic("failed to start IRQ thread!\n");
@@ -86,7 +86,7 @@ void kernel_main( void )
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
 		{
 			threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
-			threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
 	}
@@ -209,7 +209,7 @@ void InitialiseSystem( void )
 	write32(HW_ARMFIQMASK, 0);
 	
 	gecko_printf("Configuring caches and MMU...\n");
-	InitiliseMemory();
+	InitializeMemory();
 }
 
 u32 _main(void)
@@ -218,7 +218,7 @@ u32 _main(void)
 	//don't use printk before our main thread started. our stackpointers are god knows were at that point & thread context isn't init yet
 	gecko_printf("StarStruck %s loading\n", git_version);	
 	gecko_printf("Initializing exceptions...\n");
-	exception_initialize();
+	initializeExceptions();
 
 	AhbFlushFrom(AHB_1);
 	AhbFlushTo(AHB_1);
@@ -255,7 +255,7 @@ u32 _main(void)
 	//create main kernel thread
 	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
-	threads[threadId].threadContext.statusRegister |= SPSR_SYSTEM_MODE;
+	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);

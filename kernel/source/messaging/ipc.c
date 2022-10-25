@@ -180,7 +180,7 @@ void ipc_process_input(void)
 		}
 	}*/
 	
-	write32((u32)&req->result, return_value);
+	write32((u32)&req->Result, return_value);
 	DCFlushRange((void*)req, sizeof(IpcMessage));
 	DCInvalidateRange((void*)req, sizeof(IpcMessage));
 	ICInvalidateAll();

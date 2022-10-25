@@ -22,29 +22,29 @@ typedef enum HeapBlockState
 
 typedef struct HeapBlock
 {
-	HeapBlockState blockState;
-	u32 size;
-	struct HeapBlock* prevBlock;
-	struct HeapBlock* nextBlock;
+	HeapBlockState BlockState;
+	u32 Size;
+	struct HeapBlock* PreviousBlock;
+	struct HeapBlock* NextBlock;
 } HeapBlock;
 CHECK_SIZE(HeapBlock, 0x10);
-CHECK_OFFSET(HeapBlock, 0x00, blockState);
-CHECK_OFFSET(HeapBlock, 0x04, size);
-CHECK_OFFSET(HeapBlock, 0x08, prevBlock);
-CHECK_OFFSET(HeapBlock, 0x0C, nextBlock);
+CHECK_OFFSET(HeapBlock, 0x00, BlockState);
+CHECK_OFFSET(HeapBlock, 0x04, Size);
+CHECK_OFFSET(HeapBlock, 0x08, PreviousBlock);
+CHECK_OFFSET(HeapBlock, 0x0C, NextBlock);
 
 typedef struct
 {
-	void* heap;
-	u32 processId;
-	u32 size;
-	HeapBlock* firstBlock;
+	void* Heap;
+	u32 ProcessId;
+	u32 Size;
+	HeapBlock* FirstBlock;
 } HeapInfo;
 CHECK_SIZE(HeapInfo, 0x10);
-CHECK_OFFSET(HeapInfo, 0x00, heap);
-CHECK_OFFSET(HeapInfo, 0x04, processId);
-CHECK_OFFSET(HeapInfo, 0x08, size);
-CHECK_OFFSET(HeapInfo, 0x0C, firstBlock);
+CHECK_OFFSET(HeapInfo, 0x00, Heap);
+CHECK_OFFSET(HeapInfo, 0x04, ProcessId);
+CHECK_OFFSET(HeapInfo, 0x08, Size);
+CHECK_OFFSET(HeapInfo, 0x0C, FirstBlock);
 
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);

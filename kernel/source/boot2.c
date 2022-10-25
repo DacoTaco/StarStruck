@@ -11,13 +11,13 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 */
 
 #include <types.h>
+#include <ios/gecko.h>
 #include "core/defines.h"
 #include "memory/memory.h"
 #include "elf.h"
 #include "nand.h"
 #include "crypto.h"
 #include "string.h"
-#include "peripherals/gecko.h"
 #include "powerpc.h"
 #include "utils.h"
 #include "panic.h"

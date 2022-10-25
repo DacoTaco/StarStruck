@@ -16,15 +16,13 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "core/hollywood.h"
 #include "interrupt/irq.h"
 
-.globl v_irq
-.globl irq_setup_stack
+.globl InterruptVector
 .globl DisableInterrupts
 .globl RestoreInterrupts
 .globl irq_wait
 
 .extern __irqstack_addr
-.extern irq_handler
-.extern SaveThreadInfo
+.extern IrqHandler
 .extern ScheduleYield
 
 BEGIN_ASM_FUNC DisableInterrupts
@@ -49,36 +47,23 @@ BEGIN_ASM_FUNC irq_wait
 	bx	lr
 END_ASM_FUNC
 
-BEGIN_ASM_FUNC irq_setup_stack
-	@ Switch to IRQ mode
-	mrs	r0, cpsr
-	msr cpsr_c, #0xd2
-	
-	@ Setup interrupt stack
-	ldr	sp, =__irqstack_addr
-
-	@ Restore mode
-	msr cpsr_c, r0
-	bx	lr
-END_ASM_FUNC
-	
-BEGIN_ASM_FUNC v_irq
-#reset the stackpointer
-	ldr		sp, =__irqstack_addr
+BEGIN_ASM_FUNC InterruptVector
+#set the stackpointer & save the thread state
+	ldr		sp, =CurrentThread
+	ldr		sp, [sp]
+	add		sp, #0x44
 #load the pc from before the interrupt(which is stored in current lr)
 	subs	lr, lr, #4
 	stmdb	sp!, {lr}
-#save the state and push the state's address to r0
-	stmdb	sp, {r0-r12, sp, lr}^
-	sub		sp, sp, #0x3C
+#save the state
+	stmdb	sp!, {r0-r12, sp, lr}^
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
-	mov		r0, sp
-	_BL		SaveThreadInfo
 	
 #handle the irq request with r0 having the state
 	mov		r0, sp
-	blx		irq_handler
+	ldr		sp, =__irqstack_addr
+	blx		IrqHandler
 
 #yield execution to the next thread
 	_BL		ScheduleYield

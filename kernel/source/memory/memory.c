@@ -141,7 +141,7 @@ void DCFlushAll(void)
 
 void DCInvalidateRange(void* start, u32 size)
 {
-	u32 pid = currentThread->processId;
+	u32 pid = CurrentThread->ProcessId;
 	if(CheckMemoryPointer(start, size, 4, pid, 0) != 0)
 	{
 		gecko_printf("bad invalidate requested: %08x (%d)\n", (u32)start, size);
@@ -267,16 +267,16 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	
 	//either map section as regular section, or section with writeback cache & buffer enabled
 	u32 translationBase = SECTION_PAGE;
-	if(memorySection->unknown != 0)
+	if(memorySection->Unknown != 0)
 		translationBase |= WRITEBACK_CACHE;
 	
-	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
-	*page = translationBase | (memorySection->physicalAddress & 0xFFF00000) | AP_VALUE(memorySection->accessRights) | PAGE_DOMAIN(memorySection->domain);
+	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
+	*page = translationBase | (memorySection->PhysicalAddress & 0xFFF00000) | AP_VALUE(memorySection->AccessRights) | PAGE_DOMAIN(memorySection->Domain);
 	DCFlushRange(page, 4);
 	
-	memorySection->size = memorySection->size - 0x100000;
-	memorySection->physicalAddress = memorySection->physicalAddress + 0x100000;
-	memorySection->virtualAddress = memorySection->virtualAddress + 0x100000;
+	memorySection->Size = memorySection->Size - 0x100000;
+	memorySection->PhysicalAddress = memorySection->PhysicalAddress + 0x100000;
+	memorySection->VirtualAddress = memorySection->VirtualAddress + 0x100000;
 	return 0;
 }
 
@@ -305,7 +305,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	if(memorySection == NULL)
 		return IPC_EINVAL;
 	
-	u32** entry = (u32**)&MemoryTranslationTable[PAGE_ENTRY(memorySection->virtualAddress)];
+	u32** entry = (u32**)&MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
 	u32* pageValue = *entry;
 	if(pageValue == NULL)
 	{
@@ -313,7 +313,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		if(pageValue == NULL)
 			return IPC_ENOMEM;
 		
-		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->domain) | COURSE_PAGE);
+		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 	}
 	else
 	{
@@ -321,26 +321,26 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 			return IPC_EINVAL;
 		else if (mode != 0)
 		{
-			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->domain) | COURSE_PAGE);
+			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 			*entry = pageValue;
 		}
 		
 		pageValue = (u32*)(0xFFFFFC00 & (u32)pageValue);
 	}
 	
-	if(mode == 0 && pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] != 0)
+	if(mode == 0 && pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->VirtualAddress)] != 0)
 		return IPC_EINVAL;
 	
-	u32 accessRights = memorySection->accessRights;
+	u32 accessRights = memorySection->AccessRights;
 	u32 type = COURSE_SECTION;
-	if(memorySection->unknown != 0)
+	if(memorySection->Unknown != 0)
 		type |= WRITEBACK_CACHE;
 
-	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->virtualAddress)] = (memorySection->physicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
+	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->VirtualAddress)] = (memorySection->PhysicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
 	DCFlushRange(pageValue, 0x1000);
-	memorySection->size -= 0x1000;
-	memorySection->physicalAddress += 0x1000;
-	memorySection->virtualAddress += 0x1000;
+	memorySection->Size -= 0x1000;
+	memorySection->PhysicalAddress += 0x1000;
+	memorySection->VirtualAddress += 0x1000;
 	return 0;
 }
 
@@ -354,15 +354,15 @@ u32 MapMemory(MemorySection* entry)
 	memcpy32(&memorySection, entry, sizeof(MemorySection));
 	
 	u32 ret = 0;
-	while(ret == 0 && memorySection.size > 0)
+	while(ret == 0 && memorySection.Size > 0)
 	{
-		if(memorySection.size == 0)
+		if(memorySection.Size == 0)
 			break;
 		
 		//page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
-		if((memorySection.virtualAddress & 0xFFFFF) == 0 && (memorySection.physicalAddress & 0xFFFFF) == 0 && memorySection.size > 0xFFFFF)
+		if((memorySection.VirtualAddress & 0xFFFFF) == 0 && (memorySection.PhysicalAddress & 0xFFFFF) == 0 && memorySection.Size > 0xFFFFF)
 			ret = MapMemoryAsSection(&memorySection);
-		else if( ((memorySection.virtualAddress & 0xFFF) != 0 || (memorySection.physicalAddress & 0xFFF) != 0) || memorySection.size < 0x1000)
+		else if( ((memorySection.VirtualAddress & 0xFFF) != 0 || (memorySection.PhysicalAddress & 0xFFF) != 0) || memorySection.Size < 0x1000)
 		{
 			ret = IPC_EINVAL;
 			break;
@@ -389,11 +389,11 @@ s32 MapHardwareRegisters()
 		if(index >= sizeof(HWRegistersMemoryMaps)/sizeof(HWRegistersMemoryMaps[0]))
 			break;
 
-		ret = MapMemory(&HWRegistersMemoryMaps[index].memorySection);
+		ret = MapMemory(&HWRegistersMemoryMaps[index].MemorySection);
 		if(ret != 0)
 			break;
 		
-		HardwareRegistersAccessTable[HWRegistersMemoryMaps[index].processId] = *page;
+		HardwareRegistersAccessTable[HWRegistersMemoryMaps[index].ProcessId] = *page;
 		u32* pageValue = (u32*)(((u32)*page) & 0xFFFFFC00);
 		for(int i = 0; i < 0x100; i++)
 		{
@@ -514,7 +514,7 @@ void ProtectMemory(int enable, void *start, void *end)
 	udelay(10);
 }
 
-s32 InitiliseMemory(void)
+s32 InitializeMemory(void)
 {
 	u32 cr;
 	s32 ret = 0;

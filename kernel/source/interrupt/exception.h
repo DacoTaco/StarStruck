@@ -14,8 +14,8 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 
 #include <types.h>
 
-void exception_initialize(void);
-void exc_handler(u32 type, u32 spsr, u32 *regs);
+void initializeExceptions(void);
+void ExceptionHandler(u32 type, u32 spsr, u32 *regs);
 
 #endif
 
