@@ -56,7 +56,8 @@ BEGIN_ASM_FUNC InterruptVector
 	subs	lr, lr, #4
 	stmdb	sp!, {lr}
 #save the state
-	stmdb	sp!, {r0-r12, sp, lr}^
+	stmdb	sp, {r0-r12, sp, lr}^
+	sub		sp, sp, #0x3C
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
 	

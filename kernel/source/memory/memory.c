@@ -484,7 +484,7 @@ return_error:
 	return IPC_EACCES;
 }
 
-s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
+s32 CheckMemoryPointer(const void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
 {
 	if(pid == 0)
 		return 0;
@@ -492,7 +492,7 @@ s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
 	s32 ret = 0;
 	u32 blockSize;
 	u8* startAddress = (u8*)ptr;
-	u8* endAddress = ptr + size;
+	u8* endAddress = startAddress + size;
 	while(startAddress < endAddress)
 	{
 		ret = CheckMemoryBlock(startAddress, type, pid, domainPid, &blockSize);

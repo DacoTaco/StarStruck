@@ -69,7 +69,7 @@ void ProtectMemory(int enable, void *start, void *end);
 void* KMalloc(u32 size);
 u32 MapMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
-s32 CheckMemoryPointer(void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);
+s32 CheckMemoryPointer(const void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);
 void DCInvalidateRange(void* start, u32 size);
 void DCFlushRange(void *start, u32 size);
 void DCFlushAll(void);

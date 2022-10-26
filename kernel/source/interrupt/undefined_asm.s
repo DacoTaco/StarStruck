@@ -19,7 +19,8 @@
 BEGIN_ASM_FUNC UndefinedInstructionVector
 #for info : see syscall asm
 	stmdb	sp!, {lr}
-	stmdb	sp!, {r0-r12, sp, lr}^
+	stmdb	sp, {r0-r12, sp, lr}^
+	sub		sp, sp, #0x3C
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
 	mov		r1, sp
@@ -39,6 +40,7 @@ BEGIN_ASM_FUNC UndefinedInstructionVector
 	ldmia	sp!, {r2}
 	msr		spsr_cxsf, r2
 	add		sp, sp, #0x04
-	ldmia	sp!, {r1-r12, sp, lr}^
+	ldmia	sp, {r1-r12, sp, lr}^
+	add		sp, sp, #0x38
 	ldmia	sp!, {pc}^	
 END_ASM_FUNC

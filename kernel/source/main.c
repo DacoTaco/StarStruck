@@ -129,7 +129,8 @@ void kernel_main( void )
 	ipc_shutdown();
 
 shutdown:
-	printk("Shutting down...\ninterrupts...\n");
+	printk("Shutting down...\n");
+	printk("interrupts...\n");
 	irq_shutdown();
 	printk("caches and MMU...\n");
 	mem_shutdown();
