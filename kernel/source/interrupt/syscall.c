@@ -17,6 +17,7 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "memory/ahb.h"
+#include "messaging/ipc.h"
 #include "messaging/message_queue.h"
 #include "messaging/resourceManager.h"
 
@@ -66,7 +67,7 @@ static const void* syscall_handlers[] = {
 	0x00000000,					//0x0027
 	0x00000000,					//0x0028
 	0x00000000,					//0x0029
-	0x00000000,					//0x002A
+	ResourceReply,				//0x002A
 	SetUID,						//0x002B
 	GetUID,						//0x002C
 	SetGID,						//0x002D

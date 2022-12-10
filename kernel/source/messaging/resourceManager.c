@@ -18,18 +18,18 @@
 #include "memory/memory.h"
 #include "messaging/resourceManager.h"
 
-u8 hashTable[0x10] SRAM_DATA = { 0 };
+u8 hashTable[0x10] = { 0 };
 u32 hashTableSalt = 0;
 u32 hashTableCount = 0;
-ResourceManager ResourceManagers[MAX_RESOURCES] SRAM_DATA;
+ResourceManager ResourceManagers[MAX_RESOURCES];
 ResourceManager* AesResourceManager;
 ResourceManager* ShaResourceManager;
 
-u32 GetPpcAccessRights(char* resourcePath)
+u32 GetPpcAccessRights(const char* resourcePath)
 {
 	u32 salt = hashTableSalt;
-	for(; *resourcePath != NULL; resourcePath++)
-		salt = salt ^ salt * 0x80 + *resourcePath + (salt >> 5);
+	for(; *resourcePath != '\0'; resourcePath++)
+		salt = salt ^ (((salt * 128) + (u32)(*resourcePath)) + (salt >> 5));
 
 	u32 hashIndex = salt % hashTableCount;
 	return ((hashTableCount == 0) || (1 << hashTable[hashIndex] & salt) != 0)
@@ -70,7 +70,7 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 			goto returnRegisterResource;
 		}
 
-		if(ResourceManagers[resourceManagerId].DevicePath == NULL)
+		if(ResourceManagers[resourceManagerId].DevicePath[0] == '\0')
 			break;
 	}
 
@@ -86,10 +86,10 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 	ResourceManagers[resourceManagerId].ProcessId = CurrentThread->ProcessId;
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 
-	if(memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
+	if(!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
 		AesResourceManager = &ResourceManagers[resourceManagerId];
 		
-	if(memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
+	if(!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
 		ShaResourceManager = &ResourceManagers[resourceManagerId];
 
 returnRegisterResource:

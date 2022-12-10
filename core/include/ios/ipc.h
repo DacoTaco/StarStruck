@@ -72,7 +72,7 @@ CHECK_SIZE(IoctlMessage, 0x14);
 
 typedef struct
 {
-	void *Data;
+	u32 *Data;
 	u32 Length;
 } IoctlvMessageData;
 CHECK_OFFSET(IoctlvMessageData, 0x00, Data);
@@ -109,30 +109,37 @@ typedef struct
 		IoctlvMessage Ioctlv;
 		u32 Arguments[5];
 	};
+} IpcRequest;
+CHECK_SIZE(IpcRequest, 0x20);
+CHECK_OFFSET(IpcRequest, 0x00, Command);
+CHECK_OFFSET(IpcRequest, 0x04, Result);
+CHECK_OFFSET(IpcRequest, 0x08, FileDescriptor);
+CHECK_OFFSET(IpcRequest, 0x08, RequestCommand);
+//all message types and their data
+CHECK_OFFSET(IpcRequest, 0x0C, Open);
+CHECK_OFFSET(IpcRequest, 0x0C, Read);
+CHECK_OFFSET(IpcRequest, 0x0C, Write);
+CHECK_OFFSET(IpcRequest, 0x0C, Seek);
+CHECK_OFFSET(IpcRequest, 0x0C, Ioctl);
+CHECK_OFFSET(IpcRequest, 0x0C, Ioctlv);
+CHECK_OFFSET(IpcRequest, 0x0C, Arguments[0]);
+CHECK_OFFSET(IpcRequest, 0x10, Arguments[1]);
+CHECK_OFFSET(IpcRequest, 0x14, Arguments[2]);
+CHECK_OFFSET(IpcRequest, 0x18, Arguments[3]);
+CHECK_OFFSET(IpcRequest, 0x1C, Arguments[4]);
+
+
+typedef struct
+{
+	IpcRequest Request;
 	void *Callback;
 	u32 CallerData;
 	u32 Relaunch;
 } IpcMessage;
 CHECK_SIZE(IpcMessage, 0x2C);
-CHECK_OFFSET(IpcMessage, 0x00, Command);
-CHECK_OFFSET(IpcMessage, 0x04, Result);
-CHECK_OFFSET(IpcMessage, 0x08, FileDescriptor);
-CHECK_OFFSET(IpcMessage, 0x08, RequestCommand);
+CHECK_OFFSET(IpcMessage, 0x00, Request);
 CHECK_OFFSET(IpcMessage, 0x20, Callback);
 CHECK_OFFSET(IpcMessage, 0x24, CallerData);
 CHECK_OFFSET(IpcMessage, 0x28, Relaunch);
-
-//all message types and their data
-CHECK_OFFSET(IpcMessage, 0x0C, Open);
-CHECK_OFFSET(IpcMessage, 0x0C, Read);
-CHECK_OFFSET(IpcMessage, 0x0C, Write);
-CHECK_OFFSET(IpcMessage, 0x0C, Seek);
-CHECK_OFFSET(IpcMessage, 0x0C, Ioctl);
-CHECK_OFFSET(IpcMessage, 0x0C, Ioctlv);
-CHECK_OFFSET(IpcMessage, 0x0C, Arguments[0]);
-CHECK_OFFSET(IpcMessage, 0x10, Arguments[1]);
-CHECK_OFFSET(IpcMessage, 0x14, Arguments[2]);
-CHECK_OFFSET(IpcMessage, 0x18, Arguments[3]);
-CHECK_OFFSET(IpcMessage, 0x1C, Arguments[4]);
 
 #endif
