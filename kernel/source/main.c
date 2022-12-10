@@ -22,6 +22,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "core/gpio.h"
 #include "core/pll.h"
 #include "memory/memory.h"
+#include "memory/heaps.h"
 #include "memory/ahb.h"
 #include "interrupt/exception.h"
 #include "messaging/ipc.h"
@@ -91,6 +92,10 @@ void kernel_main( void )
 		}
 	}
 
+	KernelHeapId = CreateHeap((void*)0x138F0000, 0xC0000);
+	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
+	//SetThreadPriority(0, 0);
+	//SetThreadPriority(IPCThreadId, 0x5C);
 	u32 vector;
 	FRESULT fres = 0;
 	

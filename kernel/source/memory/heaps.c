@@ -22,6 +22,7 @@
 #define ALIGNED_BLOCK_HEADER_SIZE	((sizeof(HeapBlock) + 0x0F) & -0x10)
 #define MAX_HEAP 					0x10
 
+u32 KernelHeapId = -1;
 static HeapInfo heaps[MAX_HEAP];
 
 s32 CreateHeap(void *ptr, u32 size)
