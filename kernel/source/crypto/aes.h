@@ -14,4 +14,6 @@
 #define AES_DEVICE_NAME "/dev/aes"
 #define AES_DEVICE_NAME_SIZE 9
 
+void AesEngineHandler(void);
+
 #endif

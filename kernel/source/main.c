@@ -30,6 +30,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "scheduler/threads.h"
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
+#include "crypto/aes.h"
 #include "utils.h"
 
 #include "sdhc.h"
@@ -92,9 +93,17 @@ void kernel_main( void )
 		}
 	}
 
+	//create AES Engine handler thread & also set it to run as system thread
+	threadId = CreateThread((s32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	if(threadId >= 0)
+		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+
+	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start AES thread!\n");	
+
 	KernelHeapId = CreateHeap((void*)0x138F0000, 0xC0000);
 	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
-	//SetThreadPriority(0, 0);
+	SetThreadPriority(0, 0);
 	//SetThreadPriority(IPCThreadId, 0x5C);
 	u32 vector;
 	FRESULT fres = 0;
