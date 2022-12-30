@@ -64,7 +64,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		ret = 0;
 	}
 
-	u32 flooredDataSize = inputSize & 0xFFFFFFC0;
+	u32 flooredDataSize = inputSize & 0xFFFFFFC0;	//floors data size to blocks of 512 bits
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 	if(flooredDataSize != 0)
