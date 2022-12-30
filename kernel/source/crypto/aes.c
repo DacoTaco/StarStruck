@@ -40,7 +40,7 @@ typedef union {
 		u32 KeepIV : 1;
 		u32 NumberOfBlocks : 12;
 	} Fields;
- 	u32 Value;
+	u32 Value;
 } AESCommand;
 
 s32 AesEventMessageQueueId = 0;
