@@ -11,8 +11,22 @@
 #ifndef __SHA_H__
 #define __SHA_H__
 
+#include <types.h>
+
 #define SHA_DEVICE_NAME "/dev/sha"
 #define SHA_DEVICE_NAME_SIZE 9
+
+typedef struct
+{
+	u32 ShaStates[5];
+	u32 LengthLower;
+	u32 LengthHigher;
+} ShaContext;
+CHECK_SIZE(ShaContext, 0x1C);
+CHECK_OFFSET(ShaContext, 0x00, ShaStates);
+CHECK_OFFSET(ShaContext, 0x14, LengthLower);
+CHECK_OFFSET(ShaContext, 0x18, LengthHigher);
+
 
 void ShaEngineHandler(void);
 

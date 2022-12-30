@@ -29,9 +29,111 @@ typedef enum
 	SHACommandTwo = 0x02,
 	SHACommandThree = 0x03,
 	ShaCommandSixTeen = 0x0F
-} SHACommandTypes;
+} ShaCommandTypes;
 
+typedef union {
+	struct {
+		u32 Execute : 1;
+		u32 GenerateIrq : 1;
+		u32 HasError : 1;
+		u32 Unknown : 19;
+		u32 NumberOfBlocks : 10;
+	} Fields;
+ 	u32 Value;
+} ShaControl;
+
+const u32 ShaUnknownBuffer[0x80] = { 0 };
+const u32 Sha1IntialState[5] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
+s32 HmacKey[64] = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
+
+s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainingMode, int hashData)
+{
+	u32 numberOfBlocks = 0;
+	u32 physicalInputAddress = 0;
+	u32* ShaControlPointer = NULL;
+	s32 ret = IPC_EINVAL;
+	write32(SHA_CMD, 0);
+
+	//chainingMode 0 == reset. so we set the internal hash states to the initial state
+	if(chainingMode == 0)
+	{
+		memcpy(hashContext->ShaStates, Sha1IntialState, sizeof(Sha1IntialState));
+		hashContext->LengthLower = 0;
+		hashContext->LengthHigher = 0;
+		ret = 0;
+	}
+
+	u32 flooredDataSize = inputSize & 0xFFFFFFC0;
+	DCFlushRange(input, flooredDataSize);
+	AhbFlushTo(AHB_SHA1);
+	if(flooredDataSize != 0)
+	{
+		//check the requested blocks to be processed
+		numberOfBlocks = (inputSize / 64) -1;
+		if(numberOfBlocks > 1023)
+			return IOSC_INVALID_SIZE;
+
+		//copy over the states from the context to the registers
+		for(s8 i = 0; i < 5; i++)
+			write32(SHA_H0+i, hashContext->ShaStates[i]);
+		
+		physicalInputAddress = VirtualToPhysical((u32)input);
+		ShaControlPointer = (u32*)SHA_CMD;
+		write32(SHA_SRC, physicalInputAddress);
+		ShaControl control = {
+			.Fields = {
+				.Execute = 1,
+				.GenerateIrq = 1,
+				.NumberOfBlocks = numberOfBlocks
+			}
+		};
+
+		write32(SHA_CMD, control);
+		ret = ReceiveMessage(ShaEventMessageQueueId, &message, None);
+		if(ret != IPC_SUCCESS)
+			panic("iosReceiveMessage: %d\n", ret);
+
+		control.Value = read32(SHA_CMD);
+		if(control.Fields.HasError != 0)
+			return IPC_EACCES;
+	}
+
+	ShaControlPointer = ShaUnknownBuffer;
+
+	// ChangingMode 2 : Last block contributed to hash
+	if(chainingMode == 2)
+	{
+		numberOfBlocks = (flooredDataSize * 8) + hashContext->LengthLower;
+		u32 higherBits = hashContext->LengthHigher;
+		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
+		if(numberOfBlocks < hashContext->LengthLower)
+			higherBits = higherBits++;
+		
+		//add size to the higher bits
+		higherBits += inputSize >> 29;
+
+		//set length properties
+		hashContext->LengthLower = numberOfBlocks;
+		hashContext->LengthHigher = higherBits;
+
+		//copy some data to some kind of buffer?
+		memset(ShaControlPointer, 0, ARRAY_LENGTH(ShaUnknownBuffer));
+		u32 lastBlockLength = inputSize - flooredDataSize;
+		if(lastBlockLength != 0)
+			memcpy(ShaControlPointer, input + flooredDataSize, lastBlockLength);
+		ShaControlPointer[lastBlockLength] = 0x80;
+
+		//reset the length properties?
+		u32 lowerBits = (lastBlockLength) * 8 + numberOfBlocks;
+		if(lowerBits < numberOfBlocks)
+			higherBits++;
+
+		higherBits += lastBlockLength >> 29;
+		hashContext->LengthLower = lowerBits;
+		hashContext->LengthHigher = higherBits;
+	}
+}
 
 void ShaEngineHandler(void)
 {
@@ -66,6 +168,7 @@ void ShaEngineHandler(void)
 			goto receiveMessageError;
 
 		ret = IPC_EINVAL;
+		s32 hmacRet = IPC_EINVAL;
 		switch (ipcMessage->Request.Command)
 		{
 			default:
@@ -111,5 +214,4 @@ receiveMessageError:
 		if(ipcMessage->Request.Command == IOS_CLOSE)
 			break;
 	}
-
 }
