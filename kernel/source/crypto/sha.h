@@ -14,4 +14,6 @@
 #define SHA_DEVICE_NAME "/dev/sha"
 #define SHA_DEVICE_NAME_SIZE 9
 
+void ShaEngineHandler(void);
+
 #endif
