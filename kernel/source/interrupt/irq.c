@@ -128,6 +128,7 @@ void IrqHandler(ThreadContext* context)
 
 	if(flags & IRQF_TIMER) 
 	{
+//		gecko_printf("IRQ: Timer\n");
 		EnqueueEventHandler(IRQ_TIMER);
 		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
@@ -159,6 +160,7 @@ void IrqHandler(ThreadContext* context)
 	}
 	if(flags & IRQF_AES) {
 //		gecko_printf("IRQ: AES\n");
+		EnqueueEventHandler(IRQ_AES);
 		write32(HW_ARMIRQFLAG, IRQF_AES);
 	}
 	if (flags & IRQF_SDHC) {

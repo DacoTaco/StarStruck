@@ -180,7 +180,7 @@ void ipc_process_input(void)
 		}
 	}*/
 	
-	write32((u32)&req->Result, return_value);
+	write32((u32)&req->Request.Result, return_value);
 	DCFlushRange((void*)req, sizeof(IpcMessage));
 	DCInvalidateRange((void*)req, sizeof(IpcMessage));
 	ICInvalidateAll();
@@ -222,6 +222,18 @@ void IpcInit(void)
 	//init ipc interrupts
 	write32(HW_IPC_ARMCTRL, ( IPC_ARM_IX1 | IPC_ARM_IX2 ));
 }
+
+s32 ResourceReply(IpcRequest* message, u32 requestReturnValue)
+{
+	u32 interrupts = DisableInterrupts();
+	s32 ret = 0;
+
+
+return_resourceReply:
+	RestoreInterrupts(interrupts);
+	return ret;
+}
+
 void ipc_initialize(void)
 {
 	write32(HW_IPC_ARMMSG, 0);

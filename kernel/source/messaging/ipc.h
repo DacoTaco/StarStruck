@@ -46,6 +46,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_OUT_SIZE	32
 
 void IpcInit(void);
+s32 ResourceReply(IpcRequest* message, u32 requestReturnValue);
 
 void ipc_irq(void);
 void ipc_send_ack(void);

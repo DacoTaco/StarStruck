@@ -46,6 +46,8 @@ CHECK_OFFSET(HeapInfo, 0x04, ProcessId);
 CHECK_OFFSET(HeapInfo, 0x08, Size);
 CHECK_OFFSET(HeapInfo, 0x0C, FirstBlock);
 
+extern u32 KernelHeapId;
+
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);
 void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment);

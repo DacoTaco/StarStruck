@@ -6,5 +6,4 @@
       "tools" : true,
       "sdk" : true
 	},
-	"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
 }

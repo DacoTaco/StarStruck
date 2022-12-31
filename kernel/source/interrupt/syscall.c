@@ -17,7 +17,9 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "memory/ahb.h"
+#include "messaging/ipc.h"
 #include "messaging/message_queue.h"
+#include "messaging/resourceManager.h"
 
 //#define _DEBUG_SYSCALL
 
@@ -50,7 +52,7 @@ static const void* syscall_handlers[] = {
 	AllocateOnHeap,				//0x0018
 	MallocateOnHeap,			//0x0019
 	FreeOnHeap,					//0x001A
-	0x00000000,					//0x001B
+	RegisterResourceManager,	//0x001B
 	0x00000000,					//0x001C
 	0x00000000,					//0x001D
 	0x00000000,					//0x001E
@@ -65,7 +67,7 @@ static const void* syscall_handlers[] = {
 	0x00000000,					//0x0027
 	0x00000000,					//0x0028
 	0x00000000,					//0x0029
-	0x00000000,					//0x002A
+	ResourceReply,				//0x002A
 	SetUID,						//0x002B
 	GetUID,						//0x002C
 	SetGID,						//0x002D

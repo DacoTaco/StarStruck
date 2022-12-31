@@ -37,6 +37,7 @@
 			"*.bin": true,
 			"*.a": true,
 		},
+		"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
 		"C_Cpp.default.cStandard": "c17",
 		"C_Cpp.default.cppStandard": "gnu++17",
 		"C_Cpp.default.intelliSenseMode": "linux-gcc-arm",
