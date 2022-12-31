@@ -12,7 +12,7 @@
 #define __AES_H__
 
 #define AES_DEVICE_NAME "/dev/aes"
-#define AES_DEVICE_NAME_SIZE 9
+#define AES_DEVICE_NAME_SIZE sizeof(AES_DEVICE_NAME)
 
 void AesEngineHandler(void);
 

@@ -49,7 +49,7 @@ void AesEngineHandler(void)
 {
 	u32 eventMessageQueue[1];
 	u32 resourceManagerMessageQueue[8];
-	u32 unknownBuffer[0x10] = { 0 };
+	u32 ivBuffer[0x10] = { 0 };
 	IpcMessage* ipcMessage;
 	IoctlvMessage* ioctlvMessage;
 	IpcRequest* ipcReply;
@@ -80,7 +80,7 @@ void AesEngineHandler(void)
 
 		ipcReply = &ipcMessage->Request;
 		ret = IPC_EINVAL;
-		IoctlvMessageData* destinationVector = NULL;
+		IoctlvMessageData* IVVector = NULL;
 		IoctlvMessageData* sourceVector = NULL;
 		switch (ipcMessage->Request.Command)
 		{
@@ -90,7 +90,7 @@ void AesEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(&ipcMessage->Request.Open.Filepath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
+				ret = memcmp(ipcMessage->Request.Data.Open.Filepath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
 				if(ret != 0)
 					ret = IPC_ENOENT;
 				//not needed, since 0 == IPC_SUCCESS anyway
@@ -100,7 +100,7 @@ void AesEngineHandler(void)
 				goto sendReply;
 			case IOS_IOCTLV:
 				ret = IPC_EINVAL;
-				ioctlvMessage = &ipcMessage->Request.Ioctlv;
+				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
 				write32(AES_CMD, 0 );
 
 				u32 ioctl = ioctlvMessage->Ioctl;
@@ -124,7 +124,7 @@ void AesEngineHandler(void)
 							key++;
 							iv++;
 						}
-						destinationVector = &ioctlvMessage->Data[3];
+						IVVector = &ioctlvMessage->Data[3];
 						sourceVector = &ioctlvMessage->Data[0];
 						goto processAesCommand;
 					case COPY:
@@ -136,8 +136,8 @@ processAesCommand:
 						if( inputData->Length != outputData->Length || ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
 							((u32)inputData->Data & 0x0F) != 0 || ((u32)outputData->Data & 0x0F) != 0)
 							goto sendReply;
-						if(ioctl == 3)
-							memcpy(unknownBuffer, outputData->Data + outputData->Length - 0x10, 0x10);
+						if(ioctl == DECRYPT)
+							memcpy(ivBuffer, inputData->Data + inputData->Length - 0x10, 0x10);
 						
 						write32(AES_SRC, VirtualToPhysical((u32)inputData->Data));
 						write32(AES_DEST, VirtualToPhysical((u32)outputData->Data));
@@ -171,17 +171,18 @@ processAesCommand:
 							goto sendReply;
 						}
 						
-						if(destinationVector != NULL)
+						if(IVVector != NULL)
 						{
-							if(ioctl == 2)
-								memcpy(unknownBuffer, outputData->Data + outputData->Length - 0x10, 0x10);
-							if(ioctl == 3)
-								memcpy(destinationVector->Data, unknownBuffer, 0x10);
+							if(ioctl == ENCRYPT)
+								memcpy(ivBuffer, outputData->Data + outputData->Length - 0x10, 0x10);
+							
+							if(ioctl <= DECRYPT)
+								memcpy(IVVector->Data, ivBuffer, 0x10);
 
 							if(sourceVector != NULL)
 								FreeOnHeap(KernelHeapId, sourceVector->Data);
 							
-							FreeOnHeap(KernelHeapId, ipcReply->Ioctlv.Data);
+							FreeOnHeap(KernelHeapId, ipcReply->Data.Ioctlv.Data);
 							ret = 0;
 						}
 						goto sendReply;

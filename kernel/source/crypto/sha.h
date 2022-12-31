@@ -14,7 +14,7 @@
 #include <types.h>
 
 #define SHA_DEVICE_NAME "/dev/sha"
-#define SHA_DEVICE_NAME_SIZE 9
+#define SHA_DEVICE_NAME_SIZE sizeof(SHA_DEVICE_NAME)
 
 typedef struct
 {

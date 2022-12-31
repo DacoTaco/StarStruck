@@ -108,7 +108,7 @@ typedef struct
 		IoctlMessage Ioctl;
 		IoctlvMessage Ioctlv;
 		u32 Arguments[5];
-	};
+	} Data;
 } IpcRequest;
 CHECK_SIZE(IpcRequest, 0x20);
 CHECK_OFFSET(IpcRequest, 0x00, Command);
@@ -116,17 +116,7 @@ CHECK_OFFSET(IpcRequest, 0x04, Result);
 CHECK_OFFSET(IpcRequest, 0x08, FileDescriptor);
 CHECK_OFFSET(IpcRequest, 0x08, RequestCommand);
 //all message types and their data
-CHECK_OFFSET(IpcRequest, 0x0C, Open);
-CHECK_OFFSET(IpcRequest, 0x0C, Read);
-CHECK_OFFSET(IpcRequest, 0x0C, Write);
-CHECK_OFFSET(IpcRequest, 0x0C, Seek);
-CHECK_OFFSET(IpcRequest, 0x0C, Ioctl);
-CHECK_OFFSET(IpcRequest, 0x0C, Ioctlv);
-CHECK_OFFSET(IpcRequest, 0x0C, Arguments[0]);
-CHECK_OFFSET(IpcRequest, 0x10, Arguments[1]);
-CHECK_OFFSET(IpcRequest, 0x14, Arguments[2]);
-CHECK_OFFSET(IpcRequest, 0x18, Arguments[3]);
-CHECK_OFFSET(IpcRequest, 0x1C, Arguments[4]);
+CHECK_OFFSET(IpcRequest, 0x0C, Data);
 
 
 typedef struct
