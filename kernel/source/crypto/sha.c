@@ -28,7 +28,7 @@ typedef enum
 	SHACommandOne = 0x01,
 	SHACommandTwo = 0x02,
 	SHACommandThree = 0x03,
-	ShaCommandSixTeen = 0x0F
+	ShaCommandFifthTeen = 0x0F
 } ShaCommandTypes;
 
 typedef union {
@@ -42,9 +42,9 @@ typedef union {
  	u32 Value;
 } ShaControl;
 
-const u32 ShaUnknownBuffer[0x80] = { 0 };
+const u8 ShaUnknownBuffer[0x80] = { 0 };
 const u32 Sha1IntialState[5] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
-s32 HmacKey[64] = { 0x00 };
+u8 HmacKey[64] = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
 s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainingMode, int hashData)
@@ -89,7 +89,8 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 			}
 		};
 
-		write32(SHA_CMD, control);
+		write32(SHA_CMD, control.Value);
+		u32* message;
 		ret = ReceiveMessage(ShaEventMessageQueueId, &message, None);
 		if(ret != IPC_SUCCESS)
 			panic("iosReceiveMessage: %d\n", ret);
@@ -177,7 +178,7 @@ void ShaEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(&ipcMessage->Request.Open.Filepath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
+				ret = memcmp(ipcMessage->Request.Data.Open.Filepath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
 				if(ret != 0)
 					ret = IPC_ENOENT;
 				//not needed, since 0 == IPC_SUCCESS anyway
@@ -186,7 +187,7 @@ void ShaEngineHandler(void)
 				
 				goto sendReply;
 			case IOS_IOCTLV:
-				ioctlvMessage = &ipcMessage->Request.Ioctlv;
+				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
 				s32 ioctl = ioctlvMessage->Ioctl;
 				switch (ioctl)
 				{
@@ -194,7 +195,7 @@ void ShaEngineHandler(void)
 					case SHACommandOne:
 					case SHACommandTwo:
 					case SHACommandThree:
-					case ShaCommandSixTeen:
+					case ShaCommandFifthTeen:
 						/* code */
 						break;
 				
