@@ -105,11 +105,11 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 	// ChangingMode 2 : Last block contributed to hash
 	if(chainingMode == 2)
 	{
-		numberOfBlocks = (flooredDataSize * 8) + hashContext->LengthLower;
 		u32 higherBits = hashContext->LengthHigher;
+		u32 lowerBits = hashContext->LengthLower;
 		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
-		if(numberOfBlocks < hashContext->LengthLower)
-			higherBits = higherBits++;
+		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
+			higherBits += 1;
 		
 		//add size to the higher bits
 		higherBits += inputSize >> 29;
@@ -118,7 +118,8 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		hashContext->LengthLower = numberOfBlocks;
 		hashContext->LengthHigher = higherBits;
 
-		//copy some data to some kind of buffer?
+		//I think this is trying to calculate some sort of padding. 
+		//Notice it subtracting inputSize from flooredDataSize.
 		memset(ShaControlPointer, 0, ARRAY_LENGTH(ShaUnknownBuffer));
 		u32 lastBlockLength = inputSize - flooredDataSize;
 		if(lastBlockLength != 0)
@@ -126,7 +127,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		ShaControlPointer[lastBlockLength] = 0x80;
 
 		//reset the length properties?
-		u32 lowerBits = (lastBlockLength) * 8 + numberOfBlocks;
+		lowerBits = (lastBlockLength) * 8 + numberOfBlocks;
 		if(lowerBits < numberOfBlocks)
 			higherBits++;
 
