@@ -40,6 +40,7 @@ CFLAGS += -DCAN_HAZ_USBGECKO
 
 CFLAGS	+= $(INCLUDE)
 ASFLAGS += $(CFLAGS)
+LDFLAGS += -Wl,--no-warn-rwx-segments
 
 ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(notdir $@).map
