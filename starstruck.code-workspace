@@ -37,16 +37,16 @@
 			"*.bin": true,
 			"*.a": true,
 		},
-		"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
-		"C_Cpp.default.cStandard": "c17",
+		"C_Cpp.default.cStandard": "gnu17",
 		"C_Cpp.default.cppStandard": "gnu++17",
-		"C_Cpp.default.intelliSenseMode": "linux-gcc-arm",
-		"C_Cpp.default.compilerPath": "${DKP_HOME}/devkitARM/bin/arm-none-eabi-gcc.exe",
+		"C_Cpp.default.intelliSenseMode": "gcc-arm",
+		"C_Cpp.default.compilerPath": "${DKP_HOME}/devkitARM/bin/arm-none-eabi-gcc",
 		"C_Cpp.default.includePath": [
-			"${DKP_HOME}/devkitARM/**",
+			"${DKP_HOME}/devkitARM/arm-none-eabi/include",
 			"${workspaceFolder}/../core/include",
 			"${workspaceFolder}/include",
-			"${workspaceFolder}/source"
+			"${workspaceFolder}/source",
+			"${default}"
 		],
 		"files.associations": {
 			"*.h": "c",
@@ -92,8 +92,10 @@
 			"ms-vscode.cpptools",
 			"dan-c-underwood.arm",
 			"trond-snekvik.gnu-mapfiles",
-			"metalcode-eu.linux-arm-none-eabi",
-			"metalcode-eu.windows-arm-none-eabi"
+			"jeff-hykin.better-cpp-syntax",
+			"ms-vscode.makefile-tools",
+			"zachsez.vcode-ppc",
+			"ms-python.python"
 		]
 	}
 }
