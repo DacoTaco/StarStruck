@@ -76,9 +76,9 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		if(numberOfBlocks >= 1024)
 			return IOSC_INVALID_SIZE;
 
-        //if this isn't the last block contributed, make sure the input data is a whole multiple of blocks large
-        if ((chainingMode != 2) && ((inputSize & (SHA_BLOCK_SIZE-1)) != 0x0))
-            return IOSC_INVALID_SIZE;
+		//if this isn't the last block contributed, make sure the input data is a whole multiple of blocks large
+		if ((chainingMode != 2) && ((inputSize & (SHA_BLOCK_SIZE-1)) != 0x0))
+        	return IOSC_INVALID_SIZE;
 
 		//copy over the states from the context to the registers
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
@@ -156,7 +156,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 			numberOfBlocks = 2;
 		
 		//places the 64-bit length value at the end of the block the data ends in
-		//I think this is what's happening, but the decompiled pseudocode is next to unreadable for 
+		//I think this is what's happening, but the decompiled pseudocode is next to unreadable 
 		//winging it for now, should be tested to ensure it behaves as intended
 		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 5)] = lowerBits;
 		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 9)] = higherBits;
@@ -171,17 +171,19 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 			}
 		}
 		
+		//set up hash engine
 		physicalInputAddress = VirtualToPhysical((u32)LastBlockBuffer);
 		ShaControlPointer = (u32*)SHA_CMD;
 		write32(SHA_SRC, physicalInputAddress);
 		ShaControl control = {
 			.Fields = {
 				.Execute = 1,
-				.GenerateIrq = 0,
+				.GenerateIrq = 0,	//no irq for this one, instead the function idles until it detects the execution has halted
 				.NumberOfBlocks = numberOfBlocks
 			}
 		};
 
+		//execute hash engine, and while waiting spin idly
 		write32(SHA_CMD, control.Value);
 		while (read32(SHA_CMD) < 0) {
 			;
@@ -189,7 +191,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+			write32(hashContext->ShaStates[i], SHA_H0 + (i*4));
 		
 		ret = 0;
 	}
@@ -216,7 +218,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+			write32(hashContext->ShaStates[i], SHA_H0 + (i*4));
 		
 		ret = IPC_SUCCESS;
 	}
