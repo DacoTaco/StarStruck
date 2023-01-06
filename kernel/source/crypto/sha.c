@@ -42,9 +42,9 @@ typedef union {
  	u32 Value;
 } ShaControl;
 
-const u8 ShaUnknownBuffer[0x80] = { 0 };
-const u32 Sha1IntialState[5] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
-u8 HmacKey[64] = { 0x00 };
+const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
+u8 LastBlockBuffer[0x80] = { 0x00 };
+u8 HmacKey[0x40] = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
 s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainingMode, int hashData)
@@ -67,16 +67,22 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 	u32 flooredDataSize = inputSize & 0xFFFFFFC0;	//floors data size to blocks of 512 bits
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
+
+	//happens in all chaining modes
 	if(flooredDataSize != 0)
 	{
 		//check the requested blocks to be processed
-		numberOfBlocks = (inputSize / 64) -1;
-		if(numberOfBlocks > 1023)
+		numberOfBlocks = (flooredDataSize / 64) -1;
+		if(numberOfBlocks >= 1024)
 			return IOSC_INVALID_SIZE;
 
+        //if this isn't the last block contributed, make sure the input data is a whole multiple of blocks large
+        if ((chainingMode != 2) && ((inputSize & (SHA_BLOCK_SIZE-1)) != 0x0))
+            return IOSC_INVALID_SIZE;
+
 		//copy over the states from the context to the registers
-		for(s8 i = 0; i < 5; i++)
-			write32(SHA_H0+i, hashContext->ShaStates[i]);
+		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
+			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
 		
 		physicalInputAddress = VirtualToPhysical((u32)input);
 		ShaControlPointer = (u32*)SHA_CMD;
@@ -100,41 +106,122 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 			return IPC_EACCES;
 	}
 
-	ShaControlPointer = ShaUnknownBuffer;
+	ShaControlPointer = LastBlockBuffer;
 
 	// ChangingMode 2 : Last block contributed to hash
 	if(chainingMode == 2)
 	{
 		u32 higherBits = hashContext->LengthHigher;
 		u32 lowerBits = hashContext->LengthLower;
+		
 		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
+		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
 		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
 			higherBits += 1;
 		
-		//add size to the higher bits
-		higherBits += inputSize >> 29;
+		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
+		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
+		lowerBits += flooredDataSize << 3;
+		higherBits += flooredDataSize >> 29;
 
 		//set length properties
-		hashContext->LengthLower = numberOfBlocks;
-		hashContext->LengthHigher = higherBits;
-
-		//I think this is trying to calculate some sort of padding. 
-		//Notice it subtracting inputSize from flooredDataSize.
-		memset(ShaControlPointer, 0, ARRAY_LENGTH(ShaUnknownBuffer));
-		u32 lastBlockLength = inputSize - flooredDataSize;
-		if(lastBlockLength != 0)
-			memcpy(ShaControlPointer, input + flooredDataSize, lastBlockLength);
-		ShaControlPointer[lastBlockLength] = 0x80;
-
-		//reset the length properties?
-		lowerBits = (lastBlockLength) * 8 + numberOfBlocks;
-		if(lowerBits < numberOfBlocks)
-			higherBits++;
-
-		higherBits += lastBlockLength >> 29;
 		hashContext->LengthLower = lowerBits;
 		hashContext->LengthHigher = higherBits;
+
+		//This pads the final block (or rather 2 blocks) of data
+		memset(LastBlockBuffer, 0, (SHA_BLOCK_SIZE * 2));
+		u32 lastBlockLength = inputSize - flooredDataSize;
+		if(lastBlockLength != 0)
+			memcpy(LastBlockBuffer, input + flooredDataSize, lastBlockLength);
+		
+		LastBlockBuffer[lastBlockLength] = 0x80;	//Demarcates end of last block's data and beginning of padding
+
+		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
+		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
+		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
+			higherBits += 1;
+
+		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
+		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
+		lowerBits += lastBlockLength << 3;
+		higherBits += lastBlockLength >> 29;
+
+		//set length properties
+		hashContext->LengthLower = lowerBits;
+		hashContext->LengthHigher = higherBits;
+
+		if ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 0x8))
+			numberOfBlocks = 1;
+		else
+			numberOfBlocks = 2;
+		
+		//places the 64-bit length value at the end of the block the data ends in
+		//I think this is what's happening, but the decompiled pseudocode is next to unreadable for 
+		//winging it for now, should be tested to ensure it behaves as intended
+		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 5)] = lowerBits;
+		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 9)] = higherBits;
+
+		DCFlushRange(LastBlockBuffer, (numberOfBlocks * SHA_BLOCK_SIZE));
+		AhbFlushTo(AHB_SHA1);
+
+		//copy over the states from the context to the registers
+		if (flooredDataSize == 0) {
+			for(s8 i = 0; i < SHA_NUM_WORDS; i++) {
+				write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+			}
+		}
+		
+		physicalInputAddress = VirtualToPhysical((u32)LastBlockBuffer);
+		ShaControlPointer = (u32*)SHA_CMD;
+		write32(SHA_SRC, physicalInputAddress);
+		ShaControl control = {
+			.Fields = {
+				.Execute = 1,
+				.GenerateIrq = 0,
+				.NumberOfBlocks = numberOfBlocks
+			}
+		};
+
+		write32(SHA_CMD, control.Value);
+		while (read32(SHA_CMD) < 0) {
+			;
+		}
+
+		//copy over the states from the registers to the context
+		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
+			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+		
+		ret = 0;
 	}
+
+	//happens in all chaining modes
+	if(flooredDataSize != 0)
+	{
+		u32 higherBits = hashContext->LengthHigher;
+		u32 lowerBits = hashContext->LengthLower;
+		
+		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
+		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
+		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
+			higherBits += 1;
+		
+		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
+		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
+		lowerBits += flooredDataSize << 3;
+		higherBits += flooredDataSize >> 29;
+
+		//set length properties
+		hashContext->LengthLower = lowerBits;
+		hashContext->LengthHigher = higherBits;
+
+		//copy over the states from the registers to the context
+		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
+			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+		
+		ret = IPC_SUCCESS;
+	}
+
+	return ret;
 }
 
 void ShaEngineHandler(void)

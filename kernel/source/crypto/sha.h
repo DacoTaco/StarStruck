@@ -15,12 +15,14 @@
 
 #define SHA_DEVICE_NAME "/dev/sha"
 #define SHA_DEVICE_NAME_SIZE sizeof(SHA_DEVICE_NAME)
+#define SHA_BLOCK_SIZE 0x40
+#define SHA_NUM_WORDS 5
 
 typedef struct
 {
-	u32 ShaStates[5];
-	u32 LengthLower;
-	u32 LengthHigher;
+	u32 ShaStates[SHA_NUM_WORDS];
+	u32 LengthLower;	//value of lower 32 bits of where the 64-bit input length will be stored in the hash
+	u32 LengthHigher;	//value of upper 32 bits of where the 64-bit input length will be stored in the hash
 } ShaContext;
 CHECK_SIZE(ShaContext, 0x1C);
 CHECK_OFFSET(ShaContext, 0x00, ShaStates);
