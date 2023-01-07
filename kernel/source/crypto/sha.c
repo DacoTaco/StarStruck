@@ -43,15 +43,13 @@ typedef union {
 } ShaControl;
 
 const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
-u8 LastBlockBuffer[0x80] = { 0x00 };
-u8 HmacKey[0x40] = { 0x00 };
+u8 LastBlockBuffer[0x80] ALIGNED(0x40) = { 0x00 };
+u8 HmacKey[0x40] ALIGNED(0x40) = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
-s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainingMode, int hashData)
+s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, int hashData)
 {
 	u32 numberOfBlocks = 0;
-	u32 physicalInputAddress = 0;
-	u32* ShaControlPointer = NULL;
 	s32 ret = IPC_EINVAL;
 	write32(SHA_CMD, 0);
 
@@ -64,7 +62,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		ret = 0;
 	}
 
-	u32 flooredDataSize = inputSize & 0xFFFFFFC0;	//floors data size to blocks of 512 bits
+	const u32 flooredDataSize = inputSize & 0xFFFFFFC0;	//floors data size to blocks of 512 bits
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
@@ -84,9 +82,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
 			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
 		
-		physicalInputAddress = VirtualToPhysical((u32)input);
-		ShaControlPointer = (u32*)SHA_CMD;
-		write32(SHA_SRC, physicalInputAddress);
+		write32(SHA_SRC, VirtualToPhysical((u32)input));
 		ShaControl control = {
 			.Fields = {
 				.Execute = 1,
@@ -105,8 +101,6 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		if(control.Fields.HasError != 0)
 			return IPC_EACCES;
 	}
-
-	ShaControlPointer = LastBlockBuffer;
 
 	// ChangingMode 2 : Last block contributed to hash
 	if(chainingMode == 2)
@@ -138,7 +132,7 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 
 		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
 		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
-		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
+		if(((lastBlockLength * 8) + lowerBits) < lowerBits)
 			higherBits += 1;
 
 		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
@@ -149,18 +143,15 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		//set length properties
 		hashContext->LengthLower = lowerBits;
 		hashContext->LengthHigher = higherBits;
-
-		if ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 0x8))
-			numberOfBlocks = 1;
-		else
-			numberOfBlocks = 2;
+	
+		numberOfBlocks = ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 1)) ? 1 : 2;
 		
 		//places the 64-bit length value at the end of the block the data ends in
 		//I think this is what's happening, but the decompiled pseudocode is next to unreadable 
 		//winging it for now, should be tested to ensure it behaves as intended
-		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 5)] = lowerBits;
-		LastBlockBuffer[((numberOfBlocks * SHA_BLOCK_SIZE) - 9)] = higherBits;
-
+		u32 index = numberOfBlocks * SHA_BLOCK_SIZE;
+		write32((u32)&LastBlockBuffer[index-4], hashContext->LengthLower);
+		write32((u32)&LastBlockBuffer[index-8], hashContext->LengthHigher);
 		DCFlushRange(LastBlockBuffer, (numberOfBlocks * SHA_BLOCK_SIZE));
 		AhbFlushTo(AHB_SHA1);
 
@@ -172,26 +163,22 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 		}
 		
 		//set up hash engine
-		physicalInputAddress = VirtualToPhysical((u32)LastBlockBuffer);
-		ShaControlPointer = (u32*)SHA_CMD;
-		write32(SHA_SRC, physicalInputAddress);
+		write32(SHA_SRC, VirtualToPhysical((u32)LastBlockBuffer));
 		ShaControl control = {
 			.Fields = {
 				.Execute = 1,
 				.GenerateIrq = 0,	//no irq for this one, instead the function idles until it detects the execution has halted
-				.NumberOfBlocks = numberOfBlocks
+				.NumberOfBlocks = numberOfBlocks -1
 			}
 		};
 
 		//execute hash engine, and while waiting spin idly
 		write32(SHA_CMD, control.Value);
-		while (read32(SHA_CMD) < 0) {
-			;
-		}
+		while (((ShaControl)read32(SHA_CMD)).Fields.Execute == 1) {}
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32(hashContext->ShaStates[i], SHA_H0 + (i*4));
+			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
 		
 		ret = 0;
 	}
@@ -218,8 +205,8 @@ s32 GenerateSha(ShaContext* hashContext, void* input, u32 inputSize, s32 chainin
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32(hashContext->ShaStates[i], SHA_H0 + (i*4));
-		
+			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
+
 		ret = IPC_SUCCESS;
 	}
 

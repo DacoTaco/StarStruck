@@ -63,7 +63,7 @@ Copyright (C) 2021			DacoTaco
 #define ALIGN_FORWARD(addr)			((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(LINESIZE-1))))
 #define ALIGN_BACKWARD(addr)		((typeof(addr))(((u32)(addr)) & (~(LINESIZE-1))))
 
-void _dc_inval_entries(void *start, int count);
+void _dc_inval_entries(const void *start, int count);
 void _dc_flush_entries(const void *start, int count);
 void _dc_flush(void);
 void _ic_invalidate(void);
@@ -110,7 +110,7 @@ static ProcessMemorySection HWRegistersMemoryMaps[] =
 	{0x0B,	{ 0x0D080000, 0x0D080000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 };
 
-void DCFlushRange(void *start, u32 size)
+void DCFlushRange(const void *start, u32 size)
 {
 	if(size == 0)
 		return;
@@ -139,7 +139,7 @@ void DCFlushAll(void)
 	RestoreInterrupts(cookie);
 }
 
-void DCInvalidateRange(void* start, u32 size)
+void DCInvalidateRange(const void* start, u32 size)
 {
 	u32 pid = CurrentThread->ProcessId;
 	if(CheckMemoryPointer(start, size, 4, pid, 0) != 0)
