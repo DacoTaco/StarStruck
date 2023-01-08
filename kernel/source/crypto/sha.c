@@ -57,8 +57,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	if(chainingMode == 0)
 	{
 		memcpy(hashContext->ShaStates, Sha1IntialState, sizeof(Sha1IntialState));
-		hashContext->LengthLower = 0;
-		hashContext->LengthHigher = 0;
+		hashContext->Length = 0;
 		ret = 0;
 	}
 
@@ -105,22 +104,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	// ChangingMode 2 : Last block contributed to hash
 	if(chainingMode == 2)
 	{
-		u32 higherBits = hashContext->LengthHigher;
-		u32 lowerBits = hashContext->LengthLower;
-		
-		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
-		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
-		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
-			higherBits += 1;
-		
-		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
-		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
-		lowerBits += flooredDataSize << 3;
-		higherBits += flooredDataSize >> 29;
-
-		//set length properties
-		hashContext->LengthLower = lowerBits;
-		hashContext->LengthHigher = higherBits;
+		hashContext->Length += flooredDataSize * 8;
 
 		//This pads the final block (or rather 2 blocks) of data
 		memset(LastBlockBuffer, 0, (SHA_BLOCK_SIZE * 2));
@@ -129,29 +113,15 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 			memcpy(LastBlockBuffer, input + flooredDataSize, lastBlockLength);
 		
 		LastBlockBuffer[lastBlockLength] = 0x80;	//Demarcates end of last block's data and beginning of padding
-
-		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
-		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
-		if(((lastBlockLength * 8) + lowerBits) < lowerBits)
-			higherBits += 1;
-
-		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
-		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
-		lowerBits += lastBlockLength << 3;
-		higherBits += lastBlockLength >> 29;
-
-		//set length properties
-		hashContext->LengthLower = lowerBits;
-		hashContext->LengthHigher = higherBits;
-	
+		hashContext->Length += lastBlockLength * 8;	
 		numberOfBlocks = ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 1)) ? 1 : 2;
 		
 		//places the 64-bit length value at the end of the block the data ends in
 		//I think this is what's happening, but the decompiled pseudocode is next to unreadable 
 		//winging it for now, should be tested to ensure it behaves as intended
 		u32 index = numberOfBlocks * SHA_BLOCK_SIZE;
-		write32((u32)&LastBlockBuffer[index-4], hashContext->LengthLower);
-		write32((u32)&LastBlockBuffer[index-8], hashContext->LengthHigher);
+		write32((u32)&LastBlockBuffer[index-4], (u32)hashContext->Length);
+		write32((u32)&LastBlockBuffer[index-8], (u32)(hashContext->Length >> 32));
 		DCFlushRange(LastBlockBuffer, (numberOfBlocks * SHA_BLOCK_SIZE));
 		AhbFlushTo(AHB_SHA1);
 
@@ -186,23 +156,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	//happens in all chaining modes
 	if(flooredDataSize != 0)
 	{
-		u32 higherBits = hashContext->LengthHigher;
-		u32 lowerBits = hashContext->LengthLower;
-		
-		//if we had an overflow in the lower bits, we need to raise the upper bits by 1
-		//this is a preemptive compensation for the upcoming addition of the currently processed block length below
-		if(((flooredDataSize * 8) + lowerBits) < lowerBits)
-			higherBits += 1;
-		
-		//multiplies the input size by 8 to get it in bits then add to the split 64-bit value
-		//this is done in 2 parts due to 32-bit overflow, one part each for the upper and lower word
-		lowerBits += flooredDataSize << 3;
-		higherBits += flooredDataSize >> 29;
-
-		//set length properties
-		hashContext->LengthLower = lowerBits;
-		hashContext->LengthHigher = higherBits;
-
+		hashContext->Length += flooredDataSize * 8;
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
 			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
