@@ -142,6 +142,7 @@ void kernel_main( void )
 		panic2(0, PANIC_MOUNT);
 	}
 
+	DisableInterrupts();
 	printk("rebooting into HBC...\n");
 	vector = boot2_run(0x00010001, 0x4C554C5A);
 	ipc_shutdown();
