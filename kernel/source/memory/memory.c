@@ -208,8 +208,8 @@ void mem_shutdown(void)
 
 void* KMalloc(u32 size)
 {
-	void* ptr = heapEnd;
 	heapEnd -= size;
+	void* ptr = heapEnd;	
 
 	return ptr;
 }

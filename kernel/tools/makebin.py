@@ -34,7 +34,7 @@ if loaderlen < len(loader):
 
 if loaderlen > len(loader):
 	print("Padding loader with 0x%x zeroes"%(loaderlen-len(loader)))
-	loader += b"\x00"*(loaderlen-len(loader))
+	loader += b"\0"*(loaderlen-len(loader))
 
 newdata = struct.pack(">IIII", hdrlen, loaderlen, elflen, 0) + hdr[16:]
 newdata += loader

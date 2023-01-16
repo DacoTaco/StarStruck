@@ -150,7 +150,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
 			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
 		
-		ret = 0;
+		ret = IPC_SUCCESS;
 	}
 
 	//happens in all chaining modes

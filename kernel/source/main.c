@@ -124,9 +124,6 @@ void kernel_main( void )
 	printk("NAND initialized.\n");
 
 	boot2_init();
-
-	printk("Initializing IPC...\n");
-	ipc_initialize();
 	
 	/*printk("Initializing SDHC...\n");
 	sdhc_init();
@@ -145,10 +142,8 @@ void kernel_main( void )
 		panic2(0, PANIC_MOUNT);
 	}
 
-	ipc_ppc_boot_title(0x000100014C554C5ALL);
-	printk("Going into IPC mainloop...\n");
-	vector = ipc_main();
-	printk("IPC mainloop done! killing IPC...\n");
+	printk("rebooting into HBC...\n");
+	vector = boot2_run(0x00010001, 0x14C554C5);
 	ipc_shutdown();
 
 shutdown:
