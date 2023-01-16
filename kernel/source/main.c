@@ -143,7 +143,7 @@ void kernel_main( void )
 	}
 
 	printk("rebooting into HBC...\n");
-	vector = boot2_run(0x00010001, 0x14C554C5);
+	vector = boot2_run(0x00010001, 0x4C554C5A);
 	ipc_shutdown();
 
 shutdown:
