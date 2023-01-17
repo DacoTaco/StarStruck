@@ -24,9 +24,9 @@
 
 typedef enum 
 { 
-	SHACommandZero = 0x00,
-	SHACommandOne = 0x01,
-	SHACommandTwo = 0x02,
+	InitializeHashContext = 0x00,
+	AddData = 0x01,
+	FinalizeHash = 0x02,
 	SHACommandThree = 0x03,
 	ShaCommandFifthTeen = 0x0F
 } ShaCommandTypes;
@@ -47,7 +47,7 @@ u8 LastBlockBuffer[0x80] ALIGNED(0x40) = { 0x00 };
 u8 HmacKey[0x40] ALIGNED(0x40) = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
-s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, int hashData)
+s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, u32* hashData)
 {
 	u32 numberOfBlocks = 0;
 	s32 ret = IPC_EINVAL;
@@ -61,7 +61,8 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 		ret = 0;
 	}
 
-	const u32 flooredDataSize = inputSize & 0xFFFFFFC0;	//floors data size to blocks of 512 bits
+	//floors data size to blocks of 512 bits
+	const u32 flooredDataSize = inputSize & (~(SHA_BLOCK_SIZE-1));
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
@@ -91,7 +92,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 		};
 
 		write32(SHA_CMD, control.Value);
-		u32* message;
+		void* message;
 		ret = ReceiveMessage(ShaEventMessageQueueId, &message, None);
 		if(ret != IPC_SUCCESS)
 			panic("iosReceiveMessage: %d\n", ret);
@@ -114,7 +115,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 		
 		LastBlockBuffer[lastBlockLength] = 0x80;	//Demarcates end of last block's data and beginning of padding
 		hashContext->Length += lastBlockLength * 8;	
-		numberOfBlocks = ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 1)) ? 1 : 2;
+		numberOfBlocks = ((lastBlockLength + 1) < (SHA_BLOCK_SIZE - 7)) ? 1 : 2;
 		
 		//places the 64-bit length value at the end of the block the data ends in
 		//I think this is what's happening, but the decompiled pseudocode is next to unreadable 
@@ -148,7 +149,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
+			hashData[i] = read32(SHA_H0 + (i * 4));
 		
 		ret = IPC_SUCCESS;
 	}
@@ -223,12 +224,18 @@ void ShaEngineHandler(void)
 				s32 ioctl = ioctlvMessage->Ioctl;
 				switch (ioctl)
 				{
-					case SHACommandZero:
-					case SHACommandOne:
-					case SHACommandTwo:
+					case InitializeHashContext:
+					case AddData:
+					case FinalizeHash:
+						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
+							break;
+						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length, ioctl, ioctlvMessage->Data[1].Data);
+						if(ret != IPC_SUCCESS)
+							goto sendReply;
+
+						break;
 					case SHACommandThree:
-					case ShaCommandFifthTeen:
-						/* code */
+					case ShaCommandFifthTeen: 
 						break;
 				
 					default:
@@ -236,6 +243,9 @@ void ShaEngineHandler(void)
 				}
 				break;
 		}
+
+		//remove message data from heap if it came from there
+		FreeOnHeap(KernelHeapId, ioctlvMessage->Data);
 
 sendReply:
 		ResourceReply(ipcReply, ret);
