@@ -222,7 +222,7 @@ void IpcInit(void)
 	write32(HW_IPC_ARMCTRL, ( IPC_ARM_IX1 | IPC_ARM_IX2 ));
 }
 
-s32 ResourceReply(IpcRequest* message, u32 requestReturnValue)
+s32 ResourceReply(IpcMessage* message, u32 requestReturnValue)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;

@@ -173,7 +173,7 @@ void ShaEngineHandler(void)
 	u32 resourceManagerMessageQueue[0x10];
 	IpcMessage* ipcMessage;
 	IoctlvMessage* ioctlvMessage;
-	IpcRequest* ipcReply;
+	IpcMessage* ipcReply;
 
 	s32 messageQueueId = CreateMessageQueue((void**)&eventMessageQueue, 1);
 	ShaEventMessageQueueId = messageQueueId;
@@ -199,6 +199,7 @@ void ShaEngineHandler(void)
 		if(ret != 0)
 			goto receiveMessageError;
 
+		ipcReply = ipcMessage;
 		ret = IPC_EINVAL;
 		s32 hmacRet = IPC_EINVAL;
 		switch (ipcMessage->Request.Command)

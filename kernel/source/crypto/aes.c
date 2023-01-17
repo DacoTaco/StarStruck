@@ -52,7 +52,7 @@ void AesEngineHandler(void)
 	u32 ivBuffer[0x10] = { 0 };
 	IpcMessage* ipcMessage;
 	IoctlvMessage* ioctlvMessage;
-	IpcRequest* ipcReply;
+	IpcMessage* ipcReply;
 
 	s32 messageQueue = CreateMessageQueue((void**)&eventMessageQueue, 1);
 	AesEventMessageQueueId = messageQueue;
@@ -78,7 +78,7 @@ void AesEngineHandler(void)
 		if(ret != 0)
 			goto receiveMessageError;
 
-		ipcReply = &ipcMessage->Request;
+		ipcReply = ipcMessage;
 		ret = IPC_EINVAL;
 		IoctlvMessageData* IVVector = NULL;
 		IoctlvMessageData* sourceVector = NULL;
@@ -182,7 +182,7 @@ processAesCommand:
 							if(sourceVector != NULL)
 								FreeOnHeap(KernelHeapId, sourceVector->Data);
 							
-							FreeOnHeap(KernelHeapId, ipcReply->Data.Ioctlv.Data);
+							FreeOnHeap(KernelHeapId, ipcReply->Request.Data.Ioctlv.Data);
 							ret = 0;
 						}
 						goto sendReply;
