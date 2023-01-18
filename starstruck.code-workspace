@@ -86,6 +86,7 @@
 		},
 		"editor.insertSpaces": false,
 		"editor.detectIndentation": false,
+		"files.eol": "\n",
 	},
 	"extensions": {
 		"recommendations": [
