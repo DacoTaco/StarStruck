@@ -16,13 +16,10 @@ jobs:
       options: --cpus 2
 
     steps:
-      - name: Setup System
-        run: |
-          sudo apt-get update
-      - name: Set up Python 3
+      - name: Set up Python 2
         uses: actions/setup-python@v4
         with:
-          python-version: 3
+          python-version: 2
       - name: Checkout
         uses: actions/checkout@v1
 
