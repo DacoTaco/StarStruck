@@ -16,6 +16,9 @@ jobs:
       options: --cpus 2
 
     steps:
+      - name: Setup System
+        run: |
+          sudo apt-get update
       - name: Set up Python 3
         uses: actions/setup-python@v4
         with:
