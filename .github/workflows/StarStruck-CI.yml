@@ -19,14 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
         
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with: 
-          python-version: 3.9
-
-      - name: Test
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
         run: |
-          apt-cache policy libc
+          python -m pip install --upgrade pip
+
       - name: Build
         run: |
           make
