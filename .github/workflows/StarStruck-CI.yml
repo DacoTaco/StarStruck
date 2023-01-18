@@ -1,0 +1,24 @@
+name: StarStruck-CI
+
+on: 
+  push:
+  pull_request:
+    branches: 
+      - '**'
+
+jobs:
+  Linux:
+    name: Linux
+    runs-on: ubuntu-latest
+
+    container:
+      image: docker://devkitpro/devkitppc
+      options: --cpus 2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Build
+        run: |
+          make
