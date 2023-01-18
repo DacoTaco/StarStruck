@@ -229,7 +229,7 @@ void ShaEngineHandler(void)
 					case FinalizeHash:
 						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
-						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length, ioctl, ioctlvMessage->Data[1].Data);
+						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length, ioctl, ioctlvMessage->Data[2].Data);
 						if(ret != IPC_SUCCESS)
 							goto sendReply;
 
