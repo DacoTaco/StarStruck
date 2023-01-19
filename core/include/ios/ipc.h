@@ -21,6 +21,7 @@ Copyright (C) 2021	DacoTaco
 #define IOS_IOCTL			0x06
 #define IOS_IOCTLV			0x07
 #define IOS_REPLY			0x08
+#define IOS_INTERRUPT		0x09
 
 #define IOS_OPEN_NONE		0x00
 #define IOS_OPEN_READ		0x01
@@ -34,10 +35,14 @@ typedef struct
 {
 	char *Filepath;
 	u32 Mode;
+	u32 UID;
+	u16 GID;
 } OpenMessage;
-CHECK_SIZE(OpenMessage, 0x08);
+CHECK_SIZE(OpenMessage, 0x10);
 CHECK_OFFSET(OpenMessage, 0x00, Filepath);
 CHECK_OFFSET(OpenMessage, 0x04, Mode);
+CHECK_OFFSET(OpenMessage, 0x08, UID);
+CHECK_OFFSET(OpenMessage, 0x0C, GID);
 
 typedef struct {
 	void *Data;
@@ -124,12 +129,16 @@ typedef struct
 	IpcRequest Request;
 	void *Callback;
 	u32 CallerData;
-	u32 Relaunch;
+	u32 UsedByThreadId;
+	u32 IsInQueue;
+	u32 UsedByProcessId;
 } IpcMessage;
-CHECK_SIZE(IpcMessage, 0x2C);
+CHECK_SIZE(IpcMessage, 0x34);
 CHECK_OFFSET(IpcMessage, 0x00, Request);
 CHECK_OFFSET(IpcMessage, 0x20, Callback);
 CHECK_OFFSET(IpcMessage, 0x24, CallerData);
-CHECK_OFFSET(IpcMessage, 0x28, Relaunch);
+CHECK_OFFSET(IpcMessage, 0x28, UsedByThreadId);
+CHECK_OFFSET(IpcMessage, 0x2C, IsInQueue);
+CHECK_OFFSET(IpcMessage, 0x30, UsedByProcessId);
 
 #endif

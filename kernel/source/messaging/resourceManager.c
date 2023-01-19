@@ -17,13 +17,12 @@
 #include "interrupt/irq.h"
 #include "memory/memory.h"
 #include "messaging/resourceManager.h"
+#include "filedesc/filedesc_types.h"
 
-u8 hashTable[0x10] = { 0 };
-u32 hashTableSalt = 0;
-u32 hashTableCount = 0;
-ResourceManager ResourceManagers[MAX_RESOURCES];
-ResourceManager* AesResourceManager;
-ResourceManager* ShaResourceManager;
+static u8 hashTable[0x10] = { 0 };
+static u32 hashTableSalt = 0;
+static u32 hashTableCount = 0;
+ResourceManager ResourceManagers[MAX_RESOURCES] SRAM_BSS;
 
 u32 GetPpcAccessRights(const char* resourcePath)
 {
@@ -41,10 +40,10 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 {
 	s32 interrupts = DisableInterrupts();
 	s32 ret = 0;
-	s32 devicePathLen = strnlen(devicePath, 0x40);
+	s32 devicePathLen = strnlen(devicePath, MAX_PATHLEN);
 	s32 resourceManagerId;
 
-	if(devicePathLen >= 0x40)
+	if(devicePathLen >= MAX_PATHLEN)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;
@@ -87,10 +86,10 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 
 	if(!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
-		AesResourceManager = &ResourceManagers[resourceManagerId];
-		
+		AesFileDescriptor.belongs_to_resource = &ResourceManagers[resourceManagerId];
+
 	if(!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
-		ShaResourceManager = &ResourceManagers[resourceManagerId];
+		ShaFileDescriptor.belongs_to_resource = &ResourceManagers[resourceManagerId];
 
 returnRegisterResource:
 	RestoreInterrupts(interrupts);

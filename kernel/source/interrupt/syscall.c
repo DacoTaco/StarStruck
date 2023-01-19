@@ -20,6 +20,8 @@
 #include "messaging/ipc.h"
 #include "messaging/message_queue.h"
 #include "messaging/resourceManager.h"
+#include "filedesc/calls.h"
+#include "filedesc/calls_async.h"
 
 //#define _DEBUG_SYSCALL
 
@@ -53,20 +55,20 @@ static const void* syscall_handlers[] = {
 	MallocateOnHeap,			//0x0019
 	FreeOnHeap,					//0x001A
 	RegisterResourceManager,	//0x001B
-	0x00000000,					//0x001C
-	0x00000000,					//0x001D
-	0x00000000,					//0x001E
-	0x00000000,					//0x001F
-	0x00000000,					//0x0020
-	0x00000000,					//0x0021
-	0x00000000,					//0x0022
-	0x00000000,					//0x0023
-	0x00000000,					//0x0024
-	0x00000000,					//0x0025
-	0x00000000,					//0x0026
-	0x00000000,					//0x0027
-	0x00000000,					//0x0028
-	0x00000000,					//0x0029
+	OpenFD,						//0x001C
+	CloseFD,					//0x001D
+	ReadFD,						//0x001E
+	WriteFD,					//0x001F
+	SeekFD,						//0x0020
+	IoctlFD,					//0x0021
+	IoctlvFD,					//0x0022
+	OpenFDAsync,				//0x0023
+	CloseFDAsync,				//0x0024
+	ReadFDAsync,				//0x0025
+	WriteFDAsync,				//0x0026
+	SeekFDAsync,				//0x0027
+	IoctlFDAsync,				//0x0028
+	IoctlvFDAsync,				//0x0029
 	ResourceReply,				//0x002A
 	SetUID,						//0x002B
 	GetUID,						//0x002C

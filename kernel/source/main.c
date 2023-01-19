@@ -108,12 +108,26 @@ void kernel_main( void )
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		panic("failed to start SHA thread!\n");	
+		panic("failed to start SHA thread!\n");
+
+	/// TODO: Some function goes here, needs research
+
+	//create IPC handler thread & also set it to run as system thread
+	threadId = CreateThread((s32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
+	if(threadId > 0)
+	{
+		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		IpcHandlerThread = &Threads[threadId];
+		IpcHandlerThreadId = threadId;
+	}
+
+	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start IPC thread!\n");	
 
 	KernelHeapId = CreateHeap((void*)0x138F0000, 0xC0000);
 	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
 	SetThreadPriority(0, 0);
-	//SetThreadPriority(IPCThreadId, 0x5C);
+	SetThreadPriority(IpcHandlerThreadId, 0x5C);
 	u32 vector;
 	FRESULT fres = 0;
 	
