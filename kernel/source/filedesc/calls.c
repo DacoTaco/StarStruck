@@ -20,7 +20,7 @@ rettype name ## FD(ARGEXTRACT_END( ARGEXTRACT_LOOP_FULL_A arguments )) { \
 
 #include "calls_inner.h"
 
-s32 OpenFDAsync(const char* path, int mode, u32 messageQueueId, IpcMessage* message)
+s32 OpenFD(const char* path, int mode)
 {
 	const s32 state = DisableInterrupts();
 	const s32 ret = OpenFD_Inner(path, mode);

@@ -29,7 +29,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(int use_extra_messages_instead_of
 {
 	s32 ret = IPC_EMAX;
 
-	const unsigned current_thread_id = IOS_GetThreadId();
+	const unsigned current_thread_id = GetThreadID();
 	if (use_extra_messages_instead_of_thread_specific) {
 		const int thread_open_msg_limit = (CurrentThread == IpcHandlerThread) ? 48 : 32;
 		if (thread_msg_usage_arr[current_thread_id] != thread_open_msg_limit)
@@ -100,7 +100,7 @@ static void strncpy_with_mem1_caveat(FileDescriptorPath* into, const char* sourc
 
 s32 OpenFD_Inner(const char* path, int mode)
 {
-	const int current_thread_id = IOS_GetThreadId();
+	const int current_thread_id = GetThreadID();
 	const int current_process_id = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 
 	const int pathLength = strnlen(path, MAX_PATHLEN);

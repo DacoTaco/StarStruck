@@ -11,6 +11,7 @@
 #ifndef __FILEDESC_TYPES_H__
 #define __FILEDESC_TYPES_H__
 
+#include "messaging/ipc.h"
 #include "messaging/message_queue.h"
 #include "messaging/resourceManager.h"
 

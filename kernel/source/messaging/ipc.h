@@ -18,6 +18,8 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "types.h"
 #include "ios/ipc.h"
 #include "scheduler/threads.h"
+#include "messaging/message_queue.h"
+#include "messaging/resourceManager.h"
 
 /* For the sake of interface compatibility between mini and powerpc code,
    you should try to commit any enhancements you make back upstream so

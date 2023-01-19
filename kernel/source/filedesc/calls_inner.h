@@ -12,6 +12,7 @@
 #define __FILEDESC_CALLS_INNER_H__
 
 #include "filedesc_types.h"
+#include "interrupt/irq.h"
 
 #ifdef WRAP_INNER_CALL
 
