@@ -77,18 +77,9 @@ s32 RegisterEventHandler(u8 device, int queueid, void* message);
 s32 UnregisterEventHandler(u8 device);
 
 s32 ClearAndEnableEvent(u32 inter);
-inline s32 ClearAndEnableSDInterrupt(const u8 sdio)
-{
-	return ClearAndEnableEvent(sdio == 0 ? IRQ_SDHC : IRQ_WIFI);
-}
-inline s32 ClearAndEnableDIInterrupt(void)
-{
-	return ClearAndEnableEvent(IRQ_DI);
-}
-inline s32 ClearAndEnableIPCInterrupt(void)
-{
-	return ClearAndEnableEvent(IRQ_IPC);
-}
+s32 ClearAndEnableSDInterrupt(const u8 sdio);
+s32 ClearAndEnableDIInterrupt(void);
+s32 ClearAndEnableIPCInterrupt(void);
 
 void irq_shutdown(void);
 void irq_enable(u32 irq);

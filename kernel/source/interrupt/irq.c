@@ -35,6 +35,11 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
+static void ClearAndEnableEventSetFlags(const u32 flags)
+{
+	write32(HW_ARMIRQFLAG, flags);
+	set32(HW_ARMIRQMASK, flags);
+}
 s32 ClearAndEnableEvent(u32 inter)
 {
 	s32 ret = IPC_EACCES;
@@ -45,56 +50,56 @@ s32 ClearAndEnableEvent(u32 inter)
 	{
 	case IRQ_EHCI:
 		if (pid == 6) {
-			Set_ARM_IRQFlags(IRQF_EHCI);
+			ClearAndEnableEventSetFlags(IRQF_EHCI);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_OHCI0:
 		if (pid == 4) {
-			Set_ARM_IRQFlags(IRQF_OHCI0);
+			ClearAndEnableEventSetFlags(IRQF_OHCI0);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_OHCI1:
 		if (pid == 5) {
-			Set_ARM_IRQFlags(IRQF_OHCI1);
+			ClearAndEnableEventSetFlags(IRQF_OHCI1);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_SDHC:
 		if (pid == 7) {
-			Set_ARM_IRQFlags(IRQF_SDHC);
+			ClearAndEnableEventSetFlags(IRQF_SDHC);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_WIFI:
 		if (pid == 11) {
-			Set_ARM_IRQFlags(IRQF_WIFI);
+			ClearAndEnableEventSetFlags(IRQF_WIFI);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_GPIO1:
 		if (pid == 14) {
 			write32(HW_GPIO1INTFLAG, 1);
-			Set_ARM_IRQFlags(IRQF_GPIO1);
+			ClearAndEnableEventSetFlags(IRQF_GPIO1);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_RESET:
 		if (pid == 14) {
-			Set_ARM_IRQFlags(IRQF_RESET);
+			ClearAndEnableEventSetFlags(IRQF_RESET);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_DI:
 		if (pid == 3) {
-			Set_ARM_IRQFlags(IRQF_DI);
+			ClearAndEnableEventSetFlags(IRQF_DI);
 			ret = IPC_SUCCESS;
 		}
 		break;
 	case IRQ_IPC:
 		if (pid == 0) {
-			Set_ARM_IRQFlags(IRQF_IPC);
+			ClearAndEnableEventSetFlags(IRQF_IPC);
 			ret = IPC_SUCCESS;
 		}
 		break;
@@ -105,6 +110,18 @@ s32 ClearAndEnableEvent(u32 inter)
 
 	RestoreInterrupts(intflags);
 	return ret;
+}
+s32 ClearAndEnableSDInterrupt(const u8 sdio)
+{
+	return ClearAndEnableEvent(sdio == 0 ? IRQ_SDHC : IRQ_WIFI);
+}
+s32 ClearAndEnableDIInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_DI);
+}
+s32 ClearAndEnableIPCInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_IPC);
 }
 
 s32 RegisterEventHandler(u8 device, int queueid, void* message)

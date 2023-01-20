@@ -31,7 +31,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(int use_extra_messages_instead_of
 
 	const unsigned current_thread_id = GetThreadID();
 	if (use_extra_messages_instead_of_thread_specific) {
-		const int thread_open_msg_limit = (CurrentThread == IpcHandlerThread) ? 48 : 32;
+		const u32 thread_open_msg_limit = (CurrentThread == IpcHandlerThread) ? 48 : 32;
 		if (thread_msg_usage_arr[current_thread_id] != thread_open_msg_limit)
 		{
 			for(int i = 0; i < 128; ++i)
@@ -71,7 +71,7 @@ static void strncpy_with_mem1_caveat(FileDescriptorPath* into, const char* sourc
 		while(length != 0 && *source != '\0')
 		{
 			u32 value = 0;
-			for(int i = 0; i < sizeof(u32) && length != 0 && *source != '\0'; ++i, --length, ++source)
+			for(u32 i = 0; i < sizeof(u32) && length != 0 && *source != '\0'; ++i, --length, ++source)
 			{
 				value |= ((u32)(source[i])) << (24 - 8 * i);
 			}
@@ -125,7 +125,7 @@ s32 OpenFD_Inner(const char* path, int mode)
 			{
 				IpcMessage* message = &ipc_message_array[current_thread_id];
 				message->Request.Command = IOS_OPEN;
-				message->Request.Data.Open.Filepath = &fd_path_array[current_thread_id].DevicePath;
+				message->Request.Data.Open.Filepath = fd_path_array[current_thread_id].DevicePath;
 				message->Request.Data.Open.Mode = mode;
 				message->Request.Data.Open.UID = GetUID();
 				message->Request.Data.Open.GID = GetGID();
@@ -204,7 +204,7 @@ int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 		current_message->Request.Command = IOS_CLOSE;
 		current_message->Request.FileDescriptor = destination->id;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		ret = SendMessageCheckReceive(current_message, destination->belongs_to_resource);
 		if (fd < 0x10000)
@@ -269,7 +269,7 @@ int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMess
 		current_message->Request.Data.Read.Data = buf;
 		current_message->Request.Data.Read.Length = len;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		ret = CheckMemoryPointer(buf, len, 4, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->belongs_to_resource->ProcessId);
 		if(ret == IPC_SUCCESS)
@@ -331,7 +331,7 @@ int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, 
 		current_message->Request.Data.Write.Data = buf;
 		current_message->Request.Data.Write.Length = len;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		ret = CheckMemoryPointer(buf, len, 3, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->belongs_to_resource->ProcessId);
 
@@ -394,7 +394,7 @@ int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue* messageQueue, Ipc
 		current_message->Request.Data.Seek.Where = offset;
 		current_message->Request.Data.Seek.Whence = origin;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		ret = SendMessageCheckReceive(current_message, destination->belongs_to_resource);
 		if (messageQueue == NULL && ret == IPC_SUCCESS)
@@ -457,7 +457,7 @@ int IoctlFD_Inner(s32 fd, u32 request_id, void *input_buffer, u32 input_buffer_l
 		current_message->Request.Data.Ioctl.IoBuffer = output_buffer;
 		current_message->Request.Data.Ioctl.IoLength = output_buffer_len;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		ret = CheckMemoryPointer(input_buffer, input_buffer_len, 3, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->belongs_to_resource->ProcessId);
 
@@ -525,7 +525,7 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 request_id, u32 vector_count_in, u32 vect
 		current_message->Request.Data.Ioctlv.IoArgc = vector_count_out;
 		current_message->Request.Data.Ioctlv.Data = vectors;
 		current_message->Callback = messageQueue;
-		current_message->CallerData = message;
+		current_message->CallerData = (u32)message;
 
 		if (checkBeforeSend)
 		{

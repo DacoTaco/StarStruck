@@ -47,10 +47,18 @@ CHECK_OFFSET(OpenMessage, 0x0C, GID);
 typedef struct {
 	void *Data;
 	u32 Length;
-} ReadWriteMessage;
-CHECK_SIZE(ReadWriteMessage, 0x08);
-CHECK_OFFSET(ReadWriteMessage, 0x00, Data);
-CHECK_OFFSET(ReadWriteMessage, 0x04, Length);
+} ReadMessage;
+CHECK_SIZE(ReadMessage, 0x08);
+CHECK_OFFSET(ReadMessage, 0x00, Data);
+CHECK_OFFSET(ReadMessage, 0x04, Length);
+
+typedef struct {
+	const void *Data;
+	u32 Length;
+} WriteMessage;
+CHECK_SIZE(WriteMessage, 0x08);
+CHECK_OFFSET(WriteMessage, 0x00, Data);
+CHECK_OFFSET(WriteMessage, 0x04, Length);
 
 typedef struct {
 	s32 Where;
@@ -107,8 +115,8 @@ typedef struct
 	};
 	union {
 		OpenMessage Open;
-		ReadWriteMessage Read;
-		ReadWriteMessage Write;
+		ReadMessage Read;
+		WriteMessage Write;
 		SeekMessage Seek;
 		IoctlMessage Ioctl;
 		IoctlvMessage Ioctlv;
