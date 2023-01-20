@@ -310,11 +310,6 @@ static int CheckPtrIsFine(const void* const addr, const u32 size)
 	return CheckAddrIsFine((u32)addr, size);
 }
 
-static void IpcEnableIrq(void)
-{
-	/// TODO: implement after research
-}
-
 void IpcHandler(void)
 {
 	SetThreadPriority(0, 0x40);
@@ -334,7 +329,7 @@ void IpcHandler(void)
 		write32(HW_IPC_PPCCTRL, 0);
 	}
 
-	IpcEnableIrq();
+	ClearAndEnableIPCInterrupt();
 
 	while(1)
 	{
@@ -369,7 +364,7 @@ void IpcHandler(void)
 				{
 					ipc_circ_buf.had_relaunch_flag = 1;
 					write32(HW_IPC_ARMCTRL, (armctrl & 0x30) | IPC_ARM_RELAUNCH);
-					IpcEnableIrq();
+					ClearAndEnableIPCInterrupt();
 					DoSendIpcRequest();
 					break;
 				}
@@ -382,7 +377,7 @@ void IpcHandler(void)
 
 				write32(HW_IPC_ARMCTRL, (armctrl & 0x30) | ((ipc_circ_buf.waiting_in_buffer_cnt < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING));
 
-				IpcEnableIrq();
+				ClearAndEnableIPCInterrupt();
 
 				ipc_circ_buf.waiting_in_buffer_cnt++;
 				if(!CheckPtrIsFine(ppc_message, sizeof(IpcRequest)))
@@ -533,13 +528,12 @@ void IpcHandler(void)
 						}
 					}
 
-					if(ret == IPC_SUCCESS)
-						ret = IoctlvFDAsync(filedesc_id,
-							ppc_message->Request.Data.Ioctlv.Ioctl,
-							ppc_message->Request.Data.Ioctlv.InputArgc,
-							ppc_message->Request.Data.Ioctlv.IoArgc,
-							ppc_message->Request.Data.Ioctlv.Data,
-							messageQueue, ppc_message);
+					ret = IoctlvFDAsync(filedesc_id,
+						ppc_message->Request.Data.Ioctlv.Ioctl,
+						ppc_message->Request.Data.Ioctlv.InputArgc,
+						ppc_message->Request.Data.Ioctlv.IoArgc,
+						ppc_message->Request.Data.Ioctlv.Data,
+						messageQueue, ppc_message);
 					break;
 				}
 

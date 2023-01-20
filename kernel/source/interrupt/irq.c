@@ -35,6 +35,78 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
+s32 ClearAndEnableEvent(u32 inter)
+{
+	s32 ret = IPC_EACCES;
+	
+	const u32 intflags = DisableInterrupts();
+	const u32 pid = GetProcessID();
+	switch(inter)
+	{
+	case IRQ_EHCI:
+		if (pid == 6) {
+			Set_ARM_IRQFlags(IRQF_EHCI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_OHCI0:
+		if (pid == 4) {
+			Set_ARM_IRQFlags(IRQF_OHCI0);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_OHCI1:
+		if (pid == 5) {
+			Set_ARM_IRQFlags(IRQF_OHCI1);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_SDHC:
+		if (pid == 7) {
+			Set_ARM_IRQFlags(IRQF_SDHC);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_WIFI:
+		if (pid == 11) {
+			Set_ARM_IRQFlags(IRQF_WIFI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_GPIO1:
+		if (pid == 14) {
+			write32(HW_GPIO1INTFLAG, 1);
+			Set_ARM_IRQFlags(IRQF_GPIO1);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_RESET:
+		if (pid == 14) {
+			Set_ARM_IRQFlags(IRQF_RESET);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_DI:
+		if (pid == 3) {
+			Set_ARM_IRQFlags(IRQF_DI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_IPC:
+		if (pid == 0) {
+			Set_ARM_IRQFlags(IRQF_IPC);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	default:
+		ret = IPC_EINVAL;
+		break;
+	}
+
+	RestoreInterrupts(intflags);
+	return ret;
+}
+
 s32 RegisterEventHandler(u8 device, int queueid, void* message)
 {
 	u32 irqState = DisableInterrupts();

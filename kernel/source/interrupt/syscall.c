@@ -76,10 +76,10 @@ static const void* syscall_handlers[] = {
 	GetGID,						//0x002E
 	AhbFlushFrom,				//0x002F
 	AhbFlushTo,					//0x0030
-	0x00000000,					//0x0031
-	0x00000000,					//0x0032
-	0x00000000,					//0x0033
-	0x00000000,					//0x0034
+	ClearAndEnableIPCInterrupt,	//0x0031
+	ClearAndEnableDIInterrupt,	//0x0032
+	ClearAndEnableSDInterrupt,	//0x0033
+	ClearAndEnableEvent,		//0x0034
 	0x00000000,					//0x0035
 	0x00000000,					//0x0036
 	0x00000000,					//0x0037

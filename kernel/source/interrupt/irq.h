@@ -26,6 +26,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQ_GPIO1			11
 #define IRQ_UNKN12			12
 #define IRQ_RESET			17
+#define IRQ_DI				18
 #define IRQ_PPCIPC			30
 #define IRQ_IPC				31
 
@@ -33,11 +34,16 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQF_NAND			(1<<IRQ_NAND)
 #define IRQF_AES			(1<<IRQ_AES)
 #define IRQF_SHA1			(1<<IRQ_SHA1)
+#define IRQF_EHCI			(1<<IRQ_EHCI)
+#define IRQF_OHCI0			(1<<IRQ_OHCI0)
+#define IRQF_OHCI1			(1<<IRQ_OHCI1)
 #define IRQF_SDHC			(1<<IRQ_SDHC)
+#define IRQF_WIFI			(1<<IRQ_WIFI)
 #define IRQF_GPIO1B			(1<<IRQ_GPIO1B)
 #define IRQF_GPIO1			(1<<IRQ_GPIO1)
 #define IRQF_UNKN12			(1<<IRQ_UNKN12)
 #define IRQF_RESET			(1<<IRQ_RESET)
+#define IRQF_DI				(1<<IRQ_DI)
 #define IRQF_IPC			(1<<IRQ_IPC)
 
 #define IRQF_ALL			( IRQF_TIMER|IRQF_NAND|IRQF_GPIO1B|IRQF_GPIO1|IRQF_RESET|IRQF_IPC|IRQF_AES|IRQF_SHA1|IRQF_SDHC )
@@ -69,6 +75,20 @@ u32 DisableInterrupts(void);
 void RestoreInterrupts(u32 cookie);
 s32 RegisterEventHandler(u8 device, int queueid, void* message);
 s32 UnregisterEventHandler(u8 device);
+
+s32 ClearAndEnableEvent(u32 inter);
+inline s32 ClearAndEnableSDInterrupt(const u8 sdio)
+{
+	return ClearAndEnableEvent(sdio == 0 ? IRQ_SDHC : IRQ_WIFI);
+}
+inline s32 ClearAndEnableDIInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_DI);
+}
+inline s32 ClearAndEnableIPCInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_IPC);
+}
 
 void irq_shutdown(void);
 void irq_enable(u32 irq);
