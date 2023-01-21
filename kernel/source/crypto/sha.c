@@ -3,6 +3,7 @@
 	sha - the sha engine in starlet
 
 	Copyright (C) 2021	DacoTaco
+	Copyright (C) 2023	Jako
 
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
@@ -23,13 +24,34 @@
 #include "messaging/ipc.h"
 
 typedef enum 
-{ 
-	InitializeHashContext = 0x00,
-	AddData = 0x01,
-	FinalizeHash = 0x02,
-	SHACommandThree = 0x03,
+{
+	SHA_ChainingMode0 = 0x00,
+	SHA_ChainingMode1 = 0x01,
+	SHA_ChainingMode2 = 0x02,
+	HMAC_ChainingMode0 = 0x03,
+	HMAC_ChainingMode1 = 0x04,
+	HMAC_ChainingMode2 = 0x05,
 	ShaCommandFifthTeen = 0x0F
 } ShaCommandTypes;
+
+typedef enum
+{
+	PrivateKey = 0,
+	PublicKey = 1,
+	PublicAndPrivateKey = 2,
+	Other = 3
+} KeyType;
+
+typedef enum
+{
+	AES_128 = 0,
+	HMAC = 1,
+	RSA_2048 = 2,
+	RSA_4096 = 3,
+	ECC_233 = 4,
+	UNKNOWN1 = 5,
+	UNKNOWN2 = 6
+} KeySubtype;
 
 typedef union {
 	struct {
@@ -43,22 +65,22 @@ typedef union {
 } ShaControl;
 
 const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
-u8 LastBlockBuffer[0x80] ALIGNED(0x40) = { 0x00 };
-u8 HmacKey[0x40] ALIGNED(0x40) = { 0x00 };
+u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
+u8 HmacKey[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
-s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, u32* hashData)
+s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, finalShaHash finalHashBuffer)
 {
 	u32 numberOfBlocks = 0;
 	s32 ret = IPC_EINVAL;
 	write32(SHA_CMD, 0);
 
 	//chainingMode 0 == reset. so we set the internal hash states to the initial state
-	if(chainingMode == 0)
+	if(chainingMode == CHAINING_FIRST_BLOCK)
 	{
 		memcpy(hashContext->ShaStates, Sha1IntialState, sizeof(Sha1IntialState));
 		hashContext->Length = 0;
-		ret = 0;
+		ret = IPC_SUCCESS;
 	}
 
 	//floors data size to blocks of 512 bits
@@ -102,8 +124,8 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 			return IPC_EACCES;
 	}
 
-	// ChangingMode 2 : Last block contributed to hash
-	if(chainingMode == 2)
+	//changingMode 2 : Last block contributed to hash
+	if(chainingMode == CHAINING_LAST_BLOCK)
 	{
 		hashContext->Length += flooredDataSize * 8;
 
@@ -149,13 +171,13 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			hashData[i] = read32(SHA_H0 + (i * 4));
+			finalHashBuffer[i] = read32(SHA_H0 + (i * 4));
 		
 		ret = IPC_SUCCESS;
 	}
 
 	//happens in all chaining modes
-	if(flooredDataSize != 0)
+	else if(flooredDataSize != 0)
 	{
 		hashContext->Length += flooredDataSize * 8;
 		//copy over the states from the registers to the context
@@ -166,6 +188,134 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	}
 
 	return ret;
+}
+
+s32* getKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize)
+{	
+	/* Public Key Lengths */
+    if (keyType == PublicKey) {
+        if (keySubtype == RSA_4096) {
+            /* RSA 4096 (512 bytes/4096 bits) */
+            *keySize = 0x200;
+        }
+        else if (keySubtype < ECC_233) {
+            if (keySubtype != RSA_2048) {
+                return IOSC_EINVAL;
+            }
+            /* RSA 2048 (256 bytes/2048 bits) */
+            *keySize = 0x100;
+        }
+        else {
+            if (keySubtype != ECC_233) {
+                return IOSC_EINVAL;
+            }
+            /* ECC 233 (60 bytes/480 bits) */
+            *keySize = 0x3c;
+        }
+    }
+    else {
+        /* Private Key Lengths */
+        if (keyType < PublicAndPrivateKey) {
+            if (keyType != PrivateKey) {
+                return IOSC_EINVAL;
+            }
+            if (keySubtype == HMAC) {
+                /* SHA-1 HMAC (20 bytes/160 bits) */
+                *keySize = 0x14;
+            }
+            else if (keySubtype < RSA_2048) {
+                if (keySubtype != AES_128) {
+                    return IOSC_EINVAL;
+                }
+                /* AES 128 (16 bytes/128 bits) */
+                *keySize = 0x10;
+            }
+            else {
+                if (keySubtype != ECC_233) {
+                    return IOSC_EINVAL;
+                }
+                /* ECC 233 (30 bytes/240 bits) */
+                *keySize = 0x1e;
+            }
+        }
+        else {
+            /* Public + Private Key Combined Lengths */
+            if (keyType == PublicAndPrivateKey) {
+                if (keySubtype != ECC_233) {
+                    return IOSC_EINVAL;
+                }
+                /* ECC 233 (90 bytes/720 bits) */
+                *keySize = 0x5a;
+            }
+            else {
+                /* Unknown zero length keys? */
+                if (keyType != Other) {
+                    return IOSC_EINVAL;
+                }
+                if (keySubtype == UNKNOWN1) {
+                    *keySize = 0;
+                }
+                else {
+                    if (keySubtype != UNKNOWN2) {
+                        return IOSC_EINVAL;
+                    }
+                    *keySize = 0;
+                }
+            }
+        }
+    }
+    return IPC_SUCCESS;
+}
+
+u32* findKeyTypeUnmasked(u32 keyHandle, KeyType *keyType)
+{
+    u32 *ret;
+	u8 keyArray[x]; //placeholder, need to have someone RE this buffer
+    
+    ret = IOSC_EINVAL;
+    if ((keyHandle < 0x20) && (keyArray[keyHandle * 0x14] != 0)) {
+        *keyType = keyArray[keyHandle * 0x14 + 1];
+        ret = IPC_SUCCESS;
+    }
+    return ret;
+}
+
+void findKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
+
+{
+    u8 keyTypeUnmasked;
+    
+    if (keyHandle == IS_RSA4096_ROOTKEY) {
+        *keytype = PublicKey;
+        *keySubtype = RSA_4096;
+    }
+    else {
+        u32 keyTypeUnmasked = findKeyTypeUnmasked(keyHandle,&keyTypeUnmasked);
+        *keytype = keyTypeUnmasked >> 4;
+        *keySubtype = keyTypeUnmasked & 0xf;
+    }
+    return;
+}
+
+u32 findKeySize(u32 *keySize, u32 keyHandle)
+{
+    u32 keySizeValidity;
+    u32 ret = IOSC_FAIL_INTERNAL;
+    KeySubtype keySubtype;
+    KeyType keyType;
+    
+    if (keyHandle == IS_RSA4096_ROOTKEY) {
+        *keySize = 0x200;
+        ret = IPC_SUCCESS;
+    }
+    else {
+        findKeyTypes(keyHandle, &keyType, &keySubtype);
+        keySizeValidity = getKeySizeFromType(keyType, keySubtype, keySize);
+        if (keySizeValidity == IPC_SUCCESS) {
+            ret = IPC_SUCCESS;
+        }
+    }
+    return ret;
 }
 
 void ShaEngineHandler(void)
@@ -182,22 +332,22 @@ void ShaEngineHandler(void)
 		panic("Unable to create SHA event queue: %d\n", messageQueueId);
 	
 	s32 ret = RegisterEventHandler(IRQ_SHA1, messageQueueId, NULL);
-	if(ret < 0)
+	if(ret < IPC_SUCCESS)
 		panic("Unable to register SHA event handler: %d\n", ret);
 
 	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 0x10);
-	if(ret < 0)
+	if(ret < IPC_SUCCESS)
 		panic("Unable to create SHA rm queue: %d\n", ret);
 	
 	ret = RegisterResourceManager(SHA_DEVICE_NAME, ret);
-	if(ret < 0)
+	if(ret < IPC_SUCCESS)
 		panic("Unable to register resource manager: %d\n", ret);
 
 	while(1)
 	{
 		//main loop should start here
 		ret = ReceiveMessage(messageQueueId, (void**)&ipcMessage, None);
-		if(ret != 0)
+		if(ret != IPC_SUCCESS)
 			goto receiveMessageError;
 
 		ipcReply = ipcMessage;
@@ -212,7 +362,7 @@ void ShaEngineHandler(void)
 				goto sendReply;
 			case IOS_OPEN:
 				ret = memcmp(ipcMessage->Request.Data.Open.Filepath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
-				if(ret != 0)
+				if(ret != IPC_SUCCESS)
 					ret = IPC_ENOENT;
 				//not needed, since 0 == IPC_SUCCESS anyway
 				/*else
@@ -222,25 +372,52 @@ void ShaEngineHandler(void)
 			case IOS_IOCTLV:
 				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
 				s32 ioctl = ioctlvMessage->Ioctl;
+				u32* dataPtr = ioctlvMessage->Data;
 				switch (ioctl)
 				{
-					case InitializeHashContext:
-					case AddData:
-					case FinalizeHash:
+					/*it seems each of these are split based on whether they handle SHA hashing or HMAC verification.
+					cases 0, 1, 2 handle SHA-1 hashing, with ioctl deciding chainingMode for GenerateSha() call
+					cases 3, 4, 5 handle HMAC verification, with (ioctl - 3) deciding chainingMode for GenerateSha() calls
+					no clue what case 0xF does though*/
+					case SHA_ChainingMode0:
+					case SHA_ChainingMode1:
+					case SHA_ChainingMode2:
 						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
+						
 						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length, ioctl, ioctlvMessage->Data[2].Data);
+						
 						if(ret != IPC_SUCCESS)
 							goto sendReply;
 
 						break;
-					case SHACommandThree:
-					case ShaCommandFifthTeen: 
+
+					case HMAC_ChainingMode0:
+					case HMAC_ChainingMode1:
+					case HMAC_ChainingMode2:
+						u32 hmacChainingMode = ioctl - 3;
+
+						if (hmacChainingMode != CHAINING_MIDDLE_BLOCK) {
+							if (dataPtr[4] == 4) {
+								u32 signerHandle = dataPtr[6];
+								
+							}
+						}
+
+						break;
+						
+					case ShaCommandFifthTeen:
+						/* code */
 						break;
 				
 					default:
 						goto sendReply;
 				}
+				
+				if (ret == IPC_SUCCESS) {
+					FreeOnHeap(KernelHeapId, ioctlvMessage->Data);
+				}
+
 				break;
 		}
 
