@@ -25,12 +25,12 @@
 
 typedef enum 
 {
-	SHA_ChainingMode0 = 0x00,
-	SHA_ChainingMode1 = 0x01,
-	SHA_ChainingMode2 = 0x02,
-	HMAC_ChainingMode0 = 0x03,
-	HMAC_ChainingMode1 = 0x04,
-	HMAC_ChainingMode2 = 0x05,
+	SHA_ChainFirstBlock = 0x00,
+	SHA_ChainMiddleBlock = 0x01,
+	SHA_ChainLastBlock = 0x02,
+	HMAC_ChainFirstBlock = 0x03,
+	HMAC_ChainMiddleBlock = 0x04,
+	HMAC_ChainLastBlock = 0x05,
 	ShaCommandFifthTeen = 0x0F
 } ShaCommandTypes;
 
@@ -379,9 +379,9 @@ void ShaEngineHandler(void)
 					cases 0, 1, 2 handle SHA-1 hashing, with ioctl deciding chainingMode for GenerateSha() call
 					cases 3, 4, 5 handle HMAC verification, with (ioctl - 3) deciding chainingMode for GenerateSha() calls
 					no clue what case 0xF does though*/
-					case SHA_ChainingMode0:
-					case SHA_ChainingMode1:
-					case SHA_ChainingMode2:
+					case SHA_ChainFirstBlock:
+					case SHA_ChainMiddleBlock:
+					case SHA_ChainLastBlock:
 						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
 						
@@ -392,9 +392,9 @@ void ShaEngineHandler(void)
 
 						break;
 
-					case HMAC_ChainingMode0:
-					case HMAC_ChainingMode1:
-					case HMAC_ChainingMode2:
+					case HMAC_ChainFirstBlock:
+					case HMAC_ChainMiddleBlock:
+					case HMAC_ChainLastBlock:
 						u32 hmacChainingMode = ioctl - 3;
 
 						if (hmacChainingMode != CHAINING_MIDDLE_BLOCK) {
