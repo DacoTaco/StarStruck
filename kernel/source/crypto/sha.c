@@ -270,7 +270,10 @@ s32* getKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize)
 u32* findKeyTypeUnmasked(u32 keyHandle, KeyType *keyType)
 {
     u32 *ret;
-	u8 keyArray[x]; //placeholder, need to have someone RE this buffer
+
+	/* seems like this buffer is 0x20 elements long, and each element is at least 0x14 bytes long
+	my bet is on 0x10 bytes long each */
+	u8 keyArray[0x20]; //placeholder, need to have someone RE this buffer
     
     ret = IOSC_EINVAL;
     if ((keyHandle < 0x20) && (keyArray[keyHandle * 0x14] != 0)) {
