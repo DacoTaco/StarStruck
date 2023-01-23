@@ -31,8 +31,8 @@ typedef enum
 	HMAC_InitState = 0x03,
 	HMAC_ContributeState = 0x04,
 	HMAC_FinalizeState = 0x05,
-	ShaCommandFifthTeen = 0x0F
-} ShaCommandTypes;
+	ShaCommandUnknown = 0x0F
+} ShaIoctlvCommandTypes;
 
 typedef union {
 	struct {
@@ -49,14 +49,14 @@ const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE,
 u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
-s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, finalShaHash finalHashBuffer)
+s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize, const ShaCommandType command, FinalShaHash finalHashBuffer)
 {
 	u32 numberOfBlocks = 0;
 	s32 ret = IPC_EINVAL;
 	write32(SHA_CMD, 0);
 
 	//chainingMode 0 == reset. so we set the internal hash states to the initial state
-	if(chainingMode == CHAINING_FIRST_BLOCK)
+	if(command == InitShaState)
 	{
 		memcpy(hashContext->ShaStates, Sha1IntialState, sizeof(Sha1IntialState));
 		hashContext->Length = 0;
@@ -68,7 +68,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
-	//happens in all chaining modes
+	//happens with all commands
 	if(flooredDataSize != 0)
 	{
 		//check the requested blocks to be processed
@@ -77,7 +77,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 			return IOSC_INVALID_SIZE;
 
 		//if this isn't the last block contributed, make sure the input data is a whole multiple of blocks large
-		if ((chainingMode != 2) && ((inputSize & (SHA_BLOCK_SIZE-1)) != 0x0))
+		if ((command != FinalizeShaState) && ((inputSize & (SHA_BLOCK_SIZE-1)) != 0x0))
         	return IOSC_INVALID_SIZE;
 
 		//copy over the states from the context to the registers
@@ -104,8 +104,8 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 			return IPC_EACCES;
 	}
 
-	//changingMode 2 : Last block contributed to hash
-	if(chainingMode == CHAINING_LAST_BLOCK)
+	//FinalizeShaState : Last block contributed to hash
+	if(command == FinalizeShaState)
 	{
 		hashContext->Length += flooredDataSize * 8;
 
@@ -224,7 +224,7 @@ void ShaEngineHandler(void)
 			case IOS_IOCTLV:
 				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
 				s32 ioctl = ioctlvMessage->Ioctl;
-				u32* dataPtr = ioctlvMessage->Data;
+				IoctlvMessageData* messageData = ioctlvMessage->Data;
 				switch (ioctl)
 				{
 					/*it seems each of these are split based on whether they handle SHA hashing or HMAC verification.
@@ -237,7 +237,8 @@ void ShaEngineHandler(void)
 						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
 						
-						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length, ioctl, ioctlvMessage->Data[2].Data);
+						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, 
+										  ioctlvMessage->Data[0].Length, (ShaCommandType)ioctl, (u8*)ioctlvMessage->Data[2].Data);
 						
 						if(ret != IPC_SUCCESS)
 							goto sendReply;
@@ -247,18 +248,17 @@ void ShaEngineHandler(void)
 					case HMAC_InitState:
 					case HMAC_ContributeState:
 					case HMAC_FinalizeState:
-						u32 hmacChainingMode = ioctl - 3;
+						ShaCommandType shaCommand = (ShaCommandType)ioctl - 3;
 
-						if (hmacChainingMode != CHAINING_MIDDLE_BLOCK) {
-							if (dataPtr[4] == 4) {
-								u32 signerHandle = dataPtr[6];
-								
+						if (shaCommand != ContributeShaState) {
+							if (messageData[3].Length == 4) {
+								u32 signerHandle = *messageData[6].Data;								
 							}
 						}
 
 						break;
 						
-					case ShaCommandFifthTeen:
+					case ShaCommandUnknown:
 						/* code */
 						break;
 				

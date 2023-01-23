@@ -19,10 +19,15 @@
 #define SHA_BLOCK_SIZE 0x40
 #define SHA_NUM_WORDS 5
 
-#define CHAINING_FIRST_BLOCK	0
-#define CHAINING_MIDDLE_BLOCK	1
-#define CHAINING_LAST_BLOCK		2
+typedef enum 
+{
+	InitShaState = 0x00,
+	ContributeShaState = 0x01,
+	FinalizeShaState = 0x02,
+} ShaCommandType;
 
+typedef u8 FinalShaHash[(SHA_NUM_WORDS * 4)];
+CHECK_SIZE(FinalShaHash, 0x14);
 
 #pragma pack(push, 1)
 typedef struct
@@ -31,14 +36,11 @@ typedef struct
 	u64 Length;	//value of where the 64-bit input length will be stored in the hash
 } ShaContext;
 #pragma pack(pop)
-
-typedef u8 finalShaHash[(SHA_NUM_WORDS * 4)];
-
 CHECK_SIZE(ShaContext, 0x1C);
 CHECK_OFFSET(ShaContext, 0x00, ShaStates);
 CHECK_OFFSET(ShaContext, 0x14, Length);
-CHECK_SIZE(finalShaHash, 0x14);
 
+s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize, const ShaCommandType command, FinalShaHash finalHashBuffer);
 void ShaEngineHandler(void);
 
 #endif
