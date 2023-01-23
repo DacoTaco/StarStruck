@@ -23,7 +23,6 @@
 #define CHAINING_MIDDLE_BLOCK	1
 #define CHAINING_LAST_BLOCK		2
 
-#define IS_RSA4096_ROOTKEY 0xFFFFFFF
 
 #pragma pack(push, 1)
 typedef struct

@@ -34,25 +34,6 @@ typedef enum
 	ShaCommandFifthTeen = 0x0F
 } ShaCommandTypes;
 
-typedef enum
-{
-	PrivateKey = 0,
-	PublicKey = 1,
-	PublicAndPrivateKey = 2,
-	Other = 3
-} KeyType;
-
-typedef enum
-{
-	AES_128 = 0,
-	HMAC = 1,
-	RSA_2048 = 2,
-	RSA_4096 = 3,
-	ECC_233 = 4,
-	UNKNOWN1 = 5,
-	UNKNOWN2 = 6
-} KeySubtype;
-
 typedef union {
 	struct {
 		u32 Execute : 1;
@@ -66,7 +47,6 @@ typedef union {
 
 const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
 u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
-u8 HmacKey[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 s32 ShaEventMessageQueueId = 0;
 
 s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 chainingMode, finalShaHash finalHashBuffer)
@@ -188,137 +168,6 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, u32 inputSize, s32 c
 	}
 
 	return ret;
-}
-
-s32* getKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize)
-{	
-	/* Public Key Lengths */
-    if (keyType == PublicKey) {
-        if (keySubtype == RSA_4096) {
-            /* RSA 4096 (512 bytes/4096 bits) */
-            *keySize = 0x200;
-        }
-        else if (keySubtype < ECC_233) {
-            if (keySubtype != RSA_2048) {
-                return IOSC_EINVAL;
-            }
-            /* RSA 2048 (256 bytes/2048 bits) */
-            *keySize = 0x100;
-        }
-        else {
-            if (keySubtype != ECC_233) {
-                return IOSC_EINVAL;
-            }
-            /* ECC 233 (60 bytes/480 bits) */
-            *keySize = 0x3c;
-        }
-    }
-    else {
-        /* Private Key Lengths */
-        if (keyType < PublicAndPrivateKey) {
-            if (keyType != PrivateKey) {
-                return IOSC_EINVAL;
-            }
-            if (keySubtype == HMAC) {
-                /* SHA-1 HMAC (20 bytes/160 bits) */
-                *keySize = 0x14;
-            }
-            else if (keySubtype < RSA_2048) {
-                if (keySubtype != AES_128) {
-                    return IOSC_EINVAL;
-                }
-                /* AES 128 (16 bytes/128 bits) */
-                *keySize = 0x10;
-            }
-            else {
-                if (keySubtype != ECC_233) {
-                    return IOSC_EINVAL;
-                }
-                /* ECC 233 (30 bytes/240 bits) */
-                *keySize = 0x1e;
-            }
-        }
-        else {
-            /* Public + Private Key Combined Lengths */
-            if (keyType == PublicAndPrivateKey) {
-                if (keySubtype != ECC_233) {
-                    return IOSC_EINVAL;
-                }
-                /* ECC 233 (90 bytes/720 bits) */
-                *keySize = 0x5a;
-            }
-            else {
-                /* Unknown zero length keys? */
-                if (keyType != Other) {
-                    return IOSC_EINVAL;
-                }
-                if (keySubtype == UNKNOWN1) {
-                    *keySize = 0;
-                }
-                else {
-                    if (keySubtype != UNKNOWN2) {
-                        return IOSC_EINVAL;
-                    }
-                    *keySize = 0;
-                }
-            }
-        }
-    }
-    return IPC_SUCCESS;
-}
-
-u32* findKeyTypeUnmasked(u32 keyHandle, KeyType *keyType)
-{
-    u32 *ret;
-
-	/* seems like this buffer is 0x20 elements long, and each element is at least 0x14 bytes long
-	my bet is on 0x10 bytes long each */
-	u8 keyArray[0x20]; //placeholder, need to have someone RE this buffer
-    
-    ret = IOSC_EINVAL;
-    if ((keyHandle < 0x20) && (keyArray[keyHandle * 0x14] != 0)) {
-        *keyType = keyArray[keyHandle * 0x14 + 1];
-        ret = IPC_SUCCESS;
-    }
-    return ret;
-}
-
-void findKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
-
-{
-    u8 keyTypeUnmasked;
-    
-    if (keyHandle == IS_RSA4096_ROOTKEY) {
-        *keytype = PublicKey;
-        *keySubtype = RSA_4096;
-    }
-    else {
-        u32 keyTypeUnmasked = findKeyTypeUnmasked(keyHandle,&keyTypeUnmasked);
-        *keytype = keyTypeUnmasked >> 4;
-        *keySubtype = keyTypeUnmasked & 0xf;
-    }
-    return;
-}
-
-u32 findKeySize(u32 *keySize, u32 keyHandle)
-{
-    u32 keySizeValidity;
-    u32 ret = IOSC_FAIL_INTERNAL;
-    KeySubtype keySubtype;
-    KeyType keyType;
-    
-    if (keyHandle == IS_RSA4096_ROOTKEY) {
-        *keySize = 0x200;
-        ret = IPC_SUCCESS;
-    }
-    else {
-        findKeyTypes(keyHandle, &keyType, &keySubtype);
-        keySizeValidity = getKeySizeFromType(keyType, keySubtype, keySize);
-        if (keySizeValidity == IPC_SUCCESS) {
-            ret = IPC_SUCCESS;
-        }
-    }
-    return ret;
 }
 
 void ShaEngineHandler(void)
