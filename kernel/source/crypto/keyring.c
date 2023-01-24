@@ -16,79 +16,51 @@
 
 s32 GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize)
 {	
-	/* Public Key Lengths */
-    if (keyType == PublicKey) {
-        if (keySubtype == RSA_4096) {
-            /* RSA 4096 (512 bytes/4096 bits) */
-            *keySize = 0x200;
-        }
-        else if (keySubtype < ECC_233) {
-            if (keySubtype != RSA_2048) {
-                return IOSC_EINVAL;
-            }
-            /* RSA 2048 (256 bytes/2048 bits) */
-            *keySize = 0x100;
-        }
-        else {
-            if (keySubtype != ECC_233) {
-                return IOSC_EINVAL;
-            }
-            /* ECC 233 (60 bytes/480 bits) */
-            *keySize = 0x3c;
-        }
-    }
-    else {
-        /* Private Key Lengths */
-        if (keyType < PublicAndPrivateKey) {
-            if (keyType != PrivateKey) {
-                return IOSC_EINVAL;
-            }
-            if (keySubtype == HMAC) {
-                /* SHA-1 HMAC (20 bytes/160 bits) */
-                *keySize = 0x14;
-            }
-            else if (keySubtype < RSA_2048) {
-                if (keySubtype != AES_128) {
-                    return IOSC_EINVAL;
-                }
-                /* AES 128 (16 bytes/128 bits) */
-                *keySize = 0x10;
-            }
-            else {
-                if (keySubtype != ECC_233) {
-                    return IOSC_EINVAL;
-                }
-                /* ECC 233 (30 bytes/240 bits) */
-                *keySize = 0x1e;
-            }
-        }
-        else {
-            /* Public + Private Key Combined Lengths */
-            if (keyType == PublicAndPrivateKey) {
-                if (keySubtype != ECC_233) {
-                    return IOSC_EINVAL;
-                }
-                /* ECC 233 (90 bytes/720 bits) */
-                *keySize = 0x5a;
-            }
-            else {
-                /* Unknown zero length keys? */
-                if (keyType != Other) {
-                    return IOSC_EINVAL;
-                }
-                if (keySubtype == UNKNOWN1) {
-                    *keySize = 0;
-                }
-                else {
-                    if (keySubtype != UNKNOWN2) {
-                        return IOSC_EINVAL;
-                    }
-                    *keySize = 0;
-                }
-            }
-        }
-    }
-    return IPC_SUCCESS;
+	switch(keyType)
+	{
+		//Public Key Lengths
+		case PublicKey:
+			if(keySubtype == RSA_4096) //RSA 4096 (512 bytes/4096 bits)
+				*keySize = 0x200;
+			else if(keySubtype == RSA_2048) //RSA 2048 (256 bytes/2048 bits)
+				*keySize = 0x100;
+			else if(keySubtype == ECC_233) //ECC 233 (60 bytes/480 bits)
+				*keySize = 0x3C;
+			else
+				return IOSC_EINVAL;
+			break;
+		//Private Key Lengths
+		case PrivateKey:
+			if(keySubtype == HMAC) //SHA-1 HMAC (20 bytes/160 bits) 
+				*keySize = 0x14;
+			else if(keySubtype == AES_128) //AES 128 (16 bytes/128 bits)
+				*keySize = 0x10;
+			else if(keySubtype == ECC_233) //ECC 233 (30 bytes/240 bits)
+				*keySize = 0x1e;
+			else
+				return IOSC_EINVAL;
+			
+			break;
+		//Public + Private Key Combined Lengths
+		case PublicAndPrivateKey:
+			if(keySubtype != ECC_233)
+				return IOSC_EINVAL;
+			
+			//ECC 233 (90 bytes/720 bits)
+            *keySize = 0x5a;
+			break;
+		case Other:
+			if(keySubtype == UNKNOWN1 || keySubtype == UNKNOWN2)
+				*keySize = 0;
+			else
+				return IOSC_EINVAL;
+			
+			break;
+		default:
+			return IOSC_EINVAL;
+	}
+
+	return IPC_SUCCESS;
 }
 
 s32 FindKeyTypeUnmasked(u32 keyHandle, KeyType *keyType)
