@@ -128,29 +128,29 @@ void IrqHandler(ThreadContext* context)
 
 	if(flags & IRQF_TIMER) 
 	{
-//		gecko_printf("IRQ: Timer\n");
+		//gecko_printf("IRQ: Timer\n");
 		EnqueueEventHandler(IRQ_TIMER);
 		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 	}
 	if(flags & IRQF_NAND) {
-//		gecko_printf("IRQ: NAND\n");
+		//gecko_printf("IRQ: NAND\n");
 		write32(NAND_CMD, 0x7fffffff); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_NAND);
 		nand_irq();
 	}
 	if(flags & IRQF_GPIO1B) {
-//		gecko_printf("IRQ: GPIO1B\n");
+		//gecko_printf("IRQ: GPIO1B\n");
 		write32(HW_GPIO1BINTFLAG, 0xFFFFFF); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_GPIO1B);
 	}
 	if(flags & IRQF_GPIO1) {
-//		gecko_printf("IRQ: GPIO1\n");
+		//gecko_printf("IRQ: GPIO1\n");
 		write32(HW_GPIO1INTFLAG, 0xFFFFFF); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_GPIO1);
 	}
 	if(flags & IRQF_RESET) {
-//		gecko_printf("IRQ: RESET\n");
+		//gecko_printf("IRQ: RESET\n");
 		write32(HW_ARMIRQFLAG, IRQF_RESET);
 	}
 	if(flags & IRQF_IPC) {
@@ -158,13 +158,18 @@ void IrqHandler(ThreadContext* context)
 		ipc_irq();
 		write32(HW_ARMIRQFLAG, IRQF_IPC);
 	}
+	if(flags & IRQF_SHA1) {
+		//gecko_printf("IRQ: SHA1\n");
+		EnqueueEventHandler(IRQ_SHA1);
+		write32(HW_ARMIRQFLAG, IRQF_SHA1);
+	}
 	if(flags & IRQF_AES) {
-//		gecko_printf("IRQ: AES\n");
+		//gecko_printf("IRQ: AES\n");
 		EnqueueEventHandler(IRQ_AES);
 		write32(HW_ARMIRQFLAG, IRQF_AES);
 	}
 	if (flags & IRQF_SDHC) {
-//		gecko_printf("IRQ: SDHC\n");
+		//gecko_printf("IRQ: SDHC\n");
 		write32(HW_ARMIRQFLAG, IRQF_SDHC);
 		sdhc_irq();
 	}

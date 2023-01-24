@@ -46,18 +46,15 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_OUT_SIZE	32
 
 void IpcInit(void);
-s32 ResourceReply(IpcRequest* message, u32 requestReturnValue);
+s32 ResourceReply(IpcMessage* message, u32 requestReturnValue);
 
 void ipc_irq(void);
 void ipc_send_ack(void);
 void ipc_reply(IpcMessage* req);
 void ipc_enqueue_reuqest(IpcMessage* req);
-void ipc_initialize(void);
 void ipc_shutdown(void);
 void ipc_post(u32 code, u32 tag, u32 num_args, ...);
 void ipc_flush(void);
-u32  ipc_main(void);
-void ipc_ppc_boot_title(u64 titleId);
 
 #endif
 

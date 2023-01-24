@@ -31,6 +31,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
 #include "crypto/aes.h"
+#include "crypto/sha.h"
 #include "utils.h"
 
 #include "sdhc.h"
@@ -101,6 +102,14 @@ void kernel_main( void )
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		panic("failed to start AES thread!\n");	
 
+	//create SHA Engine handler thread & also set it to run as system thread
+	threadId = CreateThread((s32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	if(threadId > 0)
+		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+
+	if( threadId < 0 || StartThread(threadId) < 0 )
+		panic("failed to start SHA thread!\n");	
+
 	KernelHeapId = CreateHeap((void*)0x138F0000, 0xC0000);
 	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
 	SetThreadPriority(0, 0);
@@ -115,9 +124,6 @@ void kernel_main( void )
 	printk("NAND initialized.\n");
 
 	boot2_init();
-
-	printk("Initializing IPC...\n");
-	ipc_initialize();
 	
 	/*printk("Initializing SDHC...\n");
 	sdhc_init();
@@ -136,10 +142,9 @@ void kernel_main( void )
 		panic2(0, PANIC_MOUNT);
 	}
 
-	ipc_ppc_boot_title(0x000100014C554C5ALL);
-	printk("Going into IPC mainloop...\n");
-	vector = ipc_main();
-	printk("IPC mainloop done! killing IPC...\n");
+	DisableInterrupts();
+	printk("rebooting into HBC...\n");
+	vector = boot2_run(0x00010001, 0x4C554C5A);
 	ipc_shutdown();
 
 shutdown:

@@ -61,6 +61,8 @@ typedef u32 size_t;
 #define LLONG_MAX 0x7fffffffffffffffLL
 #define ULLONG_MAX 0xffffffffffffffffULL
 
+#define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
+
 #define CHECK_SIZE(Type, Size) StaticAssert(sizeof(Type) == Size, #Type " must be " #Size " bytes")
 
 #define CHECK_OFFSET(Type, Offset, Field) StaticAssert(offsetof(Type, Field) == Offset, #Type "::" #Field " must be at offset " #Offset)

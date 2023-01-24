@@ -68,7 +68,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_MAX_FILENAME	0x1300
 
 extern char __mem2_area_start[];
-static volatile u64 boot_titleID = 0;
 static volatile IpcMessage* input_queue[IPC_IN_SIZE] ALIGNED(0x20) SRAM_BSS;
 static volatile IpcMessage* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
 static u16 in_cnt = 0;
@@ -223,7 +222,7 @@ void IpcInit(void)
 	write32(HW_IPC_ARMCTRL, ( IPC_ARM_IX1 | IPC_ARM_IX2 ));
 }
 
-s32 ResourceReply(IpcRequest* message, u32 requestReturnValue)
+s32 ResourceReply(IpcMessage* message, u32 requestReturnValue)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;
@@ -232,18 +231,6 @@ s32 ResourceReply(IpcRequest* message, u32 requestReturnValue)
 return_resourceReply:
 	RestoreInterrupts(interrupts);
 	return ret;
-}
-
-void ipc_initialize(void)
-{
-	write32(HW_IPC_ARMMSG, 0);
-	write32(HW_IPC_PPCMSG, 0);
-	write32(HW_IPC_PPCCTRL, IPC_CTRL_RESET);
-	write32(HW_IPC_ARMCTRL, IPC_CTRL_RESET);
-	in_cnt = 0;
-	out_cnt = 0;
-	irq_enable(IRQ_IPC);
-	write32(HW_IPC_ARMCTRL, IPC_ARM_IX1);
 }
 
 void ipc_shutdown(void)
@@ -256,24 +243,3 @@ void ipc_shutdown(void)
 	write32(HW_IPC_ARMCTRL, IPC_CTRL_RESET);
 	irq_disable(IRQ_IPC);
 }
-
-void ipc_ppc_boot_title(u64 titleId)
-{
-	boot_titleID = titleId;
-	return;
-}
-
-u32 ipc_main(void)
-{
-	while (boot_titleID == 0) 
-	{
-		u32 cookie = DisableInterrupts();		
-		if(in_cnt > 0)
-			ipc_process_input();
-		RestoreInterrupts(cookie);
-	}
-	DisableInterrupts();
-	
-	return boot2_run(boot_titleID >> 32, boot_titleID & 0xFFFFFFFF);
-}
-
