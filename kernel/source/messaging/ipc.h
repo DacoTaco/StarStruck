@@ -48,9 +48,9 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 
-extern IpcMessage* ipc_message_array;
-extern MessageQueue ipc_message_queue_array[MAX_THREADS];
-extern unsigned thread_msg_usage_arr[MAX_THREADS];
+extern IpcMessage* IpcMessageArray;
+extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
+extern unsigned ThreadMessageUsageArray[MAX_THREADS];
 extern ThreadInfo* IpcHandlerThread;
 extern s32 IpcHandlerThreadId;
 

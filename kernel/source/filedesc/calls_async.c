@@ -12,15 +12,17 @@
 #include "calls_async.h"
 #include "memory/memory.h"
 
+// tells calls_inner.h to produce the <name>FDAsync syscall functions in its include, with this template
+// they all share this exact shape, except Open
 #define WRAP_INNER_CALL(rettype, name, arguments) \
-rettype name ## FDAsync(ARGEXTRACT_END( ARGEXTRACT_LOOP_FULL_A arguments ), u32 messageQueueId, IpcMessage* message) { \
+rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), u32 messageQueueId, IpcMessage* message) { \
 	const s32 state = DisableInterrupts(); \
 	rettype ret = IPC_EACCES; \
 	if(messageQueueId < 256) { \
 		MessageQueue* queue = &MessageQueues[messageQueueId]; \
 		if(queue->ProcessId == GetProcessID()) { \
 			if((ret = CheckMemoryPointer(message, sizeof(IpcRequest), 4, queue->ProcessId, 0)) == IPC_SUCCESS) { \
-				ret = name ## FD_Inner(ARGEXTRACT_END( ARGEXTRACT_LOOP_EVEN_A arguments ), queue, message); \
+				ret = name ## FD_Inner(ARGEXTRACT_DO( ARGEXTRACT_EVEN arguments ), queue, message); \
 			} \
 		} \
 	} \

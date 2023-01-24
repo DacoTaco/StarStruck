@@ -86,10 +86,10 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 
 	if(!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
-		AesFileDescriptor.belongs_to_resource = &ResourceManagers[resourceManagerId];
+		AesFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
 
 	if(!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
-		ShaFileDescriptor.belongs_to_resource = &ResourceManagers[resourceManagerId];
+		ShaFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
 
 returnRegisterResource:
 	RestoreInterrupts(interrupts);

@@ -71,7 +71,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 #define IPC_MAX_FILENAME	0x1300
 
-#define TOTAL_IPCMSG_IN_ARR (MAX_THREADS + 128)
+#define MAX_IPCMESSAGES (MAX_THREADS + 128)
 
 extern char __mem2_area_start[];
 static volatile IpcMessage* input_queue[IPC_IN_SIZE] ALIGNED(0x20) SRAM_BSS;
@@ -79,12 +79,12 @@ static volatile IpcMessage* output_queue[IPC_OUT_SIZE] ALIGNED(0x20) SRAM_BSS;
 static u16 in_cnt = 0;
 static u16 out_cnt = 0;
 
-IpcMessage* ipc_message_array = NULL;
-FileDescriptorPath* fd_path_array = NULL;
-MessageQueue ipc_message_queue_array[MAX_THREADS] SRAM_BSS;
-unsigned thread_msg_usage_arr[MAX_THREADS] SRAM_BSS;
-static void* message_queue_ptr_array[MAX_THREADS] SRAM_BSS;
-static FileDescriptorPath* fd_path_ptr_array[MAX_THREADS] SRAM_BSS;
+IpcMessage* IpcMessageArray = NULL;
+FileDescriptorPath* FiledescPathArray = NULL;
+MessageQueue IpcMessageQueueArray[MAX_THREADS] SRAM_BSS;
+unsigned ThreadMessageUsageArray[MAX_THREADS] SRAM_BSS;
+static void* IpcMessageQueueDataPtrArray[MAX_THREADS] SRAM_BSS;
+static FileDescriptorPath* FiledescPathPointerArray[MAX_THREADS] SRAM_BSS;
 
 ThreadInfo* IpcHandlerThread = NULL;
 s32 IpcHandlerThreadId = -1;
@@ -95,15 +95,15 @@ static IpcRequest IpcHandlerRequest SRAM_BSS;
 #define IPC_CIRCULAR_BUFFER_SIZE 0x30
 
 typedef struct {
-	u32 had_relaunch_flag;
-	u32 waiting_in_buffer_cnt;
-	u32 ready_to_send_cnt;
-	u32 have_to_send_idx;
-	u32 prepare_to_send_idx;
-	IpcRequest* circular_backing_array[IPC_CIRCULAR_BUFFER_SIZE];
+	u32 HadRelaunchFlag;
+	u32 WaitingInBufferAmount;
+	u32 ReadyToSendAmount;
+	u32 SendingIndex;
+	u32 PrepareToSendIndex;
+	IpcRequest* BackingArray[IPC_CIRCULAR_BUFFER_SIZE];
 } IpcCircularBuffer;
 
-static IpcCircularBuffer ipc_circ_buf SRAM_BSS;
+static IpcCircularBuffer IpcCircBuf SRAM_BSS;
 
 void ipc_send_ack(void)
 {
@@ -248,66 +248,61 @@ void ipc_irq(void)
 		gecko_printf("IPC: IRQ but no bell!\n");
 }
 
-void DoSendIpcRequest(void)
+void SendIpcRequest(void)
 {
-	if (ipc_circ_buf.had_relaunch_flag && ipc_circ_buf.ready_to_send_cnt != 0)
-	{
-		IpcRequest* const ptr = ipc_circ_buf.circular_backing_array[ipc_circ_buf.have_to_send_idx];
-		DCFlushRange(ptr, sizeof(IpcRequest));
-		write32(HW_IPC_ARMMSG, (u32)ptr);
-		ipc_circ_buf.have_to_send_idx = (ipc_circ_buf.have_to_send_idx + 1) % IPC_CIRCULAR_BUFFER_SIZE;
-		ipc_circ_buf.ready_to_send_cnt--;
-		ipc_circ_buf.waiting_in_buffer_cnt--;
-		ipc_circ_buf.had_relaunch_flag = 0;
-		write32(HW_IPC_ARMCTRL, (read32(HW_IPC_ARMCTRL) & 0x30) | ((ipc_circ_buf.waiting_in_buffer_cnt == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING));
-	}
+	if (!IpcCircBuf.HadRelaunchFlag || IpcCircBuf.ReadyToSendAmount == 0)
+		return;
+
+	IpcRequest* const ptr = IpcCircBuf.BackingArray[IpcCircBuf.SendingIndex];
+	DCFlushRange(ptr, sizeof(IpcRequest));
+	write32(HW_IPC_ARMMSG, (u32)ptr);
+	IpcCircBuf.SendingIndex = (IpcCircBuf.SendingIndex + 1) % IPC_CIRCULAR_BUFFER_SIZE;
+	IpcCircBuf.ReadyToSendAmount--;
+	IpcCircBuf.WaitingInBufferAmount--;
+	IpcCircBuf.HadRelaunchFlag = 0;
+	mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING);
 }
 
-static void DoFlushIpcRequestAfterInvalidate(IpcRequest *request)
+static void FlushAndSendRequest(IpcRequest *request)
 {
-	const u32 req_cmd = request->RequestCommand;
-	if (req_cmd == IOS_IOCTL)
+	const u32 requestCommand = request->RequestCommand;
+	if (requestCommand == IOS_IOCTL)
 	{
 		DCFlushRange(request->Data.Ioctl.InputBuffer, request->Data.Ioctl.InputLength);
 		DCFlushRange(request->Data.Ioctl.IoBuffer, request->Data.Ioctl.IoLength);
 	}
-	else if (req_cmd == IOS_READ)
+	else if (requestCommand == IOS_READ)
 	{
 		DCFlushRange(request->Data.Read.Data, request->Result);
 	}
-	else if (req_cmd == IOS_IOCTLV)
+	else if (requestCommand == IOS_IOCTLV)
 	{
-		const u32 total_arg_count = request->Data.Ioctlv.InputArgc + request->Data.Ioctlv.IoArgc;
-		for(u32 i = 0; i < total_arg_count; ++i)
+		const u32 totalArgc = request->Data.Ioctlv.InputArgc + request->Data.Ioctlv.IoArgc;
+		for(u32 i = 0; i < totalArgc; ++i)
 		{
 			DCFlushRange(request->Data.Ioctlv.Data[i].Data, request->Data.Ioctlv.Data[i].Length);
 		}
-		DCFlushRange(request->Data.Ioctlv.Data, total_arg_count * sizeof(IoctlvMessageData));
+		DCFlushRange(request->Data.Ioctlv.Data, totalArgc * sizeof(IoctlvMessageData));
 	}
-	
-	ipc_circ_buf.circular_backing_array[ipc_circ_buf.prepare_to_send_idx] = request;
-	ipc_circ_buf.prepare_to_send_idx = (ipc_circ_buf.prepare_to_send_idx + 1) % IPC_CIRCULAR_BUFFER_SIZE;
-	ipc_circ_buf.ready_to_send_cnt++;
 
-	DoSendIpcRequest();
-	return;
+	IpcCircBuf.BackingArray[IpcCircBuf.PrepareToSendIndex] = request;
+	IpcCircBuf.PrepareToSendIndex = (IpcCircBuf.PrepareToSendIndex + 1) % IPC_CIRCULAR_BUFFER_SIZE;
+	IpcCircBuf.ReadyToSendAmount++;
+
+	SendIpcRequest();
 }
 
-static int CheckAddrIsFine_Inner(const u32 addr, const u32 size)
+static int ValidateAddressInt(const u32 addr, const u32 size)
 {
-	const u32 addr_end = addr + size;
-	return (addr < addr_end) && ((0x10000000 <= addr && addr_end < 0x13620000) || (addr_end < 0x01800000));
-}
-static int CheckAddrIsFine(const u32 addr, const u32 size)
-{
-	const int ret = CheckAddrIsFine_Inner(addr, size);
+	const u32 addrEnd = addr + size;
+	const int ret = (addr < addrEnd) && ((0x10000000 <= addr && addrEnd < 0x13620000) || (addrEnd < 0x01800000));
 	if(!ret)
 		printk("IPC: failed buf check: ptr=%08x len=%d\n", addr, size);
 	return ret;
 }
-static int CheckPtrIsFine(const void* const addr, const u32 size)
+static int ValidateAddressPtr(const void* const addr, const u32 size)
 {
-	return CheckAddrIsFine((u32)addr, size);
+	return ValidateAddressInt((u32)addr, size);
 }
 
 void IpcHandler(void)
@@ -315,7 +310,7 @@ void IpcHandler(void)
 	SetThreadPriority(0, 0x40);
 	IpcHandlerRequest.Command = IOS_INTERRUPT;
 
-	const s32 messageQueue = CreateMessageQueue((void**)IpcHandlerMessageQueueData, 50);
+	const s32 messageQueue = CreateMessageQueue((void**)IpcHandlerMessageQueueData, ARRAY_LENGTH(IpcHandlerMessageQueueData));
 	if (messageQueue < 0)
 		return;
 	
@@ -324,226 +319,224 @@ void IpcHandler(void)
 		return;
 
 	// enable incoming & outgoing ipc messages from PPC
-	if ((read32(HW_IPC_PPCCTRL) & 0x30) == 0)
-	{
+	if ((read32(HW_IPC_PPCCTRL) & (IPC_PPC_IY1 | IPC_PPC_IY2)) == 0)
 		write32(HW_IPC_PPCCTRL, 0);
-	}
 
 	ClearAndEnableIPCInterrupt();
 
+	int wantReceive = 1;
+	IpcMessage *messagePointer = NULL;
 	while(1)
 	{
-		IpcMessage *message_ptr = NULL;
+		ret = 1;
+		while(wantReceive && ret != IPC_SUCCESS)
+			ret = ReceiveMessage(messageQueue, (void**)&messagePointer, None);
 
-		do {
-			ret = ReceiveMessage(messageQueue, (void**)&message_ptr, None);
-		} while (ret != IPC_SUCCESS);
+		wantReceive = 1;
 
-		while (1)
+		if(messagePointer->Request.Command == IOS_REPLY)
 		{
-			if(message_ptr->Request.Command == IOS_REPLY)
-			{
-				DoFlushIpcRequestAfterInvalidate(&message_ptr->Request);
-				break;
-			}
+			FlushAndSendRequest(&messagePointer->Request);
+			continue;
+		}
 
-			IpcMessage *ppc_message = (void*)read32(HW_IPC_PPCMSG);
-			write32(HW_IPC_PPCMSG, (u32)ppc_message);
+		IpcMessage *messageFromPPC = (void*)read32(HW_IPC_PPCMSG);
+		write32(HW_IPC_PPCMSG, (u32)messageFromPPC);
 
-			if (message_ptr->Request.Command != IOS_INTERRUPT)
+		if (messagePointer->Request.Command != IOS_INTERRUPT)
+		{
+			printk("UNKNOWN MESSAGE: %u\n", messagePointer->Request.Command);
+			ret = ReceiveMessage(messageQueue, (void**)&messagePointer, None);
+			if (ret != IPC_SUCCESS)
+				continue;
+		}
+		
+		const u32 armctrl = read32(HW_IPC_ARMCTRL);
+		if((armctrl & IPC_ARM_RELAUNCH) != 0)
+		{
+			IpcCircBuf.HadRelaunchFlag = 1;
+			mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), IPC_ARM_RELAUNCH);
+
+			ClearAndEnableIPCInterrupt();
+			SendIpcRequest();
+			continue;
+		}
+
+		if ((armctrl & IPC_ARM_INCOMING) == 0)
+		{
+			printk("UNKNOWN INTERRUPT: %x / %x\n", read32(HW_ARMIRQFLAG), read32(HW_ARMIRQMASK));
+			continue;
+		}
+
+		write32(HW_IPC_ARMCTRL, (armctrl & (IPC_ARM_IX1 | IPC_ARM_IX2)) | ((IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING));
+
+		ClearAndEnableIPCInterrupt();
+
+		IpcCircBuf.WaitingInBufferAmount++;
+		if(!ValidateAddressPtr(messageFromPPC, sizeof(IpcRequest)))
+			continue;
+
+		DCInvalidateRange(messageFromPPC, sizeof(IpcRequest));
+		const int filedescId = messageFromPPC->Request.FileDescriptor;
+		messageFromPPC->Request.RequestCommand = messageFromPPC->Request.Command;
+		ret = IPC_SUCCESS;
+
+		// systematically check pointers for access and invalidate them
+		switch(messageFromPPC->Request.Command)
+		{
+		default:
+			printk("Dispatch switch ERROR: %d cmd: %d\n", IPC_EINVAL, messageFromPPC->Request.Command);
+			ret = IPC_EINVAL;
+			break;
+
+		case IOS_OPEN:
 			{
-				printk("UNKNOWN MESSAGE: %u\n", message_ptr->Request.Command);
-				ret = ReceiveMessage(messageQueue, (void**)&message_ptr, None);
-				if (ret != IPC_SUCCESS)
-					break;
-			}
-			else
-			{
-				const u32 armctrl = read32(HW_IPC_ARMCTRL);
-				if((armctrl & IPC_ARM_RELAUNCH) != 0)
+				if(!ValidateAddressPtr(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN))
 				{
-					ipc_circ_buf.had_relaunch_flag = 1;
-					write32(HW_IPC_ARMCTRL, (armctrl & 0x30) | IPC_ARM_RELAUNCH);
-					ClearAndEnableIPCInterrupt();
-					DoSendIpcRequest();
+					ret = IPC_EACCES;
 					break;
 				}
-
-				if ((armctrl & IPC_ARM_INCOMING) == 0)
+				DCInvalidateRange(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN);
+				const u32 pathlen = strnlen(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN);
+				if (pathlen >= MAX_PATHLEN)
 				{
-					printk("UNKNOWN INTERRUPT: %x / %x\n", read32(HW_ARMIRQFLAG), read32(HW_ARMIRQMASK));
-					break;
-				}
-
-				write32(HW_IPC_ARMCTRL, (armctrl & 0x30) | ((ipc_circ_buf.waiting_in_buffer_cnt < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING));
-
-				ClearAndEnableIPCInterrupt();
-
-				ipc_circ_buf.waiting_in_buffer_cnt++;
-				if(!CheckPtrIsFine(ppc_message, sizeof(IpcRequest)))
-				{
-					break;
-				}
-
-				DCInvalidateRange(ppc_message, sizeof(IpcRequest));
-				const int filedesc_id = ppc_message->Request.FileDescriptor;
-				ppc_message->Request.RequestCommand = ppc_message->Request.Command;
-				ret = IPC_SUCCESS;
-				switch(ppc_message->Request.Command)
-				{
-				default:
-					printk("Dispatch switch ERROR: %d cmd: %d\n", IPC_EINVAL, ppc_message->Request.Command);
+					printk("IPC: failed open path check: path=%s len=%d\n",messageFromPPC->Request.Data.Open.Filepath, pathlen);
 					ret = IPC_EINVAL;
 					break;
-
-				case IOS_OPEN:
-					{
-						if(!CheckPtrIsFine(ppc_message->Request.Data.Open.Filepath, MAX_PATHLEN))
-						{
-							ret = IPC_EACCES;
-							break;
-						}
-						DCInvalidateRange(ppc_message->Request.Data.Open.Filepath, MAX_PATHLEN);
-						const u32 pathlen = strnlen(ppc_message->Request.Data.Open.Filepath, MAX_PATHLEN);
-						if (pathlen >= MAX_PATHLEN)
-						{
-							printk("IPC: failed open path check: path=%s len=%d\n",ppc_message->Request.Data.Open.Filepath, pathlen);
-							ret = IPC_EINVAL;
-							break;
-						}
-					}
-					
-					ret = OpenFDAsync(
-						ppc_message->Request.Data.Open.Filepath,
-						ppc_message->Request.Data.Open.Mode,
-						messageQueue, ppc_message);
-					break;
-
-				case IOS_CLOSE:
-					ret = CloseFDAsync(filedesc_id, messageQueue, ppc_message);
-					break;
-
-				case IOS_READ:
-					{
-						if (ppc_message->Request.Data.Read.Data != NULL)
-						{
-							if(!CheckPtrIsFine(ppc_message->Request.Data.Read.Data, ppc_message->Request.Data.Read.Length))
-							{
-								ret = IPC_EACCES;
-								break;
-							}
-						}
-						DCInvalidateRange(ppc_message->Request.Data.Read.Data, ppc_message->Request.Data.Read.Length);
-					}
-
-					ret = ReadFDAsync(filedesc_id, ppc_message->Request.Data.Read.Data, ppc_message->Request.Data.Read.Data == NULL ? 0 : ppc_message->Request.Data.Read.Length,messageQueue,ppc_message);
-					break;
-
-				case IOS_WRITE:
-					{
-						if (ppc_message->Request.Data.Write.Data != NULL)
-						{
-							if(!CheckPtrIsFine(ppc_message->Request.Data.Write.Data, ppc_message->Request.Data.Write.Length))
-							{
-								ret = IPC_EACCES;
-								break;
-							}
-						}
-						DCInvalidateRange(ppc_message->Request.Data.Write.Data, ppc_message->Request.Data.Write.Length);
-					}
-					
-					ret = WriteFDAsync(filedesc_id,
-						ppc_message->Request.Data.Write.Data,
-						ppc_message->Request.Data.Write.Length,
-						messageQueue, ppc_message);
-					break;
-
-				case IOS_SEEK:
-					ret = SeekFDAsync(filedesc_id,
-						ppc_message->Request.Data.Seek.Where,
-						ppc_message->Request.Data.Seek.Whence,
-						messageQueue, ppc_message);
-					break;
-
-				case IOS_IOCTL:
-					{
-						if (ppc_message->Request.Data.Ioctl.InputLength != 0)
-						{
-							if(!CheckPtrIsFine(ppc_message->Request.Data.Ioctl.InputBuffer, ppc_message->Request.Data.Ioctl.InputLength))
-							{
-								ret = IPC_EACCES;
-								break;
-							}
-						}
-						if (ppc_message->Request.Data.Ioctl.IoLength != 0)
-						{
-							if(!CheckPtrIsFine(ppc_message->Request.Data.Ioctl.IoBuffer, ppc_message->Request.Data.Ioctl.IoLength))
-							{
-								ret = IPC_EACCES;
-								break;
-							}
-						}
-						DCInvalidateRange(ppc_message->Request.Data.Ioctl.InputBuffer, ppc_message->Request.Data.Ioctl.InputLength);
-						DCInvalidateRange(ppc_message->Request.Data.Ioctl.IoBuffer, ppc_message->Request.Data.Ioctl.IoLength);
-					}
-
-					ret = IoctlFDAsync(filedesc_id,
-						ppc_message->Request.Data.Ioctl.Ioctl,
-						ppc_message->Request.Data.Ioctl.InputBuffer,
-						ppc_message->Request.Data.Ioctl.InputLength,
-						ppc_message->Request.Data.Ioctl.IoBuffer,
-						ppc_message->Request.Data.Ioctl.IoLength,
-						messageQueue, ppc_message);
-					break;
-
-				case IOS_IOCTLV:
-					{
-						const u32 total_arg_count = ppc_message->Request.Data.Ioctlv.InputArgc + ppc_message->Request.Data.Ioctlv.IoArgc;
-						if (total_arg_count != 0)
-						{
-							if(!CheckPtrIsFine(ppc_message->Request.Data.Ioctlv.Data, total_arg_count * sizeof(IoctlvMessageData)))
-							{
-								ret = IPC_EACCES;
-								break;
-							}
-						}
-
-						DCInvalidateRange(ppc_message->Request.Data.Ioctlv.Data, total_arg_count * sizeof(IoctlvMessageData));
-						u32 i = 0;
-						for(; i < total_arg_count; ++i)
-						{
-							if (ppc_message->Request.Data.Ioctlv.Data[i].Length != 0)
-							{
-								if(!CheckPtrIsFine(ppc_message->Request.Data.Ioctlv.Data[i].Data, ppc_message->Request.Data.Ioctlv.Data[i].Length))
-								{
-									break;
-								}
-							}
-							DCInvalidateRange(ppc_message->Request.Data.Ioctlv.Data[i].Data, ppc_message->Request.Data.Ioctlv.Data[i].Length);
-						}
-						if(i != total_arg_count)
-						{
-							ret = IPC_EACCES;
-							break;
-						}
-					}
-
-					ret = IoctlvFDAsync(filedesc_id,
-						ppc_message->Request.Data.Ioctlv.Ioctl,
-						ppc_message->Request.Data.Ioctlv.InputArgc,
-						ppc_message->Request.Data.Ioctlv.IoArgc,
-						ppc_message->Request.Data.Ioctlv.Data,
-						messageQueue, ppc_message);
-					break;
-				}
-
-				if (ret < 0)
-				{
-					ppc_message->Request.Result = ret;
-					DoFlushIpcRequestAfterInvalidate(&ppc_message->Request);
 				}
 			}
+			
+			ret = OpenFDAsync(
+				messageFromPPC->Request.Data.Open.Filepath,
+				messageFromPPC->Request.Data.Open.Mode,
+				messageQueue, messageFromPPC);
+			break;
+
+		case IOS_CLOSE:
+			ret = CloseFDAsync(filedescId, messageQueue, messageFromPPC);
+			break;
+
+		case IOS_READ:
+			{
+				if (messageFromPPC->Request.Data.Read.Data != NULL)
+				{
+					if(!ValidateAddressPtr(messageFromPPC->Request.Data.Read.Data, messageFromPPC->Request.Data.Read.Length))
+					{
+						ret = IPC_EACCES;
+						break;
+					}
+				}
+				DCInvalidateRange(messageFromPPC->Request.Data.Read.Data, messageFromPPC->Request.Data.Read.Length);
+			}
+
+			ret = ReadFDAsync(filedescId, messageFromPPC->Request.Data.Read.Data, messageFromPPC->Request.Data.Read.Data == NULL ? 0 : messageFromPPC->Request.Data.Read.Length,messageQueue,messageFromPPC);
+			break;
+
+		case IOS_WRITE:
+			{
+				if (messageFromPPC->Request.Data.Write.Data != NULL)
+				{
+					if(!ValidateAddressPtr(messageFromPPC->Request.Data.Write.Data, messageFromPPC->Request.Data.Write.Length))
+					{
+						ret = IPC_EACCES;
+						break;
+					}
+				}
+				DCInvalidateRange(messageFromPPC->Request.Data.Write.Data, messageFromPPC->Request.Data.Write.Length);
+			}
+			
+			ret = WriteFDAsync(filedescId,
+				messageFromPPC->Request.Data.Write.Data,
+				messageFromPPC->Request.Data.Write.Length,
+				messageQueue, messageFromPPC);
+			break;
+
+		case IOS_SEEK:
+			ret = SeekFDAsync(filedescId,
+				messageFromPPC->Request.Data.Seek.Where,
+				messageFromPPC->Request.Data.Seek.Whence,
+				messageQueue, messageFromPPC);
+			break;
+
+		case IOS_IOCTL:
+			{
+				if (messageFromPPC->Request.Data.Ioctl.InputLength != 0)
+				{
+					if(!ValidateAddressPtr(messageFromPPC->Request.Data.Ioctl.InputBuffer, messageFromPPC->Request.Data.Ioctl.InputLength))
+					{
+						ret = IPC_EACCES;
+						break;
+					}
+				}
+				if (messageFromPPC->Request.Data.Ioctl.IoLength != 0)
+				{
+					if(!ValidateAddressPtr(messageFromPPC->Request.Data.Ioctl.IoBuffer, messageFromPPC->Request.Data.Ioctl.IoLength))
+					{
+						ret = IPC_EACCES;
+						break;
+					}
+				}
+				DCInvalidateRange(messageFromPPC->Request.Data.Ioctl.InputBuffer, messageFromPPC->Request.Data.Ioctl.InputLength);
+				DCInvalidateRange(messageFromPPC->Request.Data.Ioctl.IoBuffer, messageFromPPC->Request.Data.Ioctl.IoLength);
+			}
+
+			ret = IoctlFDAsync(filedescId,
+				messageFromPPC->Request.Data.Ioctl.Ioctl,
+				messageFromPPC->Request.Data.Ioctl.InputBuffer,
+				messageFromPPC->Request.Data.Ioctl.InputLength,
+				messageFromPPC->Request.Data.Ioctl.IoBuffer,
+				messageFromPPC->Request.Data.Ioctl.IoLength,
+				messageQueue, messageFromPPC);
+			break;
+
+		case IOS_IOCTLV:
+			{
+				const u32 totalArgc = messageFromPPC->Request.Data.Ioctlv.InputArgc + messageFromPPC->Request.Data.Ioctlv.IoArgc;
+				if (totalArgc != 0)
+				{
+					if(!ValidateAddressPtr(messageFromPPC->Request.Data.Ioctlv.Data, totalArgc * sizeof(IoctlvMessageData)))
+					{
+						ret = IPC_EACCES;
+						break;
+					}
+				}
+
+				DCInvalidateRange(messageFromPPC->Request.Data.Ioctlv.Data, totalArgc * sizeof(IoctlvMessageData));
+				u32 i = 0;
+				for(; i < totalArgc; ++i)
+				{
+					if (messageFromPPC->Request.Data.Ioctlv.Data[i].Length != 0)
+					{
+						if(!ValidateAddressPtr(messageFromPPC->Request.Data.Ioctlv.Data[i].Data, messageFromPPC->Request.Data.Ioctlv.Data[i].Length))
+						{
+							break;
+						}
+					}
+					DCInvalidateRange(messageFromPPC->Request.Data.Ioctlv.Data[i].Data, messageFromPPC->Request.Data.Ioctlv.Data[i].Length);
+				}
+				if(i != totalArgc)
+				{
+					ret = IPC_EACCES;
+					break;
+				}
+			}
+
+			ret = IoctlvFDAsync(filedescId,
+				messageFromPPC->Request.Data.Ioctlv.Ioctl,
+				messageFromPPC->Request.Data.Ioctlv.InputArgc,
+				messageFromPPC->Request.Data.Ioctlv.IoArgc,
+				messageFromPPC->Request.Data.Ioctlv.Data,
+				messageQueue, messageFromPPC);
+			break;
 		}
+
+		if (ret < 0)
+		{
+			messageFromPPC->Request.Result = ret;
+			FlushAndSendRequest(&messageFromPPC->Request);
+		}
+
+		wantReceive = 0;
 	}
 }
 
@@ -551,18 +544,18 @@ static void IpcInitMessageQueues(void)
 {
 	int i;
 
-	ipc_message_array = KMalloc(sizeof(IpcMessage) * TOTAL_IPCMSG_IN_ARR);
-	fd_path_array = KMalloc(sizeof(FileDescriptorPath) * MAX_THREADS);
+	IpcMessageArray = KMalloc(sizeof(IpcMessage) * MAX_IPCMESSAGES);
+	FiledescPathArray = KMalloc(sizeof(FileDescriptorPath) * MAX_THREADS);
 
 	for(i = 0; i < MAX_THREADS; ++i)
 	{
-		fd_path_ptr_array[i] = &fd_path_array[i];
+		FiledescPathPointerArray[i] = &FiledescPathArray[i];
 	}
 
 	for(i = 0; i < MAX_THREADS; ++i)
 	{
-		MessageQueue *currentQueue = &ipc_message_queue_array[i];
-		currentQueue->QueueHeap = &message_queue_ptr_array[i];
+		MessageQueue *currentQueue = &IpcMessageQueueArray[i];
+		currentQueue->QueueHeap = &IpcMessageQueueDataPtrArray[i];
 		currentQueue->ReceiveThreadQueue.NextThread = &ThreadStartingState;
 		currentQueue->SendThreadQueue.NextThread = &ThreadStartingState;
 		currentQueue->Used = 0;
@@ -584,31 +577,33 @@ s32 ResourceReply(IpcMessage* message, u32 requestReturnValue)
 	u32 interrupts = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
 
-	const int msgIndex = message - ipc_message_array;
-	if (0 <= msgIndex && msgIndex < TOTAL_IPCMSG_IN_ARR) {
-		IpcMessage* messageToSend = NULL;
-		MessageQueue* queue = message->Callback;
-		if(queue == NULL || (message->IsInQueue != 0 && message->UsedByProcessId == CurrentThread->ProcessId))
-		{
-			message->Request.Result = requestReturnValue;
-			const int flag = queue != NULL;
-			if(queue != NULL)
-			{
-				messageToSend = (IpcMessage*)message->CallerData;
-				message->IsInQueue = 0;
-				messageToSend->Request.Command = IOS_REPLY;
-				messageToSend->Request.Result = requestReturnValue;
-				thread_msg_usage_arr[message->UsedByThreadId]--;
-			}
-			else
-			{
-				queue = &ipc_message_queue_array[msgIndex];
-				messageToSend = message;
-			}
-			ret = SendMessageToQueue(queue, messageToSend, flag ? RegisteredEventHandler : None);
-		}
-	}
+	const int msgIndex = message - IpcMessageArray;
+	if ( ! (0 <= msgIndex && msgIndex < MAX_IPCMESSAGES) )
+		goto restore_and_return;
 
+	IpcMessage* messageToSend = NULL;
+	MessageQueue* queue = message->Callback;
+	if( ! (queue == NULL || (message->IsInQueue != 0 && message->UsedByProcessId == CurrentThread->ProcessId)) )
+		goto restore_and_return;
+
+	message->Request.Result = requestReturnValue;
+	const int flag = queue != NULL;
+	if(queue != NULL)
+	{
+		messageToSend = (IpcMessage*)message->CallerData;
+		message->IsInQueue = 0;
+		messageToSend->Request.Command = IOS_REPLY;
+		messageToSend->Request.Result = requestReturnValue;
+		ThreadMessageUsageArray[message->UsedByThreadId]--;
+	}
+	else
+	{
+		queue = &IpcMessageQueueArray[msgIndex];
+		messageToSend = message;
+	}
+	ret = SendMessageToQueue(queue, messageToSend, flag ? RegisteredEventHandler : None);
+
+restore_and_return:
 	RestoreInterrupts(interrupts);
 	return ret;
 }
@@ -619,15 +614,13 @@ s32 SendMessageCheckReceive(IpcMessage *message, ResourceManager* resource)
 	message->UsedByProcessId = resource->ProcessId;
 	s32 ret = SendMessageToQueue(resource->MessageQueue, message, None);
 
-	if (ret == IPC_SUCCESS && cb == NULL)
-	{
-		IpcMessage* rcvd_msg = NULL;
-		ret = ReceiveMessageFromQueue(&ipc_message_queue_array[message - ipc_message_array], (void**)&rcvd_msg, None);
-		if(ret == IPC_SUCCESS && rcvd_msg != message)
-		{
-			ret = IPC_EINVAL;
-		}
-	}
+	if (ret != IPC_SUCCESS || cb != NULL)
+		return ret;
+
+	IpcMessage* receivedMessage = NULL;
+	ret = ReceiveMessageFromQueue(&IpcMessageQueueArray[message - IpcMessageArray], (void**)&receivedMessage, None);
+	if(ret == IPC_SUCCESS && receivedMessage != message)
+		ret = IPC_EINVAL;
 
 	return ret;
 }

@@ -13,12 +13,14 @@
 
 #include "filedesc_types.h"
 
+// these functions are implemented through calls_inner.h via a template in calls.c
+// the actual work done is in calls_inner.c by the <name>FD_Inner functions
 s32 OpenFD(const char* path, int mode);
-int CloseFD(s32 fd);
-int ReadFD(s32 fd, void *buf, u32 len);
-int WriteFD(s32 fd, const void *buf, u32 len);
-int SeekFD(s32 fd, s32 offset, s32 origin);
-int IoctlFD(s32 fd, u32 request_id, void *input_buffer, u32 input_buffer_len, void *output_buffer, u32 output_buffer_len);
-int IoctlvFD(s32 fd, u32 request_id, u32 vector_count_in, u32 vector_count_out, IoctlvMessageData *vectors);
+s32 CloseFD(s32 fd);
+s32 ReadFD(s32 fd, void *buf, u32 len);
+s32 WriteFD(s32 fd, const void *buf, u32 len);
+s32 SeekFD(s32 fd, s32 offset, s32 origin);
+s32 IoctlFD(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength);
+s32 IoctlvFD(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors);
 
 #endif

@@ -44,6 +44,20 @@ _SYSCALL OSDestroyHeap,				0x0017
 _SYSCALL OSAllocateMemory,			0x0018
 _SYSCALL OSAlignedAllocateMemory,	0x0019
 _SYSCALL OSFreeMemory,				0x001A
+_SYSCALL OSOpenFD,					0x001C
+_SYSCALL OSCloseFD,					0x001D
+_SYSCALL OSReadFD,					0x001E
+_SYSCALL OSWriteFD,					0x001F
+_SYSCALL OSSeekFD,					0x0020
+_SYSCALL OSIoctlFD,					0x0021
+_SYSCALL OSIoctlvFD,				0x0022
+_SYSCALL OSOpenFDAsync,				0x0023
+_SYSCALL OSCloseFDAsync,			0x0024
+_SYSCALL OSReadFDAsync,				0x0025
+_SYSCALL OSWriteFDAsync,			0x0026
+_SYSCALL OSSeekFDAsync,				0x0027
+_SYSCALL OSIoctlFDAsync,			0x0028
+_SYSCALL OSIoctlvFDAsync,			0x0029
 
 /* this is a special svc syscall. its the only syscall left in IOS. only used for printk too */
 .thumb

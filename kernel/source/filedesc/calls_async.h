@@ -13,12 +13,14 @@
 
 #include "filedesc_types.h"
 
-s32 OpenFDAsync(const char* path, int mode, u32 messageQueueId, IpcMessage* message);
-int CloseFDAsync(s32 fd, u32 messageQueueId, IpcMessage* message);
-int ReadFDAsync(s32 fd, void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
-int WriteFDAsync(s32 fd, const void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
-int SeekFDAsync(s32 fd, s32 offset, s32 origin, u32 messageQueueId, IpcMessage* message);
-int IoctlFDAsync(s32 fd, u32 request_id, void *input_buffer, u32 input_buffer_len, void *output_buffer, u32 output_buffer_len, u32 messageQueueId, IpcMessage* message);
-int IoctlvFDAsync(s32 fd, u32 request_id, u32 vector_count_in, u32 vector_count_out, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message);
+// these functions are implemented through calls_inner.h via a template in calls_async.c
+// the actual work done is in calls_inner.c by the <name>FD_Inner functions
+s32 OpenFDAsync(const char* path, s32 mode, u32 messageQueueId, IpcMessage* message);
+s32 CloseFDAsync(s32 fd, u32 messageQueueId, IpcMessage* message);
+s32 ReadFDAsync(s32 fd, void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
+s32 WriteFDAsync(s32 fd, const void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
+s32 SeekFDAsync(s32 fd, s32 offset, s32 origin, u32 messageQueueId, IpcMessage* message);
+s32 IoctlFDAsync(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, u32 messageQueueId, IpcMessage* message);
+s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message);
 
 #endif

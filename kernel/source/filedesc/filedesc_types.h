@@ -17,12 +17,13 @@
 
 typedef union {
 	char DevicePath[MAX_PATHLEN];
+	// used for paths in MEM1 that need to be accessed as 32 bit values
 	u32 DevicePathUINT[MAX_PATHLEN / sizeof(u32)];
 } FileDescriptorPath;
 
 typedef struct {
-	s32 id;
-	ResourceManager* belongs_to_resource;
+	s32 Id;
+	ResourceManager* BelongsToResource;
 } FileDescriptor;
 
 #define MAX_PROCESS_FDS 0x18
@@ -32,6 +33,6 @@ typedef ProcessFileDescriptors_t AllProcessesFileDescriptors_t[MAX_PROCESSES];
 
 extern FileDescriptor AesFileDescriptor;
 extern FileDescriptor ShaFileDescriptor;
-extern FileDescriptorPath* fd_path_array;
+extern FileDescriptorPath* FiledescPathArray;
 
 #endif
