@@ -33,7 +33,7 @@ CHECK_SIZE(FinalShaHash, 0x14);
 typedef struct
 {
 	u32 ShaStates[SHA_NUM_WORDS];
-	u64 Length;	//value of where the 64-bit input length will be stored in the hash
+	u64 Length;	//length in bits of total data contributed to SHA-1 hash
 } ShaContext;
 #pragma pack(pop)
 CHECK_SIZE(ShaContext, 0x1C);
