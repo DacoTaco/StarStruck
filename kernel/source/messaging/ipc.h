@@ -59,13 +59,7 @@ void IpcHandler(void);
 s32 ResourceReply(IpcMessage* message, u32 requestReturnValue);
 s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
 
-void ipc_irq(void);
-void ipc_send_ack(void);
-void ipc_reply(IpcMessage* req);
-void ipc_enqueue_reuqest(IpcMessage* req);
 void ipc_shutdown(void);
-void ipc_post(u32 code, u32 tag, u32 num_args, ...);
-void ipc_flush(void);
 
 #endif
 
