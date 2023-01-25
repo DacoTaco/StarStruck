@@ -244,8 +244,9 @@ void IrqHandler(ThreadContext* context)
 	}
 	if(flags & IRQF_IPC) {
 		//gecko_printf("IRQ: IPC\n");
-		ipc_irq();
+		EnqueueEventHandler(IRQ_IPC);
 		write32(HW_ARMIRQFLAG, IRQF_IPC);
+		clear32(HW_ARMIRQMASK, IRQF_IPC);
 	}
 	if(flags & IRQF_SHA1) {
 		//gecko_printf("IRQ: SHA1\n");
