@@ -183,6 +183,7 @@ void IpcHandler(void)
 		while(wantReceive && ret != IPC_SUCCESS)
 			ret = ReceiveMessage(messageQueue, (void**)&messagePointer, None);
 
+		ret = IPC_SUCCESS;
 		wantReceive = 1;
 
 		if(messagePointer->Request.Command == IOS_REPLY)
@@ -198,8 +199,10 @@ void IpcHandler(void)
 		{
 			printk("UNKNOWN MESSAGE: %u\n", messagePointer->Request.Command);
 			ret = ReceiveMessage(messageQueue, (void**)&messagePointer, None);
-			if (ret != IPC_SUCCESS)
-				continue;
+			if (ret == IPC_SUCCESS)
+				wantReceive = 0;
+
+			continue;
 		}
 		
 		const u32 armctrl = read32(HW_IPC_ARMCTRL);
