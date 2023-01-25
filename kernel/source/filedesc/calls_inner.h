@@ -1,6 +1,6 @@
 /*
 	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
-	resourceManager - manager to maintain all device resources
+	calls_inner - internal filedescriptor syscalls handlers
 
 	Copyright (C);
 

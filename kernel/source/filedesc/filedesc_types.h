@@ -1,6 +1,6 @@
 /*
 	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
-	resourceManager - manager to maintain all device resources
+	filedesc_types - typedefs and structures relating to file descriptors
 
 	Copyright (C) 2021	DacoTaco
 
