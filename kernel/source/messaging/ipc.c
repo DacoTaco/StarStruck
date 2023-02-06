@@ -111,7 +111,7 @@ void SendIpcRequest(void)
 	IpcCircBuf.ReadyToSendAmount--;
 	IpcCircBuf.WaitingInBufferAmount--;
 	IpcCircBuf.HadRelaunchFlag = 0;
-	mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING);
+	mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_OUTGOING);
 }
 
 static void FlushAndSendRequest(IpcRequest *request)
@@ -204,7 +204,7 @@ void IpcHandler(void)
 
 			continue;
 		}
-		
+
 		const u32 armctrl = read32(HW_IPC_ARMCTRL);
 		if((armctrl & IPC_ARM_RELAUNCH) != 0)
 		{
@@ -222,7 +222,7 @@ void IpcHandler(void)
 			continue;
 		}
 
-		write32(HW_IPC_ARMCTRL, (armctrl & (IPC_ARM_IX1 | IPC_ARM_IX2)) | ((IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING));
+		mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_INCOMING);
 
 		ClearAndEnableIPCInterrupt();
 
