@@ -227,12 +227,11 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 
 	while(used == 0)
 	{
+		register s32 yieldReturn	__asm__("r0");
 		CurrentThread->ThreadState = Waiting;
 		YieldCurrentThread(&messageQueue->ReceiveThreadQueue);
-
-		//IOS returns CurrentThread->ThreadContext.Registers[0] here, but that sounds weird?
-		if(CurrentThread->ThreadContext.Registers[0] != 0)
-			return 0;
+		if(yieldReturn != IPC_SUCCESS)
+			return yieldReturn;
 
 		used = messageQueue->Used;
 	}
@@ -250,7 +249,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	messageQueue->First = first;
 	messageQueue->Used = used-1;
 	
-	if(messageQueue->SendThreadQueue.NextThread != NULL )
+	if(messageQueue->SendThreadQueue.NextThread->NextThread != NULL )
 		UnblockThread(&messageQueue->SendThreadQueue, 0);
 
 	return 0;
