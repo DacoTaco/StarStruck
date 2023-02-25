@@ -171,7 +171,7 @@ void IpcHandler(void)
 
 	// enable incoming & outgoing ipc messages from PPC
 	if ((read32(HW_IPC_PPCCTRL) & (IPC_PPC_IY1 | IPC_PPC_IY2)) == 0)
-		write32(HW_IPC_PPCCTRL, 0);
+		write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) & (IPC_PPC_IY1 | IPC_PPC_IY2));
 
 	ClearAndEnableIPCInterrupt();
 
