@@ -29,6 +29,8 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #define		HW_TIMER			(HW_REG_BASE + 0x010)
 #define		HW_ALARM			(HW_REG_BASE + 0x014)
 
+#define		HW_VISOLID			(HW_REG_BASE + 0x024)
+
 #define		HW_PPCIRQFLAG		(HW_REG_BASE + 0x030)
 #define		HW_PPCIRQMASK		(HW_REG_BASE + 0x034)
 
