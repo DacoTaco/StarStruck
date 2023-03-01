@@ -44,6 +44,5 @@ BEGIN_ASM_FUNC YieldCurrentThread
 	beq		yield
 	_BL		ThreadQueue_PushThread
 yield:
-	ldr		r0, =ScheduleYield
-	bx		r0
+	ldr		pc, =ScheduleYield
 END_ASM_FUNC

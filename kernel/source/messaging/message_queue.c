@@ -96,11 +96,10 @@ s32 JamMessage(s32 queueId, void* message, u32 flags)
 		do
 		{
 			CurrentThread->ThreadState = Waiting;
-			//wth ios?
-			ret = (s32)&messageQueue->SendThreadQueue;
-			YieldCurrentThread((ThreadQueue*)ret);
+			ret = YieldCurrentThread(&messageQueue->SendThreadQueue);
 			if(ret != 0)
 				goto restore_and_return;
+
 		} while (messageQueue->QueueSize <= messageQueue->Used);		
 	}
 
@@ -162,11 +161,9 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 		while(queueSize <= used)
 		{
 			CurrentThread->ThreadState = Waiting;
-			ThreadQueue* threadQueue = &messageQueue->SendThreadQueue;
-			YieldCurrentThread(threadQueue);
-			
-			if(threadQueue != NULL)
-				return (s32)threadQueue;
+			const s32 yieldReturn = YieldCurrentThread(&messageQueue->SendThreadQueue);
+			if(yieldReturn != IPC_SUCCESS)
+				return yieldReturn;
 			
 			used = messageQueue->Used;
 			queueSize = messageQueue->QueueSize;
@@ -227,9 +224,9 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 
 	while(used == 0)
 	{
-		register s32 yieldReturn	__asm__("r0");
 		CurrentThread->ThreadState = Waiting;
-		YieldCurrentThread(&messageQueue->ReceiveThreadQueue);
+		const s32 yieldReturn = YieldCurrentThread(&messageQueue->ReceiveThreadQueue);
+		printk("ReceiveMessageFromQueue: yield return : %d\n", yieldReturn);
 		if(yieldReturn != IPC_SUCCESS)
 			return yieldReturn;
 
@@ -252,7 +249,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	if(messageQueue->SendThreadQueue.NextThread->NextThread != NULL )
 		UnblockThread(&messageQueue->SendThreadQueue, 0);
 
-	return 0;
+	return IPC_SUCCESS;
 }
 
 s32 DestroyMessageQueue(s32 queueId)

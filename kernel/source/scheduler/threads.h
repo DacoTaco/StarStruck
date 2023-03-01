@@ -88,7 +88,7 @@ extern ThreadQueue SchedulerQueue;
 void InitializeThreadContext(void);
 void ScheduleYield( void );
 void YieldThread( void );
-void YieldCurrentThread( ThreadQueue* threadQueue );
+s32 YieldCurrentThread( ThreadQueue* threadQueue );
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
 ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue);
 void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread );
