@@ -5,6 +5,7 @@
 #include <string.h>
 #include <string>
 #include <malloc.h>
+#include <time.h>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <ogc/ipc.h>
@@ -98,10 +99,6 @@ int main(int argc, char **argv)
 		
 		if ( pressed & WPAD_BUTTON_2 || gcPressed & PAD_BUTTON_X ) 
 		{
-			{
-			}
-			{
-			}
 			return 0;
 		}
 		
@@ -184,6 +181,15 @@ int main(int argc, char **argv)
 					memset( buffer, 0, 0x100 );
 					
 					printf("ES_ImportBoot():%d\n", IOS_IoctlvAsync( fd, 0x1F, 0, 0, (ioctlv*)buffer, NULL, NULL ) );
+
+					//wait for IPC to come back online. for mini this doesn't matter, but for IOS kernels it most certainly does.
+					for (u32 counter = 0; !(read32(0x0d000004) & 2); counter++) {
+						usleep(1000);
+						
+						if (counter >= 400)
+							break;
+					}
+
 					__IPC_Reinitialize();
 					printf("IPC reinit\n");
 					break;
