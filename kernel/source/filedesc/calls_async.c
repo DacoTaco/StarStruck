@@ -40,7 +40,7 @@ s32 OpenFDAsync(const char* path, int mode, u32 messageQueueId, IpcMessage* mess
 	s32 ret = IPC_EACCES;
 
 	const s32 state = DisableInterrupts();
-	if (messageQueueId < 256) {
+	if (messageQueueId < MAX_MESSAGEQUEUES) {
 		MessageQueue* queue = &MessageQueues[messageQueueId];
 		if(queue->ProcessId == GetProcessID()) {
 			if((ret = CheckMemoryPointer(message, sizeof(IpcRequest), 4, queue->ProcessId, 0)) == IPC_SUCCESS) {
