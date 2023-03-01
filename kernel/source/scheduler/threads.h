@@ -98,7 +98,7 @@ s32 JoinThread(s32 threadId, u32* returnedValue);
 s32 SuspendThread(s32 threadId);
 s32 StartThread(s32 threadId);
 s32 GetThreadID(void);
-s32 GetProcessID(void);
+u32 GetProcessID(void);
 s32 GetThreadPriority(u32 threadId);
 s32 SetThreadPriority(u32 threadId, s32 priority);
 s32 GetUID(void);

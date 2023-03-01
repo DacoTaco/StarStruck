@@ -17,10 +17,14 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "core/hollywood.h"
+#include "core/defines.h"
 #include "interrupt/irq.h"
 #include "messaging/message_queue.h"
 #include "messaging/resourceManager.h"
 #include "messaging/ipc.h"
+#include "filedesc/filedesc_types.h"
+
+FileDescriptor AesFileDescriptor SRAM_BSS;
 
 typedef enum 
 { 

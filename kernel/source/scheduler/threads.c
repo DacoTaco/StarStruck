@@ -434,7 +434,7 @@ s32 GetThreadID()
 	return _GetThreadID(CurrentThread);
 }
 
-s32 GetProcessID()
+u32 GetProcessID()
 {
 	return CurrentThread->ProcessId;
 }

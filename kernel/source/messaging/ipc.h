@@ -17,6 +17,9 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 #include "types.h"
 #include "ios/ipc.h"
+#include "scheduler/threads.h"
+#include "messaging/message_queue.h"
+#include "messaging/resourceManager.h"
 
 /* For the sake of interface compatibility between mini and powerpc code,
    you should try to commit any enhancements you make back upstream so
@@ -45,16 +48,18 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 
-void IpcInit(void);
-s32 ResourceReply(IpcMessage* message, u32 requestReturnValue);
+extern IpcMessage* IpcMessageArray;
+extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
+extern unsigned ThreadMessageUsageArray[MAX_THREADS];
+extern ThreadInfo* IpcHandlerThread;
+extern s32 IpcHandlerThreadId;
 
-void ipc_irq(void);
-void ipc_send_ack(void);
-void ipc_reply(IpcMessage* req);
-void ipc_enqueue_reuqest(IpcMessage* req);
+void IpcInit(void);
+void IpcHandler(void);
+s32 ResourceReply(IpcMessage* message, u32 requestReturnValue);
+s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
+
 void ipc_shutdown(void);
-void ipc_post(u32 code, u32 tag, u32 num_args, ...);
-void ipc_flush(void);
 
 #endif
 

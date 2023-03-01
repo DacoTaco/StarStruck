@@ -35,6 +35,95 @@ void IrqInit(void)
 	set32(HW_DIFLAGS, 6);
 }
 
+static void ClearAndEnableEventSetFlags(const u32 flags)
+{
+	write32(HW_ARMIRQFLAG, flags);
+	set32(HW_ARMIRQMASK, flags);
+}
+s32 ClearAndEnableEvent(u32 inter)
+{
+	s32 ret = IPC_EACCES;
+	
+	const u32 intflags = DisableInterrupts();
+	const u32 pid = GetProcessID();
+	switch(inter)
+	{
+	case IRQ_EHCI:
+		if (pid == 6) {
+			ClearAndEnableEventSetFlags(IRQF_EHCI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_OHCI0:
+		if (pid == 4) {
+			ClearAndEnableEventSetFlags(IRQF_OHCI0);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_OHCI1:
+		if (pid == 5) {
+			ClearAndEnableEventSetFlags(IRQF_OHCI1);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_SDHC:
+		if (pid == 7) {
+			ClearAndEnableEventSetFlags(IRQF_SDHC);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_WIFI:
+		if (pid == 11) {
+			ClearAndEnableEventSetFlags(IRQF_WIFI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_GPIO1:
+		if (pid == 14) {
+			write32(HW_GPIO1INTFLAG, 1);
+			ClearAndEnableEventSetFlags(IRQF_GPIO1);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_RESET:
+		if (pid == 14) {
+			ClearAndEnableEventSetFlags(IRQF_RESET);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_DI:
+		if (pid == 3) {
+			ClearAndEnableEventSetFlags(IRQF_DI);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	case IRQ_IPC:
+		if (pid == 0) {
+			ClearAndEnableEventSetFlags(IRQF_IPC);
+			ret = IPC_SUCCESS;
+		}
+		break;
+	default:
+		ret = IPC_EINVAL;
+		break;
+	}
+
+	RestoreInterrupts(intflags);
+	return ret;
+}
+s32 ClearAndEnableSDInterrupt(const u8 sdio)
+{
+	return ClearAndEnableEvent(sdio == 0 ? IRQ_SDHC : IRQ_WIFI);
+}
+s32 ClearAndEnableDIInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_DI);
+}
+s32 ClearAndEnableIPCInterrupt(void)
+{
+	return ClearAndEnableEvent(IRQ_IPC);
+}
+
 s32 RegisterEventHandler(u8 device, int queueid, void* message)
 {
 	u32 irqState = DisableInterrupts();
@@ -155,7 +244,8 @@ void IrqHandler(ThreadContext* context)
 	}
 	if(flags & IRQF_IPC) {
 		//gecko_printf("IRQ: IPC\n");
-		ipc_irq();
+		EnqueueEventHandler(IRQ_IPC);
+		clear32(HW_ARMIRQMASK, IRQF_IPC);
 		write32(HW_ARMIRQFLAG, IRQF_IPC);
 	}
 	if(flags & IRQF_SHA1) {
