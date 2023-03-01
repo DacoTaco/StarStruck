@@ -18,7 +18,7 @@
 rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), u32 messageQueueId, IpcMessage* message) { \
 	const s32 state = DisableInterrupts(); \
 	rettype ret = IPC_EACCES; \
-	if(messageQueueId < 256) { \
+	if(messageQueueId < MAX_MESSAGEQUEUES) { \
 		MessageQueue* queue = &MessageQueues[messageQueueId]; \
 		if(queue->ProcessId == GetProcessID()) { \
 			if((ret = CheckMemoryPointer(message, sizeof(IpcRequest), 4, queue->ProcessId, 0)) == IPC_SUCCESS) { \
