@@ -191,11 +191,11 @@ void ShaEngineHandler(void)
 	if(ret < IPC_SUCCESS)
 		panic("Unable to register SHA event handler: %d\n", ret);
 
-	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 0x10);
-	if(ret < IPC_SUCCESS)
+	messageQueueId = CreateMessageQueue((void**)&resourceManagerMessageQueue, 0x10);
+	if(messageQueueId < IPC_SUCCESS)
 		panic("Unable to create SHA rm queue: %d\n", ret);
 	
-	ret = RegisterResourceManager(SHA_DEVICE_NAME, ret);
+	ret = RegisterResourceManager(SHA_DEVICE_NAME, messageQueueId);
 	if(ret < IPC_SUCCESS)
 		panic("Unable to register resource manager: %d\n", ret);
 

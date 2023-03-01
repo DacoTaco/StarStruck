@@ -67,11 +67,11 @@ void AesEngineHandler(void)
 	if(ret < 0)
 		panic("Unable to register AES event handler: %d\n", ret);
 
-	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 8);
-	if(ret < 0)
+	messageQueue = CreateMessageQueue((void**)&resourceManagerMessageQueue, 8);
+	if(messageQueue < 0)
 		panic("Unable to create AES rm queue: %d\n", ret);
 
-	ret = RegisterResourceManager(AES_DEVICE_NAME, ret);
+	ret = RegisterResourceManager(AES_DEVICE_NAME, messageQueue);
 	if(ret < 0)
 		panic("Unable to register resource manager: %d\n", ret);
 	
