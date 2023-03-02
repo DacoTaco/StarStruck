@@ -22,22 +22,36 @@ __swistack_size = 0x100;
 MEMORY {
 	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 32K
 	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
-	modules				: ORIGIN = 0x13400000, LENGTH = 4416K
-	kernel_heap			: ORIGIN = 0x13850000, LENGTH = 128K
+	modules				: ORIGIN = 0x13400000, LENGTH = 2048K
+	ipc_heap			: ORIGIN = 0x13600000, LENGTH = 128K
+	kmalloc_heap		: ORIGIN = 0x13850000, LENGTH = 128K
 	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
 	iobuf_heap			: ORIGIN = 0x13C40000, LENGTH = 512K
+	kernel_heap			: ORIGIN = 0x138F0000, LENGTH = 768K
 	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
 __modules_area_start = ORIGIN(modules);
 
-__kernel_heap_start = ORIGIN(kernel_heap);
-__kernel_heap_size = LENGTH(kernel_heap);
-__kernel_heap_end = ORIGIN(kernel_heap) + LENGTH(kernel_heap);
+__kmalloc_heap_start = ORIGIN(kmalloc_heap);
+__kmalloc_heap_size = LENGTH(kmalloc_heap);
+__kmalloc_heap_end = ORIGIN(kmalloc_heap) + LENGTH(kmalloc_heap);
+
+__ipc_heap_start = ORIGIN(ipc_heap);
+__ipc_heap_size = LENGTH(ipc_heap);
+__ipc_heap_end = ORIGIN(ipc_heap) + LENGTH(ipc_heap);
 
 __thread_stacks_area_start = ORIGIN(thread_stacks);
 __thread_stacks_area_size = LENGTH(thread_stacks);
 __thread_stacks_area_end = ORIGIN(thread_stacks) + LENGTH(thread_stacks);
+
+__iobuf_heap_area_start = ORIGIN(iobuf_heap);
+__iobuf_heap_area_size = LENGTH(iobuf_heap);
+__iobuf_heap_area_end = ORIGIN(iobuf_heap) + LENGTH(iobuf_heap);
+
+__kernel_heap_area_start = ORIGIN(kernel_heap);
+__kernel_heap_area_size = LENGTH(kernel_heap);
+__kernel_heap_area_end = ORIGIN(kernel_heap) + LENGTH(kernel_heap);
 
 __mem2_area_start = ORIGIN(mem2);
 __mem2_area_size = LENGTH(mem2);

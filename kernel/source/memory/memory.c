@@ -70,33 +70,42 @@ void _ic_invalidate(void);
 void _dc_invalidate(void);
 
 //the variables defined in the linker script are variables containing the value of the address
-extern const u32 __kernel_heap_size;
-extern const void* __kernel_heap_start;
-extern const void* __kernel_heap_end;
-u8* heapCurrent = (u8*)&__kernel_heap_start;
-u8* heapEnd = (u8*)&__kernel_heap_end;
+extern const u32 __kmalloc_heap_start[];
+extern const u32 __kmalloc_heap_end[];
+extern const u32 __kmalloc_heap_size[];
+extern const u32 __ipc_heap_start[];
+extern const u32 __ipc_heap_size[];
+extern const u32 __thread_stacks_area_start[];
+extern const u32 __thread_stacks_area_size[];
+extern const u32 __iobuf_heap_area_start[];
+extern const u32 __iobuf_heap_area_size[];
+extern const u32 __kernel_heap_area_start[];
+extern const u32 __kernel_heap_area_size[];
+
+u8* heapCurrent = (u8*)__kmalloc_heap_start;
+u8* heapEnd = (u8*)__kmalloc_heap_end;
 
 //the pagetable for the mmu's translation table base register MUST be 0x4000 (16KB aligned) !
-//this is (kinda) ensured by having the heap 16KB aligned and this being the first malloc
+//this is (kinda) ensured by having the kMalloc heap 16KB aligned and this being the first malloc
 u32* MemoryTranslationTable = NULL;
 u32 DomainAccessControlTable[MAX_PROCESSES];
 u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 
 static MemorySection KernelMemoryMaps[] = 
 {
-	// physical		virtual		size		domain		access		unknown
-	{ 0xFFF00000, 0xFFF00000, 0x00100000, 0x0000000F, AP_NOUSER, 0x00000001 }, //Starlet sram 
-	{ 0x13A70000, 0x13A70000, 0x00020000, 0x0000000F, AP_NOUSER, 0x00000001 }, //    ???
-	{ 0x13AC0000, 0x13AC0000, 0x00020000, 0x0000000F, AP_NOUSER, 0x00000001 }, //Thread stacks
-	{ 0x0D800000, 0x0D800000, 0x000D0000, 0x0000000F, AP_ROUSER, 0x00000000 }, //Hardware registers(AHB mirror)
-	{ 0x00000000, 0x00000000, 0x04000000, 0x00000008, AP_RWUSER, 0x00000001 }, //MEM1 + ???
-	{ 0x10000000, 0x10000000, 0x03600000, 0x00000008, AP_RWUSER, 0x00000001 }, //MEM2
-	{ 0x13870000, 0x13870000, 0x00030000, 0x0000000F, AP_RWUSER, 0x00000000 }, //    ???
-	{ 0x13600000, 0x13600000, 0x00020000, 0x0000000F, AP_RWUSER, 0x00000001 }, //    ???
-	{ 0x13C40000, 0x13C40000, 0x00080000, 0x0000000F, AP_RWUSER, 0x00000001 }, //IOBuf ?
-	{ 0x13850000, 0x13850000, 0x00020000, 0x0000000F, AP_ROUSER, 0x00000000 }, //Kernel heap
-	{ 0x138F0000, 0x138F0000, 0x000C0000, 0x0000000F, AP_RWUSER, 0x00000001 }, //Module elf??
-	{ 0x13F00000, 0x13F00000, 0x00100000, 0x0000000F, AP_RWUSER, 0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
+	// physical							virtual								size							domain			access		unknown
+	{ 0xFFF00000,						0xFFF00000, 						0x00100000, 					0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Starlet sram 
+	{ 0x13A70000, 						0x13A70000, 						0x00020000, 					0x0000000F, 	AP_NOUSER, 	0x00000001 }, //    ???
+	{ (u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_size, 0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Thread stacks
+	{ 0x0D800000, 						0x0D800000, 						0x000D0000, 					0x0000000F, 	AP_ROUSER, 	0x00000000 }, //Hardware registers(AHB mirror)
+	{ 0x00000000, 						0x00000000, 						0x04000000, 					0x00000008, 	AP_RWUSER, 	0x00000001 }, //MEM1 + ???
+	{ 0x10000000, 						0x10000000, 						0x03600000, 					0x00000008, 	AP_RWUSER, 	0x00000001 }, //MEM2
+	{ 0x13870000, 						0x13870000, 						0x00030000, 					0x0000000F, 	AP_RWUSER, 	0x00000000 }, //    ???
+	{ (u32)__ipc_heap_start, 			(u32)__ipc_heap_start, 				(u32)__ipc_heap_size, 			0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IPC Heap
+	{ (u32)__iobuf_heap_area_start, 	(u32)__iobuf_heap_area_start, 		(u32)__iobuf_heap_area_size, 	0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IOBuf ?
+	{ (u32)__kmalloc_heap_start, 		(u32)__kmalloc_heap_start, 			(u32)__kmalloc_heap_size, 		0x0000000F, 	AP_ROUSER, 	0x00000000 }, //KMalloc heap
+	{ (u32)__kernel_heap_area_start, 	(u32)__kernel_heap_area_start, 		(u32)__kernel_heap_area_size, 	0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Module elf??
+	{ 0x13F00000, 						0x13F00000, 						0x00100000, 					0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
 };
 
 static ProcessMemorySection HWRegistersMemoryMaps[] = 

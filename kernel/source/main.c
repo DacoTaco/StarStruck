@@ -45,6 +45,8 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
 FATFS fatfs;
+extern const u32 __ipc_heap_start[];
+extern const u32 __ipc_heap_end[];
 
 void DiThread()
 {
@@ -273,11 +275,11 @@ u32 _main(void)
 	write32(MEM1_MEM2SIMULATESIZE, 0x4000000);
 	write32(MEM1_MEM2INITLOW, MEM2_PHY2VIRT(0x10000800));
 	write32(MEM1_MEM2INITHIGH, MEM2_PHY2VIRT(0x135e0000));
-	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT(0x135e0000));
-	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT(0x13600000));
-	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT(0x13600000));
-	write32(MEM1_3148, MEM2_PHY2VIRT(0x13600000));
-	write32(MEM1_314C, MEM2_PHY2VIRT(0x13620000));
+	write32(MEM1_IOSIPCLOW, MEM2_PHY2VIRT(0x135e0000));
+	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT((u32)__ipc_heap_start));
+	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start));
+	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT((u32)__ipc_heap_start));
+	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_end));
 	DCFlushRange((void*)0x00003100, 0x68);
 	gecko_printf("Updated DDR settings in lomem for current map\n");
 	

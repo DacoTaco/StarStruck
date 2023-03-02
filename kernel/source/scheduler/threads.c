@@ -20,7 +20,6 @@
 
 extern const void* __thread_stacks_area_start;
 extern const void* __thread_stacks_area_end;
-extern const u32 __kernel_heap_size;
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
 extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
