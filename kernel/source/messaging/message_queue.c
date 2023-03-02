@@ -226,7 +226,6 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	{
 		CurrentThread->ThreadState = Waiting;
 		const s32 yieldReturn = YieldCurrentThread(&messageQueue->ReceiveThreadQueue);
-		printk("ReceiveMessageFromQueue: yield return : %d\n", yieldReturn);
 		if(yieldReturn != IPC_SUCCESS)
 			return yieldReturn;
 
