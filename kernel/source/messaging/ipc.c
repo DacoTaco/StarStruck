@@ -180,7 +180,7 @@ void IpcHandler(void)
 		//wait for a valid message
 		while(ReceiveMessage(messageQueue, (void**)&messagePointer, None) != IPC_SUCCESS);
 
-		IpcMessage *messageFromPPC = (void*)read32(HW_IPC_PPCMSG);
+		messageFromPPC = (void*)read32(HW_IPC_PPCMSG);
 		if(messagePointer->Request.Command == IOS_REPLY)
 		{
 			FlushAndSendRequest(&messagePointer->Request);
