@@ -188,11 +188,11 @@ void EnqueueEventHandler(s32 device)
 		messageIndex -= queue->QueueSize;
 
 	queue->QueueHeap[messageIndex] = eventHandlers[device].Message;
-	if(queue->ReceiveThreadQueue.NextThread != NULL)
+	if(queue->ReceiveThreadQueue.NextThread->NextThread != NULL)
 	{
 		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->ReceiveThreadQueue);
 		handlerThread->ThreadState = Ready;
-		handlerThread->UserContext.Registers[0] = IPC_SUCCESS;
+		handlerThread->ThreadContext.Registers[0] = IPC_SUCCESS;
 		ThreadQueue_PushThread(&SchedulerQueue, handlerThread);
 	}
 }
