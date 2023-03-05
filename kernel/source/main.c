@@ -45,6 +45,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
 FATFS fatfs;
+extern const u32 __kernel_heap_area_start[];
 extern const u32 __ipc_heap_start[];
 extern const u32 __ipc_heap_end[];
 
@@ -126,7 +127,7 @@ void kernel_main( void )
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		panic("failed to start IPC thread!\n");	
 
-	KernelHeapId = CreateHeap((void*)0x138F0000, 0xC0000);
+	KernelHeapId = CreateHeap((void*)__kernel_heap_area_start, 0xC0000);
 	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
 	SetThreadPriority(0, 0);
 	SetThreadPriority(IpcHandlerThreadId, 0x5C);
