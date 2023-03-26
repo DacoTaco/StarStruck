@@ -1,0 +1,18 @@
+{
+	"C_Cpp.default.cStandard": "c17",
+	"C_Cpp.default.cppStandard": "gnu++17",
+	"C_Cpp.default.intelliSenseMode": "gcc-x86",
+	"C_Cpp.default.compilerPath": "${DKP_HOME}/devkitPPC/bin/powerpc-eabi-gcc",
+	"C_Cpp.default.defines": [
+		"HW_RVL"
+	],
+	"C_Cpp.default.includePath": [
+		"${DKP_HOME}/devkitPPC/powerpc-eabi/include/**",
+		"${DKP_HOME}/portlibs/ppc/include/**",
+		"${DKP_HOME}/portlibs/wii/include/**",
+		"${DKP_HOME}/libogc/include/**",
+		"${workspaceFolder}/include/**",
+		"${workspaceFolder}/source/**",
+		"${workspaceFolder}/build/**",
+	],
+}

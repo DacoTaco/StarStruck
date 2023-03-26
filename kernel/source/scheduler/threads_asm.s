@@ -29,7 +29,7 @@ BEGIN_ASM_FUNC EndThread
 	mov		r0, r0
 END_ASM_FUNC
 
-#void YieldCurrentThread(ThreadQueue* queue)
+#s32 YieldCurrentThread(ThreadQueue* queue)
 BEGIN_ASM_FUNC YieldCurrentThread
 	ldr		r1, =CurrentThread
 	ldr		r1, [r1, #0x00]

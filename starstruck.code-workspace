@@ -17,14 +17,15 @@
 			"path": "elfloader"
 		},
 		{
-			"name": "tools",
-			"path": "tools"
+			"name": "tools/ppcloader",
+			"path": "tools/ppcloader",
 		},
 		{
 			"path": "sdk"
 		}
 	],
-	"settings": {
+	"settings":
+	{
 		"files.exclude": {
 			"**/.git": true,
 			"**/.svn": true,
@@ -43,7 +44,6 @@
 		"C_Cpp.default.intelliSenseMode": "gcc-arm",
 		"C_Cpp.default.compilerPath": "${DKP_HOME}/devkitARM/bin/arm-none-eabi-gcc",
 		"C_Cpp.default.includePath": [
-			"${DKP_HOME}/devkitARM/arm-none-eabi/include",
 			"${workspaceFolder}/../core/include",
 			"${workspaceFolder}/include",
 			"${workspaceFolder}/source",

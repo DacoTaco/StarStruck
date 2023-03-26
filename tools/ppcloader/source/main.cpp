@@ -27,7 +27,6 @@ static GXRModeObj *vmode = NULL;
 int main(int argc, char **argv) 
 //---------------------------------------------------------------------------------
 {
-	CheckForGecko();
 	// Initialise the video system
 	VIDEO_Init();
 
@@ -42,20 +41,16 @@ int main(int argc, char **argv)
 	VIDEO_WaitVSync();
 	if (vmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 
-	int x = 20, y = 20, w, h;
-	w = vmode->fbWidth - (x * 2);
-	h = vmode->xfbHeight - (y + 20);
-
 	// Initialize the console
-	CON_InitEx(vmode, x, y, w, h);
-
+	CON_Init(xfb,(vmode->viWidth + vmode->viXOrigin - 640) / 2, (vmode->viHeight + vmode->viYOrigin - 480) / 2,  640, 480, 640*VI_DISPLAY_PIX_SZ );
+	CheckForGecko();
 	VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
     
 	// This function initialises the attached controllers
 	//WPAD_Init();
 	PAD_Init();
 
-	printf("\n\n\n\nHello World!\n");
+	printf("Hello World!\n");
 	if(	read32(0x0d800064) != 0xFFFFFFFF )
 	{
 		printf("AHB Access Disabled\n");
