@@ -499,5 +499,5 @@ finish:
 
 int IoctlvFD_Inner(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, MessageQueue* messageQueue, IpcMessage* message)
 {
-	return IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, messageQueue, message, 1);
+	return IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, messageQueue, message, RegisteredEventHandler);
 }

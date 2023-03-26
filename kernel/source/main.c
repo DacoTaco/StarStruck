@@ -128,7 +128,7 @@ void kernel_main( void )
 		panic("failed to start IPC thread!\n");	
 
 	KernelHeapId = CreateHeap((void*)__kernel_heap_area_start, 0xC0000);
-	printk("$IOSVersion: IOSP: 03/03/10 10:43:18 64M $");
+	printk("$IOSVersion: IOSP: %s %s 64M $", __DATE__, __TIME__);
 	SetThreadPriority(0, 0);
 	SetThreadPriority(IpcHandlerThreadId, 0x5C);
 	u32 vector;
