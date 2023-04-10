@@ -1,8 +1,8 @@
 /*
-	mini - a Free Software replacement for the Nintendo/BroadOn IOS.
-	linker script
-	
-Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
+	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
+	syscalls - internal communications over software interrupts
+
+	Copyright (C) 2023	DacoTaco
 
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
@@ -13,25 +13,42 @@ OUTPUT_ARCH(arm)
 EXTERN(_start)
 ENTRY(_start)
 
-__stack_size = 0x300;
-__irqstack_size = 0x060;
-__excstack_size = 0x100;
-__swistack_size = 0x100;
+/* 
+    Flags:
+    0x00000001 : PF_X
+    0x00000002 : PF_W
+    0x00000004 : PF_R
+    0x0XX00000 : domain
+*/
+
+PHDRS
+{
+	phdrs		PT_PHDR PHDRS FLAGS(0x00F00000);
+	headers		PT_LOAD PHDRS FLAGS(0x00F00000) AT(0x138F0000);
+	crypto		PT_LOAD FLAGS(0x000000007) /* Read | Write | Execute */;
+	sram		PT_LOAD FLAGS(0x000000006) /* Read | Write */;
+	kernel		PT_LOAD FLAGS(0x000000005) /* Read | Execute */;
+	rodata		PT_LOAD FLAGS(0x000000004) /* Read */;
+	svcs		PT_LOAD FLAGS(0x000000004) /* Read */;
+	data		PT_LOAD FLAGS(0x000000006) /* Read | Write */;
+}
 
 /*Sram is split up in several parts lol. FFFE0000 = 32K available. then there is 32K of unusable crap, followed by 64K of memory*/
 MEMORY {
-	sram_data			: ORIGIN = 0xFFFE0000, LENGTH = 32K
-	sram				: ORIGIN = 0xFFFF0000, LENGTH = 62K
-	modules				: ORIGIN = 0x13400000, LENGTH = 2048K
+	sram				: ORIGIN = 0xFFFE0000, LENGTH = 32K
+	kernel				: ORIGIN = 0xFFFF0000, LENGTH = 64K
 	ipc_heap			: ORIGIN = 0x13600000, LENGTH = 128K
 	kmalloc_heap		: ORIGIN = 0x13850000, LENGTH = 128K
+	crypto				: ORIGIN = 0x13A70000, LENGTH = 128K
 	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
 	iobuf_heap			: ORIGIN = 0x13C40000, LENGTH = 512K
-	kernel_heap			: ORIGIN = 0x138F0000, LENGTH = 768K
+	headers_heap		: ORIGIN = 0x138F0000, LENGTH = 768K
 	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
-__modules_area_start = ORIGIN(modules);
+__stack_size = 0x300;
+__irqstack_size = 0x060;
+__excstack_size = 0x100;
 
 __kmalloc_heap_start = ORIGIN(kmalloc_heap);
 __kmalloc_heap_size = LENGTH(kmalloc_heap);
@@ -39,27 +56,22 @@ __kmalloc_heap_end = ORIGIN(kmalloc_heap) + LENGTH(kmalloc_heap);
 
 __ipc_heap_start = ORIGIN(ipc_heap);
 __ipc_heap_size = LENGTH(ipc_heap);
-__ipc_heap_end = ORIGIN(ipc_heap) + LENGTH(ipc_heap);
 
 __thread_stacks_area_start = ORIGIN(thread_stacks);
 __thread_stacks_area_size = LENGTH(thread_stacks);
-__thread_stacks_area_end = ORIGIN(thread_stacks) + LENGTH(thread_stacks);
 
 __iobuf_heap_area_start = ORIGIN(iobuf_heap);
 __iobuf_heap_area_size = LENGTH(iobuf_heap);
-__iobuf_heap_area_end = ORIGIN(iobuf_heap) + LENGTH(iobuf_heap);
 
-__kernel_heap_area_start = ORIGIN(kernel_heap);
-__kernel_heap_area_size = LENGTH(kernel_heap);
-__kernel_heap_area_end = ORIGIN(kernel_heap) + LENGTH(kernel_heap);
+__headers_size = LENGTH(headers_heap);
+__headers_addr = ORIGIN(headers_heap);
 
-__mem2_area_start = ORIGIN(mem2);
-__mem2_area_size = LENGTH(mem2);
-__mem2_area_end = ORIGIN(mem2) + LENGTH(mem2);
+__crypto_addr = ORIGIN(crypto);
+__crypto_size = LENGTH(crypto);
 
 SECTIONS
 {
-	.bss.mem2 :
+	.bss.mem2 (NOLOAD) :
 	{
 		__bss2_start = . ;
 		*(.bss.mem2)
@@ -67,59 +79,59 @@ SECTIONS
 		__bss2_end = . ;
 	} >mem2
 
-	.data.sram (NOLOAD):
+	.data.sram :
 	{
 		__data_sram_start = . ;
 		*(.data.sram)
 		. = ALIGN(4);
 		__data_sram_end = . ;
-	} >sram_data
+	} > sram : sram
 
 	.init :
 	{
 		*(.init)
 		. = ALIGN(4);
-	} >sram
+	} > kernel : kernel
 
 	.text :
 	{
-		*(.text*)
-		*(.text.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text.*)
 		*(.gnu.warning)
-		*(.gnu.linkonce.t*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.t*)
 		*(.glue_7)
 		*(.glue_7t)
 		. = ALIGN(4);
-	} >sram
+	} > kernel : kernel
 
 	.rodata :
 	{
-		*(.rodata)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata)
 		*all.rodata*(*)
 		*(.roda)
-		*(.rodata.*)
-		*(.gnu.linkonce.r*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.r*)
 		. = ALIGN(4);
-	} >sram
+	} > kernel : rodata
 
 	.data :
 	{
-		*(.data)
-		*(.data.*)
-		*(.gnu.linkonce.d*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.d*)
 		. = ALIGN(4);
-	} >sram
+	} > kernel : data
 
-	.bss :
+	.bss(NOLOAD) :
 	{
 		__bss_start = . ;
-		*(.dynbss)
-		*(.gnu.linkonce.b*)
-		*(.bss*)
-		*(COMMON)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .dynbss)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.b*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .bss*)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) COMMON)
 		. = ALIGN(4);
 		__bss_end = . ;
-	} >sram
+	}  > kernel : data
 
 	.stack :
 	{
@@ -136,11 +148,52 @@ SECTIONS
 		. = . +__excstack_size;
 		. = ALIGN(16);
 		__excstack_addr = .;
-		__swistack_end = .;
-		. = . +__swistack_size;
+	} > kernel : data
+
+	.syscalls :
+	{
+		*(.syscalls)
+		. = ALIGN(4);
+	} > sram :svcs
+
+	.headers (NOLOAD) :
+	{
+		*(.headers);
+		KEEP( *(.headers) );
 		. = ALIGN(16);
-		__swistack_addr = .;
-	} >sram
+	} >headers_heap :headers
+
+	.modules __headers_addr + SIZEOF_HEADERS - 0x34:
+	{
+		*(.modules);
+		KEEP( *(.modules) );
+		. = __headers_size - SIZEOF_HEADERS + 0x34;
+		. = ALIGN(16);
+	} :headers
+
+	.crypto.bss (NOLOAD):
+	{
+		aes* sha* hmac* keyring* (.dynbss)
+		aes* sha* hmac* keyring* (.gnu.linkonce.b*)
+		aes* sha* hmac* keyring* (.bss*)
+		aes* sha* hmac* keyring* (COMMON)
+		. = ALIGN(4);
+	} > crypto :crypto
+
+	.crypto :
+	{
+		*(.crypto.text*)
+		aes* sha* hmac* keyring* (.text .text.* .gnu.linkonce.t*)
+		. = ALIGN(4);
+		*(.crypto.data*)
+		aes* sha* hmac* keyring* (.rodata)
+		aes* sha* hmac* keyring* (.roda)
+		aes* sha* hmac* keyring* (.rodata.*)
+		aes* sha* hmac* keyring* (.data)
+		aes* sha* hmac* keyring* (.data.*)
+		aes* sha* hmac* keyring* (.gnu.linkonce.d*)
+		. = ALIGN(4);
+	} > crypto :crypto
 
 	/DISCARD/ :
 	{
@@ -148,5 +201,3 @@ SECTIONS
 		*(.ARM.extab*)
 	}
 }
-
-

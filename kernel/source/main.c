@@ -45,9 +45,9 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
 FATFS fatfs;
-extern const u32 __kernel_heap_area_start[];
 extern const u32 __ipc_heap_start[];
-extern const u32 __ipc_heap_end[];
+extern const u32 __ipc_heap_size[];
+extern const u32 __headers_addr[];
 
 void DiThread()
 {
@@ -85,7 +85,7 @@ void kernel_main( void )
 	//not sure what this is about, if you know please let us know.
 	u32 hardwareVersion, hardwareRevision;
 	GetHollywoodVersion(&hardwareVersion,&hardwareRevision);
-	if (hardwareVersion == 0) 
+	if (hardwareVersion == 0)
 	{
 		u32 dvdConfig = read32(HW_DI_CFG);
 		u32 unknownConfig = dvdConfig >> 2 & 1;
@@ -125,14 +125,16 @@ void kernel_main( void )
 	}
 
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		panic("failed to start IPC thread!\n");	
+		panic("failed to start IPC thread!\n");
 
-	KernelHeapId = CreateHeap((void*)__kernel_heap_area_start, 0xC0000);
+	KernelHeapId = CreateHeap((void*)__headers_addr, 0xC0000);
 	printk("$IOSVersion: IOSP: %s %s 64M $", __DATE__, __TIME__);
 	SetThreadPriority(0, 0);
 	SetThreadPriority(IpcHandlerThreadId, 0x5C);
 	u32 vector;
 	FRESULT fres = 0;
+
+	//while(1){}
 	
 	crypto_initialize();
 	printk("crypto support initialized\n");
@@ -280,7 +282,7 @@ u32 _main(void)
 	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT((u32)__ipc_heap_start));
-	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_end));
+	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start + (u32)__ipc_heap_size));
 	DCFlushRange((void*)0x00003100, 0x68);
 	gecko_printf("Updated DDR settings in lomem for current map\n");
 	

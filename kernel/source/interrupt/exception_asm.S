@@ -18,7 +18,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl SetupExceptionsStack
 
 .extern __excstack_addr
-.extern __swistack_addr
 .extern ExceptionHandler
 
 BEGIN_ASM_FUNC SetupExceptionsStack
@@ -29,11 +28,6 @@ BEGIN_ASM_FUNC SetupExceptionsStack
 	@ Setup exception stack
 	ldr	sp, =__excstack_addr
 
-	@ Switch to SVC mode
-	msr cpsr_c, #0xd3
-	@ Setup exception stack
-	ldr	sp, =__swistack_addr
-
 	@ Switch to ABORT mode
 	msr cpsr_c, #0xd7
 	@ Setup exception stack
@@ -42,7 +36,7 @@ BEGIN_ASM_FUNC SetupExceptionsStack
 	@ Switch to UNDF mode
 	msr cpsr_c, #0xdb
 	@ Setup exception stack
-	ldr	sp, =__swistack_addr
+	ldr	sp, =__excstack_addr
 	
 	@ Restore mode
 	msr cpsr_c, r0

@@ -12,7 +12,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define __MEMORY_H__
 
 #define MEM2_BASE				0x10000000
-#define MEM2_PHY2VIRT(addr)		( (u32)addr | 0x80000000 )
+#define MEM2_PHY2VIRT(addr)		( (u32)(addr) | 0x80000000 )
 
 #define MEM1_BASE				0x00000000
 #define MEM1_END				(MEM1_BASE | 0x01800000 )

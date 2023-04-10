@@ -18,8 +18,8 @@
 #include "scheduler/threads.h"
 #include "memory/memory.h"
 
-extern const void* __thread_stacks_area_start;
-extern const void* __thread_stacks_area_end;
+extern const u32 __thread_stacks_area_start[];
+extern const u32 __thread_stacks_area_size[];
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
 extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
@@ -55,7 +55,7 @@ void InitializeThreadContext()
 		ProcessGID[i] = i;
 	}
 
-	memset8((u8*)&__thread_stacks_area_start, 0xA5, (u32)&__thread_stacks_area_end - (u32)&__thread_stacks_area_start);
+	memset8((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
 	for(s16 i = 0; i < MAX_THREADS; i++)
 	{
