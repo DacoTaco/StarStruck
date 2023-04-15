@@ -27,6 +27,15 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_IOSHEAPLOW			( MEM1_BASE | 0x3148 )
 #define MEM1_IOSHEAPHIGH		( MEM1_BASE | 0x314C )
 
+//Access permissions
+//we can have multiple APs per second level page, hence the formula to calculate the value for us
+#define APX_VALUE(number, access)	((access & 0x03) << ((2+number)*2))
+#define AP_VALUE(access)			APX_VALUE(3, access)
+#define AP_ROM						0x00
+#define AP_NOUSER					0x01
+#define AP_ROUSER					0x02
+#define AP_RWUSER					0x03
+
 #include <types.h>
 
 #include "memory/ahb.h"

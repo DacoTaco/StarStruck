@@ -33,6 +33,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "crypto/aes.h"
 #include "crypto/sha.h"
 #include "utils.h"
+#include "elf.h"
 
 #include "sdhc.h"
 #include "ff.h"
@@ -126,6 +127,49 @@ void kernel_main( void )
 
 	if( threadId < 0 || StartThread(threadId) < 0 )
 		panic("failed to start IPC thread!\n");
+
+	//loop the program headers and map/launch all modules
+	Elf32_Phdr* headers = (Elf32_Phdr*)__headers_addr;
+	for(u32 index = 1; index < 0x0F; index++)
+	{
+		MemorySection section;
+		Elf32_Phdr header = headers[index];
+		if(header.p_type != PT_LOAD || (header.p_flags & 0x0FF00000) == 0 || header.p_vaddr == (u32)__headers_addr)
+			continue;
+		
+		section.PhysicalAddress = header.p_paddr;
+		section.VirtualAddress = header.p_vaddr;
+		section.Domain = FLAGSTODOMAIN(header.p_flags);
+		section.Size = (header.p_memsz + 0xFFF) & 0xFFFFF000;
+
+		//????
+		if(header.p_flags & PF_X)
+			section.AccessRights = AP_ROUSER;
+		else if(header.p_flags & PF_W)
+			section.AccessRights = AP_RWUSER;
+		else if(header.p_flags & PF_R)
+			section.AccessRights = AP_ROM;
+		else
+			section.AccessRights = AP_ROUSER;
+
+		section.Unknown = 1;
+		s32 ret = MapMemory(&section);
+		if(ret != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+		
+		//map cached version
+		section.VirtualAddress |= 0x80000000;
+		section.Unknown = 0;
+		ret = MapMemory(&section);
+		if(ret != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+		
+		printk("load segment @ [%08x, %08x] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
+
+		//clear memory that didn't have stuff loaded in from the elf
+		if(header.p_filesz < header.p_memsz)
+			memset8((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
+	}
 
 	KernelHeapId = CreateHeap((void*)__headers_addr, 0xC0000);
 	printk("$IOSVersion: IOSP: %s %s 64M $", __DATE__, __TIME__);

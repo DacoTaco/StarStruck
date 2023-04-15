@@ -24,6 +24,7 @@ ENTRY(_start)
 PHDRS
 {
 	phdrs		PT_PHDR PHDRS FLAGS(0x00F00000);
+	note		PT_NOTE FLAGS(0);
 	headers		PT_LOAD PHDRS FLAGS(0x00F00000) AT(0x138F0000);
 	crypto		PT_LOAD FLAGS(0x000000007) /* Read | Write | Execute */;
 	sram		PT_LOAD FLAGS(0x000000006) /* Read | Write */;
@@ -79,7 +80,7 @@ SECTIONS
 		__bss2_end = . ;
 	} >mem2
 
-	.data.sram :
+	.data.sram(NOLOAD) : ALIGN(4)
 	{
 		__data_sram_start = . ;
 		*(.data.sram)
@@ -87,13 +88,13 @@ SECTIONS
 		__data_sram_end = . ;
 	} > sram : sram
 
-	.init :
+	.init : ALIGN(0x10)
 	{
 		*(.init)
 		. = ALIGN(4);
 	} > kernel : kernel
 
-	.text :
+	.text : ALIGN(0x10)
 	{
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text*)
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text.*)
@@ -104,7 +105,7 @@ SECTIONS
 		. = ALIGN(4);
 	} > kernel : kernel
 
-	.rodata :
+	.rodata : ALIGN(4)
 	{
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata)
 		*all.rodata*(*)
@@ -114,7 +115,7 @@ SECTIONS
 		. = ALIGN(4);
 	} > kernel : rodata
 
-	.data :
+	.data : ALIGN(0x40)
 	{
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data)
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data.*)
@@ -150,26 +151,21 @@ SECTIONS
 		__excstack_addr = .;
 	} > kernel : data
 
-	.syscalls :
+	.syscalls : ALIGN(0x10)
 	{
 		*(.syscalls)
 		. = ALIGN(4);
 	} > sram :svcs
 
-	.headers (NOLOAD) :
+	.note __headers_addr + SIZEOF_HEADERS - 0x34:
 	{
-		*(.headers);
-		KEEP( *(.headers) );
-		. = ALIGN(16);
-	} >headers_heap :headers
+		*(.note);
+	} > headers_heap :headers :note
 
-	.modules __headers_addr + SIZEOF_HEADERS - 0x34:
+	.modules :
 	{
-		*(.modules);
-		KEEP( *(.modules) );
-		. = __headers_size - SIZEOF_HEADERS + 0x34;
-		. = ALIGN(16);
-	} :headers
+		. += __headers_size - (SIZEOF_HEADERS - 0x34) - SIZEOF(.note);
+	} >headers_heap :headers
 
 	.crypto.bss (NOLOAD):
 	{
@@ -180,7 +176,7 @@ SECTIONS
 		. = ALIGN(4);
 	} > crypto :crypto
 
-	.crypto :
+	.crypto : ALIGN(0x40)
 	{
 		*(.crypto.text*)
 		aes* sha* hmac* keyring* (.text .text.* .gnu.linkonce.t*)

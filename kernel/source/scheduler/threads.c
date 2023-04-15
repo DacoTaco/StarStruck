@@ -59,9 +59,6 @@ void InitializeThreadContext()
 
 	for(s16 i = 0; i < MAX_THREADS; i++)
 	{
-		//IOS clears the thread structure on startup, we do it on initalize
-		memset32(&Threads[i], 0 , sizeof(ThreadInfo));
-
 		//gcc works by having a downwards stack, hence setting the stack to the upper limit
 		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (STACK_SIZE*(i+1));
 	}

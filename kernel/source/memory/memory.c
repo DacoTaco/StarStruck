@@ -45,15 +45,6 @@ Copyright (C) 2021			DacoTaco
 #define DOMAIN_RESERVED				0x02
 #define DOMAIN_MANAGER				0x03
 
-//Access permissions
-//we can have multiple APs per second level page, hence the formula to calculate the value for us
-#define APX_VALUE(number, access)	((access & 0x03) << ((2+number)*2))
-#define AP_VALUE(access)			APX_VALUE(3, access)
-#define AP_ROM						0x00
-#define AP_NOUSER					0x01
-#define AP_ROUSER					0x02
-#define AP_RWUSER					0x03
-
 //CR bits
 #define CR_MMU						(1 << 0)
 #define CR_DCACHE					(1 << 2)
