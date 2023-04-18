@@ -184,7 +184,7 @@ void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 }
 
 //IOS Handlers
-s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
 {
 	int threadId = 0;
 	s32 irqState = DisableInterrupts();

@@ -75,7 +75,7 @@ void DiThread()
 void kernel_main( void )
 {
 	//create IRQ Timer handler thread
-	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
+	s32 threadId = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
 	//set thread to run as a system thread
 	if(threadId >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -92,14 +92,14 @@ void kernel_main( void )
 		u32 unknownConfig = dvdConfig >> 2 & 1;
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
 		{
-			threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threadId = CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
 			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
 	}
 
 	//create AES Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	if(threadId >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -107,7 +107,7 @@ void kernel_main( void )
 		panic("failed to start AES thread!\n");	
 
 	//create SHA Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	if(threadId > 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -117,7 +117,7 @@ void kernel_main( void )
 	/// TODO: Some function goes here, needs research
 
 	//create IPC handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
+	threadId = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
 	if(threadId > 0)
 	{
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -336,7 +336,7 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
+	s32 threadId = CreateThread((u32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	

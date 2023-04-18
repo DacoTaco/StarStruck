@@ -92,7 +92,7 @@ s32 YieldCurrentThread( ThreadQueue* threadQueue );
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
 ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue);
 void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread );
-s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(u32 threadId, u32 return_value);
 s32 JoinThread(s32 threadId, u32* returnedValue);
 s32 SuspendThread(s32 threadId);
