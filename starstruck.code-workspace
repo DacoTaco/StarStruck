@@ -17,6 +17,10 @@
 			"path": "elfloader"
 		},
 		{
+			"name": "modules",
+			"path": "modules",
+		},
+		{
 			"name": "tools/ppcloader",
 			"path": "tools/ppcloader",
 		},

@@ -1,13 +1,14 @@
 /*
 	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
-	syscalls - internal communications over software interrupts
-
 	Copyright (C) 2023	DacoTaco
 
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+INCLUDE kernelHeaders.ld
+INCLUDE kernelModules.ld
+INCLUDE iosModules.ld
 OUTPUT_FORMAT("elf32-bigarm")
 OUTPUT_ARCH(arm)
 EXTERN(_start)
@@ -20,30 +21,24 @@ ENTRY(_start)
     0x00000004 : PF_R
     0x0XX00000 : domain
 */
-
 PHDRS
 {
-	phdrs		PT_PHDR PHDRS FLAGS(0x00F00000);
-	note		PT_NOTE FLAGS(0);
-	headers		PT_LOAD PHDRS FLAGS(0x00F00000) AT(0x138F0000);
-	crypto		PT_LOAD FLAGS(0x000000007) /* Read | Write | Execute */;
-	sram		PT_LOAD FLAGS(0x000000006) /* Read | Write */;
-	kernel		PT_LOAD FLAGS(0x000000005) /* Read | Execute */;
-	rodata		PT_LOAD FLAGS(0x000000004) /* Read */;
-	svcs		PT_LOAD FLAGS(0x000000004) /* Read */;
-	data		PT_LOAD FLAGS(0x000000006) /* Read | Write */;
+	sram		PT_LOAD FLAGS(0x00000006) /* Read | Write */;
+	kernel		PT_LOAD FLAGS(0x00000005) /* Read | Execute */;
+	rodata		PT_LOAD FLAGS(0x00000004) /* Read */;
+	svcs		PT_LOAD FLAGS(0x00000004) /* Read */;
+	data		PT_LOAD FLAGS(0x00000006) /* Read | Write */;
 }
 
 /*Sram is split up in several parts lol. FFFE0000 = 32K available. then there is 32K of unusable crap, followed by 64K of memory*/
-MEMORY {
+MEMORY 
+{
 	sram				: ORIGIN = 0xFFFE0000, LENGTH = 32K
 	kernel				: ORIGIN = 0xFFFF0000, LENGTH = 64K
 	ipc_heap			: ORIGIN = 0x13600000, LENGTH = 128K
 	kmalloc_heap		: ORIGIN = 0x13850000, LENGTH = 128K
-	crypto				: ORIGIN = 0x13A70000, LENGTH = 128K
 	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
 	iobuf_heap			: ORIGIN = 0x13C40000, LENGTH = 512K
-	headers_heap		: ORIGIN = 0x138F0000, LENGTH = 768K
 	mem2				: ORIGIN = 0x13F00000, LENGTH = 1M
 }
 
@@ -64,12 +59,6 @@ __thread_stacks_area_size = LENGTH(thread_stacks);
 __iobuf_heap_area_start = ORIGIN(iobuf_heap);
 __iobuf_heap_area_size = LENGTH(iobuf_heap);
 
-__headers_size = LENGTH(headers_heap);
-__headers_addr = ORIGIN(headers_heap);
-
-__crypto_addr = ORIGIN(crypto);
-__crypto_size = LENGTH(crypto);
-
 SECTIONS
 {
 	.bss.mem2 (NOLOAD) :
@@ -79,14 +68,6 @@ SECTIONS
 		. = ALIGN(4);
 		__bss2_end = . ;
 	} >mem2
-
-	.data.sram(NOLOAD) : ALIGN(4)
-	{
-		__data_sram_start = . ;
-		*(.data.sram)
-		. = ALIGN(4);
-		__data_sram_end = . ;
-	} > sram : sram
 
 	.init : ALIGN(0x10)
 	{
@@ -109,11 +90,19 @@ SECTIONS
 	{
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata)
 		*all.rodata*(*)
-		*(.roda)
+		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .roda)
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata.*)
 		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.r*)
 		. = ALIGN(4);
 	} > kernel : rodata
+
+	.data.sram (NOLOAD) : ALIGN(4)
+	{
+		__data_sram_start = . ;
+		*(.data.sram)
+		. = ALIGN(4);
+		__data_sram_end = . ;
+	} > sram : sram
 
 	.data : ALIGN(0x40)
 	{
@@ -157,42 +146,9 @@ SECTIONS
 		. = ALIGN(4);
 	} > sram :svcs
 
-	.note __headers_addr + SIZEOF_HEADERS - 0x34:
-	{
-		*(.note);
-	} > headers_heap :headers :note
-
-	.modules :
-	{
-		. += __headers_size - (SIZEOF_HEADERS - 0x34) - SIZEOF(.note);
-	} >headers_heap :headers
-
-	.crypto.bss (NOLOAD):
-	{
-		aes* sha* hmac* keyring* (.dynbss)
-		aes* sha* hmac* keyring* (.gnu.linkonce.b*)
-		aes* sha* hmac* keyring* (.bss*)
-		aes* sha* hmac* keyring* (COMMON)
-		. = ALIGN(4);
-	} > crypto :crypto
-
-	.crypto : ALIGN(0x40)
-	{
-		*(.crypto.text*)
-		aes* sha* hmac* keyring* (.text .text.* .gnu.linkonce.t*)
-		. = ALIGN(4);
-		*(.crypto.data*)
-		aes* sha* hmac* keyring* (.rodata)
-		aes* sha* hmac* keyring* (.roda)
-		aes* sha* hmac* keyring* (.rodata.*)
-		aes* sha* hmac* keyring* (.data)
-		aes* sha* hmac* keyring* (.data.*)
-		aes* sha* hmac* keyring* (.gnu.linkonce.d*)
-		. = ALIGN(4);
-	} > crypto :crypto
-
 	/DISCARD/ :
 	{
+		*(.ARM.attributes*)
 		*(.ARM.exidx*)
 		*(.ARM.extab*)
 	}
