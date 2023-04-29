@@ -25,7 +25,7 @@ BUILD			:= build
 SOURCES			:= source $(wildcard source/*/)
 INCLUDES		:= source
 DATA			:=
-MODULES			:= es
+MODULES			:= fs es
 
 #---------------------------------------------------------------------------------
 # options for code generation

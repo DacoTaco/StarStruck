@@ -6,16 +6,10 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include <ios/syscalls.h>
+#ifndef __FS_H__
+#define __FS_H__
 
-#include "es.h"
+#define FS_DEVICE_NAME "/dev/fs"
+#define FS_DEVICE_NAME_SIZE sizeof(FS_DEVICE_NAME)
 
-int main(void)
-{
-	OSPrintk("Hello from ES!");
-	while(1)
-	{
-		OSYieldThread();
-	}
-	return 0;
-}
+#endif

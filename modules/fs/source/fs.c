@@ -8,11 +8,11 @@
 
 #include <ios/syscalls.h>
 
-#include "es.h"
+#include "fs.h"
 
 int main(void)
 {
-	OSPrintk("Hello from ES!");
+	OSPrintk("Hello from FS!");
 	while(1)
 	{
 		OSYieldThread();
