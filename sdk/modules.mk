@@ -63,16 +63,13 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES_BIN 		:= $(addsuffix .o,$(BINFILES))
-export OFILES_SOURCES 	:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES 			:= $(OFILES_BIN) $(OFILES_SOURCES)
-export HFILES 			:= $(addsuffix .h,$(subst .,_,$(BINFILES)))
+export OFILES 			:= $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export INCLUDE			:= $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 						   $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 						   -I$(CURDIR)/$(BUILD) -I$(SDKDIR)/modules
 export LIBPATHS			:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: $(BUILD) clean $(TARGET)
+.PHONY: $(BUILD) updates clean $(TARGET)
 
 #---------------------------------------------------------------------------------
 
@@ -81,8 +78,11 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) SDKDIR=../$(SDKDIR) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-$(TARGET): $(OUTPUTPATH)/$(TARGET)_module.ld
-$(OUTPUTPATH)/$(TARGET)_module.ld: $(OUTPUT)
+#check if files changed, if so -> build
+$(TARGET): $(BUILD) $(OUTPUTPATH)/$(TARGET)_module.ld
+#only do something if our output changed
+$(OUTPUTPATH)/$(TARGET)_module.ld: $(OUTPUT_STRIPPED)
+	@echo creating files
 	@if [ -z $(OUTPUTPATH) ]; then\
 		echo "OUTPUTPATH is a required variable to build module binary data"; \
 		false; \
@@ -113,8 +113,6 @@ $(OUTPUT_STRIPPED): $(OUTPUT)
 	$(SILENTCMD)$(STRIP) $< -o $@
 	
 $(OUTPUT)	:	$(OFILES) $(TARGET).ld
-
-$(OFILES_SOURCES) : $(HFILES)
 
 $(TARGET).ld:
 	@cat $(SDKDIR)/modules/moduleTemplate.ld | \

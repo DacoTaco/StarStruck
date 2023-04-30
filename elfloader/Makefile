@@ -89,18 +89,10 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES_BIN := $(addsuffix .o,$(BINFILES))
-
-export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
-
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
-
+export OFILES := $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD)
-
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 .PHONY: $(BUILD) clean
@@ -116,7 +108,6 @@ clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_BIN).bin
 
-
 #---------------------------------------------------------------------------------
 else
 
@@ -129,8 +120,6 @@ $(OUTPUT_BIN).bin: $(OUTPUT).elf
 	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
 
 $(OUTPUT).elf	:	$(OFILES)
-
-$(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
 # The bin2o rule should be copied and modified

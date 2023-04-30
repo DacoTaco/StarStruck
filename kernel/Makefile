@@ -39,6 +39,7 @@ CFLAGS += -DCAN_HAZ_USBGECKO
 # uses the 'safe' version of the usbgecko receive and send functions
 #CFLAGS += -DGECKO_SAFE
 
+MODULESPATH = ../modules
 MODULESCRIPT = iosModules
 CFLAGS	+= $(INCLUDE)
 CXXFLAGS = $(CFLAGS)
@@ -101,10 +102,7 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES_BIN 		:= $(addsuffix .o,$(BINFILES))
-export OFILES_SOURCES 	:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES 			:= $(OFILES_BIN) $(OFILES_SOURCES)
-export HFILES 			:= $(addsuffix .h,$(subst .,_,$(BINFILES)))
+export OFILES 			:= $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export LIBPATHS			:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export INCLUDE			:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 							$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
@@ -128,7 +126,7 @@ $(MODULESCRIPT).ld:
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	$(SILENTCMD) > $(BUILD)/$@
 	@- $(foreach mod, $(MODULES), $(eval module = $(mod)) \
-		$(MAKE) --no-print-directory OUTPUTPATH=$(CURDIR)/$(BUILD) -C ../modules/$(module)/ -f Makefile $(module); \
+		$(MAKE) --no-print-directory OUTPUTPATH=$(CURDIR)/$(BUILD) -C $(MODULESPATH)/$(module)/ -f Makefile $(module); \
 		echo 'INCLUDE $(module)_module.ld' >> $(BUILD)/$@; \
 	)
 
@@ -154,8 +152,6 @@ $(OUTPUT_STRIPPED): $(OUTPUT)
 	$(SILENTCMD)$(STRIP) $< -o $@
 	
 $(OUTPUT)	:	$(OFILES)
-
-$(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
 # The bin2o rule should be copied and modified
