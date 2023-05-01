@@ -24,14 +24,8 @@ BEGIN_ASM_FUNC UndefinedInstructionVector
 	mrs		r1, spsr
 	stmdb	sp!, {r1}
 	mov		r1, sp
-
-#ifdef _THUMBMODE_
-	ldrh	r0,[lr,#-2]
-	bic		r0,r0,#0xFFFFFF00
-#else
+#always get the last 4 bytes that were executed. this is because a UNDF syscall is 4 bytes long
 	ldr		r0,[lr,#-4]
-	bic		r0,r0,#0xFF000000
-#endif
 
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
 	blx		UndefinedInstructionHandler

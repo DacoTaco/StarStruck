@@ -18,6 +18,7 @@
 	.globl \name
     BEGIN_ASM_FUNC \name
 		swi		\syscall
+#		.long (0xE6000010 | (\syscall << 5))
 		bx		lr
 	END_ASM_FUNC
 .endm
