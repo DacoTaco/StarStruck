@@ -7,15 +7,27 @@
 */
 
 #include <ios/syscalls.h>
+#include "ios/printk.h"
 
 #include "fs.h"
 
 int main(void)
 {
-	OSPrintk("Hello from FS!");
+	u32 messageQueueMessages[8] ALIGNED(0x10);
+	u32* message;
+	printk("$IOSVersion:  FFSP: %s %s 64M $", __DATE__, __TIME__);
+	s32 messageQueueId = OSCreateMessageQueue((void**)&messageQueueMessages, 8);
+	if(messageQueueId < 0)
+	{
+		printk("failed to create messagequeue! %d\n", messageQueueId);
+		return -408;
+	}	
+
 	while(1)
 	{
-		OSYieldThread();
+      	s32 ret = OSReceiveMessage(messageQueueId, &message, 0);
+		if(ret < 0)
+			break;
 	}
 	return 0;
 }

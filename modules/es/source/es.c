@@ -7,15 +7,29 @@
 */
 
 #include <ios/syscalls.h>
+#include "ios/printk.h"
 
 #include "es.h"
 
 int main(void)
-{
-	OSPrintk("Hello from ES!");
+{	
+	u32* message;
+	u32 messageQueueMessages[8] ALIGNED(0x20) = { 0 };
+
+	OSSetThreadPriority(0,0x50);
+	OSSetThreadPriority(0,0x79);
+	printk("$IOSVersion:  ES: %s %s 64M $", __DATE__, __TIME__);
+
+	s32 EsMessageQueueId = OSCreateMessageQueue((void**)&messageQueueMessages, 1);
+	if(EsMessageQueueId < 0)
+	{
+		printk("failed to create messagequeue! %d\n", EsMessageQueueId);
+		return -408;
+	}	
+	
 	while(1)
 	{
-		OSYieldThread();
+		OSReceiveMessage(EsMessageQueueId, &message, 0);
 	}
 	return 0;
 }
