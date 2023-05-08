@@ -145,7 +145,7 @@ void kernel_main( void )
 		section.Domain = FLAGSTODOMAIN(header.p_flags);
 		section.Size = (header.p_memsz + 0xFFF) & 0xFFFFF000;
 
-		//????
+		//set section access
 		if(header.p_flags & PF_X)
 			section.AccessRights = AP_ROUSER;
 		else if(header.p_flags & PF_W)
@@ -155,19 +155,19 @@ void kernel_main( void )
 		else
 			section.AccessRights = AP_ROUSER;
 
-		section.Unknown = 1;
+		section.IsCached = 1;
 		s32 ret = MapMemory(&section);
 		if(ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 		
 		//map cached version
 		section.VirtualAddress |= 0x80000000;
-		section.Unknown = 0;
+		section.IsCached = 0;
 		ret = MapMemory(&section);
 		if(ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 		
-		printk("load segment @ [%08x, %08x] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
+		printk("load segment @ [%d, %d] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
 
 		//clear memory that didn't have stuff loaded in from the elf
 		if(header.p_filesz < header.p_memsz)
@@ -183,8 +183,8 @@ void kernel_main( void )
 		u32 stackTop = __modules[i].StackAddress;
 		u32 arg = __modules[i].UserId;
 		 
-		printk("priority = %d, stackSize = %d, stackPtr = %08x\n", priority, stackSize, stackTop);
-		printk("starting thread entry: 0x%08x\n", main);
+		printk("priority = %d, stackSize = %d, stackPtr = %d\n", priority, stackSize, stackTop);
+		printk("starting thread entry: 0x%d\n", main);
 
 		threadId = CreateThread(main, &arg, (u32*)stackTop, stackSize, priority, 1);
 		Threads[threadId].ProcessId = arg;

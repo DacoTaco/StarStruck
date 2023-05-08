@@ -48,7 +48,7 @@ typedef struct
 	u32 Size;
 	u32 Domain;
 	u32 AccessRights;
-	u32 Unknown;
+	u32 IsCached;
 } MemorySection;
 
 CHECK_OFFSET(MemorySection, 0x00, PhysicalAddress);
@@ -56,7 +56,7 @@ CHECK_OFFSET(MemorySection, 0x04, VirtualAddress);
 CHECK_OFFSET(MemorySection, 0x08, Size);
 CHECK_OFFSET(MemorySection, 0x0C, Domain);
 CHECK_OFFSET(MemorySection, 0x10, AccessRights);
-CHECK_OFFSET(MemorySection, 0x14, Unknown);
+CHECK_OFFSET(MemorySection, 0x14, IsCached);
 CHECK_SIZE(MemorySection, 0x18);
 
 typedef struct
