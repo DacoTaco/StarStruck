@@ -120,6 +120,7 @@ ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue)
 }
 
 __attribute__((target("arm")))
+__attribute__ ((noreturn))
 void ScheduleYield( void )
 {
 	CurrentThread = ThreadQueue_PopThread(&SchedulerQueue);
@@ -130,7 +131,6 @@ void ScheduleYield( void )
 	TlbInvalidate();
 	FlushMemory();
 
-	register void* threadContext	__asm__("r0") = (void*)CurrentThread;
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
@@ -138,22 +138,22 @@ void ScheduleYield( void )
 		add		sp, %[threadContext], %[stackOffset]\n\
 		msr		cpsr_c, #0xdb\n\
 		add		sp, %[threadContext], %[stackOffset]\n\
-#move pointer to the context\n\
-		add		%[threadContext], %[threadContext], %[threadContextOffset]\n\
+#store pointer of the context in lr\n\
+		mov		lr, %[threadContext]\n\
 #restore the status register\n\
-		ldmia	%[threadContext]!, {r4}\n\
-		msr		spsr_cxsf, r4\n\
+		ldr		%[threadContext], [lr, #0x00]\n\
+		msr		spsr_cxsf, %[threadContext]\n\
 #restore the rest of the state\n\
-		mov		lr, %[threadContext] \n\
-		ldmia	lr, {r0-r12, sp, lr}^\n\
-		add		lr, lr, #0x3C\n\
+		ldmib	lr, {r0-r12, sp, lr}^\n\
+		ldr		lr, [lr, #0x40]\n\
 #jump to thread\n\
-		ldmia	lr, {pc}^\n"
+		movs 	pc, lr\n"
 		:
-		: [threadContext] "r" (threadContext), 
+		: [threadContext] "r" (CurrentThread), 
 		  [threadContextOffset] "J" (offsetof(ThreadInfo, ThreadContext)),
-		  [stackOffset] "J" (offsetof(ThreadInfo, UserContext) + sizeof(ThreadContext))
+		  [stackOffset] "J" (offsetof(ThreadInfo, UserContext))
 	);
+	__builtin_unreachable();
 }
 
 //Called syscalls.

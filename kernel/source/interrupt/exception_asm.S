@@ -46,65 +46,65 @@ END_ASM_FUNC
 .pool
 	
 BEGIN_ASM_FUNC InstructionAbortVector
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-	sub		sp, sp, #0x3c
+	stmib	sp!, {lr}
+	stmib	sp, {r0-lr}^
+	add		sp, sp, #0x3c
 	mov		r2, sp
 	mrs		r1, spsr
 	mov		r0, #3
 
 	blx		ExceptionHandler
 
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
+	ldmdb	sp!, {r0-r12}
+	sub		sp, sp, #8
+	ldmdb	sp!, {lr}
 	subs	pc, lr, #4
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC DataAbortVector
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-	sub		sp, sp, #0x3c
+	stmib	sp!, {lr}
+	stmib	sp, {r0-lr}^
+	add		sp, sp, #0x3c
 	mov		r2, sp
 	mrs		r1, spsr
 	mov		r0, #4
 
 	blx		ExceptionHandler
 
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
+	ldmdb	sp!, {r0-r12}
+	sub		sp, sp, #8
+	ldmdb	sp!, {lr}
 	subs	pc, lr, #8
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC ReservedExceptionVector
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-	sub		sp, sp, #0x3c
+	stmib	sp!, {lr}
+	stmib	sp, {r0-lr}^
+	add		sp, sp, #0x3c
 	mov		r2, sp
 	mrs		r1, spsr
 	mov		r0, #5
 
 	blx		ExceptionHandler
 
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
+	ldmdb	sp!, {r0-r12}
+	sub		sp, sp, #8
+	ldmdb	sp!, {lr}
 	movs	pc, lr
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC FastIrqVector
-	stmfd	sp!, {lr}
-	stmfd	sp, {r0-lr}^
-	sub		sp, sp, #0x3c
+	stmib	sp!, {lr}
+	stmib	sp, {r0-lr}^
+	add		sp, sp, #0x3c
 	mov		r2, sp
 	mrs		r1, spsr
 	mov		r0, #7
 
 	blx		ExceptionHandler
 
-	ldmfd	sp!, {r0-r12}
-	add		sp, sp, #8
-	ldmfd	sp!, {lr}
+	ldmdb	sp!, {r0-r12}
+	sub		sp, sp, #8
+	ldmdb	sp!, {lr}
 	subs	pc, lr, #4
 END_ASM_FUNC

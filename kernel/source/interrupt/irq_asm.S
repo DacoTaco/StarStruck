@@ -48,22 +48,24 @@ BEGIN_ASM_FUNC irq_wait
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC InterruptVector
-#set the stackpointer & save the thread state
+#set the stackpointer & save the thread context
 	ldr		sp, =CurrentThread
 	ldr		sp, [sp]
-	add		sp, #0x44
-#load the pc from before the interrupt(which is stored in current lr)
-	subs	lr, lr, #4
-	stmdb	sp!, {lr}
-#save the state
-	stmdb	sp, {r0-r12, sp, lr}^
-	sub		sp, sp, #0x3C
-	mrs		r1, spsr
-	stmdb	sp!, {r1}
-	
-#handle the irq request with r0 having the state
+#save the context
+	stmib	sp, {r0-r12, sp, lr}^
+
+#set our sp back to the irq stack
 	mov		r0, sp
 	ldr		sp, =__irqstack_addr
+
+#load the pc from before the interrupt(which is stored in current lr)
+	sub		lr, lr, #4
+	str		lr, [r0, #0x40]
+
+	mrs		lr, spsr
+	str		lr, [r0]
+	
+#handle the irq request with r0 having the state
 	blx		IrqHandler
 
 #yield execution to the next thread
