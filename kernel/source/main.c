@@ -17,6 +17,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <ios/processor.h>
 #include <ios/printk.h>
 #include <ios/gecko.h>
+#include <ios/module.h>
 
 #include "core/hollywood.h"
 #include "core/gpio.h"
@@ -49,6 +50,8 @@ FATFS fatfs;
 extern const u32 __ipc_heap_start[];
 extern const u32 __ipc_heap_size[];
 extern const u32 __headers_addr[];
+extern const ModuleInfo __modules[];
+extern const u32 __modules_size;
 
 void DiThread()
 {
@@ -169,6 +172,23 @@ void kernel_main( void )
 		//clear memory that didn't have stuff loaded in from the elf
 		if(header.p_filesz < header.p_memsz)
 			memset8((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
+	}
+
+	const u32 modules_cnt = __modules_size / sizeof(ModuleInfo);
+	for(u32 i = 0; i < modules_cnt;i++)
+	{
+		u32 main = __modules[i].EntryPoint;
+		u32 stackSize = __modules[i].StackSize;
+		u32 priority = __modules[i].Priority;
+		u32 stackTop = __modules[i].StackAddress;
+		u32 arg = __modules[i].UserId;
+		 
+		printk("priority = %d, stackSize = %d, stackPtr = %08x\n", priority, stackSize, stackTop);
+		printk("starting thread entry: 0x%08x\n", main);
+
+		threadId = CreateThread(main, &arg, (u32*)stackTop, stackSize, priority, 1);
+		Threads[threadId].ProcessId = arg;
+		StartThread(threadId);
 	}
 
 	KernelHeapId = CreateHeap((void*)__headers_addr, 0xC0000);
