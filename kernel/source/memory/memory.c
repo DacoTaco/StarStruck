@@ -45,15 +45,6 @@ Copyright (C) 2021			DacoTaco
 #define DOMAIN_RESERVED				0x02
 #define DOMAIN_MANAGER				0x03
 
-//Access permissions
-//we can have multiple APs per second level page, hence the formula to calculate the value for us
-#define APX_VALUE(number, access)	((access & 0x03) << ((2+number)*2))
-#define AP_VALUE(access)			APX_VALUE(3, access)
-#define AP_ROM						0x00
-#define AP_NOUSER					0x01
-#define AP_ROUSER					0x02
-#define AP_RWUSER					0x03
-
 //CR bits
 #define CR_MMU						(1 << 0)
 #define CR_DCACHE					(1 << 2)
@@ -79,8 +70,10 @@ extern const u32 __thread_stacks_area_start[];
 extern const u32 __thread_stacks_area_size[];
 extern const u32 __iobuf_heap_area_start[];
 extern const u32 __iobuf_heap_area_size[];
-extern const u32 __kernel_heap_area_start[];
-extern const u32 __kernel_heap_area_size[];
+extern const u32 __headers_addr[];
+extern const u32 __headers_size[];
+extern const u32 __crypto_addr[];
+extern const u32 __crypto_size[];
 
 u8* heapCurrent = (u8*)__kmalloc_heap_start;
 u8* heapEnd = (u8*)__kmalloc_heap_end;
@@ -93,9 +86,9 @@ u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 
 static MemorySection KernelMemoryMaps[] = 
 {
-	// physical							virtual								size							domain			access		unknown
+	// physical							virtual								size							domain			access		 IsCached
 	{ 0xFFF00000,						0xFFF00000, 						0x00100000, 					0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Starlet sram 
-	{ 0x13A70000, 						0x13A70000, 						0x00020000, 					0x0000000F, 	AP_NOUSER, 	0x00000001 }, //    ???
+	{ (u32)__crypto_addr,				(u32)__crypto_addr,					(u32)__crypto_size,				0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Crypto
 	{ (u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_size, 0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Thread stacks
 	{ 0x0D800000, 						0x0D800000, 						0x000D0000, 					0x0000000F, 	AP_ROUSER, 	0x00000000 }, //Hardware registers(AHB mirror)
 	{ 0x00000000, 						0x00000000, 						0x04000000, 					0x00000008, 	AP_RWUSER, 	0x00000001 }, //MEM1 + ???
@@ -104,13 +97,13 @@ static MemorySection KernelMemoryMaps[] =
 	{ (u32)__ipc_heap_start, 			(u32)__ipc_heap_start, 				(u32)__ipc_heap_size, 			0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IPC Heap
 	{ (u32)__iobuf_heap_area_start, 	(u32)__iobuf_heap_area_start, 		(u32)__iobuf_heap_area_size, 	0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IOBuf ?
 	{ (u32)__kmalloc_heap_start, 		(u32)__kmalloc_heap_start, 			(u32)__kmalloc_heap_size, 		0x0000000F, 	AP_ROUSER, 	0x00000000 }, //KMalloc heap
-	{ (u32)__kernel_heap_area_start, 	(u32)__kernel_heap_area_start, 		(u32)__kernel_heap_area_size, 	0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Module elf??
+	{ (u32)__headers_addr, 				(u32)__headers_addr, 				(u32)__headers_size,			0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Kernel heap & program header storage
 	{ 0x13F00000, 						0x13F00000, 						0x00100000, 					0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
 };
 
 static ProcessMemorySection HWRegistersMemoryMaps[] = 
 {
-	  // 		physical	virtual		size		domain		access		unknown
+	  // 		physical	virtual		size		domain		access	  IsCached
 	{0x00,	{ 0x0D000000, 0x0D000000, 0x000D0000, 0x0000000F, AP_NOUSER, 0x00000000 }},
 	{0x02,	{ 0x0D010000, 0x0D010000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 	{0x03,	{ 0x0D806000, 0x0D006000, 0x00001000, 0x0000000F, AP_RWUSER, 0x00000000 }},
@@ -265,7 +258,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	 size : 0x00100000
 	 domain : 0x0F
 	 accessRights : 0x01;
-	 unknown : 0x01;
+	 IsCached : 0x01;
 	 page table[FFF ( 0xFFF00000 >> 20 )] = ( 0x1E | 0xFFF00000 | 0x400 | 0x1E0 )
 	 aka page[0xFFF] (0x13853FFC) = 0xFFF005FE ( b1111.1111.1111.0000.0000.0101.1111.1110 )
 	 aka regular section entry, writeback/cache, domain 0x0F, read, and redirects to physical address 0xFFFxxxxx
@@ -276,7 +269,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	
 	//either map section as regular section, or section with writeback cache & buffer enabled
 	u32 translationBase = SECTION_PAGE;
-	if(memorySection->Unknown != 0)
+	if(memorySection->IsCached != 0)
 		translationBase |= WRITEBACK_CACHE;
 	
 	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
@@ -299,7 +292,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		size : 0x00020000
 		domain : 0x0F
 		accessRights : 0x01;
-		unknown : 0x01;
+		IsCached : 0x01;
 		
 		first the page is allocated using _kmallocMemorySection (mem range > 0x13854000)
 		after that its saved as a course page in our translation table :
@@ -342,7 +335,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 	
 	u32 accessRights = memorySection->AccessRights;
 	u32 type = COURSE_SECTION;
-	if(memorySection->Unknown != 0)
+	if(memorySection->IsCached != 0)
 		type |= WRITEBACK_CACHE;
 
 	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->VirtualAddress)] = (memorySection->PhysicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);

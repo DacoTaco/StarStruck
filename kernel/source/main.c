@@ -17,6 +17,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include <ios/processor.h>
 #include <ios/printk.h>
 #include <ios/gecko.h>
+#include <ios/module.h>
 
 #include "core/hollywood.h"
 #include "core/gpio.h"
@@ -33,6 +34,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "crypto/aes.h"
 #include "crypto/sha.h"
 #include "utils.h"
+#include "elf.h"
 
 #include "sdhc.h"
 #include "ff.h"
@@ -45,9 +47,11 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
 FATFS fatfs;
-extern const u32 __kernel_heap_area_start[];
 extern const u32 __ipc_heap_start[];
-extern const u32 __ipc_heap_end[];
+extern const u32 __ipc_heap_size[];
+extern const u32 __headers_addr[];
+extern const ModuleInfo __modules[];
+extern const u32 __modules_size;
 
 void DiThread()
 {
@@ -74,7 +78,7 @@ void DiThread()
 void kernel_main( void )
 {
 	//create IRQ Timer handler thread
-	s32 threadId = CreateThread((s32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
+	s32 threadId = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
 	//set thread to run as a system thread
 	if(threadId >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -85,20 +89,20 @@ void kernel_main( void )
 	//not sure what this is about, if you know please let us know.
 	u32 hardwareVersion, hardwareRevision;
 	GetHollywoodVersion(&hardwareVersion,&hardwareRevision);
-	if (hardwareVersion == 0) 
+	if (hardwareVersion == 0)
 	{
 		u32 dvdConfig = read32(HW_DI_CFG);
 		u32 unknownConfig = dvdConfig >> 2 & 1;
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
 		{
-			threadId = CreateThread((s32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threadId = CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
 			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
 	}
 
 	//create AES Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	if(threadId >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -106,7 +110,7 @@ void kernel_main( void )
 		panic("failed to start AES thread!\n");	
 
 	//create SHA Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	if(threadId > 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -116,7 +120,7 @@ void kernel_main( void )
 	/// TODO: Some function goes here, needs research
 
 	//create IPC handler thread & also set it to run as system thread
-	threadId = CreateThread((s32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
+	threadId = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
 	if(threadId > 0)
 	{
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -125,14 +129,76 @@ void kernel_main( void )
 	}
 
 	if( threadId < 0 || StartThread(threadId) < 0 )
-		panic("failed to start IPC thread!\n");	
+		panic("failed to start IPC thread!\n");
 
-	KernelHeapId = CreateHeap((void*)__kernel_heap_area_start, 0xC0000);
+	//loop the program headers and map/launch all modules
+	Elf32_Phdr* headers = (Elf32_Phdr*)__headers_addr;
+	for(u32 index = 1; index < 0x0F; index++)
+	{
+		MemorySection section;
+		Elf32_Phdr header = headers[index];
+		if(header.p_type != PT_LOAD || (header.p_flags & 0x0FF00000) == 0 || header.p_vaddr == (u32)__headers_addr)
+			continue;
+		
+		section.PhysicalAddress = header.p_paddr;
+		section.VirtualAddress = header.p_vaddr;
+		section.Domain = FLAGSTODOMAIN(header.p_flags);
+		section.Size = (header.p_memsz + 0xFFF) & 0xFFFFF000;
+
+		//set section access
+		if(header.p_flags & PF_X)
+			section.AccessRights = AP_ROUSER;
+		else if(header.p_flags & PF_W)
+			section.AccessRights = AP_RWUSER;
+		else if(header.p_flags & PF_R)
+			section.AccessRights = AP_ROM;
+		else
+			section.AccessRights = AP_ROUSER;
+
+		section.IsCached = 1;
+		s32 ret = MapMemory(&section);
+		if(ret != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+		
+		//map cached version
+		section.VirtualAddress |= 0x80000000;
+		section.IsCached = 0;
+		ret = MapMemory(&section);
+		if(ret != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+		
+		printk("load segment @ [%d, %d] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
+
+		//clear memory that didn't have stuff loaded in from the elf
+		if(header.p_filesz < header.p_memsz)
+			memset8((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
+	}
+
+	const u32 modules_cnt = __modules_size / sizeof(ModuleInfo);
+	for(u32 i = 0; i < modules_cnt;i++)
+	{
+		u32 main = __modules[i].EntryPoint;
+		u32 stackSize = __modules[i].StackSize;
+		u32 priority = __modules[i].Priority;
+		u32 stackTop = __modules[i].StackAddress;
+		u32 arg = __modules[i].UserId;
+		 
+		printk("priority = %d, stackSize = %d, stackPtr = %d\n", priority, stackSize, stackTop);
+		printk("starting thread entry: 0x%d\n", main);
+
+		threadId = CreateThread(main, &arg, (u32*)stackTop, stackSize, priority, 1);
+		Threads[threadId].ProcessId = arg;
+		StartThread(threadId);
+	}
+
+	KernelHeapId = CreateHeap((void*)__headers_addr, 0xC0000);
 	printk("$IOSVersion: IOSP: %s %s 64M $", __DATE__, __TIME__);
 	SetThreadPriority(0, 0);
 	SetThreadPriority(IpcHandlerThreadId, 0x5C);
 	u32 vector;
 	FRESULT fres = 0;
+
+	//while(1){}
 	
 	crypto_initialize();
 	printk("crypto support initialized\n");
@@ -280,7 +346,7 @@ u32 _main(void)
 	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT((u32)__ipc_heap_start));
-	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_end));
+	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start + (u32)__ipc_heap_size));
 	DCFlushRange((void*)0x00003100, 0x68);
 	gecko_printf("Updated DDR settings in lomem for current map\n");
 	
@@ -290,7 +356,7 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	s32 threadId = CreateThread((s32)kernel_main, NULL, NULL, 0, 0x7F, 1);
+	s32 threadId = CreateThread((u32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	

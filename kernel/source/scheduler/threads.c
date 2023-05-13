@@ -18,8 +18,8 @@
 #include "scheduler/threads.h"
 #include "memory/memory.h"
 
-extern const void* __thread_stacks_area_start;
-extern const void* __thread_stacks_area_end;
+extern const u32 __thread_stacks_area_start[];
+extern const u32 __thread_stacks_area_size[];
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
 extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
@@ -55,13 +55,10 @@ void InitializeThreadContext()
 		ProcessGID[i] = i;
 	}
 
-	memset8((u8*)&__thread_stacks_area_start, 0xA5, (u32)&__thread_stacks_area_end - (u32)&__thread_stacks_area_start);
+	memset8((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
 	for(s16 i = 0; i < MAX_THREADS; i++)
 	{
-		//IOS clears the thread structure on startup, we do it on initalize
-		memset32(&Threads[i], 0 , sizeof(ThreadInfo));
-
 		//gcc works by having a downwards stack, hence setting the stack to the upper limit
 		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (STACK_SIZE*(i+1));
 	}
@@ -123,6 +120,7 @@ ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue)
 }
 
 __attribute__((target("arm")))
+__attribute__ ((noreturn))
 void ScheduleYield( void )
 {
 	CurrentThread = ThreadQueue_PopThread(&SchedulerQueue);
@@ -133,7 +131,6 @@ void ScheduleYield( void )
 	TlbInvalidate();
 	FlushMemory();
 
-	register void* threadContext	__asm__("r0") = (void*)CurrentThread;
 	__asm__ volatile (
 		"\
 #ios loads the threads' state buffer back in to sp, resetting the exception's stack\n\
@@ -141,22 +138,22 @@ void ScheduleYield( void )
 		add		sp, %[threadContext], %[stackOffset]\n\
 		msr		cpsr_c, #0xdb\n\
 		add		sp, %[threadContext], %[stackOffset]\n\
-#move pointer to the context\n\
-		add		%[threadContext], %[threadContext], %[threadContextOffset]\n\
+#store pointer of the context in lr\n\
+		mov		lr, %[threadContext]\n\
 #restore the status register\n\
-		ldmia	%[threadContext]!, {r4}\n\
-		msr		spsr_cxsf, r4\n\
+		ldr		%[threadContext], [lr, #0x00]\n\
+		msr		spsr_cxsf, %[threadContext]\n\
 #restore the rest of the state\n\
-		mov		lr, %[threadContext] \n\
-		ldmia	lr, {r0-r12, sp, lr}^\n\
-		add		lr, lr, #0x3C\n\
+		ldmib	lr, {r0-r12, sp, lr}^\n\
+		ldr		lr, [lr, #0x40]\n\
 #jump to thread\n\
-		ldmia	lr, {pc}^\n"
+		movs 	pc, lr\n"
 		:
-		: [threadContext] "r" (threadContext), 
+		: [threadContext] "r" (CurrentThread), 
 		  [threadContextOffset] "J" (offsetof(ThreadInfo, ThreadContext)),
-		  [stackOffset] "J" (offsetof(ThreadInfo, UserContext) + sizeof(ThreadContext))
+		  [stackOffset] "J" (offsetof(ThreadInfo, UserContext))
 	);
+	__builtin_unreachable();
 }
 
 //Called syscalls.
@@ -187,7 +184,7 @@ void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 }
 
 //IOS Handlers
-s32 CreateThread(s32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
 {
 	int threadId = 0;
 	s32 irqState = DisableInterrupts();

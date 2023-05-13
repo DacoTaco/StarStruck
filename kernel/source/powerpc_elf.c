@@ -20,11 +20,9 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "powerpc_elf.h"
 #include "elf.h"
 
-extern u8 __modules_area_start[];
-
 #define PPC_MEM1_END	(0x017fffff)
 #define PPC_MEM2_START	(0x10000000)
-#define PPC_MEM2_END	((u32) __modules_area_start)
+#define PPC_MEM2_END	(0x13400000)
 
 #define PHDR_MAX 10
 

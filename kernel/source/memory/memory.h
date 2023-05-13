@@ -12,7 +12,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define __MEMORY_H__
 
 #define MEM2_BASE				0x10000000
-#define MEM2_PHY2VIRT(addr)		( (u32)addr | 0x80000000 )
+#define MEM2_PHY2VIRT(addr)		( (u32)(addr) | 0x80000000 )
 
 #define MEM1_BASE				0x00000000
 #define MEM1_END				(MEM1_BASE | 0x01800000 )
@@ -27,6 +27,15 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_IOSHEAPLOW			( MEM1_BASE | 0x3148 )
 #define MEM1_IOSHEAPHIGH		( MEM1_BASE | 0x314C )
 
+//Access permissions
+//we can have multiple APs per second level page, hence the formula to calculate the value for us
+#define APX_VALUE(number, access)	((access & 0x03) << ((2+number)*2))
+#define AP_VALUE(access)			APX_VALUE(3, access)
+#define AP_ROM						0x00
+#define AP_NOUSER					0x01
+#define AP_ROUSER					0x02
+#define AP_RWUSER					0x03
+
 #include <types.h>
 
 #include "memory/ahb.h"
@@ -39,7 +48,7 @@ typedef struct
 	u32 Size;
 	u32 Domain;
 	u32 AccessRights;
-	u32 Unknown;
+	u32 IsCached;
 } MemorySection;
 
 CHECK_OFFSET(MemorySection, 0x00, PhysicalAddress);
@@ -47,7 +56,7 @@ CHECK_OFFSET(MemorySection, 0x04, VirtualAddress);
 CHECK_OFFSET(MemorySection, 0x08, Size);
 CHECK_OFFSET(MemorySection, 0x0C, Domain);
 CHECK_OFFSET(MemorySection, 0x10, AccessRights);
-CHECK_OFFSET(MemorySection, 0x14, Unknown);
+CHECK_OFFSET(MemorySection, 0x14, IsCached);
 CHECK_SIZE(MemorySection, 0x18);
 
 typedef struct

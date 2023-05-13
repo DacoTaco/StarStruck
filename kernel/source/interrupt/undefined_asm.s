@@ -18,29 +18,22 @@
 
 BEGIN_ASM_FUNC UndefinedInstructionVector
 #for info : see syscall asm
-	stmdb	sp!, {lr}
-	stmdb	sp, {r0-r12, sp, lr}^
-	sub		sp, sp, #0x3C
-	mrs		r1, spsr
-	stmdb	sp!, {r1}
-	mov		r1, sp
-
-#ifdef _THUMBMODE_
-	ldrh	r0,[lr,#-2]
-	bic		r0,r0,#0xFFFFFF00
-#else
+	stmib	sp, {r0-r12, sp, lr}^
+	mrs		r8, spsr
+	str		r8, [sp]
+	str		lr, [sp, #0x40]
+#always get the last 4 bytes that were executed. this is because a UNDF syscall is 4 bytes long
 	ldr		r0,[lr,#-4]
-	bic		r0,r0,#0xFF000000
-#endif
 
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
 	blx		UndefinedInstructionHandler
 	msr		cpsr_c, #0xdb
 
-	ldmia	sp!, {r2}
-	msr		spsr_cxsf, r2
-	add		sp, sp, #0x04
-	ldmia	sp, {r1-r12, sp, lr}^
-	add		sp, sp, #0x38
-	ldmia	sp!, {pc}^	
+	ldr		r11, [sp]
+	msr		spsr_cxsf, r11
+	mov		lr, r0
+	ldmib	sp,{r0-r12, sp, lr}^
+	mov		r0, lr
+	ldr		lr, [sp, #0x40]
+	movs	pc, lr
 END_ASM_FUNC

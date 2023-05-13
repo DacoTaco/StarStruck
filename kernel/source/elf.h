@@ -43,6 +43,12 @@ typedef struct {
 	u32 p_align;
 } Elf32_Phdr;
 
+//domain are in the elf flags in bit 21-24 (0x0xx00000)
+#define FLAGSTODOMAIN(flags) (flags) >> 0x14
+#define PF_X 0x01
+#define PF_W 0x02
+#define PF_R 0x04
+
 #define PT_NULL     0
 #define PT_LOAD     1
 #define PT_DYNAMIC  2

@@ -9,6 +9,5 @@ git_version.h
 *.dol
 *.a
 *.lst
-*/build/*
+**/build/*
 tools/ppcloader/build/
-

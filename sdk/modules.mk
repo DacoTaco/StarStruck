@@ -1,47 +1,21 @@
 #---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
-ifeq ($(SDKDIR),)
-SDKDIR = ../sdk
-endif
-
-include $(SDKDIR)/starlet.mk
-
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-# DATA is a list of directories containing binary data
-#
-# All directories are specified relative to the project directory where
-# the makefile is found
-#
-#---------------------------------------------------------------------------------
-TARGET			:= elfloader
-LDSCRIPT 		= stub.ld
-MAKEBIN 		= tools/makebin.py
-BUILD			:= build
-SOURCES			:= source
-INCLUDES		:= source
-DATA			:= data
-
-
-#---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS += -fpic
-CFLAGS	+=	$(INCLUDE)
-ASFLAGS += $(CFLAGS)
+CFLAGS	+= -DCAN_HAZ_USBGECKO -D__PRIORITY=$(PRIORITY)
+CFLAGS	+= $(INCLUDE)
+ASFLAGS	+= $(CFLAGS)
+SOURCES	+= $(SDKDIR)/modules/
+
+ifeq ($(BUILD),)
+BUILD	:= build
+endif
 
 ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(TARGET).map
+LDFLAGS += -Wl,-Map,$(notdir $@).map
 endif
 
-ifneq ($(LDSCRIPT),)
-LDFLAGS += -Wl,-T../$(LDSCRIPT)
-endif
+LDFLAGS += -Wl,-T$(TARGET).ld -Wl,--section-start,.module=$(VIRTUALADDR)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -52,7 +26,7 @@ LIBS	:= -lcore -lgcc
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../$(COREDIR)
+LIBDIRS	:=	../../../$(COREDIR) $(SDKDIR)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -61,9 +35,9 @@ LIBDIRS	:=	../../$(COREDIR)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
-
-export OUTPUT			:=	$(CURDIR)/$(TARGET)
-export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET)
+export TARGET			:=	$(notdir $(CURDIR))
+export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym.elf
+export OUTPUT_STRIPPED	:=	$(CURDIR)/$(TARGET).elf
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
@@ -89,24 +63,43 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES := $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD)
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export OFILES 			:= $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export INCLUDE			:= $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
+						   $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+						   -I$(CURDIR)/$(BUILD) -I$(SDKDIR)/modules
+export LIBPATHS			:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) updates clean $(TARGET)
 
 #---------------------------------------------------------------------------------
-	
+
+all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
+	@$(MAKE) SDKDIR=../$(SDKDIR) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
+#check if files changed, if so -> build
+$(TARGET): $(BUILD) $(OUTPUTPATH)/$(TARGET)_module.ld
+#only do something if our output changed
+$(OUTPUTPATH)/$(TARGET)_module.ld: $(OUTPUT_STRIPPED)
+	@echo creating files
+	@if [ -z $(OUTPUTPATH) ]; then\
+		echo "OUTPUTPATH is a required variable to build module binary data"; \
+		false; \
+    fi
+	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .note=$(OUTPUTPATH)/$(TARGET)_notes.bin $(OUTPUT_STRIPPED)
+	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .module=$(OUTPUTPATH)/$(TARGET)_module.bin $(OUTPUT_STRIPPED)
+	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .module.data=$(OUTPUTPATH)/$(TARGET)_moduleData.bin $(OUTPUT_STRIPPED)
+	@cat $(SDKDIR)/modules/embeddedModuleTemplate.ld | \
+		sed 's/__PHYSADDR__/$(PHYSADDR)/g' | \
+		sed 's/__VIRTADDR__/$(VIRTUALADDR)/g' | \
+		sed 's/__PROCESSID__/$(PROCESSID)/g' | \
+		sed 's/__BSS_SIZE__/$(shell printf "%d" $(shell readelf -l $(OUTPUT_STRIPPED) | grep LOAD | tail -1 | tr -s ' ' | cut -d ' ' -f 7))/g' | \
+		sed 's/__ModuleName__/$(TARGET)/g' > $(OUTPUTPATH)/$(TARGET)_module.ld
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT_BIN).bin
+	$(SILENTMSG) clean ...
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT) $(OUTPUT_STRIPPED)
 
 #---------------------------------------------------------------------------------
 else
@@ -115,11 +108,18 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 
-$(OUTPUT_BIN).bin: $(OUTPUT).elf
-	$(SILENTMSG)  "  OBJCPY    $@"
-	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
+$(OUTPUT_STRIPPED): $(OUTPUT)
+	$(SILENTMSG)  "STRIP	$@"
+	$(SILENTCMD)$(STRIP) $< -o $@
+	
+$(OUTPUT)	:	$(OFILES) $(TARGET).ld
 
-$(OUTPUT).elf	:	$(OFILES)
+$(TARGET).ld:
+	@cat $(SDKDIR)/modules/moduleTemplate.ld | \
+		sed 's/__PHYSADDR__/$(PHYSADDR)/g' | \
+		sed 's/__PRIORITY__/$(PRIORITY)/g' | \
+		sed 's/__PROCESSID__/$(PROCESSID)/g' | \
+		sed 's/__STACKSIZE__/$(STACKSIZE)/g' > $@
 
 #---------------------------------------------------------------------------------
 # The bin2o rule should be copied and modified

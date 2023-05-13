@@ -26,7 +26,7 @@
 //#define _DEBUG_SYSCALL
 
 typedef u32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8, u32 r9);
-static const void* syscall_handlers[] = {
+static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) = {
 	CreateThread,				//0x0000
 	JoinThread,					//0x0001
 	CancelThread,				//0x0002
