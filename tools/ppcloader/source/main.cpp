@@ -18,10 +18,17 @@
 
 #define IOS_TO_LOAD 0x00000001000000FEULL
 #define SRAMADDR(x) (0x0d400000 | ((x) & 0x000FFFFF))
-#define MEM2RAW(x) (u32*)( ( ((u32)x) & 0x0FFFFFFF) | 0x10000000)
+#define MEM_TO_RAW(x) (u32*)( ( ((u32)x) & 0x0FFFFFFF) | 0x10000000)
 
 static void *xfb = NULL;
 static GXRModeObj *vmode = NULL;
+
+static inline u32 _read32(u32 addr)
+{
+	u32 x;
+	__asm__ __volatile__ ("lwz %0,0(%1) ; sync" : "=r"(x) : "b"(addr));
+	return x;
+}
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv) 
@@ -116,80 +123,82 @@ int main(int argc, char **argv)
 				continue;
 			
 			//load mini
-			printf("loading mini...\n");
-			mini_loaded = 1;
-			/*// ** Boot mini from mem code by giantpune ** //
-			void *mini = memalign(32, armboot_bin_size);  
-			if(!mini) 
-				  return 0;    
-
-			memcpy(mini, armboot_bin, armboot_bin_size);  
-			DCFlushRange(mini, armboot_bin_size);               
-
-			*(u32*)0xc150f000 = 0x424d454d;  
-			asm volatile("eieio");  
-
-			*(u32*)0xc150f004 = MEM_VIRTUAL_TO_PHYSICAL(mini);  
-			asm volatile("eieio");
-
-			tikview views[4] ATTRIBUTE_ALIGN(32);
-			printf("Shutting down IOS subsystems.\n");
-			__IOS_ShutdownSubsystems();
-			printf("Loading IOS 254.\n");
-			__ES_Init();
-			u32 numviews;
-			ES_GetNumTicketViews(IOS_TO_LOAD, &numviews);
-			ES_GetTicketViews(IOS_TO_LOAD, views, numviews);
-			ES_LaunchTitleBackground(IOS_TO_LOAD, &views[0]);
-			free(mini);*/
+			gprintf("loading mini...\n");
 			
-			// ** boot mini without BootMii IOS code by Crediar ** //
-			unsigned char ES_ImportBoot2[16] =
+			s32 fd = -1;
+			ioctlv* params = NULL;
+			try
 			{
-				0x68, 0x4B, 0x2B, 0x06, 0xD1, 0x0C, 0x68, 0x8B, 0x2B, 0x00, 0xD1, 0x09, 0x68, 0xC8, 0x68, 0x42
-			};
+				void *mini = (void*)0x90100000;
+				memcpy(mini, armboot_bin, armboot_bin_size);
+				DCFlushRange( mini, armboot_bin_size );
 
-			printf("Shutting down IOS subsystems.\n");
-			__IOS_ShutdownSubsystems();
-			for(u32 i = 0x939F0000; i < 0x939FE000; i+=2 )
-			{
-				if( memcmp( (void*)(i), ES_ImportBoot2, sizeof(ES_ImportBoot2) ) == 0 )
+				//time to drop the exploit bomb on /dev/sha
+				fd = IOS_Open("/dev/sha", 0);
+				if(fd < 0)
+					throw "Failed to open /dev/sha : " + std::to_string(fd);
+				
+				params = (ioctlv*)memalign(sizeof(ioctlv) * 4, 32);
+				if(params == NULL)
+					throw "failed to alloc IOS call data";
+
+				//overwrite the thread 0 state with address 0 (0x80000000)
+				memset(params, 0, sizeof(ioctlv) * 4);
+				params[1].data	= (void*)0xFFFE0028;
+				params[1].len	= 0;
+				DCFlushRange(params, sizeof(ioctlv) * 4);
+
+				//set code to load new ios via syscall 43
+				u32 code[] = {
+					0x48034904,    // LDR R0, 0x10, LDR R1, 0x14
+                    0x477846C0,    // BX PC, NOP
+                    0xE6000870,    // SYSCALL
+                    0xE12FFF1E,    // BLR
+                    0x10100000,    // offset
+                    0x0025161F,    // version
+				};
+				memcpy((void*)0x80000000, code, sizeof(code));
+				DCFlushRange((void*)0x80000000, sizeof(code));
+				ICInvalidateRange((void*)0x80000000, sizeof(code));
+
+				//send sha init command
+				mini_loaded = 1;
+				s32 ret = IOS_Ioctlv(fd, 0x00, 1, 2, params);
+				if(ret < 0)
+					throw "failed to send SHA init : " + std::to_string(ret);
+
+				//wait for IPC to come back online. for mini this doesn't matter, but for IOS kernels it most certainly does.
+				for (u32 counter = 0; !(read32(0x0d000004) & 2); counter++) 
 				{
-					DCInvalidateRange( (void*)i, 0x20 );
+					usleep(1000);
 					
-					*(vu32*)(i+0x00)	= 0x48034904;	// LDR R0, 0x10, LDR R1, 0x14
-					*(vu32*)(i+0x04)	= 0x477846C0;	// BX PC, NOP
-					*(vu32*)(i+0x08)	= 0xE6000870;	// SYSCALL
-					*(vu32*)(i+0x0C)	= 0xE12FFF1E;	// BLR
-					*(vu32*)(i+0x10)	= 0x10100000;	// offset
-					*(vu32*)(i+0x14)	= 0x0025161F;	// version
-
-					DCFlushRange( (void*)i, 0x20 );
-
-					void *mini = (void*)0x90100000;
-					memcpy(mini, armboot_bin, armboot_bin_size);
-					DCFlushRange( mini, armboot_bin_size );
-					
-					s32 fd = IOS_Open( "/dev/es", 0 );
-					
-					u8 *buffer = (u8*)memalign( 32, 0x100 );
-					memset( buffer, 0, 0x100 );
-					
-					printf("ES_ImportBoot():%d\n", IOS_IoctlvAsync( fd, 0x1F, 0, 0, (ioctlv*)buffer, NULL, NULL ) );
-
-					//wait for IPC to come back online. for mini this doesn't matter, but for IOS kernels it most certainly does.
-					for (u32 counter = 0; !(read32(0x0d000004) & 2); counter++) {
-						usleep(1000);
-						
-						if (counter >= 400)
-							break;
-					}
-
-					__IPC_Reinitialize();
-					printf("IPC reinit\n");
-					break;
+					if (counter >= 400)
+						break;
 				}
+
+				__IPC_Reinitialize();
+				gprintf("IPC reinit\n");
 			}
+			catch (const std::string& ex)
+			{
+				gprintf("IOSBoot Exception -> %s", ex.c_str());
+			}
+			catch (char const* ex)
+			{
+				gprintf("IOSBoot Exception -> %s", ex);
+			}
+			catch (...)
+			{
+				gprintf("IOSBoot Exception was thrown");
+			}
+
+			if(params)
+				free(params);
+
+			if(fd >= 0)
+				IOS_Close(fd);
+			
+			break;
 		}
 
 		// Wait for the next frame
