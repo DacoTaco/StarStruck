@@ -15,6 +15,7 @@
 #include "gecko.h"
 
 #include "armboot_bin.h"
+#include "loadkernel_bin.h"
 
 #define IOS_TO_LOAD 0x00000001000000FEULL
 #define SRAMADDR(x) (0x0d400000 | ((x) & 0x000FFFFF))
@@ -149,17 +150,9 @@ int main(int argc, char **argv)
 				DCFlushRange(params, sizeof(ioctlv) * 4);
 
 				//set code to load new ios via syscall 43
-				u32 code[] = {
-					0x48034904,    // LDR R0, 0x10, LDR R1, 0x14
-                    0x477846C0,    // BX PC, NOP
-                    0xE6000870,    // SYSCALL
-                    0xE12FFF1E,    // BLR
-                    0x10100000,    // offset
-                    0x0025161F,    // version
-				};
-				memcpy((void*)0x80000000, code, sizeof(code));
-				DCFlushRange((void*)0x80000000, sizeof(code));
-				ICInvalidateRange((void*)0x80000000, sizeof(code));
+				memcpy((void*)0x80000000, loadkernel_bin, loadkernel_bin_size);
+				DCFlushRange((void*)0x80000000, loadkernel_bin_size);
+				ICInvalidateRange((void*)0x80000000, loadkernel_bin_size);
 
 				//send sha init command
 				mini_loaded = 1;

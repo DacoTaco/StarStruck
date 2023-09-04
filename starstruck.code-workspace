@@ -21,8 +21,8 @@
 			"path": "modules",
 		},
 		{
-			"name": "tools/ppcloader",
-			"path": "tools/ppcloader",
+			"name": "tools",
+			"path": "tools",
 		},
 		{
 			"path": "sdk"
