@@ -20,8 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
 
-#include "types.h"
-#include "string.h"
+#include <types.h>
+#include <string.h>
+#include <ios/processor.h>
 #include "utils.h"
 #include "elf.h"
 

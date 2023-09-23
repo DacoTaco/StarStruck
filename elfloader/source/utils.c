@@ -9,6 +9,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 */
 
 #include <stdarg.h>
+#include <ios/processor.h>
 
 #include "types.h"
 #include "gpio.h"
