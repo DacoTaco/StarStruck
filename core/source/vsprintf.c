@@ -384,7 +384,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 					value = va_arg(args, LLONG);
 					break;
 				case PRINT_C_SIZE:
-					value = va_arg(args, SSIZE_T);
+					value = (INTMAX_T)va_arg(args, SSIZE_T);
 					break;
 				case PRINT_C_INTMAX:
 					value = va_arg(args, INTMAX_T);
@@ -423,29 +423,29 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 					    unsigned int);
 					break;
 				case PRINT_C_LONG:
-					value = va_arg(args, unsigned long int);
+					value = (INTMAX_T)va_arg(args, unsigned long int);
 					break;
 				case PRINT_C_LLONG:
-					value = va_arg(args, ULLONG);
+					value = (INTMAX_T)va_arg(args, ULLONG);
 					break;
 				case PRINT_C_SIZE:
-					value = va_arg(args, size_t);
+					value = (INTMAX_T)va_arg(args, size_t);
 					break;
 				case PRINT_C_INTMAX:
-					value = va_arg(args, UINTMAX_T);
+					value = (INTMAX_T)va_arg(args, UINTMAX_T);
 					break;
 				case PRINT_C_PTRDIFF:
 					value = va_arg(args, UPTRDIFF_T);
 					break;
 				default:
-					value = va_arg(args, unsigned int);
+					value = (INTMAX_T)va_arg(args, unsigned int);
 					break;
 				}
 				fmtint(str, &len, size, value, base, width,
 				    precision, flags);
 				break;
 			case 'c':
-				cvalue = va_arg(args, int);
+				cvalue = (unsigned char)va_arg(args, int);
 				OUTCHAR(str, len, size, cvalue);
 				break;
 			case 's':
@@ -476,7 +476,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 					flags |= PRINT_F_NUM;
 					flags |= PRINT_F_UNSIGNED;
 					fmtint(str, &len, size,
-					    (UINTPTR_T)strvalue, 16, width,
+					    (INTMAX_T)strvalue, 16, width,
 					    precision, flags);
 				}
 				break;
@@ -484,19 +484,19 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 				switch (cflags) {
 				case PRINT_C_CHAR:
 					charptr = va_arg(args, signed char *);
-					*charptr = len;
+					*charptr = (signed char )len;
 					break;
 				case PRINT_C_SHORT:
 					shortptr = va_arg(args, short int *);
-					*shortptr = len;
+					*shortptr = (short int)len;
 					break;
 				case PRINT_C_LONG:
 					longptr = va_arg(args, long int *);
-					*longptr = len;
+					*longptr = (long int)len;
 					break;
 				case PRINT_C_LLONG:
 					llongptr = va_arg(args, LLONG *);
-					*llongptr = len;
+					*llongptr = (LLONG)len;
 					break;
 				case PRINT_C_SIZE:
 					/*
@@ -511,15 +511,15 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 					break;
 				case PRINT_C_INTMAX:
 					intmaxptr = va_arg(args, INTMAX_T *);
-					*intmaxptr = len;
+					*intmaxptr = (INTMAX_T)len;
 					break;
 				case PRINT_C_PTRDIFF:
 					ptrdiffptr = va_arg(args, PTRDIFF_T *);
-					*ptrdiffptr = len;
+					*ptrdiffptr = (PTRDIFF_T)len;
 					break;
 				default:
 					intptr = va_arg(args, int *);
-					*intptr = len;
+					*intptr = (int)len;
 					break;
 				}
 				break;
@@ -596,9 +596,9 @@ fmtint(char *str, size_t *len, size_t size, INTMAX_T value, int base, int width,
 	int noprecision = (precision == -1);
 
 	if (flags & PRINT_F_UNSIGNED)
-		uvalue = value;
+		uvalue = (UINTMAX_T)value;
 	else {
-		uvalue = (value >= 0) ? value : -value;
+		uvalue = (UINTMAX_T)((value >= 0) ? value : -value);
 		if (value < 0)
 			sign = '-';
 		else if (flags & PRINT_F_PLUS)	/* Do a sign. */
@@ -704,8 +704,8 @@ convert(UINTMAX_T value, char *buf, size_t size, int base, int caps)
 
 	/* We return an unterminated buffer with the digits in reverse order. */
 	do {
-		buf[pos++] = digits[value % base];
-		value /= base;
+		buf[pos++] = digits[value % (UINTMAX_T)base];
+		value /= (UINTMAX_T)base;
 	} while (value != 0 && pos < size);
 
 	return (int)pos;

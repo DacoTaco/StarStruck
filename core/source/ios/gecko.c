@@ -146,7 +146,7 @@ void gecko_flush(void)
 }
 
 #if !defined(NDEBUG) && !defined(GECKO_SAFE)
-static int gecko_sendbuffer(const void *buffer, u32 size)
+static u32 gecko_sendbuffer(const void *buffer, u32 size)
 {
 	u32 left = size;
 	char *ptr = (char*)buffer;
@@ -168,7 +168,7 @@ static int gecko_sendbuffer(const void *buffer, u32 size)
 #endif
 
 #if !defined(NDEBUG) && defined(GECKO_SAFE)
-static int gecko_sendbuffer_safe(const void *buffer, u32 size)
+static u32 gecko_sendbuffer_safe(const void *buffer, u32 size)
 {
 	u32 left = size;
 	char *ptr = (char*)buffer;
@@ -221,7 +221,7 @@ u8 gecko_enable_console(const u8 enable)
 }
 
 #ifndef NDEBUG
-int gecko_printf(const char *fmt, ...)
+u32 gecko_printf(const char *fmt, ...)
 {
 	if (!gecko_console_enabled)
 		return 0;
@@ -229,16 +229,16 @@ int gecko_printf(const char *fmt, ...)
 	va_list args;
 	char buffer[256];
 	memset(buffer, 0, sizeof(buffer));
-	int i;
+	s32 i;
 
 	va_start(args, fmt);
 	i = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 
 #ifdef GECKO_SAFE
-	return gecko_sendbuffer_safe(buffer, i);
+	return gecko_sendbuffer_safe(buffer, (u32)i);
 #else
-	return gecko_sendbuffer(buffer, i);
+	return gecko_sendbuffer(buffer, (u32)i);
 #endif
 }
 #endif

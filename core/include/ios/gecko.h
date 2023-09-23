@@ -28,7 +28,7 @@ void gecko_flush(void);
 #ifdef NDEBUG
 #define gecko_printf(...) do { } while(0)
 #else
-int gecko_printf(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+u32 gecko_printf(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 #endif
 
 #else

@@ -37,7 +37,7 @@ void *memset(void *b, int c, size_t len)
 	size_t i;
 
 	for (i = 0; i < len; i++)
-		((unsigned char *)b)[i] = c;
+		((unsigned char *)b)[i] = (unsigned char)c;
 
 	return b;
 }

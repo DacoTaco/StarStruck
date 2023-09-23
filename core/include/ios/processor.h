@@ -96,7 +96,7 @@ static inline u32 mask32(u32 addr, u32 clear, u32 set)
 
 static inline u16 read16(u32 addr)
 {
-	u32 data;
+	u16 data;
 	__asm__ volatile ("ldrh\t%0, [%1]" : "=l" (data) : "l" (addr));
 	return data;
 }
@@ -150,7 +150,7 @@ static inline u16 mask16(u32 addr, u16 clear, u16 set)
 
 static inline u8 read8(u32 addr)
 {
-	u32 data;
+	u8 data;
 	__asm__ volatile ("ldrb\t%0, [%1]" : "=l" (data) : "l" (addr));
 	return data;
 }

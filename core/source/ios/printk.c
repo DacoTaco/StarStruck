@@ -22,7 +22,7 @@ int printk(const char *fmt, ...)
 	memset(buffer, 0, sizeof(buffer));
 
 	va_start(args, fmt);
-	int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+	s32 len = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 	
 	//nintendo's debug interface is super fun
@@ -34,14 +34,14 @@ int printk(const char *fmt, ...)
 	char syscallBuffer[16] = { 0 };
 	while(index < len)
 	{
-		s32 chuckSize = index+15 <= len
+		s32 chunkSize = index+15 <= len
 			? 15
 			: len - index;
 		memset(syscallBuffer, 0, 16);
-		memcpy(syscallBuffer, &buffer[index], chuckSize);
+		memcpy(syscallBuffer, &buffer[index], (u32)chunkSize);
 		OSPrintk(syscallBuffer);
 
-		index += chuckSize;
+		index += chunkSize;
 	}
 
 	if(len > 0 && buffer[len-1] != '\n')
