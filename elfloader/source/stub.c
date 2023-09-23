@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "types.h"
 #include "string.h"
-#include "hollywood.h"
 #include "utils.h"
 #include "elf.h"
 
@@ -32,6 +31,9 @@ typedef struct {
 	u32 elfsize;
 	u32 argument;
 } ioshdr;
+
+#define	HW_MEMMIRR	0xd800060
+#define	HW_BOOT0	0xd80018C
 
 extern void debug_output(u8 byte);
 
