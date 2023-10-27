@@ -56,51 +56,8 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	return IPC_EMAX;
 }
 
-static void SpecialStrncpyForMEM1(FileDescriptorPath* into, const char* source, int length)
+s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
-	u32 idx = 0;
-	while(length != 0 && *source != '\0')
-	{
-		u32 value = 0;
-		for(u32 i = 0; i < sizeof(u32) && length != 0 && *source != '\0'; ++i, --length, ++source)
-		{
-			value |= ((u32)(source[i])) << (24 - 8 * i);
-		}
-		into->DevicePathUINT[idx] = value;
-		++idx;
-	}
-	for(; idx < ARRAY_LENGTH(into->DevicePathUINT); ++idx)
-	{
-		into->DevicePathUINT[idx] = 0;
-	}
-}
-
-static void SpecialStrncpyRegular(FileDescriptorPath* into, const char* source, int length)
-{
-	int i = 0;
-	for(; i < length && source[i] != '\0'; ++i)
-	{
-		into->DevicePath[i] = source[i];
-	}
-	for(; i < length; ++i)
-	{
-		into->DevicePath[i] = 0;
-	}
-}
-// strncpy (with 0 padding if the source is shorter than length)
-static void SpecialStrncpy(FileDescriptorPath* into, const char* source, int length)
-{
-	// if in mem1, work in u32 sized chunks
-	if((u32)into < 0x01800000)
-	{
-		SpecialStrncpyForMEM1(into, source, length);
-	}
-	// otherwise, normal strncpy
-	else
-	{
-		SpecialStrncpyRegular(into, source, length);
-	}
-}
 
 s32 OpenFD_Inner(const char* path, int mode)
 {
@@ -115,7 +72,7 @@ s32 OpenFD_Inner(const char* path, int mode)
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	SpecialStrncpy(&FiledescPathArray[currentThreadId], path, pathLength + 1);
+	strncpy(FiledescPathArray[currentThreadId].DevicePath, path, pathLength + 1);
 
 	for(int i = 0; i < MAX_RESOURCES; ++i)
 	{

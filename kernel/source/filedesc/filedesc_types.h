@@ -17,9 +17,8 @@
 
 typedef union {
 	char DevicePath[MAX_PATHLEN];
-	// used for paths in MEM1 that need to be accessed as 32 bit values
-	u32 DevicePathUINT[MAX_PATHLEN / sizeof(u32)];
 } FileDescriptorPath;
+CHECK_SIZE(FileDescriptorPath, MAX_PATHLEN);
 
 typedef struct {
 	s32 Id;

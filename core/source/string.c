@@ -84,6 +84,59 @@ int strncmp(const char *s1, const char *s2, size_t n)
 	return s1[i] - s2[i];
 }
 
+// strncpy (with 0 padding if the source is shorter than length)
+// IOS has a completely custom strncpy to deal with a MEM1 HW bug
+// MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
+// hence the weird access/seperation of code
+char* strncpy(char *dest, const char *src, size_t maxlen)
+{
+	// if in mem1, work in u32 sized chunks
+	if((u32)dest < 0x01800000)
+	{
+		u32 index = 0;
+		u32 destination = (u32)dest;
+		while(index < maxlen)
+		{
+			u32* address = (u32*)(destination & (u32)~0x03);
+			u32 offset = 24 - (destination & 0x03) * 8;
+			u32 value = (*address & (u32)~(0xFF << offset)) | ((src[index]) << offset);
+			*address = value;
+			destination++;
+			if(src[index] == '\0')
+				break;
+			index++;
+		}
+
+		//add padding
+		while(index < maxlen)
+		{
+			u32* address = (u32*)(destination & (u32)~0x03);
+			u32 offset = 24 - ((u32)destination & 0x03) * 8;
+			*address = (*address & (u32)~(0xFF << offset));
+
+			destination++;
+			index++;
+		}
+	}
+	// otherwise, normal strncpy
+	else
+	{
+		size_t i = 0;
+		for(; i < maxlen && src[i] != '\0'; ++i)
+		{
+			dest[i] = src[i];
+		}
+
+		//padding
+		for(; i < maxlen; ++i)
+		{
+			dest[i] = 0;
+		}
+	}
+
+	return dest;
+}
+
 size_t strlcpy(char *dest, const char *src, size_t maxlen)
 {
 	size_t len,needed;
