@@ -154,14 +154,89 @@ void *memset(void *dest, int character, size_t length)
 	return dest;
 }
 
-void *memcpy(void *dst, const void *src, size_t len)
-{
-	size_t i;
+// memcpy
+// IOS has a completely custom memcpy to deal with a MEM1 HW bug
+// MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
+// hence the weird access/seperation of code
+__attribute__((target("arm")))
+void *memcpy(void *dest, const void *src, size_t len)
+{	
+	if(len == 0)
+		return dest;
+	
+	//these are normal for ARM (r0 - r2 = function arguments)
+	//however, to make sure we have the values in these registers we will redefine them here
+	//nintendo's memcpy is very optimised and custom written and its lovely lol
+	register size_t length asm("r3") = len;
+	register void *source asm ("r2") = (void*)src;
+	register void *destination asm ("r1") = dest;
+	register void *ret asm ("r0") = dest;
+	
+	if((((u32)destination | (u32)source) & 0x03) == 0)
+	{
+		__asm__ volatile ("\
+			#Save the register values that GCC might have used before the asm \n\
+			stmdb		sp!,{r4,r5,r6,r7,r8,r9,r10,r11} \n\
+			#check if we can do a 0x10 copy paste \n\
+			cmp			%[length], #0x0F \n\
+			bls			memcpy_end \n\
+			#check if we can do a 0x20 copy/paste \n\
+			cmp			%[length], #0x1F \n\
+			bls			memcpy_By16 \n\
+			memcpy_by32: \n\
+			ldmia		%[source]!,{r4,r5,r6,r7,r8,r9,r10,r11} \n\
+			stmia		%[destination]!,{r4,r5,r6,r7,r8,r9,r10,r11} \n\
+			sub			%[length],%[length], #0x20 \n\
+			cmp			%[length], #0x1F \n\
+			bls			memcpy_By16 \n\
+			b			memcpy_by32 \n\
+			memcpy_By16: \n\
+			cmp			%[length], #0x0F \n\
+			bls			memcpy_end \n\
+			ldmia		%[source]!,{r4,r5,r6,r7} \n\
+			stmia		%[destination]!,{r4,r5,r6,r7} \n\
+			sub			%[length],%[length], #0x10 \n\
+			b			memcpy_By16 \n\
+			memcpy_end: \n\
+			ldmia		sp!,{r4,r5,r6,r7,r8,r9,r10,r11} \n"
+			:
+			: [source] "r" (source), [destination] "r" (destination), [length] "r" (length));
 
-	for (i = 0; i < len; i++)
-		((unsigned char *)dst)[i] = ((unsigned char *)src)[i];
+		//ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
+		while(length >= 4)
+		{
+			*(u32*)destination = *(u32*)source;
+			destination += 4;
+			source += 4;
+			length -= 4;
+		}
+	}
 
-	return dst;
+	//and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
+	if (destination < (void *)0x1800000) 
+	{
+		for(; length != 0; length--)
+		{
+			u32* address = (u32*)((u32)dest & (u32)~0x03);
+			u32 offset = 24 - ((u32)dest & 0x03) * 8;
+			u8 data = *(u8*)source;
+			*address = (*address & (u32)~(0xFF << (offset & 0xFF))) | (data << (offset & 0xFF));
+			destination++;
+			source++;
+		}
+	}
+	else 
+	{
+		while(length != 0)
+		{
+			*(u8*)destination = *(u8*)source;
+			destination++;
+			source++;
+			length--;
+		}
+	}
+
+	return ret;
 }
 
 int memcmp(const void *s1, const void *s2, size_t len)

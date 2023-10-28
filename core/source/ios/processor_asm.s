@@ -14,7 +14,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl debug_output
 .globl GetCurrentStatusRegister
 .globl GetSavedStatusRegister
-.globl memcpy32
 .text
 
 BEGIN_ASM_FUNC debug_output
@@ -39,15 +38,5 @@ END_ASM_FUNC
 
 BEGIN_ASM_FUNC GetSavedStatusRegister
 	mrs		r0, spsr
-	bx		lr
-END_ASM_FUNC
-
-BEGIN_ASM_FUNC memcpy32
-	bics	r2, #3
-	bxeq	lr
-1:	ldr		r3, [r1],#4
-	str		r3, [r0],#4
-	subs	r2, #4
-	bne		1b
 	bx		lr
 END_ASM_FUNC

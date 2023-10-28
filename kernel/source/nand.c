@@ -66,22 +66,22 @@ void nand_irq(void)
 	/*if (current_request.code != 0) {
 		switch (current_request.req) {
 			case IPC_NAND_GETID:
-				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
+				memcpy((void*)current_request.args[0], ipc_data, 0x40);
 				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_STATUS:
-				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
+				memcpy((void*)current_request.args[0], ipc_data, 0x40);
 				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_READ:
 				err = nand_correct(last_page_read, ipc_data, ipc_ecc);
 
 				if (current_request.args[1] != 0xFFFFFFFF) {
-					memcpy32((void*)current_request.args[1], ipc_data, PAGE_SIZE);
+					memcpy((void*)current_request.args[1], ipc_data, PAGE_SIZE);
 					DCFlushRange((void*)current_request.args[1], PAGE_SIZE);
 				}
 				if (current_request.args[2] != 0xFFFFFFFF) {
-					memcpy32((void*)current_request.args[2], ipc_ecc, PAGE_SPARE_SIZE);
+					memcpy((void*)current_request.args[2], ipc_ecc, PAGE_SPARE_SIZE);
 					DCFlushRange((void*)current_request.args[2], PAGE_SPARE_SIZE);
 				}
 				break;

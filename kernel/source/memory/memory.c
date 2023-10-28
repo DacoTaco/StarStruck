@@ -10,6 +10,7 @@ Copyright (C) 2021			DacoTaco
 */
 
 #include <ios/processor.h>
+#include <string.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
 
@@ -353,7 +354,7 @@ s32 MapMemory(MemorySection* entry)
 		return IPC_EINVAL;
 	
 	MemorySection memorySection;
-	memcpy32(&memorySection, entry, sizeof(MemorySection));
+	memcpy(&memorySection, entry, sizeof(MemorySection));
 	
 	s32 ret = 0;
 	while(ret == 0 && memorySection.Size > 0)
@@ -530,7 +531,7 @@ s32 InitializeMemory(void)
 	_dc_invalidate();
 	TlbInvalidate();
 
-	memset32(heapCurrent, 0, (u32)(heapEnd - heapCurrent));
+	memset(heapCurrent, 0, (u32)(heapEnd - heapCurrent));
 	gecko_printf("MEM: mapping sections\n");
 	MemoryTranslationTable = (u32*)_kmallocMemorySection(PageTable);	
 	if(MemoryTranslationTable == NULL)

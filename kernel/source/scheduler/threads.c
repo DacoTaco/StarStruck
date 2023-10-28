@@ -9,6 +9,7 @@
 */
 
 #include <types.h>
+#include <string.h>
 #include <ios/processor.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
@@ -46,7 +47,7 @@ void InitializeThreadContext()
 {
 	//copy function to mem2 where everything can access it
 	ThreadEndFunction = KMalloc(0x10);
-	memcpy32(ThreadEndFunction, EndThread, 0x10);
+	memcpy(ThreadEndFunction, EndThread, 0x10);
 
 	//Initilize thread structures & set stack pointers
 	for(u16 i = 0; i < MAX_PROCESSES; i++)

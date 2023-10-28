@@ -200,12 +200,6 @@ static inline u8 mask8(u32 addr, u8 clear, u8 set)
 	return data;
 }
 
-/*
- * These functions are guaranteed to copy by reading from src and writing to dst in <n>-bit units
- * If size is not aligned, the remaining bytes are not copied
- */
-void memcpy32(void *dst, void *src, u32 size);
-
 u32 GetCurrentStatusRegister(void);
 u32 GetSavedStatusRegister();
 void debug_output(u8 byte);
