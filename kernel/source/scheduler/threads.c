@@ -55,7 +55,7 @@ void InitializeThreadContext()
 		ProcessGID[i] = i;
 	}
 
-	memset8((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
+	memset((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
 	for(u16 i = 0; i < MAX_THREADS; i++)
 	{

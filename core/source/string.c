@@ -32,14 +32,126 @@ size_t strnlen(const char *s, size_t count)
 	return len;
 }
 
-void *memset(void *b, int c, size_t len)
+void set_memory(void* dest, const unsigned char data, size_t len)
 {
-	size_t i;
+	if (dest < (void *)0x1800000) 
+	{
+		for(; len != 0; len--)
+		{
+			u32* address = (u32*)((u32)dest & (u32)~0x03);
+			u32 offset = 24 - ((u32)dest & 0x03) * 8;
+			*address = (*address & (u32)~(0xFF << offset)) | (data << offset);;
+			dest++;
+		}
+	}
+	else 
+	{
+		for(; len != 0; len--)
+		{
+			*(u8*)dest = data;
+			dest++;
+		}
+  	}
+}
 
-	for (i = 0; i < len; i++)
-		((unsigned char *)b)[i] = (unsigned char)c;
+//this is more like a regular memset, but only used at the end of memset..
+__attribute__((target("arm")))
+void set_memory_short(void* dest, const unsigned char c, size_t len)
+{
+	u32 data = c | (c << 8) | (u32)(c << 16) || (u32)(c << 24);
+	register u32 data1 asm("r3") = data;
+	register u32 data2 asm ("r4") = data;
+	register u32 data3 asm ("r5") = data;
+	u32* address = dest;
+	for(u32 index = len & 0xFFFFFFF0; index != 0; index -= 0x10)
+	{
+		__asm__ volatile ("stmia	%[address]!, {%[data],%[data1],%[data2],%[data3]}" 
+			: 
+			: [address] "r" (address), [data] "r" (data), [data1] "r" (data1), [data2] "r" (data2), [data3] "r" (data3));
+	}
 
-	return b;
+	for(u32 index = len & 0x0F; index != 0; index -= 4)
+	{
+		*address = data;
+		address++;
+	}
+}
+// memset
+// IOS has a completely custom memset to deal with a MEM1 HW bug
+// MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
+// hence the weird access/seperation of code
+void *memset(void *dest, int character, size_t length)
+{
+	if (length == 0)
+		return dest;
+
+	void* destination = dest;
+	const u8 data = (u8)character & 0xff;
+	u32 cnt = 0;
+
+	//if destination isn't 4 byte aligned, do a seperate memset until we are aligned 
+	if(((u32)dest & 3) != 0)
+	{
+		cnt = 4 - ((u32)dest & 3);
+		if(length <= cnt)
+		{
+			set_memory(dest, data, length);
+			return dest;
+		}
+
+		set_memory(dest, data, cnt);
+		length -= cnt;
+		destination = (void*)((u32)dest & 0xFFFFFFFC) + 4;
+	}
+	
+	//align destination to 16 bytes
+	if (length < 0x101 || ((u32)destination & 0xf) == 0)
+		cnt = length & 0xFFFFFFFC;
+	else
+	{
+		cnt = 0x10 - ((u32)destination & 0x0F);
+		u32 dataToCopy = length;
+		if(length < cnt)
+		{
+			dataToCopy = 0;
+			cnt = length;
+		}
+
+		u32 alignedCnt = cnt & 0x0C;
+		if(alignedCnt != 0)
+		{
+			u16 alignedData = (u16)(data | (data << 8));
+			u32* address = destination;
+			for(; 3 < alignedCnt; alignedCnt -= 4)
+			{
+				*address = (u32)(alignedData | alignedData << 0x10);
+				address++;
+			}
+			cnt = cnt & 3;
+		}
+
+		if(cnt != 0)
+			set_memory(destination, data, cnt);
+
+		if(dataToCopy == 0)
+			return dest;
+
+		length = dataToCopy - 0x10 + ((u32)destination & 0x0F);
+		destination = (void*)(((u32)destination & (u32)0xFFFFFFF0) + 0x10);
+		cnt = length & 0xFFFFFFF0;
+	}
+
+	if(cnt != 0)
+	{
+		set_memory_short(destination, data, cnt);
+		destination += cnt;
+		length -= cnt;
+	}
+
+	if(length != 0)
+		set_memory(destination, data, length);
+
+	return dest;
 }
 
 void *memcpy(void *dst, const void *src, size_t len)

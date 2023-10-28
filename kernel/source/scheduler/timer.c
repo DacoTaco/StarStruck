@@ -10,6 +10,7 @@
 
 #include <ios/processor.h>
 #include <ios/errno.h>
+#include <string.h>
 
 #include "core/defines.h"
 #include "core/hollywood.h"
@@ -338,7 +339,7 @@ clear_previousTimer:
 //clear the timer struct
 clear_timer:
 	if(destroyTimer)
-		memset8(timerInfo, 0, sizeof(TimerInfo));
+		memset(timerInfo, 0, sizeof(TimerInfo));
 	else
 	{
 		timerInfo->PreviousTimer = NULL;

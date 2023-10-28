@@ -10,6 +10,7 @@
 
 #include <errno.h>
 #include <ios/processor.h>
+#include <string.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
 
@@ -175,7 +176,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	//get pointer and clear it!
 	ret = (u32)(currentBlock + 1);
 	if(ret)
-		memset8((u8*)ret, 0, size);
+		memset((u8*)ret, 0, size);
 
 restore_and_return:
 	RestoreInterrupts(irqState);

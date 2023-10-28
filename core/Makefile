@@ -108,6 +108,10 @@ else
 #---------------------------------------------------------------------------------
 $(OUTPUT).a	:	$(OFILES)
 
+#we don't want gcc to rewrite our code in string.c. it would cause GCC to replace some parts of memset with a call to memset
+#that... isn't correct for obvious reasons :)
+string.o: 		CFLAGS += -fno-builtin
+
 #---------------------------------------------------------------------------------
 # The bin2o rule should be copied and modified
 # for each extension used in the data directories

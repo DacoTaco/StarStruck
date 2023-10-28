@@ -175,7 +175,7 @@ void kernel_main( void )
 
 		//clear memory that didn't have stuff loaded in from the elf
 		if(header.p_filesz < header.p_memsz)
-			memset8((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
+			memset((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
 	}
 
 	const u32 modules_cnt = __modules_size / sizeof(ModuleInfo);

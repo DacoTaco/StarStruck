@@ -29,7 +29,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	if (!useMsgFromExtraInsteadOfThread)
 	{
 		IpcMessage *destination = &IpcMessageArray[currentThreadId];
-		memset8(&destination->Request, 0, sizeof(destination->Request));
+		memset(&destination->Request, 0, sizeof(destination->Request));
 		*out = destination;
 		return IPC_SUCCESS;
 	}
@@ -44,7 +44,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 		if(destination->IsInQueue)
 			continue;
 
-		memset8(&destination->Request, 0, sizeof(destination->Request));
+		memset(&destination->Request, 0, sizeof(destination->Request));
 		*out = destination;
 
 		ThreadMessageUsageArray[currentThreadId]++;
@@ -151,7 +151,7 @@ int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 
 	ret = SendMessageCheckReceive(currentMessage, destination->BelongsToResource);
 	if (fd < 0x10000)
-		memset8(destination, 0, sizeof(*destination));
+		memset(destination, 0, sizeof(*destination));
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;

@@ -246,7 +246,7 @@ void* _kmallocMemorySection(KernelMemoryType type)
 	
 	size = (u32)(ptrEnd - ptr);
 	heapCurrent = ptrEnd;
-	memset8(ptr, 0, size);
+	memset(ptr, 0, size);
 	return ptr;
 }
 
