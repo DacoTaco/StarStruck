@@ -24,7 +24,7 @@ MessageQueue MessageQueues[MAX_MESSAGEQUEUES] SRAM_DATA;
 
 s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s16 queueId = 0;
 	
 	if(ptr == NULL)
@@ -66,9 +66,9 @@ restore_and_return:
 	return queueId;
 }
 
-s32 JamMessage(s32 queueId, void* message, u32 flags)
+s32 JamMessage(const u32 queueId, void* message, u32 flags)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	MessageQueue* messageQueue;
 
@@ -121,9 +121,9 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessage(s32 queueId, void* message, u32 flags)
+s32 SendMessage(const u32 queueId, void* message, u32 flags)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
@@ -150,8 +150,8 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 	if(messageQueue == NULL)
 		return IPC_EINVAL;
 	
-	s32 used = messageQueue->Used;
-	s32 queueSize = messageQueue->QueueSize;
+	u32 used = messageQueue->Used;
+	u32 queueSize = messageQueue->QueueSize;
 
 	if (queueSize <= used) 
 	{
@@ -170,7 +170,7 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 		}
 	}
 	
-	s32 heapIndex = messageQueue->First + used;
+	u32 heapIndex = messageQueue->First + used;
 	if(queueSize <= heapIndex)
 		heapIndex = heapIndex - queueSize;
 	
@@ -185,9 +185,9 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 	return 0;
 }
 
-s32 ReceiveMessage(s32 queueId, void** message, u32 flags)
+s32 ReceiveMessage(const u32 queueId, void** message, u32 flags)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
 	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
@@ -218,7 +218,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	if(messageQueue == NULL)
 		return IPC_EINVAL;
 	
-	s32 used = messageQueue->Used;
+	u32 used = messageQueue->Used;
 	if(used == 0 && flags != None)
 		return IPC_EQUEUEEMPTY;
 
@@ -238,7 +238,7 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 		used = messageQueue->Used;
 	}
 	
-	s32 first = messageQueue->First + 1;
+	u32 first = messageQueue->First + 1;
 	if(messageQueue->QueueSize <= first)
 		first = first - messageQueue->QueueSize;
 	
@@ -251,12 +251,12 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	return IPC_SUCCESS;
 }
 
-s32 DestroyMessageQueue(s32 queueId)
+s32 DestroyMessageQueue(const u32 queueId)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(queueId < 0 || queueId > MAX_MESSAGEQUEUES)
+	if(queueId > MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;

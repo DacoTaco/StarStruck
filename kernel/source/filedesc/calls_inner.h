@@ -61,4 +61,4 @@ DEFINE_FD_FUNCS(s32, Ioctlv, (s32, fd)(u32, requestId)(u32, vectorInputCount)(u3
 
 #endif
 
-s32 OpenFD_Inner(const char* path, int mode);
+s32 OpenFD_Inner(const char* path, AccessMode mode);

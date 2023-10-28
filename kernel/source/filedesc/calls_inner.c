@@ -29,7 +29,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	if (!useMsgFromExtraInsteadOfThread)
 	{
 		IpcMessage *destination = &IpcMessageArray[currentThreadId];
-		memset8(&destination->Request, 0, sizeof(destination->Request));
+		memset(&destination->Request, 0, sizeof(destination->Request));
 		*out = destination;
 		return IPC_SUCCESS;
 	}
@@ -44,7 +44,7 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 		if(destination->IsInQueue)
 			continue;
 
-		memset8(&destination->Request, 0, sizeof(destination->Request));
+		memset(&destination->Request, 0, sizeof(destination->Request));
 		*out = destination;
 
 		ThreadMessageUsageArray[currentThreadId]++;
@@ -56,58 +56,12 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	return IPC_EMAX;
 }
 
-static void SpecialStrncpyForMEM1(FileDescriptorPath* into, const char* source, int length)
+s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
-	u32 idx = 0;
-	while(length != 0 && *source != '\0')
-	{
-		u32 value = 0;
-		for(u32 i = 0; i < sizeof(u32) && length != 0 && *source != '\0'; ++i, --length, ++source)
-		{
-			value |= ((u32)(source[i])) << (24 - 8 * i);
-		}
-		into->DevicePathUINT[idx] = value;
-		++idx;
-	}
-	for(; idx < ARRAY_LENGTH(into->DevicePathUINT); ++idx)
-	{
-		into->DevicePathUINT[idx] = 0;
-	}
-}
+	const u32 currentThreadId = GetThreadID();
+	const u32 currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 
-static void SpecialStrncpyRegular(FileDescriptorPath* into, const char* source, int length)
-{
-	int i = 0;
-	for(; i < length && source[i] != '\0'; ++i)
-	{
-		into->DevicePath[i] = source[i];
-	}
-	for(; i < length; ++i)
-	{
-		into->DevicePath[i] = 0;
-	}
-}
-// strncpy (with 0 padding if the source is shorter than length)
-static void SpecialStrncpy(FileDescriptorPath* into, const char* source, int length)
-{
-	// if in mem1, work in u32 sized chunks
-	if((u32)into < 0x01800000)
-	{
-		SpecialStrncpyForMEM1(into, source, length);
-	}
-	// otherwise, normal strncpy
-	else
-	{
-		SpecialStrncpyRegular(into, source, length);
-	}
-}
-
-s32 OpenFD_Inner(const char* path, int mode)
-{
-	const int currentThreadId = GetThreadID();
-	const int currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
-
-	const int pathLength = strnlen(path, MAX_PATHLEN);
+	const u32 pathLength = strnlen(path, MAX_PATHLEN);
 	if (pathLength >= MAX_PATHLEN)
 		return IPC_EINVAL;
 
@@ -115,7 +69,7 @@ s32 OpenFD_Inner(const char* path, int mode)
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	SpecialStrncpy(&FiledescPathArray[currentThreadId], path, pathLength + 1);
+	strncpy(FiledescPathArray[currentThreadId].DevicePath, path, pathLength + 1);
 
 	for(int i = 0; i < MAX_RESOURCES; ++i)
 	{
@@ -197,7 +151,7 @@ int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 
 	ret = SendMessageCheckReceive(currentMessage, destination->BelongsToResource);
 	if (fd < 0x10000)
-		memset8(destination, 0, sizeof(*destination));
+		memset(destination, 0, sizeof(*destination));
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;
@@ -469,7 +423,7 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 
 	if (checkBeforeSend)
 	{
-		const int pid = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
+		const u32 pid = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 		ret = CheckMemoryPointer(vectors, (vectorInputCount + vectorIOCount) * sizeof(*vectors), 3, pid, fd_ptr->BelongsToResource->ProcessId);
 		for(u32 i = 0; i < vectorInputCount && ret == IPC_SUCCESS; ++i)
 		{

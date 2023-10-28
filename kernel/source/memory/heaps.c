@@ -10,6 +10,7 @@
 
 #include <errno.h>
 #include <ios/processor.h>
+#include <string.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
 
@@ -19,15 +20,15 @@
 #include "interrupt/irq.h"
 #include "scheduler/threads.h"
 
-#define ALIGNED_BLOCK_HEADER_SIZE	((sizeof(HeapBlock) + 0x0F) & -0x10)
+#define ALIGNED_BLOCK_HEADER_SIZE	((sizeof(HeapBlock) + 0x0F) & 0xFFFFFFF0)
 #define MAX_HEAP 					0x10
 
-u32 KernelHeapId = -1;
+s32 KernelHeapId = -1;
 static HeapInfo heaps[MAX_HEAP];
 
 s32 CreateHeap(void *ptr, u32 size)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s8 heap_index = 0;
 	
 	if(ptr == NULL || ((u32)ptr & 0x1f) != 0 || size < 0x30 || CheckMemoryPointer(ptr, size, 4, CurrentThread->ProcessId, 0) < 0 )
@@ -63,7 +64,7 @@ restore_and_return:
 
 s32 DestroyHeap(s32 heapid)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(heapid < 0 || heapid >= MAX_HEAP || heaps[heapid].Heap == NULL)
@@ -95,7 +96,7 @@ void* AllocateOnHeap(s32 heapid, u32 size)
 
 void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	u32 ret = 0;
 	
 	if(	heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].Heap || 
@@ -108,7 +109,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		goto restore_and_return;
 	
 	//align size by 0x20
-	u32 alignedSize = (size + 0x1F) & -0x20;
+	u32 alignedSize = (size + 0x1F) & 0xFFFFFFE0;
 	HeapBlock* currentBlock = heaps[heapid].FirstBlock;
 	HeapBlock* blockToAllocate = NULL;
 	u32 blockSize = 0;
@@ -175,7 +176,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	//get pointer and clear it!
 	ret = (u32)(currentBlock + 1);
 	if(ret)
-		memset8((u8*)ret, 0, size);
+		memset((u8*)ret, 0, size);
 
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -206,7 +207,7 @@ int MergeNextBlockIfUnused(HeapBlock* parentBlock)
 
 s32 FreeOnHeap(s32 heapid, void* ptr)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	//verify incoming parameters & if the heap is in use

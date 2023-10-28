@@ -360,7 +360,7 @@ __bitfield(u_int32_t *src, int start, int len)
 		bc = 8 - bs;
 		if (bc > len)
 			bc = len;
-		dst |= (*sp++ >> bs) << shift;
+		dst |= (u_int32_t)((*sp++ >> bs) << shift);
 		shift += bc;
 		start += bc;
 		len -= bc;

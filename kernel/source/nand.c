@@ -52,9 +52,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define NAND_FLAGS_RD	0x2000
 #define NAND_FLAGS_ECC	0x1000
 
-static u8 ipc_data[PAGE_SIZE] SRAM_BSS ALIGNED(32);
-static u8 ipc_ecc[ECC_BUFFER_ALLOC] SRAM_BSS ALIGNED(128); //128 alignment REQUIRED
-
 static volatile int irq_flag;
 static u32 last_page_read = 0;
 static u32 nand_min_page = 0x200; // default to protecting boot1+boot2
@@ -69,22 +66,22 @@ void nand_irq(void)
 	/*if (current_request.code != 0) {
 		switch (current_request.req) {
 			case IPC_NAND_GETID:
-				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
+				memcpy((void*)current_request.args[0], ipc_data, 0x40);
 				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_STATUS:
-				memcpy32((void*)current_request.args[0], ipc_data, 0x40);
+				memcpy((void*)current_request.args[0], ipc_data, 0x40);
 				DCFlushRange((void*)current_request.args[0], 0x40);
 				break;
 			case IPC_NAND_READ:
 				err = nand_correct(last_page_read, ipc_data, ipc_ecc);
 
 				if (current_request.args[1] != 0xFFFFFFFF) {
-					memcpy32((void*)current_request.args[1], ipc_data, PAGE_SIZE);
+					memcpy((void*)current_request.args[1], ipc_data, PAGE_SIZE);
 					DCFlushRange((void*)current_request.args[1], PAGE_SIZE);
 				}
 				if (current_request.args[2] != 0xFFFFFFFF) {
-					memcpy32((void*)current_request.args[2], ipc_ecc, PAGE_SPARE_SIZE);
+					memcpy((void*)current_request.args[2], ipc_ecc, PAGE_SPARE_SIZE);
 					DCFlushRange((void*)current_request.args[2], PAGE_SPARE_SIZE);
 				}
 				break;
@@ -124,9 +121,9 @@ void nand_send_command(u32 command, u32 bitmask, u32 flags, u32 num_bytes) {
 	write32(NAND_CMD, cmd);
 }
 
-void __nand_set_address(s32 page_off, s32 pageno) {
-	if (page_off != -1) write32(NAND_ADDR0, page_off);
-	if (pageno != -1)   write32(NAND_ADDR1, pageno);
+void __nand_set_address(u32 page_off, u32 pageno) {
+	if (0 < (s32)page_off) write32(NAND_ADDR0, page_off);
+	if (0 < (s32)pageno)   write32(NAND_ADDR1, pageno);
 }
 
 void __nand_setup_dma(u8 *data, u8 *spare) {
@@ -262,8 +259,8 @@ int nand_correct(u32 pageno, void *data, void *ecc)
 				corrected++;
 			} else {
 				// byteswap and extract odd and even halves
-				u16 even = (syndrome >> 24) | ((syndrome >> 8) & 0xf00);
-				u16 odd = ((syndrome << 8) & 0xf00) | ((syndrome >> 8) & 0x0ff);
+				u16 even = (u16)(syndrome >> 24) | ((syndrome >> 8) & 0xf00);
+				u16 odd = (u16)((syndrome << 8) & 0xf00) | ((syndrome >> 8) & 0x0ff);
 				if((even ^ odd) != 0xfff) {
 					// oops, can't fix this one
 					uncorrectable++;

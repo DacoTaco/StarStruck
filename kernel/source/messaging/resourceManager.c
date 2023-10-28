@@ -36,11 +36,11 @@ u32 GetPpcAccessRights(const char* resourcePath)
 		: 0;
 }
 
-s32 RegisterResourceManager(const char* devicePath, s32 queueid)
+s32 RegisterResourceManager(const char* devicePath, const u32 queueid)
 {
-	s32 interrupts = DisableInterrupts();
+	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;
-	s32 devicePathLen = strnlen(devicePath, MAX_PATHLEN);
+	u32 devicePathLen = strnlen(devicePath, MAX_PATHLEN);
 	s32 resourceManagerId;
 
 	if(devicePathLen >= MAX_PATHLEN)
@@ -49,7 +49,7 @@ s32 RegisterResourceManager(const char* devicePath, s32 queueid)
 		goto returnRegisterResource;
 	}
 
-	if(CheckMemoryPointer(devicePath, ret, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid >= MAX_MESSAGEQUEUES)
+	if(CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;

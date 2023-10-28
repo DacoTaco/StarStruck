@@ -9,11 +9,14 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 */
 
 #include <stdarg.h>
+#include <ios/processor.h>
 
 #include "types.h"
 #include "gpio.h"
-#include "hollywood.h"
 #include "utils.h"
+
+#define		HW_TIMER			0x0d800010
+#define		HW_GPIO1BOUT		0x0d8000C0
 
 extern void debug_output(u8 byte);
 

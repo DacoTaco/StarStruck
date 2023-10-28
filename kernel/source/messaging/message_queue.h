@@ -19,9 +19,9 @@ typedef struct
 	ThreadQueue ReceiveThreadQueue;
 	ThreadQueue SendThreadQueue;
 	u32 ProcessId;
-	s32 Used;
-	s32 First;
-	s32 QueueSize;
+	u32 Used;
+	u32 First;
+	u32 QueueSize;
 	void** QueueHeap;
 } MessageQueue;
 CHECK_SIZE(MessageQueue, 0x1C);
@@ -43,11 +43,11 @@ typedef enum
 extern MessageQueue MessageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
-s32 DestroyMessageQueue(s32 queueId);
-s32 JamMessage(s32 queueId, void* message, u32 flags);
-s32 SendMessage(s32 queueId, void* message, u32 flags);
+s32 DestroyMessageQueue(const u32 queueId);
+s32 JamMessage(const u32 queueId, void* message, u32 flags);
+s32 SendMessage(const u32 queueId, void* message, u32 flags);
 s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags);
-s32 ReceiveMessage(s32 queueid, void **message, u32 flags);
+s32 ReceiveMessage(const u32 queueId, void **message, u32 flags);
 s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flags);
 
 #endif

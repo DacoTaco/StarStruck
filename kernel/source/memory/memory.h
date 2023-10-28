@@ -79,9 +79,9 @@ typedef enum
 s32 InitializeMemory(void);
 void ProtectMemory(int enable, void *start, void *end);
 void* KMalloc(u32 size);
-u32 MapMemory(MemorySection* entry);
+s32 MapMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
-s32 CheckMemoryPointer(const void* ptr, s32 size, u32 type, s32 pid, s32 domainPid);
+s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainPid);
 void DCInvalidateRange(const void* start, u32 size);
 void DCFlushRange(const void *start, u32 size);
 void DCFlushAll(void);

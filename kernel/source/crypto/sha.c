@@ -51,7 +51,7 @@ typedef union {
 
 const u32 Sha1IntialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
 u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
-s32 ShaEventMessageQueueId = 0;
+u32 ShaEventMessageQueueId = 0;
 
 s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize, const ShaCommandType command, FinalShaHash finalHashBuffer)
 {
@@ -68,7 +68,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 	}
 
 	//floors data size to blocks of 512 bits
-	const u32 flooredDataSize = inputSize & (~(SHA_BLOCK_SIZE-1));
+	const u32 flooredDataSize = inputSize & (u32)(~(SHA_BLOCK_SIZE-1));
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
@@ -86,14 +86,14 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 
 		//copy over the states from the context to the registers
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+			write32((u32)(SHA_H0 + (i*4)), hashContext->ShaStates[i]);
 		
 		write32(SHA_SRC, VirtualToPhysical((u32)input));
 		ShaControl control = {
 			.Fields = {
 				.Execute = 1,
 				.GenerateIrq = 1,
-				.NumberOfBlocks = numberOfBlocks
+				.NumberOfBlocks = numberOfBlocks & 0x3FF
 			}
 		};
 
@@ -135,7 +135,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 		//copy over the states from the context to the registers
 		if (flooredDataSize == 0) {
 			for(s8 i = 0; i < SHA_NUM_WORDS; i++) {
-				write32(SHA_H0 + (i*4), hashContext->ShaStates[i]);
+				write32((u32)(SHA_H0 + (i*4)), hashContext->ShaStates[i]);
 			}
 		}
 		
@@ -145,7 +145,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 			.Fields = {
 				.Execute = 1,
 				.GenerateIrq = 0,	//no irq for this one, instead the function idles until it detects the execution has halted
-				.NumberOfBlocks = numberOfBlocks -1
+				.NumberOfBlocks = (numberOfBlocks -1) & 0x3FF
 			}
 		};
 
@@ -155,7 +155,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			finalHashBuffer[i] = read32(SHA_H0 + (i * 4));
+			finalHashBuffer[i] = read32((u32)(SHA_H0 + (i * 4)));
 		
 		ret = IPC_SUCCESS;
 	}
@@ -166,7 +166,7 @@ s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize,
 		hashContext->Length += flooredDataSize * 8;
 		//copy over the states from the registers to the context
 		for(s8 i = 0; i < SHA_NUM_WORDS; i++)
-			hashContext->ShaStates[i] = read32(SHA_H0 + (i * 4));
+			hashContext->ShaStates[i] = read32((u32)(SHA_H0 + (i * 4)));
 
 		ret = IPC_SUCCESS;
 	}
@@ -182,19 +182,20 @@ void ShaEngineHandler(void)
 	IoctlvMessage* ioctlvMessage;
 	IpcMessage* ipcReply;
 
-	s32 messageQueueId = CreateMessageQueue((void**)&eventMessageQueue, 1);
-	ShaEventMessageQueueId = messageQueueId;
-	if(messageQueueId < 0)
-		panic("Unable to create SHA event queue: %d\n", messageQueueId);
+	s32 ret = CreateMessageQueue((void**)&eventMessageQueue, 1);
+	ShaEventMessageQueueId = (u32)ret;
+	if(ret < 0)
+		panic("Unable to create SHA event queue: %d\n", ret);
 	
-	s32 ret = RegisterEventHandler(IRQ_SHA1, messageQueueId, NULL);
+	ret = RegisterEventHandler(IRQ_SHA1, ShaEventMessageQueueId, NULL);
 	if(ret < IPC_SUCCESS)
 		panic("Unable to register SHA event handler: %d\n", ret);
 
-	messageQueueId = CreateMessageQueue((void**)&resourceManagerMessageQueue, 0x10);
-	if(messageQueueId < IPC_SUCCESS)
+	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 0x10);
+	if(ret < IPC_SUCCESS)
 		panic("Unable to create SHA rm queue: %d\n", ret);
 	
+	const u32 messageQueueId = (u32)ret;
 	ret = RegisterResourceManager(SHA_DEVICE_NAME, messageQueueId);
 	if(ret < IPC_SUCCESS)
 		panic("Unable to register resource manager: %d\n", ret);
@@ -227,7 +228,7 @@ void ShaEngineHandler(void)
 				goto sendReply;
 			case IOS_IOCTLV:
 				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
-				s32 ioctl = ioctlvMessage->Ioctl;
+				u32 ioctl = ioctlvMessage->Ioctl;
 				IoctlvMessageData* messageData = ioctlvMessage->Data;
 				switch (ioctl)
 				{
@@ -242,7 +243,7 @@ void ShaEngineHandler(void)
 							break;
 						
 						ret = GenerateSha((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[0].Data, 
-										  ioctlvMessage->Data[0].Length, (ShaCommandType)ioctl, (u8*)ioctlvMessage->Data[2].Data);
+										  ioctlvMessage->Data[0].Length, (ShaCommandType)ioctl, (u32*)ioctlvMessage->Data[2].Data);
 						
 						if(ret != IPC_SUCCESS)
 							goto sendReply;
@@ -256,7 +257,7 @@ void ShaEngineHandler(void)
 
 						if (shaCommand != ContributeShaState) {
 							if (messageData[3].Length == 4) {
-								u32 signerHandle = *messageData[6].Data;								
+								u32 signerHandle = *messageData[6].Data;
 							}
 						}
 

@@ -30,7 +30,7 @@ seeprom_t seeprom ALIGNED(0x20);
 void crypto_read_otp(void)
 {
 	u32 *otpd = (u32*)&otp;
-	int i;
+	u32 i;
 	for (i=0; i< 0x20; i++) {
 		write32(HW_OTPCMD,0x80000000|i);
 		*otpd++ = read32(HW_OTPDATA);
@@ -101,7 +101,7 @@ void aes_set_key(u8 *key)
 
 void aes_decrypt(u8 *src, u8 *dst, u32 blocks, u8 keep_iv)
 {
-	int this_blocks = 0;
+	u32 this_blocks = 0;
 	while(blocks > 0) {
 		this_blocks = blocks;
 		if (this_blocks > 0x80)

@@ -87,7 +87,7 @@ void FindKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
     }
     
 	KeyType retKeyType;
-	u32 keyTypeUnmasked = FindKeyTypeUnmasked(keyHandle, &retKeyType);
+	u32 keyTypeUnmasked = (u32)FindKeyTypeUnmasked(keyHandle, &retKeyType);
 	*keytype = keyTypeUnmasked >> 4;
 	*keySubtype = keyTypeUnmasked & 0xf;
     return;
@@ -95,7 +95,6 @@ void FindKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
 
 s32 FindKeySize(u32 *keySize, u32 keyHandle)
 {
-    u32 keySizeValidity;
     KeySubtype keySubtype;
     KeyType keyType;
     
@@ -106,8 +105,7 @@ s32 FindKeySize(u32 *keySize, u32 keyHandle)
     }
 
     FindKeyTypes(keyHandle, &keyType, &keySubtype);
-	keySizeValidity = GetKeySizeFromType(keyType, keySubtype, keySize);
-	if (keySizeValidity == IPC_SUCCESS)
+	if (GetKeySizeFromType(keyType, keySubtype, keySize) == IPC_SUCCESS)
 		return IPC_SUCCESS;
 
     return IOSC_FAIL_INTERNAL;

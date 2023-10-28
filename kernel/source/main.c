@@ -57,12 +57,12 @@ void DiThread()
 {
 	u32 messages[1];
 	u32 msg;
-	s32 queueId = 0;
 
-	queueId = CreateMessageQueue((void**)&messages, 1);
-	if(queueId < 0)
-		panic("Unable to create DI thread message queue: %d\n", queueId);
-
+	s32 ret = CreateMessageQueue((void**)&messages, 1);
+	if(ret < 0)
+		panic("Unable to create DI thread message queue: %d\n", ret);
+	
+	const u32 queueId = (u32)ret;
 	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
 	while(1)
 	{
@@ -78,12 +78,13 @@ void DiThread()
 void kernel_main( void )
 {
 	//create IRQ Timer handler thread
-	s32 threadId = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
+	s32 ret = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
+	u32 threadId = (u32)ret;
 	//set thread to run as a system thread
-	if(threadId >= 0)
+	if(ret >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	
-	if( threadId < 0 || StartThread(threadId) < 0 )
+	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start IRQ thread!\n");
 
 	//not sure what this is about, if you know please let us know.
@@ -95,40 +96,43 @@ void kernel_main( void )
 		u32 unknownConfig = dvdConfig >> 2 & 1;
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
 		{
-			threadId = CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threadId = (u32)CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
 			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
 	}
 
 	//create AES Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
-	if(threadId >= 0)
+	ret = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = (u32)ret;
+	if(ret >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
-	if( threadId < 0 || StartThread(threadId) < 0 )
+	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start AES thread!\n");	
 
 	//create SHA Engine handler thread & also set it to run as system thread
-	threadId = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
-	if(threadId > 0)
+	ret = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
+	threadId = (u32)ret;
+	if(ret > 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
-	if( threadId < 0 || StartThread(threadId) < 0 )
+	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start SHA thread!\n");
 
 	/// TODO: Some function goes here, needs research
 
 	//create IPC handler thread & also set it to run as system thread
-	threadId = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
-	if(threadId > 0)
+	ret = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
+	threadId = (u32)ret;
+	if(ret > 0)
 	{
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 		IpcHandlerThread = &Threads[threadId];
-		IpcHandlerThreadId = threadId;
+		IpcHandlerThreadId = (u32)threadId;
 	}
 
-	if( threadId < 0 || StartThread(threadId) < 0 )
+	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start IPC thread!\n");
 
 	//loop the program headers and map/launch all modules
@@ -167,11 +171,11 @@ void kernel_main( void )
 		if(ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 		
-		printk("load segment @ [%d, %d] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
+		printk("load segment @ [%08x, %08x] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
 
 		//clear memory that didn't have stuff loaded in from the elf
 		if(header.p_filesz < header.p_memsz)
-			memset8((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
+			memset((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
 	}
 
 	const u32 modules_cnt = __modules_size / sizeof(ModuleInfo);
@@ -184,9 +188,9 @@ void kernel_main( void )
 		u32 arg = __modules[i].UserId;
 		 
 		printk("priority = %d, stackSize = %d, stackPtr = %d\n", priority, stackSize, stackTop);
-		printk("starting thread entry: 0x%d\n", main);
+		printk("starting thread entry: 0x%x\n", main);
 
-		threadId = CreateThread(main, &arg, (u32*)stackTop, stackSize, priority, 1);
+		threadId = (u32)CreateThread(main, (void*)arg, (u32*)stackTop, stackSize, priority, 1);
 		Threads[threadId].ProcessId = arg;
 		StartThread(threadId);
 	}
@@ -356,11 +360,11 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	s32 threadId = CreateThread((u32)kernel_main, NULL, NULL, 0, 0x7F, 1);
+	u32 threadId = (u32)CreateThread((u32)kernel_main, NULL, NULL, 0, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	
-	if( threadId < 0 || StartThread(threadId) < 0 )
+	if( threadId != 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);
 
 	panic("\npanic!\n");

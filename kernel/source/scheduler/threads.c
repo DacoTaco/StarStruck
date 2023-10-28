@@ -9,6 +9,7 @@
 */
 
 #include <types.h>
+#include <string.h>
 #include <ios/processor.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
@@ -30,11 +31,11 @@ u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10);
 ThreadQueue SchedulerQueue ALIGNED(0x04) = { &ThreadStartingState };
-ThreadInfo ThreadStartingState ALIGNED(0x04) = {.Priority = -1};
+ThreadInfo ThreadStartingState ALIGNED(0x04) = {.Priority = 0x00};
 ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
-static inline s32 _GetThreadID(ThreadInfo* thread)
+static inline u32 _GetThreadID(ThreadInfo* thread)
 {
 	u32 offset = (u32)thread - (u32)(&Threads[0]);
 	return offset == 0 
@@ -46,21 +47,21 @@ void InitializeThreadContext()
 {
 	//copy function to mem2 where everything can access it
 	ThreadEndFunction = KMalloc(0x10);
-	memcpy32(ThreadEndFunction, EndThread, 0x10);
+	memcpy(ThreadEndFunction, EndThread, 0x10);
 
 	//Initilize thread structures & set stack pointers
-	for(s16 i = 0; i < MAX_PROCESSES; i++)
+	for(u16 i = 0; i < MAX_PROCESSES; i++)
 	{
 		ProcessUID[i] = i;
 		ProcessGID[i] = i;
 	}
 
-	memset8((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
+	memset((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
-	for(s16 i = 0; i < MAX_THREADS; i++)
+	for(u16 i = 0; i < MAX_THREADS; i++)
 	{
 		//gcc works by having a downwards stack, hence setting the stack to the upper limit
-		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (STACK_SIZE*(i+1));
+		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (u32)(STACK_SIZE*(i+1));
 	}
 }
 
@@ -94,8 +95,8 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 		return;
 
 	ThreadInfo* nextThread = threadQueue->NextThread;	
-	s16 threadPriority = thread->Priority;
-	s16 nextPriority = nextThread->Priority;
+	u32 threadPriority = thread->Priority;
+	u32 nextPriority = nextThread->Priority;
 	ThreadQueue* previousThread = threadQueue;
 
 	while(threadPriority < nextPriority)
@@ -159,7 +160,7 @@ void ScheduleYield( void )
 //Called syscalls.
 void YieldThread( void )
 {
-	s32 state = DisableInterrupts();
+	u32 state = DisableInterrupts();
 	CurrentThread->ThreadState = Ready;
 
 	YieldCurrentThread(&SchedulerQueue);
@@ -170,7 +171,7 @@ void YieldThread( void )
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 {
 	ThreadInfo* nextThread = ThreadQueue_PopThread(threadQueue);
-	nextThread->ThreadContext.Registers[0] = returnValue;
+	nextThread->ThreadContext.Registers[0] = (u32)returnValue;
 	nextThread->ThreadState = Ready;
 	
 	ThreadQueue_PushThread(&SchedulerQueue, nextThread);
@@ -184,10 +185,10 @@ void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 }
 
 //IOS Handlers
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached)
 {
 	int threadId = 0;
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 
 	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (CurrentThread != NULL && priority > CurrentThread->InitialPriority))
 	{
@@ -236,13 +237,13 @@ restore_and_return:
 	return threadId;	
 }
 
-s32	StartThread(s32 threadId)
+s32	StartThread(const u32 threadId)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	ThreadQueue* threadQueue = NULL;
 
-	if(threadId >= MAX_THREADS || threadId < 0)
+	if(threadId >= MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -290,9 +291,9 @@ restore_and_return:
 	return ret;	
 }
 
-s32 CancelThread(u32 threadId, u32 return_value)
+s32 CancelThread(const u32 threadId, u32 return_value)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(threadId > MAX_THREADS)
@@ -321,7 +322,7 @@ s32 CancelThread(u32 threadId, u32 return_value)
 	else
 		threadToCancel->ThreadState = Unset;
 	
-	CurrentThread->ThreadContext.Registers[0] = ret;
+	CurrentThread->ThreadContext.Registers[0] = (u32)ret;
 	if(threadToCancel == CurrentThread)
 		ScheduleYield();
 	else if(CurrentThread->Priority < SchedulerQueue.NextThread->Priority)
@@ -335,9 +336,9 @@ restore_and_return:
 	return ret;
 }
 
-s32 JoinThread(s32 threadId, u32* returnedValue)
+s32 JoinThread(const u32 threadId, u32* returnedValue)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
 	if(threadId >= MAX_THREADS)
@@ -380,9 +381,9 @@ restore_and_return:
 	return ret;
 }
 
-s32 SuspendThread(s32 threadId)
+s32 SuspendThread(const u32 threadId)
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
 	if(threadId >= MAX_THREADS)
@@ -425,7 +426,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 GetThreadID()
+u32 GetThreadID()
 {
 	return _GetThreadID(CurrentThread);
 }
@@ -435,16 +436,16 @@ u32 GetProcessID()
 	return CurrentThread->ProcessId;
 }
 
-s32 GetThreadPriority( u32 threadId )
+s32 GetThreadPriority( const u32 threadId )
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	
 	ThreadInfo* thread;
 	s32 ret;
 	
 	if(threadId == 0 && CurrentThread != NULL)
 	{
-		ret = CurrentThread->Priority;
+		ret = (s32)CurrentThread->Priority;
 		goto restore_and_return;
 	}
 	
@@ -456,7 +457,7 @@ s32 GetThreadPriority( u32 threadId )
 	if( CurrentThread != NULL && CurrentThread->ProcessId != 0 && thread->ProcessId != CurrentThread->ProcessId)
 		goto return_error;
 	
-	ret = thread->Priority;
+	ret = (s32)thread->Priority;
 	goto restore_and_return;
 	
 return_error:
@@ -466,9 +467,9 @@ restore_and_return:
 	return ret;
 }
 
-s32 SetThreadPriority( u32 threadId, s32 priority )
+s32 SetThreadPriority( const u32 threadId, u32 priority )
 {
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 
 	ThreadInfo* thread = NULL;
 	s32 ret = 0;
@@ -513,7 +514,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 GetUID(void)
+u32 GetUID(void)
 {
 	return ProcessUID[CurrentThread->ProcessId];
 }
@@ -521,7 +522,7 @@ s32 GetUID(void)
 s32 SetUID(u32 pid, u32 uid)
 {
 	s32 ret = IPC_SUCCESS;
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	
 	if(pid >= MAX_PROCESSES)
 	{
@@ -542,15 +543,15 @@ restore_and_return:
 	return ret;
 }
 
-s32 GetGID(void)
+u16 GetGID(void)
 {
 	return ProcessGID[CurrentThread->ProcessId];
 }
 
-s32 SetGID(u32 pid, u32 gid)
+s32 SetGID(u32 pid, u16 gid)
 {
 	s32 ret = IPC_SUCCESS;
-	s32 irqState = DisableInterrupts();
+	u32 irqState = DisableInterrupts();
 	
 	if(pid >= MAX_PROCESSES)
 	{

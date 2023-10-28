@@ -16,7 +16,7 @@
 // they all share this exact shape, except Open
 #define WRAP_INNER_CALL(rettype, name, arguments) \
 rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), u32 messageQueueId, IpcMessage* message) { \
-	const s32 state = DisableInterrupts(); \
+	const u32 state = DisableInterrupts(); \
 	rettype ret = IPC_EACCES; \
 	if(messageQueueId < MAX_MESSAGEQUEUES) { \
 		MessageQueue* queue = &MessageQueues[messageQueueId]; \
@@ -39,7 +39,7 @@ s32 OpenFDAsync(const char* path, int mode, u32 messageQueueId, IpcMessage* mess
 {
 	s32 ret = IPC_EACCES;
 
-	const s32 state = DisableInterrupts();
+	const u32 state = DisableInterrupts();
 	if (messageQueueId < MAX_MESSAGEQUEUES) {
 		MessageQueue* queue = &MessageQueues[messageQueueId];
 		if(queue->ProcessId == GetProcessID()) {

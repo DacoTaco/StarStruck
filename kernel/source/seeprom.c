@@ -63,7 +63,7 @@ int seeprom_read(void *dst, int offset, int size)
 	{
 		set32(HW_GPIO1OUT, GP_EEP_CS);
 		send_bits((0x600 | (offset + i)), 11);
-		recv = recv_bits(16);
+		recv = (u16)recv_bits(16);
 		*ptr++ = recv;
 		clear32(HW_GPIO1OUT, GP_EEP_CS);
 		eeprom_delay();
