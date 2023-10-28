@@ -112,7 +112,7 @@ static int read_to(u32 bytes)
 	return 0;
 }
 
-int boot2_load(int copy)
+int boot2_load(u8 copy)
 {
 	boot2blockmap *maps = (boot2blockmap*)sector_buf;
 	u32 block;
@@ -157,13 +157,13 @@ int boot2_load(int copy)
 	if(copy == 0) {
 		for(block=BOOT2_START; block<=BOOT2_END; block++) {
 			if(good_blockmap.blocks[block] == 0x00) {
-				boot2_blocks[valid_blocks++] = block;
+				boot2_blocks[valid_blocks++] = (u8)block;
 			}
 		}
 	} else if(copy == 1) {
 		for(block=BOOT2_END; block>=BOOT2_START; block--) {
 			if(good_blockmap.blocks[block] == 0x00) {
-				boot2_blocks[valid_blocks++] = block;
+				boot2_blocks[valid_blocks++] = (u8)block;
 			}
 		}
 	} else {
@@ -225,7 +225,7 @@ int boot2_load(int copy)
 	gecko_printf("boot2 title key: %08x%08x%08x%08x\n", kp[0], kp[1], kp[2], kp[3]);
 #endif
 
-	boot2_content_size = (tmd.contents.size + 15) & ~15;
+	boot2_content_size = (tmd.contents.size + 15) & (u32)~15;
 	gecko_printf("boot2 content size: 0x%x (padded: 0x%x)\n",
 		(u32)tmd.contents.size, boot2_content_size);
 
@@ -243,7 +243,7 @@ int boot2_load(int copy)
 }
 
 void boot2_init(void) {
-	boot2_copy = -1;
+	boot2_copy = (u8)-1;
 	boot2_initialized = 0;
 	if(boot2_load(0) < 0) {
 		gecko_printf("failed to load boot2 copy 0, trying copy 1...\n");

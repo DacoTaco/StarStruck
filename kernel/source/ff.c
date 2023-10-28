@@ -782,13 +782,15 @@ FRESULT dir_find (
 )
 {
 	FRESULT res;
-	BYTE a, c, lfen, ord, sum, *dir;
-
+	BYTE a, c, *dir;
 
 	res = dir_seek(dj, 0);			/* Rewind directory object */
 	if (res != FR_OK) return res;
 
+#if _USE_LFN
+	BYTE lfen, ord, sum;
 	ord = sum = 0xFF; lfen = *(dj->fn+11) & 1;
+#endif
 	do {
 		res = move_window(dj->fs, dj->sect);
 		if (res != FR_OK) break;
