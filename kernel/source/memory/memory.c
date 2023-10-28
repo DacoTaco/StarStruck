@@ -51,8 +51,8 @@ Copyright (C) 2021			DacoTaco
 #define CR_ICACHE					(1 << 12)
 
 #define MEMBLOCK_COUNT(start, end)	( (end - start) / LINESIZE)
-#define ALIGN_FORWARD(addr)			((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(LINESIZE-1))))
-#define ALIGN_BACKWARD(addr)		((typeof(addr))(((u32)(addr)) & (~(LINESIZE-1))))
+#define ALIGN_FORWARD(addr)			((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE-1))))
+#define ALIGN_BACKWARD(addr)		((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE-1))))
 
 void _dc_inval_entries(const void *start, int count);
 void _dc_flush_entries(const void *start, int count);
@@ -200,7 +200,7 @@ void mem_shutdown(void)
 	_dc_flush();
 	FlushMemory();
 	u32 cr = GetControlRegister();
-	cr &= ~(CR_MMU | CR_DCACHE | CR_ICACHE); //disable ICACHE, DCACHE, MMU
+	cr &= (u32)~(CR_MMU | CR_DCACHE | CR_ICACHE); //disable ICACHE, DCACHE, MMU
 	SetControlRegister(cr);
 	_ic_invalidate();
 	_dc_invalidate();
@@ -244,7 +244,7 @@ void* _kmallocMemorySection(KernelMemoryType type)
 		return NULL;
 	}
 	
-	size = (ptrEnd - ptr);
+	size = (u32)(ptrEnd - ptr);
 	heapCurrent = ptrEnd;
 	memset8(ptr, 0, size);
 	return ptr;
@@ -347,7 +347,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 }
 
 //basically mmap
-u32 MapMemory(MemorySection* entry)
+s32 MapMemory(MemorySection* entry)
 {
 	if(entry == NULL)
 		return IPC_EINVAL;
@@ -355,7 +355,7 @@ u32 MapMemory(MemorySection* entry)
 	MemorySection memorySection;
 	memcpy32(&memorySection, entry, sizeof(MemorySection));
 	
-	u32 ret = 0;
+	s32 ret = 0;
 	while(ret == 0 && memorySection.Size > 0)
 	{
 		if(memorySection.Size == 0)
@@ -384,7 +384,7 @@ s32 MapHardwareRegisters()
 {
 	u32** page = (u32**) &MemoryTranslationTable[0xD0];
 	u32 index = 0;
-	u32 ret = 0;
+	s32 ret = 0;
 	
 	while(ret == 0)
 	{
@@ -397,7 +397,7 @@ s32 MapHardwareRegisters()
 		
 		HardwareRegistersAccessTable[HWRegistersMemoryMaps[index].ProcessId] = *page;
 		u32* pageValue = (u32*)(((u32)*page) & 0xFFFFFC00);
-		for(int i = 0; i < 0x100; i++)
+		for(u32 i = 0; i < 0x100; i++)
 		{
 			if(*pageValue == 0)
 				*pageValue = (i * 0x1000) + (0x0D000000 | SECTION_PAGE | PAGE_DOMAIN(0x0A) | AP_VALUE(AP_NOUSER));
@@ -446,7 +446,7 @@ u32 VirtualToPhysical(u32 virtualAddress)
 	return physicalAddress + offset;
 }
 
-s32 CheckMemoryBlock(u8* ptr, u32 type, s32 pid, s32 domainPid, u32* blockSize)
+s32 CheckMemoryBlock(u8* ptr, u32 type, u32 pid, u32 domainPid, u32* blockSize)
 {
 	u32 pageEntry = MemoryTranslationTable[PAGE_ENTRY((u32)ptr)];
 	u32 pageType = pageEntry & PAGE_MASK;
@@ -486,7 +486,7 @@ return_error:
 	return IPC_EACCES;
 }
 
-s32 CheckMemoryPointer(const void* ptr, s32 size, u32 type, s32 pid, s32 domainPid)
+s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainPid)
 {
 	if(pid == 0)
 		return 0;
@@ -525,12 +525,12 @@ s32 InitializeMemory(void)
 	gecko_printf("MEM: cleaning up\n");
 
 	//Disable MMU+Cache & invalidate all caches & tlb
-	SetControlRegister(GetControlRegister() & ~(CR_DCACHE | CR_MMU | CR_ICACHE));
+	SetControlRegister(GetControlRegister() & (u32)~(CR_DCACHE | CR_MMU | CR_ICACHE));
 	_ic_invalidate();
 	_dc_invalidate();
 	TlbInvalidate();
 
-	memset32(heapCurrent, 0, heapEnd - heapCurrent);
+	memset32(heapCurrent, 0, (u32)(heapEnd - heapCurrent));
 	gecko_printf("MEM: mapping sections\n");
 	MemoryTranslationTable = (u32*)_kmallocMemorySection(PageTable);	
 	if(MemoryTranslationTable == NULL)

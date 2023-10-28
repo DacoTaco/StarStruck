@@ -82,7 +82,7 @@ static void* IpcMessageQueueDataPtrArray[MAX_THREADS] SRAM_BSS;
 static FileDescriptorPath* FiledescPathPointerArray[MAX_THREADS] SRAM_BSS;
 
 ThreadInfo* IpcHandlerThread = NULL;
-s32 IpcHandlerThreadId = -1;
+u32 IpcHandlerThreadId = (u32)-1;
 
 static IpcMessage* IpcHandlerMessageQueueData[50] SRAM_BSS;
 static IpcRequest IpcHandlerRequest SRAM_BSS;
@@ -112,7 +112,7 @@ void SendIpcRequest(void)
 	IpcCircBuf.ReadyToSendAmount--;
 	IpcCircBuf.WaitingInBufferAmount--;
 	IpcCircBuf.HadRelaunchFlag = 0;
-	mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_OUTGOING);
+	mask32(HW_IPC_ARMCTRL, (u32)~(IPC_ARM_IX1 | IPC_ARM_IX2), (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_OUTGOING);
 }
 
 static void FlushAndSendRequest(IpcRequest *request)
@@ -125,7 +125,7 @@ static void FlushAndSendRequest(IpcRequest *request)
 	}
 	else if (requestCommand == IOS_READ)
 	{
-		DCFlushRange(request->Data.Read.Data, request->Result);
+		DCFlushRange(request->Data.Read.Data, (u32)request->Result);
 	}
 	else if (requestCommand == IOS_IOCTLV)
 	{
@@ -159,11 +159,12 @@ void IpcHandler(void)
 	SetThreadPriority(0, 0x40);
 	IpcHandlerRequest.Command = IOS_INTERRUPT;
 
-	const s32 messageQueue = CreateMessageQueue((void**)IpcHandlerMessageQueueData, ARRAY_LENGTH(IpcHandlerMessageQueueData));
-	if (messageQueue < 0)
+	s32 ret = CreateMessageQueue((void**)IpcHandlerMessageQueueData, ARRAY_LENGTH(IpcHandlerMessageQueueData));
+	if (ret < 0)
 		return;
 	
-	s32 ret = RegisterEventHandler(IRQ_IPC, messageQueue, &IpcHandlerRequest);
+	const u32 messageQueue = (u32)ret;
+	ret = RegisterEventHandler(IRQ_IPC, messageQueue, &IpcHandlerRequest);
 	if(ret != IPC_SUCCESS)
 		return;
 
@@ -196,7 +197,7 @@ void IpcHandler(void)
 		if((armctrl & IPC_ARM_RELAUNCH) != 0)
 		{
 			IpcCircBuf.HadRelaunchFlag = 1;
-			mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), IPC_ARM_RELAUNCH);
+			mask32(HW_IPC_ARMCTRL, (u32)~(IPC_ARM_IX1 | IPC_ARM_IX2), IPC_ARM_RELAUNCH);
 
 			ClearAndEnableIPCInterrupt();
 			SendIpcRequest();
@@ -212,7 +213,7 @@ void IpcHandler(void)
 		u32 set = IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) 
 			? IPC_ARM_ACK_OUT 
 			: 0;
-		mask32(HW_IPC_ARMCTRL, ~(IPC_ARM_IX1 | IPC_ARM_IX2), set | IPC_ARM_INCOMING);
+		mask32(HW_IPC_ARMCTRL, (u32)~(IPC_ARM_IX1 | IPC_ARM_IX2), set | IPC_ARM_INCOMING);
 		ClearAndEnableIPCInterrupt();
 
 		IpcCircBuf.WaitingInBufferAmount++;
@@ -369,7 +370,7 @@ void IpcInit(void)
 	IpcInitMessageQueues();
 }
 
-s32 ResourceReply(IpcMessage* message, u32 requestReturnValue)
+s32 ResourceReply(IpcMessage* message, s32 requestReturnValue)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = IPC_EINVAL;

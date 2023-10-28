@@ -92,7 +92,6 @@ void TimerHandler(void)
 {
 
 	u32 timer_messages[1];
-	s32 timerQueueId = 0;
 	s32 ret;
 	u32 interupts = 0;
 	u32 timerTicks = 0;
@@ -107,10 +106,11 @@ void TimerHandler(void)
 	CurrentTimer->NextTimer = CurrentTimer;
 	CurrentTimer->MessageQueue = NULL;*/
 
-	timerQueueId = CreateMessageQueue((void**)&timer_messages, 1);
-	if(timerQueueId < 0)
-		panic("Unable to create timer message queue: %d\n", timerQueueId);
+	ret = CreateMessageQueue((void**)&timer_messages, 1);
+	if(ret < 0)
+		panic("Unable to create timer message queue: %d\n", ret);
 
+	const u32 timerQueueId = (u32)ret;
 	ret = RegisterEventHandler(IRQ_TIMER, timerQueueId, 0);
 	if(ret < 0)
 		panic("Unable to register timer event handler: %d\n", ret);
@@ -201,7 +201,7 @@ void SetTimerAlarm(u32 ticks)
 	return;
 }
 
-s32 CreateTimer(u32 delayUs, u32 periodUs, u32 queueid, void *message)
+s32 CreateTimer(u32 delayUs, u32 periodUs, const u32 queueid, void *message)
 {
 	s32 ret = 0;
 	u32 interupts = DisableInterrupts();
@@ -250,7 +250,7 @@ return_create_timer:
 	RestoreInterrupts(interupts);
 	return ret;
 }
-s32 RestartTimer(s32 timerId, s32 timeUs, int repeatTimeUs)
+s32 RestartTimer(s32 timerId, u32 timeUs, u32 repeatTimeUs)
 {
 	u32 interupts = DisableInterrupts();
 	s32 ret = 0;

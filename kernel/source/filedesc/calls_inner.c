@@ -58,13 +58,10 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 
 s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
+	const u32 currentThreadId = GetThreadID();
+	const u32 currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 
-s32 OpenFD_Inner(const char* path, int mode)
-{
-	const int currentThreadId = GetThreadID();
-	const int currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
-
-	const int pathLength = strnlen(path, MAX_PATHLEN);
+	const u32 pathLength = strnlen(path, MAX_PATHLEN);
 	if (pathLength >= MAX_PATHLEN)
 		return IPC_EINVAL;
 
@@ -426,7 +423,7 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 
 	if (checkBeforeSend)
 	{
-		const int pid = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
+		const u32 pid = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 		ret = CheckMemoryPointer(vectors, (vectorInputCount + vectorIOCount) * sizeof(*vectors), 3, pid, fd_ptr->BelongsToResource->ProcessId);
 		for(u32 i = 0; i < vectorInputCount && ret == IPC_SUCCESS; ++i)
 		{

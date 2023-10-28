@@ -34,6 +34,6 @@ CHECK_OFFSET(ResourceManager, 0x44, MessageQueue);
 CHECK_OFFSET(ResourceManager, 0x48, ProcessId);
 CHECK_OFFSET(ResourceManager, 0x4C, PpcHasAccessRights);
 
-s32 RegisterResourceManager(const char* devicePath, s32 queueid);
+s32 RegisterResourceManager(const char* devicePath, const u32 queueid);
 
 #endif

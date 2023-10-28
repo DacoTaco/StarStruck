@@ -23,10 +23,15 @@ Copyright (C) 2021	DacoTaco
 #define IOS_REPLY			0x08
 #define IOS_INTERRUPT		0x09
 
-#define IOS_OPEN_NONE		0x00
-#define IOS_OPEN_READ		0x01
-#define IOS_OPEN_WRITE		0x02
-#define IOS_OPEN_RW			(IOS_OPEN_READ|IOS_OPEN_WRITE)
+typedef enum
+{
+	NoAccess = 0x00,
+	Read = 0x01,
+	Write = 0x02,
+	ReadWrite = 0x03,
+	AccessModeSize = 0xFFFFFFFF
+} AccessMode;
+CHECK_SIZE(AccessMode, 4);
 
 #define RELNCH_RELAUNCH 	0x01
 #define RELNCH_BACKGROUND 	0x02
@@ -34,7 +39,7 @@ Copyright (C) 2021	DacoTaco
 typedef struct 
 {
 	char *Filepath;
-	u32 Mode;
+	AccessMode Mode;
 	u32 UID;
 	u16 GID;
 } OpenMessage;

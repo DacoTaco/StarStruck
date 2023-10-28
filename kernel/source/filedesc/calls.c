@@ -14,7 +14,7 @@
 // they all share this exact shape, except Open
 #define WRAP_INNER_CALL(rettype, name, arguments) \
 rettype name ## FD(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments )) { \
-	const s32 state = DisableInterrupts(); \
+	const u32 state = DisableInterrupts(); \
 	const rettype ret = name ## FD_Inner(ARGEXTRACT_DO( ARGEXTRACT_EVEN arguments ), NULL, NULL); \
 	RestoreInterrupts(state); \
 	return ret; \
@@ -25,7 +25,7 @@ rettype name ## FD(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments )) { \
 // OpenFD_Inner doesn't have or take a MessageQueue/IpcMessage pointer
 s32 OpenFD(const char* path, int mode)
 {
-	const s32 state = DisableInterrupts();
+	const u32 state = DisableInterrupts();
 	const s32 ret = OpenFD_Inner(path, mode);
 	RestoreInterrupts(state);
 	return ret;

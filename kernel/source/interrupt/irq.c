@@ -124,7 +124,7 @@ s32 ClearAndEnableIPCInterrupt(void)
 	return ClearAndEnableEvent(IRQ_IPC);
 }
 
-s32 RegisterEventHandler(u8 device, int queueid, void* message)
+s32 RegisterEventHandler(const u8 device, const u32 queueid, void* message)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -149,7 +149,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 UnregisterEventHandler(u8 device)
+s32 UnregisterEventHandler(const u8 device)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -179,10 +179,10 @@ void EnqueueEventHandler(s32 device)
 	if(queue == NULL)
 		return;
 
-	if(queue->Used >= queue->QueueSize)
+	if((u32)queue->Used >= queue->QueueSize)
 		return;
 
-	s32 messageIndex = queue->Used + queue->First;
+	u32 messageIndex = (u32)(queue->Used + queue->First);
 	queue->Used += 1;
 	if(messageIndex >= queue->QueueSize)
 		messageIndex -= queue->QueueSize;

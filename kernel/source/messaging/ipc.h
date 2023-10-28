@@ -52,11 +52,11 @@ extern IpcMessage* IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];
 extern ThreadInfo* IpcHandlerThread;
-extern s32 IpcHandlerThreadId;
+extern u32 IpcHandlerThreadId;
 
 void IpcInit(void);
 void IpcHandler(void);
-s32 ResourceReply(IpcMessage* message, u32 requestReturnValue);
+s32 ResourceReply(IpcMessage* message, s32 requestReturnValue);
 s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
 
 void ipc_shutdown(void);

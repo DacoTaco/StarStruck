@@ -47,38 +47,40 @@ typedef union {
 	u32 Value;
 } AESCommand;
 
-s32 AesEventMessageQueueId = 0;
+u32 AesEventMessageQueueId = 0;
 
 void AesEngineHandler(void)
 {
 	u32 eventMessageQueue[1];
 	u32 resourceManagerMessageQueue[8];
 	u32 ivBuffer[0x10] = { 0 };
+	s32 ret;
 	IpcMessage* ipcMessage;
 	IoctlvMessage* ioctlvMessage;
 	IpcMessage* ipcReply;
 
-	s32 messageQueue = CreateMessageQueue((void**)&eventMessageQueue, 1);
-	AesEventMessageQueueId = messageQueue;
-	if(messageQueue < 0)
-		panic("Unable to create AES event queue: %d\n", messageQueue);
+	ret = CreateMessageQueue((void**)&eventMessageQueue, 1);
+	AesEventMessageQueueId = (u32)ret;
+	if(ret < 0)
+		panic("Unable to create AES event queue: %d\n", ret);
 
-	s32 ret = RegisterEventHandler(IRQ_AES, AesEventMessageQueueId, 0);
+	ret = RegisterEventHandler(IRQ_AES, AesEventMessageQueueId, 0);
 	if(ret < 0)
 		panic("Unable to register AES event handler: %d\n", ret);
 
-	messageQueue = CreateMessageQueue((void**)&resourceManagerMessageQueue, 8);
-	if(messageQueue < 0)
+	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 8);
+	if(ret < 0)
 		panic("Unable to create AES rm queue: %d\n", ret);
 
-	ret = RegisterResourceManager(AES_DEVICE_NAME, messageQueue);
+	const u32 resourceMessageQueue = (u32)ret;
+	ret = RegisterResourceManager(AES_DEVICE_NAME, resourceMessageQueue);
 	if(ret < 0)
 		panic("Unable to register resource manager: %d\n", ret);
 	
 	while(1)
 	{
 		//main loop should start here
-		ret = ReceiveMessage(messageQueue, (void**)&ipcMessage, None);
+		ret = ReceiveMessage(resourceMessageQueue, (void**)&ipcMessage, None);
 		if(ret != 0)
 			goto receiveMessageError;
 
@@ -154,10 +156,10 @@ processAesCommand:
 							.Fields = {
 								.Command = 1,
 								.GenerateIrq = 1,
-								.EnableDataHandling = ioctl != 0,
+								.EnableDataHandling = ioctl != COPY,
 								.IsDecryption = ioctl == DECRYPT,
 								.KeepIV = 0,
-								.NumberOfBlocks = (inputData->Length - 0x10U) >> 4
+								.NumberOfBlocks = ((inputData->Length - 0x10U) >> 4) & 0xFFF
 							}
 						};
 						write32(AES_CMD, command.Value);

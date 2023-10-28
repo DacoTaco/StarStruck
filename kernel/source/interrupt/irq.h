@@ -30,21 +30,21 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQ_PPCIPC			30
 #define IRQ_IPC				31
 
-#define IRQF_TIMER			(1<<IRQ_TIMER)
-#define IRQF_NAND			(1<<IRQ_NAND)
-#define IRQF_AES			(1<<IRQ_AES)
-#define IRQF_SHA1			(1<<IRQ_SHA1)
-#define IRQF_EHCI			(1<<IRQ_EHCI)
-#define IRQF_OHCI0			(1<<IRQ_OHCI0)
-#define IRQF_OHCI1			(1<<IRQ_OHCI1)
-#define IRQF_SDHC			(1<<IRQ_SDHC)
-#define IRQF_WIFI			(1<<IRQ_WIFI)
-#define IRQF_GPIO1B			(1<<IRQ_GPIO1B)
-#define IRQF_GPIO1			(1<<IRQ_GPIO1)
-#define IRQF_UNKN12			(1<<IRQ_UNKN12)
-#define IRQF_RESET			(1<<IRQ_RESET)
-#define IRQF_DI				(1<<IRQ_DI)
-#define IRQF_IPC			(1<<IRQ_IPC)
+#define IRQF_TIMER			((u32)(1<<IRQ_TIMER))
+#define IRQF_NAND			((u32)(1<<IRQ_NAND))
+#define IRQF_AES			((u32)(1<<IRQ_AES))
+#define IRQF_SHA1			((u32)(1<<IRQ_SHA1))
+#define IRQF_EHCI			((u32)(1<<IRQ_EHCI))
+#define IRQF_OHCI0			((u32)(1<<IRQ_OHCI0))
+#define IRQF_OHCI1			((u32)(1<<IRQ_OHCI1))
+#define IRQF_SDHC			((u32)(1<<IRQ_SDHC))
+#define IRQF_WIFI			((u32)(1<<IRQ_WIFI))
+#define IRQF_GPIO1B			((u32)(1<<IRQ_GPIO1B))
+#define IRQF_GPIO1			((u32)(1<<IRQ_GPIO1))
+#define IRQF_UNKN12			((u32)(1<<IRQ_UNKN12))
+#define IRQF_RESET			((u32)(1<<IRQ_RESET))
+#define IRQF_DI				((u32)(1<<IRQ_DI))
+#define IRQF_IPC			((u32)(1<<IRQ_IPC))
 
 #define IRQF_ALL			( IRQF_TIMER|IRQF_NAND|IRQF_GPIO1B|IRQF_GPIO1|IRQF_RESET|IRQF_IPC|IRQF_AES|IRQF_SHA1|IRQF_SDHC )
 
@@ -73,8 +73,8 @@ CHECK_OFFSET(EventHandler, 0x0C, Unknown);
 void IrqInit(void);
 u32 DisableInterrupts(void);
 void RestoreInterrupts(u32 cookie);
-s32 RegisterEventHandler(u8 device, int queueid, void* message);
-s32 UnregisterEventHandler(u8 device);
+s32 RegisterEventHandler(const u8 device, const u32 queueid, void* message);
+s32 UnregisterEventHandler(const u8 device);
 
 s32 ClearAndEnableEvent(u32 inter);
 s32 ClearAndEnableSDInterrupt(const u8 sdio);
