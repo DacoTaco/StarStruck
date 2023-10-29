@@ -57,7 +57,7 @@ SECTIONS
 		LONG(0x7E);
 		LONG(__stackSize);
 		LONG(0x7F);
-		LONG(__stack);
+		LONG(__stackEnd);
 	} :headers :note
 
 	/* Program */
