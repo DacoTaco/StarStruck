@@ -45,6 +45,7 @@ _SYSCALL OSDestroyHeap,				0x0017
 _SYSCALL OSAllocateMemory,			0x0018
 _SYSCALL OSAlignedAllocateMemory,	0x0019
 _SYSCALL OSFreeMemory,				0x001A
+_SYSCALL OSRegisterResourceManager,	0x001B
 _SYSCALL OSOpenFD,					0x001C
 _SYSCALL OSCloseFD,					0x001D
 _SYSCALL OSReadFD,					0x001E

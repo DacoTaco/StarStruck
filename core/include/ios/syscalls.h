@@ -15,25 +15,26 @@
 #pragma GCC optimize ("O1")
 
 s32 OSCreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
-s32 OSJoinThread(s32 threadId, u32* returnedValue);
-s32 OSStopThread(s32 threadid, u32 returnValue);
+s32 OSJoinThread(u32 threadId, u32* returnedValue);
+s32 OSStopThread(u32 threadid, u32 returnValue);
 u32 OSGetThreadId(void);
 s32 OSGetProcessId(void);
-s32 OSStartThread( s32 threadid );
+s32 OSStartThread( u32 threadid );
 void OSYieldThread(void);
-s32 OSGetThreadPriority(s32 threadid);
-s32 OSSetThreadPriority(s32 threadid, u32 priority);
+s32 OSGetThreadPriority(u32 threadid);
+s32 OSSetThreadPriority(u32 threadid, u32 priority);
 s32 OSCreateMessageQueue(void *ptr, u32 size);
-s32 OSDestroyMessageQueue(s32 queueid);
-s32 OSSendMessage(s32 queueid, void *message, u32 flags);
-s32 OSReceiveMessage(s32 queueid, void *message, u32 flags);
+s32 OSDestroyMessageQueue(u32 queueid);
+s32 OSSendMessage(u32 queueid, void *message, u32 flags);
+s32 OSReceiveMessage(u32 queueid, void *message, u32 flags);
 s32 OSCreateHeap(void *ptr, u32 size);
-s32 OSDestroyHeap(s32 heapid);
-s32 OSRegisterEventHandler(u8 device, s32 queueid, s32 message);
+s32 OSDestroyHeap(u32 heapid);
+s32 OSRegisterEventHandler(u8 device, u32 queueid, void* message);
 s32 OSUnregisterEventHandler(u8 device);
-void* OSAllocateMemory(s32 heapid, u32 size);
-void* OSAlignedAllocateMemory(s32 heapid, u32 size, u32 align);
-s32 OSFreeMemory(s32 heapid, void *ptr);
+void* OSAllocateMemory(u32 heapid, u32 size);
+void* OSAlignedAllocateMemory(u32 heapid, u32 size, u32 align);
+s32 OSFreeMemory(u32 heapid, void *ptr);
+s32 OSRegisterResourceManager(const char* devicePath, const u32 queueid);
 
 //special IOS syscall to print something to debug device
 void OSPrintk(const char* str);
