@@ -242,9 +242,6 @@ void kernel_main( void )
 
 	//while(1){}
 
-	nand_initialize();
-	printk("NAND initialized.\n");
-
 	boot2_init();
 	
 	/*printk("Initializing SDHC...\n");
