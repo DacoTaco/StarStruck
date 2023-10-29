@@ -207,9 +207,6 @@ void kernel_main( void )
 	crypto_initialize();
 	printk("crypto support initialized\n");
 
-	nand_initialize();
-	printk("NAND initialized.\n");
-
 	boot2_init();
 	
 	/*printk("Initializing SDHC...\n");

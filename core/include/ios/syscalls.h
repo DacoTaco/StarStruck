@@ -9,6 +9,7 @@
 */
 
 #include "types.h"
+#include "ios/ahb.h"
 
 //required pragma to make GCC not optimize out our parameters/calls
 #pragma GCC push_options
@@ -35,6 +36,11 @@ void* OSAllocateMemory(u32 heapid, u32 size);
 void* OSAlignedAllocateMemory(u32 heapid, u32 size, u32 align);
 s32 OSFreeMemory(u32 heapid, void *ptr);
 s32 OSRegisterResourceManager(const char* devicePath, const u32 queueid);
+void OSAhbFlushFrom(AHBDEV type);
+void OSAhbFlushTo(AHBDEV type);
+void OSDCInvalidateRange(const void* start, u32 size);
+void OSDCFlushRange(const void *start, u32 size);
+u32 OSVirtualToPhysical(u32 virtualAddress);
 
 //special IOS syscall to print something to debug device
 void OSPrintk(const char* str);
