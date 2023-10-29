@@ -9,7 +9,7 @@
 #ifndef __FS_H__
 #define __FS_H__
 
-#define FS_DEVICE_NAME "/dev/fs"
-#define FS_DEVICE_NAME_SIZE sizeof(FS_DEVICE_NAME)
+#define FS_DEVICE_NAME 			"/dev/fs"
+#define FS_DEVICE_NAME_SIZE		sizeof(FS_DEVICE_NAME)
 
 #endif

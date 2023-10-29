@@ -286,9 +286,9 @@ void IrqHandler(ThreadContext* context)
 
 	if(flags & IRQF_NAND) {
 		//gecko_printf("IRQ: NAND\n");
+		EnqueueEventHandler(IRQ_NAND);
 		write32(NAND_CMD, 0x7fffffff); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_NAND);
-		nand_irq();
 	}
 
 	if(flags & IRQF_GPIO1B) {

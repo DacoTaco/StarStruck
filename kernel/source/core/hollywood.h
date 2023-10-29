@@ -216,16 +216,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 /* NAND Registers */
 
 #define		NAND_REG_BASE		0xd010000
-
 #define		NAND_CMD			(NAND_REG_BASE + 0x000)
-#define		NAND_STATUS			NAND_CMD
-#define		NAND_CONF			(NAND_REG_BASE + 0x004)
-#define		NAND_ADDR0			(NAND_REG_BASE + 0x008)
-#define		NAND_ADDR1			(NAND_REG_BASE + 0x00c)
-#define		NAND_DATA			(NAND_REG_BASE + 0x010)
-#define		NAND_ECC			(NAND_REG_BASE + 0x014)
-#define		NAND_UNK1			(NAND_REG_BASE + 0x018)
-#define		NAND_UNK2			(NAND_REG_BASE + 0x01c)
 
 /* AES Registers */
 
