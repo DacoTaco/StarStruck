@@ -27,6 +27,7 @@ Copyright (C) 2021			DacoTaco
 #define PAGE_ENTRY(x)				((x)>>0x14)
 #define COURSEPAGE_ENTRY_VALUE(x)	((x << 0x0C) >> 0x18)
 #define PAGE_DOMAIN(x)				((x)<<5)
+#define PAGE_TYPE(x)				((x) & PAGE_MASK)
 #define PAGE_MASK					0x13
 #define SECTION_SECTION				0x01
 #define COURSE_SECTION				0x02
@@ -315,7 +316,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		pageValue = (u32*)_kmallocMemorySection(CoursePage);
 		if(pageValue == NULL)
 			return IPC_ENOMEM;
-		
+
 		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 	}
 	else
@@ -363,7 +364,7 @@ s32 MapMemory(MemorySection* entry)
 			break;
 		
 		//page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
-		if((memorySection.VirtualAddress & 0xFFFFF) == 0 && (memorySection.PhysicalAddress & 0xFFFFF) == 0 && memorySection.Size > 0xFFFFF)
+		if((memorySection.VirtualAddress & 0xFFFFF) == 0 && (memorySection.PhysicalAddress & 0xFFFFF) == 0 && memorySection.Size >= 0xFFFFF)
 			ret = MapMemoryAsSection(&memorySection);
 		else if( ((memorySection.VirtualAddress & 0xFFF) != 0 || (memorySection.PhysicalAddress & 0xFFF) != 0) || memorySection.Size < 0x1000)
 		{
@@ -450,15 +451,16 @@ u32 VirtualToPhysical(u32 virtualAddress)
 s32 CheckMemoryBlock(u8* ptr, u32 type, u32 pid, u32 domainPid, u32* blockSize)
 {
 	u32 pageEntry = MemoryTranslationTable[PAGE_ENTRY((u32)ptr)];
-	u32 pageType = pageEntry & PAGE_MASK;
+	u32 pageType = PAGE_TYPE(pageEntry);
 	u32 AccessPermissionsValue = 0;
-	
+
 	if(pageType == COURSE_PAGE)
 	{
 		*blockSize = 0x1000;
-		u32 page = (COURSEPAGE_ENTRY_VALUE((u32)ptr) * 4) + (pageEntry & 0xFFFFFC00);
+		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE((u32)ptr) << 2) + (pageEntry & 0xFFFFFC00));
 		if((page & PAGE_TYPE_MASK) != COURSE_SECTION)
 			goto return_error;
+
 		AccessPermissionsValue = page << 0x1A;		
 	}
 	else if(pageType == SECTION_PAGE)
