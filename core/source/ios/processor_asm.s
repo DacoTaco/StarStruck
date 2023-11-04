@@ -14,6 +14,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl debug_output
 .globl GetCurrentStatusRegister
 .globl GetSavedStatusRegister
+.globl BusyDelay
 .text
 
 BEGIN_ASM_FUNC debug_output
@@ -40,3 +41,21 @@ BEGIN_ASM_FUNC GetSavedStatusRegister
 	mrs		r0, spsr
 	bx		lr
 END_ASM_FUNC
+
+.thumb
+BEGIN_ASM_FUNC BusyDelay
+	push {lr}
+	mov r3, #0
+	sub r0, #4
+	add r2, r3, 0
+	cmp r3, r0
+	bcs BusyDelay_done
+BusyDelay_loop:
+	add r3, #1
+	cmp r3, r2
+	bcc BusyDelay_loop
+BusyDelay_done:
+	pop  {r0}
+	bx r0
+END_ASM_FUNC
+.arm
