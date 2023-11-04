@@ -40,7 +40,6 @@ CHECK_SIZE(ShaContext, 0x1C);
 CHECK_OFFSET(ShaContext, 0x00, ShaStates);
 CHECK_OFFSET(ShaContext, 0x14, Length);
 
-s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize, const ShaCommandType command, FinalShaHash finalHashBuffer);
 void ShaEngineHandler(void);
 
 #endif
