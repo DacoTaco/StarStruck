@@ -15,7 +15,9 @@
 #include "crypto/boot2.h"
 #include "crypto/nand.h"
 #include "crypto/seeprom.h"
+#include "messaging/message_queue.h"
 #include <ios/errno.h>
+#include <ios/ipc.h>
 
 static u32 IOSC_BOOT2_DummyVersion = 0;
 static u32 IOSC_BOOT2_DummyUnk1 = 0;
@@ -29,6 +31,18 @@ static s32 IOSC_BOOT2_UpdateUnk2(void);
 static s32 IOSC_NAND_UpdateGen(void);
 static s32 IOSC_SEEPROM_UpdatePRNGSeed(void);
 static s32 IOSC_SEEPROM_GetPRNGSeed(void);
+
+static s32 IOSC_SendEmptyMessageToQueue(const u32 queueId)
+{
+	s32 ret = SendMessageUnsafe(queueId, NULL, RegisteredEventHandler);
+	return ret;
+}
+static s32 IOSC_DiscardMessageFromQueue(const u32 queueId)
+{
+	IpcMessage* receivedMessage = NULL;
+	s32 ret = ReceiveMessageUnsafe(queueId, &receivedMessage, None);
+	return ret;
+}
 
 s32 IOSC_Init(void)
 {
