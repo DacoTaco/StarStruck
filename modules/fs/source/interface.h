@@ -44,7 +44,14 @@ typedef struct {
 	u8 RandomDataOutput;
 	u8 RandomDataInput;
     u8 ReadStatusPrefix;
-    u8 Unknown6[32];
+	u8 Unknown6;
+	u8 InputAddress;
+	u8 Unknown7[2];
+	u32 NandSizeBitShift;
+	u8 Unknown8[4];
+	u32 PageSizeBitShift;
+	u32 EccSizeBitShift;
+    u8 Unknown9[12];
 	u8 ChipType;
 	u8 ChipAttributes1;
 	u8 ChipAttributes2;
@@ -71,6 +78,11 @@ CHECK_OFFSET(NandInformationBase, 0x14, RandomDataOutputPrefix);
 CHECK_OFFSET(NandInformationBase, 0x15, RandomDataOutput);
 CHECK_OFFSET(NandInformationBase, 0x16, RandomDataInput);
 CHECK_OFFSET(NandInformationBase, 0x17, ReadStatusPrefix);
+CHECK_OFFSET(NandInformationBase, 0x19, InputAddress);
+CHECK_OFFSET(NandInformationBase, 0x1C, NandSizeBitShift);
+CHECK_OFFSET(NandInformationBase, 0x24, PageSizeBitShift);
+CHECK_OFFSET(NandInformationBase, 0x28, EccSizeBitShift);
+CHECK_OFFSET(NandInformationBase, 0x2C, Unknown9);
 CHECK_OFFSET(NandInformationBase, 0x38, ChipType);
 CHECK_OFFSET(NandInformationBase, 0x39, ChipAttributes1);
 CHECK_OFFSET(NandInformationBase, 0x3A, ChipAttributes2);
@@ -94,10 +106,51 @@ CHECK_SIZE(NandInformation, 0x44);
 CHECK_OFFSET(NandInformation, 0x00, Info);
 CHECK_OFFSET(NandInformation, 0x40, Extension);
 
+typedef enum
+{
+	DeleteCommand = 0,
+	UnknownCommandType = 1,
+	ReadCommand = 2,
+	UnknownCommandType2 = 3,
+} CommandType;
+typedef struct 
+{
+	u32 Unknown;
+	u32 CommandType;
+	s32 Return;
+} NandErrorEntry;
+CHECK_SIZE(NandErrorEntry, 0x0C);
+CHECK_OFFSET(NandErrorEntry, 0x00, Unknown);
+CHECK_OFFSET(NandErrorEntry, 0x04, CommandType);
+CHECK_OFFSET(NandErrorEntry, 0x08, Return);
+
+#define ERROR_LOG_SIZE		0x21
+typedef struct {
+	u32 SuccessfulDeletes;
+	u32 Unknown2;
+	u32 SuccessfulReads;
+	u32 Unknown4;
+	u32 ErrorOverflowIndex;
+	u32 ErrorIndex;
+	NandErrorEntry Errors[ERROR_LOG_SIZE];
+} NandCommandLog;
+CHECK_SIZE(NandCommandLog, 0x1A4);
+CHECK_OFFSET(NandCommandLog, 0x00, SuccessfulDeletes);
+CHECK_OFFSET(NandCommandLog, 0x04, Unknown2);
+CHECK_OFFSET(NandCommandLog, 0x08, SuccessfulReads);
+CHECK_OFFSET(NandCommandLog, 0x0C, Unknown4);
+CHECK_OFFSET(NandCommandLog, 0x10, ErrorOverflowIndex);
+CHECK_OFFSET(NandCommandLog, 0x14, ErrorIndex);
+
 extern u8 _nandInitialized;
-extern u32 _irqMessageQueueId;
-extern u32 _ioscMessageQueueId;
+extern u32 IrqMessageQueueId;
+extern u32 IoscMessageQueueId;
+extern NandInformation SelectedNandChip;
 
 s32 InitializeNand();
-s32 SendCommand(u8 command, u32 bitmask, u32 flags, u32 dataLength);
+void SetNandAddress(u32 pageOffset, u32 pageNumber);
+void SetNandData(void* data, void* ecc);
+s32 ReadNandStatus(void);
+s32 CorrectNandData(void* data, void* ecc);
+s32 SendNandCommand(u8 command, u32 bitmask, u32 flags, u32 dataLength);
 #endif
