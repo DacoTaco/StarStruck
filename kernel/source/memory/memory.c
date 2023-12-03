@@ -450,7 +450,7 @@ u32 VirtualToPhysical(u32 virtualAddress)
 		physicalAddress = (virtualAddress & 0xFFFFF) | ( pageEntry & 0xFFF00000);
 	else if((pageEntry & PAGE_MASK) == COURSE_PAGE)
 	{
-		u32 page = (COURSEPAGE_ENTRY_VALUE(virtualAddress) * 4) + (pageEntry & 0xFFFFFC00);
+		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE(virtualAddress) << 2) + (pageEntry & 0xFFFFFC00));
 		if((page & PAGE_TYPE_MASK) == COURSE_SECTION)
 			physicalAddress = (virtualAddress & 0xFFF) | (page & 0xFFFFF000);
 	}
