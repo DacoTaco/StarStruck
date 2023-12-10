@@ -28,7 +28,9 @@ int main(void)
 	if (ret < 0)
 		return ret;
 
-	ret = InitializeNand();
+	if (InitializeNand() == 0)
+	{
+	}
 
 	while (1)
 	{
