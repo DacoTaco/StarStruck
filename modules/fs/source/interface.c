@@ -34,6 +34,11 @@ typedef union {
 } NandCommand;
 CHECK_SIZE(NandCommand, 4);
 
+typedef struct {
+	u32 Initialized;
+	u32 Opened;
+} InterfaceState;
+
 const NandInformation SupportedNandChips[10] MODULE_DATA = {
 	// Hynix HY27US0812(1/2)B
 	{
@@ -556,8 +561,8 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 #define DEFAULT_RESET_CMD		0xFF
 #define DEFAULT_READID_CMD		0x90
 
-
-u8 _nandInitialized = 0;
+InterfaceState InterfaceStates[7] = {0};
+#define IsInitialized() InterfaceStates[0].Initialized
 u32 IrqMessageQueueId = 0;
 u32 IoscMessageQueueId = 0;
 NandInformation SelectedNandChip;
@@ -565,11 +570,12 @@ NandCommandLog InterfaceCommandLog;
 static u32 _ioscMessage;
 static u32 _irqMessageQueue[4] = { 0 };
 static u8 _nandInfoBuffer[0x40] = { 0 };
-static u8 _pageBuffer[0x800] = { 0 };
+static u8 _readPageBuffer[0x800] = { 0 };
+static u8 _writePageBuffer[0x900] = { 0 };
 static u8 _eccBuffer[0x40] = { 0 };
 static u8 _unknown_19Bytes[0x13] = { 0 };
 
-void LogCommand(u32 unknown, CommandType commandType, s32 returnValue)
+void LogCommand(u32 page, CommandType commandType, s32 returnValue)
 {
 	if(returnValue == 0)
 	{
@@ -597,7 +603,7 @@ void LogCommand(u32 unknown, CommandType commandType, s32 returnValue)
 			InterfaceCommandLog.ErrorIndex++;
 		}
 
-		InterfaceCommandLog.Errors[index].Unknown = unknown;
+		InterfaceCommandLog.Errors[index].Page = page;
 		InterfaceCommandLog.Errors[index].CommandType = commandType;
 		InterfaceCommandLog.Errors[index].Return = returnValue;
 	}
@@ -678,7 +684,7 @@ return_error:
 }
 s32 InitializeNand()
 {
-	if(_nandInitialized)
+	if(IsInitialized())
 		return 0;
 
 	// enable NAND controller
@@ -748,7 +754,7 @@ s32 InitializeNand()
 	InterfaceCommandLog.SuccessfulReads = 0;
 	InterfaceCommandLog.ErrorIndex = 0;
 	InterfaceCommandLog.ErrorOverflowIndex = 0;
-	_nandInitialized = 1;
+	InterfaceStates[0].Initialized = 1;
 	return 0;
 
 destroy_and_return:
@@ -838,7 +844,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 		goto return_read;
 	}
 
-	if(_nandInitialized == 0)
+	if(!IsInitialized())
 	{
 		ret = -10;
 		goto return_read;
@@ -858,12 +864,12 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 		read_address = SelectedNandChip.Info.Commands.InputAddress;
 
 	if(!readEcc)
-		SetNandData(_pageBuffer, (void*)-1);
+		SetNandData(_readPageBuffer, (void*)-1);
 	else
 		SetNandData(data, _eccBuffer);
 
 	if(!readEcc)
-		OSDCInvalidateRange(_pageBuffer, pageSize + eccSize);
+		OSDCInvalidateRange(_readPageBuffer, pageSize + eccSize);
 	else
 	{
 		OSDCInvalidateRange(data, pageSize);
@@ -882,13 +888,13 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 	if(ecc != NULL)
 	{
 		if(readEcc == 0)
-			memcpy(_eccBuffer, &_pageBuffer[pageSize], eccSize);
+			memcpy(_eccBuffer, &_readPageBuffer[pageSize], eccSize);
 		else
 			memcpy(ecc, _eccBuffer, eccSize);
 	}
 
 	if(readEcc == 0)
-		memcpy(data, _pageBuffer, pageSize);
+		memcpy(data, _readPageBuffer, pageSize);
 	else
 		ret = CorrectNandData(data, _eccBuffer);
 
