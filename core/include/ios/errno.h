@@ -17,23 +17,11 @@
 #define IPC_ENOENT					-6					// File not found
 #define IPC_EQUEUEEMPTY				-7					// Queue Empty
 #define IPC_EQUEUEFULL				-8					// Queue full
+#define IPC_EAGAIN					-11					// ?????
 #define IPC_EIO						-12					// ECC error
+#define IPC_EUNKN					-13					// ?????
+#define IPC_EDIRDEPTH				-20					// Max directory depth exceeded
 #define IPC_ENOMEM					-22					// Alloc failed during request
-
-#define FS_EINVAL					-101				// Invalid path
-#define FS_EACCESS					-102				// Permission denied
-#define FS_ECORRUPT					-103				// Corrupted NAND
-#define FS_EEXIST					-105				// File exists
-#define FS_ENOENT					-106				// No such file or directory
-#define FS_ENFILE					-107				// Too many fds open
-#define FS_EFBIG					-108				// Max block count reached?
-#define FS_EFDEXHAUSTED				-109				// Too many fds open
-#define FS_ENAMELEN					-110				// Pathname is too long
-#define FS_EFDOPEN					-111				// FD is already open
-#define FS_EIO						-114				// ECC error
-#define FS_ENOTEMPTY				-115				// Directory not empty
-#define FS_EDIRDEPTH				-116				// Max directory depth exceeded
-#define FS_EBUSY					-118				// Resource busy
 
 #define ES_SHORT_READ				-1009				// Short read
 #define ES_EIO						-1010				// Write failure

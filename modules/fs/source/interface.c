@@ -5,7 +5,7 @@
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
-#include <errno.h>
+#include <ios/errno.h>
 #include <string.h>
 #include <ios/processor.h>
 #include <ios/syscalls.h>
@@ -773,7 +773,7 @@ s32 ReadNandStatus(void)
 	OSAhbFlushFrom(AHB_NAND);
 	OSAhbFlushTo(AHB_STARLET);
 	if((s32)(_nandInfoBuffer[0] << 0x1F) < 0 )
-		return -13;
+		return IPC_EUNKN;
 	return 0;
 }
 s32 CorrectNandData(void* data, void* ecc)
@@ -803,7 +803,7 @@ s32 CorrectNandData(void* data, void* ecc)
 		//single-bit error in ECC
 		if(!((syndrome - 1) & syndrome))
 		{
-			ret = -11;
+			ret = IPC_EAGAIN;
 			continue;
 		}
 
@@ -818,7 +818,7 @@ s32 CorrectNandData(void* data, void* ecc)
 		u8 correctedByte = (1 << (unknown & 0x07)) ^ *dataPointer;
 		//lol memcpy for 1 byte? silly ios, must be for the mem1 bug i suppose
 		memcpy(dataPointer, &correctedByte, 1);
-		ret = -11;
+		ret = IPC_EAGAIN;
 	}
 	
 	//this can't be right. it cant be returning an error on ecc error, right? :/
