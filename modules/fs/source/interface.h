@@ -130,12 +130,12 @@ typedef enum
 } CommandType;
 typedef struct 
 {
-	u32 Unknown;
+	u32 Page;
 	u32 CommandType;
 	s32 Return;
 } NandErrorEntry;
 CHECK_SIZE(NandErrorEntry, 0x0C);
-CHECK_OFFSET(NandErrorEntry, 0x00, Unknown);
+CHECK_OFFSET(NandErrorEntry, 0x00, Page);
 CHECK_OFFSET(NandErrorEntry, 0x04, CommandType);
 CHECK_OFFSET(NandErrorEntry, 0x08, Return);
 
@@ -157,7 +157,6 @@ CHECK_OFFSET(NandCommandLog, 0x0C, Unknown4);
 CHECK_OFFSET(NandCommandLog, 0x10, ErrorOverflowIndex);
 CHECK_OFFSET(NandCommandLog, 0x14, ErrorIndex);
 
-extern u8 _nandInitialized;
 extern u32 IrqMessageQueueId;
 extern u32 IoscMessageQueueId;
 extern NandInformation SelectedNandChip;

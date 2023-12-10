@@ -27,8 +27,11 @@ int main(void)
 	ret = OSRegisterResourceManager("/dev/boot2", messageQueueId);
 	if(ret < 0)
 		return ret;
+	
+	if(InitializeNand() == 0)
+	{
 
-	ret = InitializeNand();	
+	}
 
 	while(1)
 	{
