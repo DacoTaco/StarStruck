@@ -29,7 +29,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #	include "peripherals/gecko.h"
 #	define	NAND_debug(f, arg...) gecko_printf("NAND: " f, ##arg);
 #else
-#	define	NAND_debug(f, arg...)
+#	define	NAND_debug(f, ...)
 #endif
 
 #define NAND_RESET      0xff
