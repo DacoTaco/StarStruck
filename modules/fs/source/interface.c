@@ -75,14 +75,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x0e },
 				.PageSizeBitShift = 0x00000009,
 				.EccSizeBitShift = 0x00000004,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0005,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x04,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -125,14 +127,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x03,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -175,14 +179,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x07,
 			.ChipAttributes1 = 0x04,
 			.ChipAttributes2 = 0x3f,
 			.ChipAttributes3 = 0x3f,
 			.ChipAttributes4 = 0xff,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -225,14 +231,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x0e },
 				.PageSizeBitShift = 0x00000009,
 				.EccSizeBitShift = 0x00000004,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00 },
+				.Unknown3 = 0x0005,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x04,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -275,14 +283,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x03,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x3e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -325,14 +335,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},			
 			.ChipType = 0x04,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -375,14 +387,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x02, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x07,
 			.ChipAttributes1 = 0x04,
 			.ChipAttributes2 = 0x3f,
 			.ChipAttributes3 = 0x3f,
 			.ChipAttributes4 = 0xff,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -425,14 +439,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x0e },
 				.PageSizeBitShift = 0x00000009,
 				.EccSizeBitShift = 0x00000004,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00 },
+				.Unknown3 = 0x0005,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x04,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -475,14 +491,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },				
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x03,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -525,14 +543,16 @@ const NandInformation SupportedNandChips[10] MODULE_DATA = {
 				.Unknown = { 0x00, 0x00, 0x00, 0x11 },
 				.PageSizeBitShift = 0x0000000B,
 				.EccSizeBitShift = 0x00000006,
-				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+				.Unknown2 = { 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00 },
+				.Unknown3 = 0x0000,
+				.Padding = { 0x00, 0x00 },
 			},
 			.ChipType = 0x04,
 			.ChipAttributes1 = 0x03,
 			.ChipAttributes2 = 0x3e,
 			.ChipAttributes3 = 0x0e,
 			.ChipAttributes4 = 0x7f,
-			.Padding = { 0x00, 0x00, 0x00 }
+			.Padding4 = { 0x00, 0x00, 0x00 }
 		},
 		.Extension = {
 			.Unknown = 0,
@@ -572,7 +592,7 @@ static u32 _irqMessageQueue[4] = { 0 };
 static u8 _nandInfoBuffer[0x40] = { 0 };
 static u8 _readPageBuffer[0x800] = { 0 };
 static u8 _writePageBuffer[0x900] = { 0 };
-static u8 _eccBuffer[0x40] = { 0 };
+static u8 _eccBuffer[0x40 * 6] = { 0 }; //max supported ecc is 0x40 bytes, this buffer can keep up to 6 ecc blocks
 static u8 _unknown_19Bytes[0x13] = { 0 };
 
 void LogCommand(u32 page, CommandType commandType, s32 returnValue)
@@ -581,8 +601,8 @@ void LogCommand(u32 page, CommandType commandType, s32 returnValue)
 	{
 		if(commandType == DeleteCommand)
 			InterfaceCommandLog.SuccessfulDeletes++;
-		else if(commandType == UnknownCommandType)
-			InterfaceCommandLog.Unknown2++;
+		else if(commandType == WriteCommand)
+			InterfaceCommandLog.SuccessfulWrites++;
 		else if(commandType == ReadCommand)
 			InterfaceCommandLog.SuccessfulReads++;
 		else
@@ -750,7 +770,7 @@ s32 InitializeNand()
 	}
 
 	InterfaceCommandLog.SuccessfulDeletes = 0;
-	InterfaceCommandLog.Unknown2 = 0;
+	InterfaceCommandLog.SuccessfulWrites = 0;
 	InterfaceCommandLog.SuccessfulReads = 0;
 	InterfaceCommandLog.ErrorIndex = 0;
 	InterfaceCommandLog.ErrorOverflowIndex = 0;
@@ -782,12 +802,14 @@ s32 ReadNandStatus(void)
 		return IPC_EUNKN;
 	return 0;
 }
-s32 CorrectNandData(void* data, void* ecc)
+s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 {
 	s32 ret = 0;
 	const u32 spareSize = 4 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift - 9);
 	const u32 eccSize = 1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF);
 	const u32 readOffset = eccSize - spareSize;
+	const u8* ecc = (u8*)eccBuffer;
+	const u8* data = (u8*)dataBuffer;
 	ret = memcmp(ecc + 0x40, ecc + readOffset, spareSize);
 	
 	//data is correct, nothing to do
@@ -840,7 +862,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 	const u32 maxPage = 1 << ((SelectedNandChip.Info.SizeInfo.NandSizeBitShift - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF);
 	if(pageNumber >= maxPage || data == NULL)
 	{
-		ret = -4;
+		ret = IPC_EINVAL;
 		goto return_read;
 	}
 
@@ -900,5 +922,130 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 
 return_read:
 	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift), ReadCommand, ret);
+	return ret;
+}
+s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc)
+{
+	s32 ret;
+	u8 cmd;
+	u32 spareSize;
+	u32 flags;
+	bool readPage = false;
+	
+	//see if page is within the pages of the nand
+	const u32 maxPage = 1 << ((SelectedNandChip.Info.SizeInfo.NandSizeBitShift - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF);
+	if(pageNumber >= maxPage || data == NULL)
+	{
+		ret = IPC_EINVAL;
+		goto return_write;
+	}
+
+	if(!IsInitialized())
+	{
+		ret = -10;
+		goto return_write;
+	}
+
+	write32(NAND_CONF, read32(NAND_CONF) & 0x7FFFFFFF);
+	if(unknownWriteflag == 0 || SelectedNandChip.Info.Commands.WriteUnknown == 0xFE)
+	{
+		unknownWriteflag = 0;
+		cmd = SelectedNandChip.Info.Commands.Write;
+	}
+	else
+		cmd = SelectedNandChip.Info.Commands.WriteUnknown;
+
+	if(ecc == NULL)
+		memset(_eccBuffer, 0, 1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+	else
+		memcpy(_eccBuffer, ecc, 1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+
+	_eccBuffer[SelectedNandChip.Info.SizeInfo.Unknown3] = 0xFF;
+	spareSize = 4 << ((SelectedNandChip.Info.SizeInfo.PageSizeBitShift - 9) & 0xFF);
+	OSDCFlushRange(data, 1 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF));
+	OSAhbFlushTo(AHB_NAND);
+	if(writeEcc)
+		OSDCInvalidateRange(&_eccBuffer[0x40], spareSize);
+	
+	SetNandAddress(0, pageNumber);
+	SetNandData(data, _eccBuffer);
+	flags = IrqFlag | WriteFlag | (writeEcc ? EccFlag : 0);
+	ret = SendNandCommand(SelectedNandChip.Info.Commands.WritePrefix,
+						  SelectedNandChip.Info.Commands.InputAddress,
+						  flags,
+						  1 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF));
+	if(ret != 0)
+		goto return_write;
+	
+	if(writeEcc != 0)
+	{
+		OSAhbFlushFrom(AHB_NAND);
+		OSAhbFlushTo(AHB_NAND);
+		const u32 offset = ((1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xff)) - spareSize);
+		memcpy(&_eccBuffer[offset], &_eccBuffer[0x40], spareSize);
+	}
+
+	//do we write out the ecc or skip it?
+	if(ecc != NULL || writeEcc)
+	{
+		if(SelectedNandChip.Info.Commands.RandomDataInput == 0xFE)
+		{
+			spareSize = 0;
+			ret = SendNandCommand(cmd, 0, IrqFlag | WaitFlag, 0);
+			if(ret != 0)
+				goto return_write;
+			else if (unknownWriteflag == 0)
+			{
+				ret = ReadNandStatus();
+				if(ret != 0)
+					goto return_write;
+			}
+
+			if(SelectedNandChip.Info.Commands.ReadPost == 0xFE)
+				spareSize = 1 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF);
+			else
+			{
+				ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadPost, 0, 0, 0);
+				if(ret != 0)
+					goto return_write;
+				readPage = true;
+			}
+
+			OSDCFlushRange(_eccBuffer, 1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+			OSAhbFlushTo(AHB_NAND);
+			SetNandAddress(spareSize, pageNumber);
+			SetNandData(_eccBuffer, (void*)0xFFFFFFFF);
+			ret = SendNandCommand(SelectedNandChip.Info.Commands.WritePrefix,
+						  SelectedNandChip.Info.Commands.InputAddress,
+						  IrqFlag | WriteFlag,
+						  1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+		}
+		else
+		{
+			OSDCFlushRange(_eccBuffer, 1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+			OSAhbFlushTo(AHB_NAND);
+			SetNandAddress(1 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF), 0xFFFFFFFF);
+			SetNandData(_eccBuffer, (void*)0xFFFFFFFF);
+
+			ret = SendNandCommand(SelectedNandChip.Info.Commands.RandomDataInput,
+						  SelectedNandChip.Info.Commands.InputAddress & 3,
+						  IrqFlag | WriteFlag,
+						  1 << (SelectedNandChip.Info.SizeInfo.EccSizeBitShift & 0xFF));
+		}
+
+		if (ret != 0) 
+			goto return_write;
+	}
+
+	ret = SendNandCommand(cmd, 0, IrqFlag | WaitFlag, 0);
+	if (ret == 0 && unknownWriteflag == 0)
+		ret = ReadNandStatus();
+
+return_write:
+	if(readPage)
+		ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, 0, 0, 0);
+	
+	write32(NAND_CONF, read32(NAND_CONF) | 0x08000000);
+	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift), WriteCommand, ret);
 	return ret;
 }

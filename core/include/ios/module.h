@@ -35,7 +35,7 @@ CHECK_OFFSET(struct ModuleInfo, 0x24, StackAddress);
 CHECK_SIZE(struct ModuleInfo, 0x28);
 
 #define MODULE_DATA __attribute__ ((section (".module.data")))
-
+#define MODULE_BSS __attribute__ ((section (".module.bss")))
 //unused as we generate the module info in link script, but shows how the module info is structured in the notes section of the elf
 #define MODULE_INFO(userId, entrypoint, priority, stackAddress, stackSize) const struct ModuleInfo moduleInfo  __attribute__ ((section (".note"))) = \
 { ._userIdHeader = 0x0B, .UserId = userId, \
