@@ -73,13 +73,17 @@ typedef struct {
 	u8 Unknown[4];
 	u32 PageSizeBitShift;
 	u32 EccSizeBitShift;
-    u8 Unknown2[12];
+    u8 Unknown2[8];
+	u16 Unknown3;
+	u8 Padding[2];
 } NandSizeInformation;
 CHECK_SIZE(NandSizeInformation, 0x1C);
 CHECK_OFFSET(NandSizeInformation, 0x00, NandSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x08, PageSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x0C, EccSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x10, Unknown2);
+CHECK_OFFSET(NandSizeInformation, 0x18, Unknown3);
+CHECK_OFFSET(NandSizeInformation, 0x1a, Padding);
 
 typedef struct {
     u16 ChipId;
@@ -124,7 +128,7 @@ CHECK_OFFSET(NandInformation, 0x40, Extension);
 typedef enum
 {
 	DeleteCommand = 0,
-	UnknownCommandType = 1,
+	WriteCommand = 1,
 	ReadCommand = 2,
 	UnknownCommandType2 = 3,
 } CommandType;
@@ -142,7 +146,7 @@ CHECK_OFFSET(NandErrorEntry, 0x08, Return);
 #define ERROR_LOG_SIZE		0x21
 typedef struct {
 	u32 SuccessfulDeletes;
-	u32 Unknown2;
+	u32 SuccessfulWrites;
 	u32 SuccessfulReads;
 	u32 Unknown4;
 	u32 ErrorOverflowIndex;
@@ -151,7 +155,7 @@ typedef struct {
 } NandCommandLog;
 CHECK_SIZE(NandCommandLog, 0x1A4);
 CHECK_OFFSET(NandCommandLog, 0x00, SuccessfulDeletes);
-CHECK_OFFSET(NandCommandLog, 0x04, Unknown2);
+CHECK_OFFSET(NandCommandLog, 0x04, SuccessfulWrites);
 CHECK_OFFSET(NandCommandLog, 0x08, SuccessfulReads);
 CHECK_OFFSET(NandCommandLog, 0x0C, Unknown4);
 CHECK_OFFSET(NandCommandLog, 0x10, ErrorOverflowIndex);
@@ -162,9 +166,6 @@ extern u32 IoscMessageQueueId;
 extern NandInformation SelectedNandChip;
 
 s32 InitializeNand();
-void SetNandAddress(u32 pageOffset, u32 pageNumber);
-void SetNandData(void* data, void* ecc);
-s32 ReadNandStatus(void);
-s32 CorrectNandData(void* data, void* ecc);
-s32 SendNandCommand(u8 command, u32 bitmask, u32 flags, u32 dataLength);
+s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc);
+s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc);
 #endif
