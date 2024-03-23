@@ -11,23 +11,38 @@
 
 #include "types.h"
 
-#define FS_EINVAL         -101    // Invalid path
-#define FS_EACCESS        -102    // Permission denied
-#define FS_ECORRUPT       -103    // Corrupted NAND
-#define FS_EEXIST         -105    // File exists
-#define FS_ENOENT         -106    // No such file or directory
-#define FS_ENFILE         -107    // Too many fds open
-#define FS_EFBIG          -108    // Max block count reached?
-#define FS_EFDEXHAUSTED   -109    // Too many fds open
-#define FS_ENAMELEN       -110    // Pathname is too long
-#define FS_EFDOPEN        -111    // FD is already open
-#define FS_BADBLOCK       -112    // Bad block
-#define FS_EAGAIN         -113    // ??????
-#define FS_EIO            -114    // ECC error
-#define FS_ENOTEMPTY      -115    // Directory not empty
-#define FS_AUTHENTICATION -116    // Authentication or access error
-#define FS_NOTIMPL        -117    // Not implemented error?
-#define FS_EBUSY          -118    // Resource busy
+#define NAND_RESULT_ACCESS     -1
+#define NAND_RESULT_ECC_CRIT   -3
+#define NAND_RESULT_CORRUPT    -4
+#define NAND_RESULT_BUSY       -5
+#define NAND_RESULT_EXISTS     -6
+#define NAND_RESULT_INVALID    -8
+#define NAND_RESULT_MAXBLOCKS  -9
+#define NAND_RESULT_MAXFD      -10
+#define NAND_RESULT_MAXFILES   -11
+#define NAND_RESULT_NOEXISTS   -12
+#define NAND_RESULT_NOTEMPTY   -13
+#define NAND_RESULT_OPENFD     -14
+#define NAND_RESULT_UNKNOWN    -64
+#define NAND_RESULT_FATALERROR -128
+
+#define FS_EINVAL              -101    // Invalid path
+#define FS_EACCESS             -102    // Permission denied
+#define FS_ECORRUPT            -103    // Corrupted NAND
+#define FS_EEXIST              -105    // File exists
+#define FS_ENOENT              -106    // No such file or directory
+#define FS_ENFILE              -107    // Too many fds open
+#define FS_EFBIG               -108    // Max block count reached?
+#define FS_EFDEXHAUSTED        -109    // Too many fds open
+#define FS_ENAMELEN            -110    // Pathname is too long
+#define FS_EFDOPEN             -111    // FD is already open
+#define FS_BADBLOCK            -112    // Bad block
+#define FS_EAGAIN              -113    // ??????
+#define FS_EIO                 -114    // ECC error
+#define FS_ENOTEMPTY           -115    // Directory not empty
+#define FS_AUTHENTICATION      -116    // Authentication or access error
+#define FS_NOTIMPL             -117    // Not implemented error?
+#define FS_EBUSY               -118    // Resource busy
 
 s32 TranslateErrno(s32 errno);
 
