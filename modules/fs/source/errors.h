@@ -11,6 +11,21 @@
 
 #include "types.h"
 
+#define NAND_RESULT_ACCESS			-1
+#define NAND_RESULT_ECC_CRIT		-3
+#define NAND_RESULT_CORRUPT			-4
+#define NAND_RESULT_BUSY			-5
+#define NAND_RESULT_EXISTS			-6
+#define NAND_RESULT_INVALID			-8
+#define NAND_RESULT_MAXBLOCKS		-9
+#define NAND_RESULT_MAXFD			-10
+#define NAND_RESULT_MAXFILES		-11
+#define NAND_RESULT_NOEXISTS		-12
+#define NAND_RESULT_NOTEMPTY		-13
+#define NAND_RESULT_OPENFD			-14
+#define NAND_RESULT_UNKNOWN			-64
+#define NAND_RESULT_FATALERROR		-128
+
 #define FS_EINVAL					-101				// Invalid path
 #define FS_EACCESS					-102				// Permission denied
 #define FS_ECORRUPT					-103				// Corrupted NAND
