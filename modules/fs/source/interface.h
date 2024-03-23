@@ -70,7 +70,7 @@ CHECK_OFFSET(NandCommandInformation, 0x15, InputAddress);
 
 typedef struct {
 	u32 NandSizeBitShift;
-	u8 Unknown[4];
+	u32 Unknown;
 	u32 PageSizeBitShift;
 	u32 EccSizeBitShift;
     u8 Unknown2[8];
@@ -168,4 +168,5 @@ extern NandInformation SelectedNandChip;
 s32 InitializeNand();
 s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc);
 s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc);
+s32 CheckNandBlock(u8 block);
 #endif
