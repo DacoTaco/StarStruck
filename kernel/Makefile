@@ -111,6 +111,7 @@ export INCLUDE			:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 .PHONY: $(BUILD) clean
 #---------------------------------------------------------------------------------
 
+all: $(BUILD)
 $(BUILD): $(MODULESCRIPT).ld
 ifeq ($(wildcard $(ELFLOADER)),)
 	@echo "elfloader is missing (elfloader.bin)."
