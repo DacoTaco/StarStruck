@@ -58,7 +58,7 @@ void set_memory(void* dest, const unsigned char data, size_t len)
 __attribute__((target("arm")))
 void set_memory_short(void* dest, const unsigned char c, size_t len)
 {
-	u32 data = c | (c << 8) | (u32)(c << 16) || (u32)(c << 24);
+	u32 data = c | (c << 8) | (u32)(c << 16) | (u32)(c << 24);
 	register u32 data1 asm("r3") = data;
 	register u32 data2 asm ("r4") = data;
 	register u32 data3 asm ("r5") = data;
