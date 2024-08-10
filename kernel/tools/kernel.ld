@@ -45,6 +45,7 @@ MEMORY
 __stack_size = 0x300;
 __irqstack_size = 0x060;
 __excstack_size = 0x100;
+__ioscstack_size = 0x400;
 
 __kmalloc_heap_start = ORIGIN(kmalloc_heap);
 __kmalloc_heap_size = LENGTH(kmalloc_heap);
@@ -138,6 +139,10 @@ SECTIONS
 		. = . +__excstack_size;
 		. = ALIGN(16);
 		__excstack_addr = .;
+		__ioscstack_end = .;
+		. = . +__ioscstack_size;
+		. = ALIGN(16);
+		__ioscstack_addr = .;
 	} > kernel : data
 
 	.syscalls : ALIGN(0x10)

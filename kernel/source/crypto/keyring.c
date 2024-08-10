@@ -60,7 +60,7 @@ void Keyring_Init(void)
 	}
 
 	OTP_GetNgId(&ngId);
-	Keyring_Init_WithMetadata(1, Other, UNKNOWN1, ngId);
+	Keyring_Init_WithMetadata(KEYRING_CONST_NG_ID, Other, UNKNOWN1, ngId);
 
 	OTP_GetRngSeed(rngSeed);
 	SEEPROM_GetCommonKey(eepromCommonKey);
@@ -71,47 +71,47 @@ void Keyring_Init(void)
 	for(u32 i = 0; i < OTP_NANDKEY_SIZE; ++i)
 		privkeyAesSd[i] ^= otpCommonKey[i];
 
-	Keyring_Init_WithKey(0, PrivateKey, ECC_233, ngPrivKey, OTP_NGPRIVKEY_SIZE);
-	Keyring_Init_WithKey(2, PrivateKey, AES_128, nandKey, OTP_RNGSEED_SIZE);
-	Keyring_Init_WithKey(3, PrivateKey, HMAC, nandHmac, OTP_NANDHMAC_SIZE);
-	Keyring_Init_WithKey(4, PrivateKey, AES_128, otpCommonKey, OTP_COMMONKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_NG_PRIVATE_KEY, PrivateKey, ECC_233, ngPrivKey, OTP_NGPRIVKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_NAND_KEY, PrivateKey, AES_128, nandKey, OTP_RNGSEED_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_NAND_HMAC, PrivateKey, HMAC, nandHmac, OTP_NANDHMAC_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_OTP_COMMON_KEY, PrivateKey, AES_128, otpCommonKey, OTP_COMMONKEY_SIZE);
 
-	Keyring_Init_WithMetadata(7, Other, UNKNOWN2, IOSC_BOOT2_GetVersion());
-	Keyring_Init_WithMetadata(8, Other, UNKNOWN2, IOSC_BOOT2_GetUnk1());
-	Keyring_Init_WithMetadata(9, Other, UNKNOWN2, IOSC_BOOT2_GetUnk2());
-	Keyring_Init_WithMetadata(10, Other, UNKNOWN2, IOSC_NAND_GetGen());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_VERSION, Other, UNKNOWN2, IOSC_BOOT2_GetVersion());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK1, Other, UNKNOWN2, IOSC_BOOT2_GetUnk1());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK2, Other, UNKNOWN2, IOSC_BOOT2_GetUnk2());
+	Keyring_Init_WithMetadata(KEYRING_CONST_NAND_GEN, Other, UNKNOWN2, IOSC_NAND_GetGen());
 
-	Keyring_Init_WithKey(5, PrivateKey, AES_128, rngSeed, OTP_RNGSEED_SIZE);
-	Keyring_Init_WithKey(6, PrivateKey, AES_128, privkeyAesSd, OTP_NANDKEY_SIZE);
-	Keyring_Init_WithKey(11, PrivateKey, AES_128, eepromCommonKey, OTP_COMMONKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_OTP_RNG_SEED, PrivateKey, AES_128, rngSeed, OTP_RNGSEED_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_SD_PRIVATE_KEY, PrivateKey, AES_128, privkeyAesSd, OTP_NANDKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_EEPROM_COMMON_KEY, PrivateKey, AES_128, eepromCommonKey, OTP_COMMONKEY_SIZE);
 }
 
-void Keyring_ClearEntryData(u32 keyHandle)
+void Keyring_ClearEntryData(u32 keyEntryHandle)
 {
-	memset(&KeyringEntries[keyHandle], 0, sizeof(KeyringEntry));
+	memset(&KeyringEntries[keyEntryHandle], 0, sizeof(KeyringEntry));
 }
 
-s32 Keyring_GetKeyIndexFitSize(const u32 keySize)
+s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 {
 	u32 runningKeySize = 0;
 	u32 previousLink = -1;
-	u32 ret = -1;
+	s16 ret = -1;
 
-	for (u32 currentIndex = 0; currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
+	for (u16 currentIndex = 0; currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
 	{
-		if (!KeyringEntries[currentIndex].IsUsed)
-		{
-			Keyring_ClearEntryData(currentIndex);
-			KeyringEntries[currentIndex].IsUsed = 1;
-			if (runningKeySize != 0) { // head found, previousLink valid, link it
-				KeyringEntries[previousLink].KeyNextPartIndex = currentIndex;
-			}
-			else { // first/head part: make return value its index
-				ret = currentIndex;
-			}
-			previousLink = currentIndex;
-			runningKeySize += KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
+		if (KeyringEntries[currentIndex].IsUsed)
+			continue;
+
+		Keyring_ClearEntryData(currentIndex);
+		KeyringEntries[currentIndex].IsUsed = 1;
+		if (runningKeySize != 0) { // head found, previousLink valid, link it
+			KeyringEntries[previousLink].KeyNextPartIndex = currentIndex;
 		}
+		else { // first/head part: make return value its index
+			ret = currentIndex % KEYRING_TOTAL_ENTRIES;
+		}
+		previousLink = currentIndex;
+		runningKeySize += KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
 	} 
 
 	// could not fit the requested size, clear the temporarily linked entries
@@ -132,6 +132,35 @@ s32 Keyring_GetKeyIndexFitSize(const u32 keySize)
 	}
 
 	return ret;
+}
+s32 Keyring_GetHandleFitSize(u32* keyHandle, const u32 keySize)
+{
+	for(u32 i = 0; i < KEYRING_METADATA_TOTAL_ENTRIES; ++i)
+	{
+		if(KeyringMetadata[i].IsUsed)
+			continue;
+		
+		KeyringMetadata[i].IsUsed = 1;
+		if(keySize == 0)
+		{
+			KeyringMetadata[i].KeyringIndex = -1;
+		}
+		else
+		{
+			const s16 keyringIndex = Keyring_GetKeyIndexFitSize(keySize);
+			KeyringMetadata[i].KeyringIndex = keyringIndex;
+			if (keyringIndex < 0)
+			{
+				KeyringMetadata[i].IsUsed = 0;
+				break;
+			}
+		}
+
+		*keyHandle = i;
+		return IPC_SUCCESS;
+	}
+
+	return IOSC_FAIL_ALLOC;
 }
 
 s32 Keyring_SetKeyMetadata(u32 keyHandle, const void *data)
@@ -156,7 +185,114 @@ s32 Keyring_GetKeyMetadata(u32 keyHandle, void *data)
 	memcpy(data, &KeyringMetadata[keyHandle].Metadata, sizeof(KeyringMetadata[keyHandle].Metadata));
 	return IPC_SUCCESS;
 }
+s32 Keyring_GetKeyMetadataIfOthers(u32 keyHandle, void *data)
+{
+	KeySubtype keySubtype = AES_128;
+	KeyType keyType = PrivateKey;
 
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+	if(keyType != Other)
+		return IOSC_INVALID_OBJTYPE;
+
+	if(Keyring_GetKeyMetadata(keyHandle, data) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	return IPC_SUCCESS;
+}
+
+s32 Keyring_SetKeyKind(u32 keyHandle, KeyKind keyKind)
+{
+	if(keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
+		return IOSC_EINVAL;
+
+	if(!KeyringMetadata[keyHandle].IsUsed)
+		return IOSC_EINVAL;
+	
+	KeyringMetadata[keyHandle].Kind = keyKind;
+	return IPC_SUCCESS;
+}
+s32 Keyring_GetKeyKind(u32 keyHandle, KeyKind *keyKind)
+{
+	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
+		return IOSC_EINVAL;
+		
+	if (!KeyringMetadata[keyHandle].IsUsed)
+		return IOSC_EINVAL;
+
+	*keyKind = KeyringMetadata[keyHandle].Kind;
+	return IPC_SUCCESS;
+}
+
+void Keyring_GetKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
+{
+	if (keyHandle == RSA4096_ROOTKEY) {
+		*keytype = PublicKey;
+		*keySubtype = RSA_4096;
+		return;
+	}
+	
+	KeyKind typeAndSubtype;
+	Keyring_GetKeyKind(keyHandle, &typeAndSubtype);
+	*keytype = typeAndSubtype.Type;
+	*keySubtype = typeAndSubtype.Subtype;
+}
+
+s32 Keyring_FindKeySize(u32 *keySize, u32 keyHandle)
+{
+	KeySubtype keySubtype;
+	KeyType keyType;
+	
+	if (keyHandle == RSA4096_ROOTKEY) 
+	{
+		*keySize = 0x200;
+		return IPC_SUCCESS;
+	}
+
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+	if (Keyring_GetKeySizeFromType(keyType, keySubtype, keySize) == IPC_SUCCESS)
+		return IPC_SUCCESS;
+
+	return IOSC_FAIL_INTERNAL;
+}
+s32 Keyring_GetSignatureSize(u32 *publicKeySize, u32 keyHandle)
+{
+	KeyType keyType;
+	KeySubtype keySubtype;
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+
+	switch(keyType)
+	{
+		case PublicKey:
+			if(keySubtype == RSA_4096)
+				*publicKeySize = 0x200;
+			else if(keySubtype == RSA_2048)
+				*publicKeySize = 0x100;
+			else if(keySubtype == ECC_233)
+				*publicKeySize = 0x3C;
+			else
+				return IOSC_EINVAL;
+			break;
+		case PrivateKey:
+			if(keySubtype == HMAC)
+				*publicKeySize = 0x14;
+			else if(keySubtype == ECC_233)
+				*publicKeySize = 0x3C;
+			else
+				return IOSC_EINVAL;
+			
+			break;
+		case PublicAndPrivateKey:
+			if(keySubtype != ECC_233)
+				return IOSC_EINVAL;
+
+			*publicKeySize = 0x3C;
+			break;
+		default:
+			return IOSC_EINVAL;
+	}
+
+	return IPC_SUCCESS;
+}
 s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize)
 {
 	switch(keyType)
@@ -204,50 +340,6 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keyS
 	}
 
 	return IPC_SUCCESS;
-}
-
-s32 Keyring_FindKeyTypeRaw(u32 keyHandle, KeyTypeAndSubtype *keyKind)
-{
-	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
-		return IOSC_EINVAL;
-		
-	if (!KeyringMetadata[keyHandle].IsUsed)
-		return IOSC_EINVAL;
-
-	*keyKind = KeyringMetadata[keyHandle].Kind;
-	return IPC_SUCCESS;
-}
-
-void Keyring_FindKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype)
-{
-	if (keyHandle == RSA4096_ROOTKEY) {
-		*keytype = PublicKey;
-		*keySubtype = RSA_4096;
-		return;
-	}
-	
-	KeyTypeAndSubtype typeAndSubtype;
-	Keyring_FindKeyTypeRaw(keyHandle, &typeAndSubtype);
-	*keytype = typeAndSubtype.Type;
-	*keySubtype = typeAndSubtype.Subtype;
-}
-
-s32 Keyring_FindKeySize(u32 *keySize, u32 keyHandle)
-{
-	KeySubtype keySubtype;
-	KeyType keyType;
-	
-	if (keyHandle == RSA4096_ROOTKEY) 
-	{
-		*keySize = 0x200;
-		return IPC_SUCCESS;
-	}
-
-	Keyring_FindKeyTypes(keyHandle, &keyType, &keySubtype);
-	if (Keyring_GetKeySizeFromType(keyType, keySubtype, keySize) == IPC_SUCCESS)
-		return IPC_SUCCESS;
-
-	return IOSC_FAIL_INTERNAL;
 }
 
 s32 Keyring_SetKey(u32 keyHandle, const void *data, u32 keySize)
@@ -303,7 +395,7 @@ s32 Keyring_GetKey(u32 keyHandle, void *keyPtr, u32 keySize)
 	return IPC_SUCCESS;
 }
 
-s32 Keyring_SetKeyOwnerIfUsed(u32 keyHandle, u32 owner)
+s32 Keyring_SetKeyOwnerProcess(u32 keyHandle, u32 owner)
 {
 	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
 		return IOSC_EINVAL;
@@ -311,10 +403,22 @@ s32 Keyring_SetKeyOwnerIfUsed(u32 keyHandle, u32 owner)
 	if(!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
-	KeyringMetadata[keyHandle].KeyHandleOwner = owner;
+	KeyringMetadata[keyHandle].OwnerProcess = owner;
 	return IPC_SUCCESS;
 }
-s32 Keyring_SetKeyZeroesIfUsed(u32 keyHandle, u32 zeroes)
+s32 Keyring_GetKeyOwner(u32 keyHandle, u32* owner)
+{
+	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
+		return IOSC_EINVAL;
+	
+	if(!KeyringMetadata[keyHandle].IsUsed)
+		return IOSC_EINVAL;
+
+	*owner = KeyringMetadata[keyHandle].OwnerProcess;
+	return IPC_SUCCESS;
+}
+
+s32 Keyring_SetKeyZeroes(u32 keyHandle, u32 zeroes)
 {
 	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
 		return IOSC_EINVAL;
@@ -331,9 +435,32 @@ s32 Keyring_SetKeyZeroesIfAnyPrivate(u32 keyHandle, u32 zeroes)
 	KeyType keyType = PrivateKey;
 	s32 ret = IOSC_INVALID_OBJTYPE;
 
-	Keyring_FindKeyTypes(keyHandle, &keyType, &keySubtype);
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
 	if(keyType == PrivateKey || keyType == PublicAndPrivateKey)
-		ret = Keyring_SetKeyZeroesIfUsed(keyHandle, zeroes);
+		ret = Keyring_SetKeyZeroes(keyHandle, zeroes);
+
+	return ret;
+}
+s32 Keyring_GetKeyZeroes(u32 keyHandle, u32* zeroes)
+{
+	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
+		return IOSC_EINVAL;
+	
+	if(!KeyringMetadata[keyHandle].IsUsed)
+		return IOSC_EINVAL;
+
+	*zeroes = KeyringMetadata[keyHandle].Zeroes;
+	return IPC_SUCCESS;
+}
+s32 Keyring_GetKeyZeroesIfAnyPrivate(u32 keyHandle, u32* zeroes)
+{
+	KeySubtype keySubtype = AES_128;
+	KeyType keyType = PrivateKey;
+	s32 ret = IOSC_INVALID_OBJTYPE;
+
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+	if(keyType == PrivateKey || keyType == PublicAndPrivateKey)
+		ret = Keyring_GetKeyZeroes(keyHandle, zeroes);
 
 	return ret;
 }

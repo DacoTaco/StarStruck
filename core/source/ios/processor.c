@@ -24,7 +24,7 @@ int sprintf(char *buffer, const char *fmt, ...)
 	return i;
 }
 
-int sprintf(char *buffer, size_t size, const char *fmt, ...)
+int snprintf(char *buffer, size_t size, const char *fmt, ...)
 {
 	va_list args;
 	int i;

@@ -121,7 +121,7 @@ void kernel_main( void )
 	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start SHA thread!\n");
 
-	/// TODO: Some function goes here, needs research
+	IOSC_InitInformation();
 
 	//create IPC handler thread & also set it to run as system thread
 	ret = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
