@@ -47,7 +47,7 @@ BEGIN_ASM_FUNC BusyDelay
 	push {lr}
 	mov r3, #0
 	sub r0, #4
-	add r2, r3, 0
+	add r2, r3, #0
 	cmp r3, r0
 	bcs BusyDelay_done
 BusyDelay_loop:
