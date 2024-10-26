@@ -11,7 +11,7 @@
 #include <asminc.h>
 #include <ios/processor.h>
 
-.thumb
+.arm
 .globl IOSC_SwapStack
 
 /* void IOSC_SwapStack(u32 currentStackBase: r0, u32 newStackBase: r1) */

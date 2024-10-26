@@ -19,7 +19,7 @@
 KeyringEntry KeyringEntries[KEYRING_TOTAL_ENTRIES];
 KeyringMetadataType KeyringMetadata[KEYRING_METADATA_TOTAL_ENTRIES];
 
-static inline void Keyring_Init_WithKey(s32 index, KeyType type, KeySubtype subType, const void* key, const u32 keySize)
+static inline void Keyring_Init_WithKey(u32 index, KeyType type, KeySubtype subType, const void* key, const u32 keySize)
 {
 	KeyringMetadata[index].IsUsed = 1;
 	KeyringMetadata[index].Kind.Type = type;
@@ -27,7 +27,7 @@ static inline void Keyring_Init_WithKey(s32 index, KeyType type, KeySubtype subT
 	KeyringMetadata[index].KeyringIndex = Keyring_GetKeyIndexFitSize(keySize);
 	Keyring_SetKey(index, key, keySize);
 }
-static inline void Keyring_Init_WithMetadata(s32 index, KeyType type, KeySubtype subType, const u32 metadata)
+static inline void Keyring_Init_WithMetadata(u32 index, KeyType type, KeySubtype subType, const u32 metadata)
 {
 	KeyringMetadata[index].IsUsed = 1;
 	KeyringMetadata[index].Kind.Type = type;
@@ -76,10 +76,10 @@ void Keyring_Init(void)
 	Keyring_Init_WithKey(KEYRING_CONST_NAND_HMAC, PrivateKey, HMAC, nandHmac, OTP_NANDHMAC_SIZE);
 	Keyring_Init_WithKey(KEYRING_CONST_OTP_COMMON_KEY, PrivateKey, AES_128, otpCommonKey, OTP_COMMONKEY_SIZE);
 
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_VERSION, Other, UNKNOWN2, IOSC_BOOT2_GetVersion());
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK1, Other, UNKNOWN2, IOSC_BOOT2_GetUnk1());
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK2, Other, UNKNOWN2, IOSC_BOOT2_GetUnk2());
-	Keyring_Init_WithMetadata(KEYRING_CONST_NAND_GEN, Other, UNKNOWN2, IOSC_NAND_GetGen());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_VERSION, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetVersion());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK1, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetUnk1());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK2, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetUnk2());
+	Keyring_Init_WithMetadata(KEYRING_CONST_NAND_GEN, Other, UNKNOWN2, (u32)IOSC_NAND_GetGen());
 
 	Keyring_Init_WithKey(KEYRING_CONST_OTP_RNG_SEED, PrivateKey, AES_128, rngSeed, OTP_RNGSEED_SIZE);
 	Keyring_Init_WithKey(KEYRING_CONST_SD_PRIVATE_KEY, PrivateKey, AES_128, privkeyAesSd, OTP_NANDKEY_SIZE);
@@ -94,21 +94,21 @@ void Keyring_ClearEntryData(u32 keyEntryHandle)
 s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 {
 	u32 runningKeySize = 0;
-	u32 previousLink = -1;
+	s32 previousLink = -1;
 	s16 ret = -1;
 
-	for (u16 currentIndex = 0; currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
+	for (s16 currentIndex = 0; currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
 	{
 		if (KeyringEntries[currentIndex].IsUsed)
 			continue;
 
-		Keyring_ClearEntryData(currentIndex);
+		Keyring_ClearEntryData((u32)currentIndex);
 		KeyringEntries[currentIndex].IsUsed = 1;
 		if (runningKeySize != 0) { // head found, previousLink valid, link it
-			KeyringEntries[previousLink].KeyNextPartIndex = currentIndex;
+			KeyringEntries[previousLink].KeyNextPartIndex = (u16)currentIndex;
 		}
 		else { // first/head part: make return value its index
-			ret = currentIndex % KEYRING_TOTAL_ENTRIES;
+			ret = currentIndex;
 		}
 		previousLink = currentIndex;
 		runningKeySize += KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
@@ -117,7 +117,7 @@ s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 	// could not fit the requested size, clear the temporarily linked entries
 	if (runningKeySize < keySize)
 	{
-		u32 keyringIndex = ret;
+		u32 keyringIndex = (u32)ret;
 		do {
 			const u32 currentIndex = keyringIndex;
 			KeyringEntries[currentIndex].IsUsed = 0;
@@ -350,10 +350,10 @@ s32 Keyring_SetKey(u32 keyHandle, const void *data, u32 keySize)
 	if(!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
-	u32 entryIndex = KeyringMetadata[keyHandle].KeyringIndex;
+	s32 entryIndex = KeyringMetadata[keyHandle].KeyringIndex;
 	u32 bytesCopied = 0;
 	do {
-		if(entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
+		if(0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
 			return IOSC_EINVAL;
 
 		u32 bytesToCopy = KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
@@ -376,10 +376,10 @@ s32 Keyring_GetKey(u32 keyHandle, void *keyPtr, u32 keySize)
 	if(!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
-	u32 entryIndex = KeyringMetadata[keyHandle].KeyringIndex;
+	s32 entryIndex = KeyringMetadata[keyHandle].KeyringIndex;
 	u32 bytesCopied = 0;
 	do {
-		if(entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
+		if(0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
 			return IOSC_EINVAL;
 
 		u32 bytesToCopy = KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
@@ -406,7 +406,7 @@ s32 Keyring_SetKeyOwnerProcess(u32 keyHandle, u32 owner)
 	KeyringMetadata[keyHandle].OwnerProcess = owner;
 	return IPC_SUCCESS;
 }
-s32 Keyring_GetKeyOwner(u32 keyHandle, u32* owner)
+s32 Keyring_GetKeyOwnerProcess(u32 keyHandle, u32* owner)
 {
 	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
 		return IOSC_EINVAL;

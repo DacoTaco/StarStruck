@@ -239,7 +239,7 @@ static s32 GenerateHmac_DerivedKeyPad(const void* signer, const u32 signerSize, 
 	}
 
 	memcpy(HmacKeyPrePad, HmacKey, 0x14);
-	memset8(HmacKeyPrePad + 0x14, 0, SHA_BLOCK_SIZE - 0x14);
+	memset(HmacKeyPrePad + 0x14, 0, SHA_BLOCK_SIZE - 0x14);
 
 	for (s32 i = 0; i < SHA_BLOCK_SIZE; ++i)
 	{
@@ -425,27 +425,27 @@ void ShaEngineHandler(void)
 						break;
 
 					case ShaCommandUnknown:
-						u8* hashCompareAgainst = messageData[0].Data;
-						const u8* dataToCheck = messageData[1].Data;
+						u8* hashCompareAgainst = (u8*)messageData[0].Data;
+						const u8* dataToCheck = (const u8*)messageData[1].Data;
 						const u32 hash_h0_offset = *messageData[2].Data;
 						const u32 hash_h1_offset = *messageData[3].Data;
-						const u8* hash_h2_pointer = messageData[4].Data;
+						const u8* hash_h2_pointer = (const u8*)messageData[4].Data;
 
 						ret = VerifyHashesArray(hashCompareAgainst, 0x400, 31, dataToCheck);
 						if (ret < 0)
-							Crypto_Panic("Data subblock failed to verify against H0 hash\n", hashCompareAgainst);
+							HMAC_Panic("Data subblock failed to verify against H0 hash\n", hashCompareAgainst);
 
 						ret = VerifyHashesArray(dataToCheck, 0x26c, 1, dataToCheck + hash_h0_offset + 0x280);
 						if (ret < 0)
-							Crypto_Panic("H0 hashes failed to verify\n", hashCompareAgainst);
+							HMAC_Panic("H0 hashes failed to verify\n", hashCompareAgainst);
 
 						ret = VerifyHashesArray(dataToCheck + 0x280, 0xa0, 1, dataToCheck + hash_h1_offset + 0x340);
 						if (ret < 0)
-							Crypto_Panic("H1 hashes failed to verify\n", hashCompareAgainst);
+							HMAC_Panic("H1 hashes failed to verify\n", hashCompareAgainst);
 
 						ret = VerifyHashesArray(dataToCheck + 0x340, 0xa0, 1, hash_h2_pointer);
 						if (ret < 0)
-							Crypto_Panic("H2 hashes failed to verify\n", hashCompareAgainst);
+							HMAC_Panic("H2 hashes failed to verify\n", hashCompareAgainst);
 
 						ret = IPC_SUCCESS;
 						break;
