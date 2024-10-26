@@ -15,6 +15,7 @@
 #include "crypto/boot2.h"
 #include "crypto/nand.h"
 #include "crypto/seeprom.h"
+#include "interrupt/irq.h"
 #include "memory/memory.h"
 #include "messaging/message_queue.h"
 #include <ios/errno.h>
@@ -56,7 +57,7 @@ static s32 IOSC_SendEmptyMessageToQueue(const u32 queueId)
 static s32 IOSC_DiscardMessageFromQueue(const u32 queueId)
 {
 	IpcMessage* receivedMessage = NULL;
-	s32 ret = ReceiveMessageUnsafe(queueId, &receivedMessage, None);
+	s32 ret = ReceiveMessageUnsafe(queueId, (void**)&receivedMessage, None);
 	return ret;
 }
 static inline s32 IOSC_CheckCurrentProcessOwnsKey(u32 keyHandle)
