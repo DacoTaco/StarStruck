@@ -15,7 +15,7 @@
 u16 BOOT2_ComputeCounterChecksum(const BOOT2_Counter* data)
 {
 	u16 sum = 0;
-	for(s32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
+	for(u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
 	{
 		sum += data->Data[i];
 	}

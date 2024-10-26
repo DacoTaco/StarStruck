@@ -16,14 +16,14 @@
 u16 NAND_ComputeCounterChecksum(const NAND_Counter* data)
 {
 	u16 sum = 0;
-	for(s32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
+	for(u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
 	{
 		sum += data->Data[i];
 	}
 	return sum;
 }
 
-u32 NAND_GetGen(void)
+s32 NAND_GetGen(void)
 {
 	NAND_Counter data;
 	s32 counter_write_index = -1;
@@ -32,7 +32,7 @@ u32 NAND_GetGen(void)
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	return data.NandGen;
+	return (s32)data.NandGen;
 }
 s32 NAND_UpdateGen(void)
 {

@@ -123,7 +123,7 @@ static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 			return IOSC_EINVAL;
 
 		KeyringEntries[keyringIndex].IsUsed = 0;
-		const s16 nextKeyringIndex = KeyringEntries[keyringIndex].KeyNextPartIndex;
+		const u16 nextKeyringIndex = KeyringEntries[keyringIndex].KeyNextPartIndex;
 		Keyring_ClearEntryData(keyringIndex);
 
 		keyringIndex = nextKeyringIndex;
@@ -151,16 +151,16 @@ void IOSC_InitInformation(void)
 	s32 messageQueueId = CreateMessageQueue(&IOSC_Information.message, 1);
 	if(messageQueueId >= 0)
 	{
-		s32 result = SendMessage(messageQueueId, NULL, RegisteredEventHandler);
+		s32 result = SendMessage((u32)messageQueueId, NULL, RegisteredEventHandler);
 		if(result != 0)
 		{
-			DestroyMessageQueue(messageQueueId);
+			DestroyMessageQueue((u32)messageQueueId);
 			messageQueueId = result;
 		}
 	}
-	IOSC_Information.messageQueueId = messageQueueId;
+	IOSC_Information.messageQueueId = (u32)messageQueueId;
 	IOSC_SEEPROM_UpdatePRNGSeed();
-	IOSC_Information.rngSeed = IOSC_SEEPROM_GetPRNGSeed();
+	IOSC_Information.rngSeed = (u32)IOSC_SEEPROM_GetPRNGSeed();
 	IOSC_Information.val3 = 0;
 	IOSC_Information.val0 = 0;
 }
@@ -195,7 +195,7 @@ s32 IOSC_Init(void)
 	Keyring_Init();
 
 	s32 ret = IPC_SUCCESS;
-	for(s8 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndZeroes); ++i)
+	for(u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndZeroes); ++i)
 	{
 		const u32 handle = HandlesAndZeroes[i][0];
 		const u32 zeroes = HandlesAndZeroes[i][1];
@@ -203,7 +203,7 @@ s32 IOSC_Init(void)
 	}
 
 	ret = IPC_SUCCESS;
-	for(s8 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndOwners); ++i)
+	for(u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndOwners); ++i)
 	{
 		const u32 handle = HandlesAndOwners[i][0];
 		const u32 owner = HandlesAndOwners[i][1];
@@ -216,7 +216,7 @@ s32 IOSC_Init(void)
 s32 IOSC_BOOT2_GetVersion(void)
 {
 	const u32 cookie = DisableInterrupts();
-	s32 ret = IOSC_BOOT2_DummyVersion;
+	s32 ret = (s32)IOSC_BOOT2_DummyVersion;
 	if(OTP_IsSet())
 	{
 		ret = BOOT2_GetVersion();
@@ -227,7 +227,7 @@ s32 IOSC_BOOT2_GetVersion(void)
 s32 IOSC_BOOT2_GetUnk1(void)
 {
 	const u32 cookie = DisableInterrupts();
-	s32 ret = IOSC_BOOT2_DummyUnk1;
+	s32 ret = (s32)IOSC_BOOT2_DummyUnk1;
 	if(OTP_IsSet())
 	{
 		ret = BOOT2_GetUnk1();
@@ -238,7 +238,7 @@ s32 IOSC_BOOT2_GetUnk1(void)
 s32 IOSC_BOOT2_GetUnk2(void)
 {
 	const u32 cookie = DisableInterrupts();
-	s32 ret = IOSC_BOOT2_DummyUnk1; // not Unk2. yes, this is a bug in IOS 58
+	s32 ret = (s32)IOSC_BOOT2_DummyUnk1; // not Unk2. yes, this is a bug in IOS 58
 	if(OTP_IsSet())
 	{
 		ret = BOOT2_GetUnk2();
@@ -249,7 +249,7 @@ s32 IOSC_BOOT2_GetUnk2(void)
 s32 IOSC_NAND_GetGen(void)
 {
 	const u32 cookie = DisableInterrupts();
-	s32 ret = IOSC_NAND_DummyGen;
+	s32 ret = (s32)IOSC_NAND_DummyGen;
 	if(OTP_IsSet())
 	{
 		ret = NAND_GetGen();
@@ -260,7 +260,7 @@ s32 IOSC_NAND_GetGen(void)
 s32 IOSC_SEEPROM_GetPRNGSeed(void)
 {
 	const u32 cookie = DisableInterrupts();
-	s32 ret = IOSC_SEEPROM_DummyPRNGSeed;
+	s32 ret = (s32)IOSC_SEEPROM_DummyPRNGSeed;
 	if(OTP_IsSet())
 	{
 		ret = SEEPROM_GetPRNGSeed();

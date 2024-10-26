@@ -26,7 +26,7 @@ CHECK_OFFSET(NAND_Counter, 0x04, Checksum);
 
 u16 NAND_ComputeCounterChecksum(const NAND_Counter* data);
 
-u32 NAND_GetGen(void);
+s32 NAND_GetGen(void);
 s32 NAND_UpdateGen(void);
 
 #endif
