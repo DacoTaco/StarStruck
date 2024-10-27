@@ -24,13 +24,65 @@ static const u8 OTP_Dummy_NandKey[OTP_NANDKEY_SIZE] = {0xc1, 0x81, 0x6a, 0xf7, 0
 static const u8 OTP_Dummy_NandHmac[OTP_NANDHMAC_SIZE] = {0x68, 0x6a, 0x69, 0x88, 0x9e, 0xbf, 0x1e, 0x74, 0xe9, 0x17, 0x8e, 0xd7, 0x32, 0x27, 0x0e, 0x2c, 0xcb, 0x0a, 0x9f, 0x55};
 static const u8 OTP_Dummy_RngSeed[OTP_RNGSEED_SIZE] = {0xc4, 0x98, 0x73, 0x85, 0xe8, 0x65, 0xac, 0xa4, 0x90, 0xa4, 0xfa, 0x2c, 0x89, 0xa5, 0x53, 0x66};
 
+typedef union {
+	struct {
+		u32 IsRead : 1;
+		u32 Unset : 26;
+		u32 Address : 5;
+	} Fields;
+	u32 Value;
+} OTPCommand;
+CHECK_SIZE(OTPCommand, 4);
+
+//OTP structure.
+typedef struct
+{
+	u8 Boot1Hash[OTP_BOOT1HASH_SIZE];
+	u8 CommonKey[OTP_COMMONKEY_SIZE];
+	u32 NgId;
+	//the ng private key & nand_hmac overlap, wtf?
+	union {
+		 struct {
+			 u8 NgPrivateKey[OTP_NGPRIVKEY_SIZE];
+			 u8 _overlap1[18];
+		 };
+		 struct {
+			 u8 _overlap2[28];
+			 u8 NandHmac[OTP_NANDHMAC_SIZE];
+		 };
+	};
+	u8 NandKey[OTP_NANDKEY_SIZE];
+	u8 RngSeed[OTP_RNGSEED_SIZE];
+	u32 unk1;
+	u32 unk2; // 0x00000007
+} Otp;
+
+CHECK_SIZE(Otp, 0x80);
+CHECK_OFFSET(Otp, 0x00, Boot1Hash);
+CHECK_OFFSET(Otp, 0x14, CommonKey);
+CHECK_OFFSET(Otp, 0x24, NgId);
+CHECK_OFFSET(Otp, 0x28, NgPrivateKey);
+CHECK_OFFSET(Otp, 0x46, _overlap1);
+CHECK_OFFSET(Otp, 0x28, _overlap2);
+CHECK_OFFSET(Otp, 0x44, NandHmac);
+CHECK_OFFSET(Otp, 0x58, NandKey);
+CHECK_OFFSET(Otp, 0x68, RngSeed);
+CHECK_OFFSET(Otp, 0x78, unk1);
+CHECK_OFFSET(Otp, 0x7C, unk2);
+
 void OTP_FetchData(u32 addr, void *out, u32 size)
 {
 	u8* outPtr = out;
 	memset(outPtr, 0, size);
 	while(size != 0)
 	{
-		write32(HW_OTPCMD, 0x80000000 | addr);
+		OTPCommand command = {
+			.Fields = {
+				.IsRead = 1,
+				.Address = addr & 0x1F
+			}
+		};
+		write32(HW_OTPCMD, command.Value);
 		const u32 data = read32(HW_OTPDATA);
 		if(size < sizeof(u32))
 		{

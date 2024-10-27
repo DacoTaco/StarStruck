@@ -63,7 +63,7 @@ void Keyring_Init(void)
 	Keyring_Init_WithMetadata(KEYRING_CONST_NG_ID, Other, UNKNOWN1, ngId);
 
 	OTP_GetRngSeed(rngSeed);
-	SEEPROM_GetCommonKey(eepromCommonKey);
+	SEEPROM_GetKoreanCommonKey(eepromCommonKey);
 	OTP_GetKeys(ngPrivKey, otpCommonKey, nandHmac, nandKey);
 
 	// stored in plaintext in IOS, kept in the source here with a xorpad (to not have the key directly)

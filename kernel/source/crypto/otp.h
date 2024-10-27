@@ -13,6 +13,7 @@
 
 #include <types.h>
 
+#define OTP_BOOT1HASH_SIZE 20
 #define OTP_COMMONKEY_SIZE 16
 #define OTP_NGPRIVKEY_SIZE 30
 #define OTP_NANDKEY_SIZE 16

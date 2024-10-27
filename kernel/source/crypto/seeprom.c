@@ -9,14 +9,15 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "crypto/seeprom.h"
-#include "crypto/otp.h"
 #include <ios/errno.h>
 #include <ios/processor.h>
+#include <string.h>
+
+#include "crypto/seeprom.h"
+#include "crypto/otp.h"
 #include "core/hollywood.h"
 #include "core/gpio.h"
 #include "utils.h"
-#include <string.h>
 #include "interrupt/irq.h"
 
 #define SEEPROM_Wait() BusyDelay(125)
@@ -26,6 +27,50 @@ static u32 SEEPROM_Dummy_MsId = 3;
 static u32 SEEPROM_Dummy_CaId = 2;
 static u32 SEEPROM_Dummy_NgKeyId = 0x69D2A2EF;
 static u8 SEEPROM_Dummy_NgSignature[60] = { 0x00, 0x50, 0xcc, 0x52, 0xdf, 0x22, 0x17, 0xf1, 0xe9, 0x3e, 0xe1, 0x9d, 0x5b, 0xb0, 0xe7, 0x51, 0x0e, 0x5b, 0xf4, 0xcb, 0xd2, 0x0b, 0x9f, 0xa4, 0xf4, 0x39, 0x45, 0x2b, 0x14, 0x9b, 0x00, 0xbd, 0xd5, 0x81, 0x3b, 0x42, 0xdd, 0x86, 0x03, 0xaa, 0x0b, 0xd5, 0x90, 0x9e, 0x8d, 0x5b, 0x3e, 0xd8, 0x2c, 0x57, 0x5b, 0x54, 0xe7, 0x5a, 0x01, 0x1f, 0x27, 0xb8, 0xa5, 0xf2 };
+
+
+typedef struct
+{
+	u8 Boot2Version;
+	u8 Unknown1;
+	u8 Unknown2;
+	u8 Pad;
+	u32 UpdateTag;
+	u16 Checksum;
+} __attribute__((packed)) EepCounter;
+CHECK_SIZE(EepCounter, 0x0A);
+CHECK_OFFSET(EepCounter, 0x00, Boot2Version);
+CHECK_OFFSET(EepCounter, 0x01, Unknown1);
+CHECK_OFFSET(EepCounter, 0x02, Unknown2);
+CHECK_OFFSET(EepCounter, 0x03, Pad);
+CHECK_OFFSET(EepCounter, 0x04, UpdateTag);
+CHECK_OFFSET(EepCounter, 0x08, Checksum);
+
+typedef struct
+{
+	union {
+		struct {
+			u32 MsId;
+			u32 CaId;
+			u32 NgKeyId;
+			u8 NgSignature[60];
+			EepCounter Counters[2];
+			u8 Padding[0x18];
+			u8 KoreanKey[16];
+		};
+		u8 Data[256];
+	};
+} __attribute__((packed)) SeepRom;
+
+CHECK_SIZE(SeepRom, 256);
+CHECK_OFFSET(SeepRom, 0x00, Data);
+CHECK_OFFSET(SeepRom, 0x00, MsId);
+CHECK_OFFSET(SeepRom, 0x04, CaId);
+CHECK_OFFSET(SeepRom, 0x08, NgKeyId);
+CHECK_OFFSET(SeepRom, 0x0C, NgSignature);
+CHECK_OFFSET(SeepRom, 0x48, Counters);
+CHECK_OFFSET(SeepRom, 0x5C, Padding);
+CHECK_OFFSET(SeepRom, 0x74, KoreanKey);
 
 #define SEEPROM_ChipSelectHigh() set32(HW_GPIO1OUT, GP_EEP_CS)
 #define SEEPROM_ChipSelectLow() clear32(HW_GPIO1OUT, GP_EEP_CS)
@@ -182,7 +227,7 @@ static s32 SEEPROM_ReadBuffer(u32 word_offset, void* data, u32 word_count)
 	return IPC_SUCCESS;
 }
 
-void SEEPROM_GetCommonKey(u8 data[OTP_COMMONKEY_SIZE])
+void SEEPROM_GetKoreanCommonKey(u8 data[OTP_COMMONKEY_SIZE])
 {
 	const u32 cookie = DisableInterrupts();
 
