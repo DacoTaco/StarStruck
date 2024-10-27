@@ -49,5 +49,7 @@ s32 SendMessage(const u32 queueId, void* message, u32 flags);
 s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags);
 s32 ReceiveMessage(const u32 queueId, void **message, u32 flags);
 s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flags);
+s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags);
+s32 ReceiveMessageUnsafe(const u32 queueId, void **message, u32 flags);
 
 #endif

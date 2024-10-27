@@ -20,6 +20,7 @@
 #include "messaging/ipc.h"
 #include "messaging/message_queue.h"
 #include "messaging/resourceManager.h"
+#include "crypto/iosc.h"
 #include "filedesc/calls.h"
 #include "filedesc/calls_async.h"
 
@@ -118,17 +119,17 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	0x00000000,					//0x0058
 	0x00000000,					//0x0059
 	0x00000000,					//0x005A
-	0x00000000,					//0x005B
-	0x00000000,					//0x005C
+	IOSC_CreateObject,			//0x005B
+	IOSC_DeleteObject,			//0x005C
 	0x00000000,					//0x005D
 	0x00000000,					//0x005E
 	0x00000000,					//0x005F
 	0x00000000,					//0x0060
 	0x00000000,					//0x0061
 	0x00000000,					//0x0062
-	0x00000000,					//0x0063
-	0x00000000,					//0x0064
-	0x00000000,					//0x0065
+	IOSC_GetData,				//0x0063
+	IOSC_GetKeySize,			//0x0064
+	IOSC_GetSignatureSize,		//0x0065
 	0x00000000,					//0x0066
 	0x00000000,					//0x0067
 	0x00000000,					//0x0068

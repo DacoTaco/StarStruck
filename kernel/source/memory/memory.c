@@ -461,7 +461,7 @@ s32 CheckMemoryBlock(u8* ptr, u32 type, u32 pid, u32 domainPid, u32* blockSize)
 		if((page & PAGE_TYPE_MASK) != COURSE_SECTION)
 			goto return_error;
 
-		AccessPermissionsValue = page << 0x1A;		
+		AccessPermissionsValue = page << 0x1A;
 	}
 	else if(pageType == SECTION_PAGE)
 	{

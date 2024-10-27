@@ -190,7 +190,7 @@ s32 ReceiveMessage(const u32 queueId, void** message, u32 flags)
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
-	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
+	if(queueId >= MAX_MESSAGEQUEUES || flags >= Invalid)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -277,6 +277,29 @@ s32 DestroyMessageQueue(const u32 queueId)
 	MessageQueues[queueId].QueueSize = 0;
 
 restore_and_return:
+	RestoreInterrupts(irqState);
+	return ret;
+}
+
+s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags)
+{
+	const s32 irqState = DisableInterrupts();
+	s32 ret = IPC_EINVAL;
+
+	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
+		ret = SendMessageToQueue(&MessageQueues[queueId], message, flags);
+
+	RestoreInterrupts(irqState);
+	return ret;
+}
+s32 ReceiveMessageUnsafe(const u32 queueId, void **message, u32 flags)
+{
+	const s32 irqState = DisableInterrupts();
+	s32 ret = IPC_EINVAL;
+
+	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
+		ret = ReceiveMessageFromQueue(&MessageQueues[queueId], message, flags);
+
 	RestoreInterrupts(irqState);
 	return ret;
 }

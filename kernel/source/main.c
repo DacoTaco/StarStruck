@@ -32,6 +32,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
 #include "crypto/aes.h"
+#include "crypto/iosc.h"
 #include "crypto/sha.h"
 #include "utils.h"
 #include "elf.h"
@@ -120,7 +121,7 @@ void kernel_main( void )
 	if( ret < 0 || StartThread(threadId) < 0 )
 		panic("failed to start SHA thread!\n");
 
-	/// TODO: Some function goes here, needs research
+	IOSC_InitInformation();
 
 	//create IPC handler thread & also set it to run as system thread
 	ret = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
@@ -330,7 +331,7 @@ u32 _main(void)
 	AhbFlushFrom(AHB_1);
 	AhbFlushTo(AHB_1);
 	
-	InitialiseSystem();	
+	InitialiseSystem();
 
 	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
@@ -339,6 +340,7 @@ u32 _main(void)
 
 	IrqInit();
 	IpcInit();
+	IOSC_Init();
 	
 	//currently unknown if these values are used in the kernel itself.
 	//if they are, these need to be replaced with actual stuff from the linker script!
