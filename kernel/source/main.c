@@ -41,11 +41,8 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"
-#include "crypto.h"
 #include "nand.h"
 #include "boot2.h"
-
-#define PPC_BOOT_FILE "/bootmii/ppcboot.elf"
 
 FATFS fatfs;
 extern const u32 __ipc_heap_start[];
@@ -204,9 +201,6 @@ void kernel_main( void )
 	FRESULT fres = 0;
 
 	//while(1){}
-	
-	crypto_initialize();
-	printk("crypto support initialized\n");
 
 	nand_initialize();
 	printk("NAND initialized.\n");

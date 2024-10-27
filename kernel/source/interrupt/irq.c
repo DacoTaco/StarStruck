@@ -22,7 +22,6 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
 
-#include "crypto.h"
 #include "nand.h"
 #include "sdhc.h"
 

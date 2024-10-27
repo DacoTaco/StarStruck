@@ -12,11 +12,15 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 
 #include <types.h>
 #include <ios/gecko.h>
+#include <ios/processor.h>
+
 #include "core/defines.h"
 #include "core/iosElf.h"
+#include "core/hollywood.h"
 #include "memory/memory.h"
+#include "memory/memory.h"
+#include "crypto/otp.h"
 #include "nand.h"
-#include "crypto.h"
 #include "string.h"
 #include "powerpc.h"
 #include "utils.h"
@@ -64,6 +68,75 @@ static tmd_t tmd MEM2_BSS;
 static tik_t tik MEM2_BSS;
 static u8 *boot2_content;
 static u32 boot2_content_size;
+
+
+#define		AES_CMD_RESET	0
+#define		AES_CMD_DECRYPT	0x9800
+
+static inline void aes_command(u16 cmd, u8 iv_keep, u32 blocks)
+{
+	if (blocks != 0)
+		blocks--;
+	write32(AES_CMD, (cmd << 16) | (iv_keep ? 0x1000 : 0) | (blocks&0x7f));
+	while (read32(AES_CMD) & 0x80000000);
+}
+
+void aes_reset(void)
+{
+	write32(AES_CMD, 0);
+	while (read32(AES_CMD) != 0);
+}
+
+void aes_set_iv(u8 *iv)
+{
+	int i;
+	for(i = 0; i < 4; i++) {
+		write32(AES_IV, *(u32 *)iv);
+		iv += 4;
+	}
+}
+
+void aes_empty_iv(void)
+{
+	int i;
+	for(i = 0; i < 4; i++)
+		write32(AES_IV, 0);
+}
+
+void aes_set_key(u8 *key)
+{
+	int i;
+	for(i = 0; i < 4; i++) {
+		write32(AES_KEY, *(u32 *)key);
+		key += 4;
+	}
+}
+
+void aes_decrypt(u8 *src, u8 *dst, u32 blocks, u8 keep_iv)
+{
+	u32 this_blocks = 0;
+	while(blocks > 0) {
+		this_blocks = blocks;
+		if (this_blocks > 0x80)
+			this_blocks = 0x80;
+
+		write32(AES_SRC, dma_addr(src));
+		write32(AES_DEST, dma_addr(dst));
+
+		DCFlushRange(src, blocks * 16);
+		DCInvalidateRange(dst, blocks * 16);
+
+		AhbFlushTo(AHB_AES);
+		aes_command(AES_CMD_DECRYPT, keep_iv, this_blocks);
+		_ahb_flush_from(AHB_AES);
+		AhbFlushTo(AHB_STARLET);
+
+		blocks -= this_blocks;
+		src += this_blocks<<4;
+		dst += this_blocks<<4;
+		keep_iv = 1;
+	}
+}
 
 // find two equal valid blockmaps from a set of three, return one of them
 static int find_valid_map(const boot2blockmap *maps)
@@ -210,9 +283,11 @@ int boot2_load(u8 copy)
 	memset(iv, 0, 16);
 	memcpy(iv, &tik.titleid, 8);
 
+	STACK_ALIGN(u8, commonKey, OTP_COMMONKEY_SIZE, 32);
+	OTP_FetchData(5, commonKey, OTP_COMMONKEY_SIZE);
 	aes_reset();
 	aes_set_iv(iv);
-	aes_set_key(otp.common_key);
+	aes_set_key(commonKey);
 	memcpy(boot2_key, &tik.cipher_title_key, 16);
 
 	aes_decrypt(boot2_key, boot2_key, 1, 0);

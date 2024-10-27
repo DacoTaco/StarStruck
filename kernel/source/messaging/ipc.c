@@ -32,7 +32,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "nand.h"
 #include "sdhc.h"
 #include "sdmmc.h"
-#include "crypto.h"
 #include "boot2.h"
 #include "powerpc.h"
 #include "panic.h"

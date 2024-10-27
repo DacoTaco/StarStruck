@@ -20,7 +20,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "interrupt/irq.h"
 
 #include "nand.h"
-#include "crypto.h"
 
 // #define	NAND_DEBUG	1
 #define NAND_SUPPORT_WRITE 1
