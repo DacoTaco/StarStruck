@@ -9,7 +9,7 @@
 */
 
 #include <types.h>
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 
 #define MAX_TIMERS		0x100
 

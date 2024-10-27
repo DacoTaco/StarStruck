@@ -15,7 +15,7 @@
 #include "core/defines.h"
 #include "core/hollywood.h"
 #include "interrupt/irq.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "scheduler/timer.h"
 #include "scheduler/threads.h"
 #include "panic.h"

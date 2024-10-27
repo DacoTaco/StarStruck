@@ -19,7 +19,7 @@
 #include "core/hollywood.h"
 #include "core/defines.h"
 #include "interrupt/irq.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "messaging/resourceManager.h"
 #include "messaging/ipc.h"
 #include "filedesc/filedesc_types.h"

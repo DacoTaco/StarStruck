@@ -18,7 +18,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "scheduler/threads.h"
 #include "scheduler/timer.h"
 #include "memory/memory.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "core/hollywood.h"
 #include "messaging/ipc.h"
 

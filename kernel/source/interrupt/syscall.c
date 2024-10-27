@@ -18,7 +18,7 @@
 #include "memory/heaps.h"
 #include "memory/ahb.h"
 #include "messaging/ipc.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "messaging/resourceManager.h"
 #include "crypto/iosc.h"
 #include "filedesc/calls.h"
