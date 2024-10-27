@@ -17,7 +17,7 @@
 #include "crypto/seeprom.h"
 #include "interrupt/irq.h"
 #include "memory/memory.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include <ios/errno.h>
 #include <ios/ipc.h>
 

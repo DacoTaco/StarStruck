@@ -54,7 +54,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #ifndef __ASSEMBLER__
 
 #include <types.h>
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 
 typedef struct
 {

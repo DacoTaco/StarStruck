@@ -18,7 +18,7 @@
 #include "memory/heaps.h"
 #include "memory/ahb.h"
 #include "messaging/ipc.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "messaging/resourceManager.h"
 #include "crypto/iosc.h"
 #include "filedesc/calls.h"
@@ -118,7 +118,7 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	0x00000000,					//0x0057
 	0x00000000,					//0x0058
 	0x00000000,					//0x0059
-	0x00000000,					//0x005A
+	LaunchRM,					//0x005A
 	IOSC_CreateObject,			//0x005B
 	IOSC_DeleteObject,			//0x005C
 	0x00000000,					//0x005D

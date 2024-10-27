@@ -13,8 +13,8 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include <types.h>
 #include <ios/gecko.h>
 #include "core/defines.h"
+#include "core/iosElf.h"
 #include "memory/memory.h"
-#include "elf.h"
 #include "nand.h"
 #include "crypto.h"
 #include "string.h"

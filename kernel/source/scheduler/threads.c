@@ -13,11 +13,18 @@
 #include <ios/processor.h>
 #include <ios/gecko.h>
 #include <ios/errno.h>
+#include <ios/module.h>
 
 #include "core/defines.h"
+#include "core/iosElf.h"
 #include "interrupt/irq.h"
 #include "scheduler/threads.h"
+#include "messaging/ipc.h"
+#include "filedesc/calls.h"
 #include "memory/memory.h"
+#include "memory/heaps.h"
+
+#include "panic.h"
 
 extern const u32 __thread_stacks_area_start[];
 extern const u32 __thread_stacks_area_size[];
@@ -569,5 +576,188 @@ s32 SetGID(u32 pid, u16 gid)
 	
 restore_and_return:
 	RestoreInterrupts(irqState);
+	return ret;
+}
+s32 LaunchRM(const char* path)
+{
+	if(GetUID() != 0)
+		return IPC_EACCES;
+
+	//*technically* heapid 0 isn't correct here. the kernel heap id just happens to be always 0, but... :)
+	//but hey, this is what IOS did!
+	Elf32_Ehdr* elfHeader = (Elf32_Ehdr*)AllocateOnHeap(0, sizeof(Elf32_Ehdr));
+	if(elfHeader == NULL)
+		return IPC_EMAX;
+
+	const u32 elfMagic = ELFMAGIC;
+	Elf32_Nhdr* noteHeader = NULL;
+	Elf32_Phdr* programHeaders = NULL;
+	s32 fd = OpenFD(path, IOS_OPEN);
+	s32 ret = fd;
+	if(ret < 0)
+		goto cleanup_launch;
+	
+	if(ReadFD(fd, elfHeader, 4) != 4)
+		goto cleanup_launch;
+	
+	if(memcmp(elfHeader, &elfMagic, 4) != 0)
+	{
+		ret = 0;
+		goto cleanup_launch;
+	}
+
+	ret = SeekFD(fd, 0, 0);
+	if(ret != 0)
+		goto cleanup_launch;
+	
+	ret = ReadFD(fd, elfHeader, sizeof(Elf32_Ehdr));
+	if(ret != sizeof(Elf32_Ehdr))
+		goto cleanup_launch;
+
+	if(ELFMAGIC != *((u32*)&elfHeader->e_ident[EI_MAG0]) || IOSELFINFO != *((u32*)&elfHeader->e_ident[EI_CLASS]))
+	{
+		ret = IPC_EINVAL;
+		goto cleanup_launch;
+	}
+
+	if(elfHeader->e_machine != EM_ARM || elfHeader->e_type != ET_EXEC || elfHeader->e_version != 1 || (elfHeader->e_flags && 0x21) != 0)
+	{
+		ret = IPC_EINVAL;
+		goto cleanup_launch;
+	}
+
+	programHeaders = (Elf32_Phdr*)AllocateOnHeap(0, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
+	if(!programHeaders)
+	{
+		ret = IPC_EMAX;
+		goto cleanup_launch;
+	}
+
+	ret = ReadFD(fd, programHeaders, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
+	if(ret != (s32)(sizeof(Elf32_Phdr) * elfHeader->e_phnum))
+		goto cleanup_launch;
+
+	noteHeader = AllocateOnHeap(0, 0x4000);
+	if(!noteHeader)
+	{
+		ret = IPC_EMAX;
+		goto cleanup_launch;
+	}
+
+	u32 headerCount = elfHeader->e_phnum;
+	u32 noteLength = 0;
+	u32 noteOffset = 0;
+	for(u32 headerIndex = 0; headerIndex < headerCount; headerIndex++)
+	{
+		Elf32_Phdr* programHeader = programHeaders + headerIndex;
+		if(programHeader->p_type == PT_LOAD)
+		{
+			noteLength = programHeader->p_filesz;
+			noteOffset = programHeader->p_offset;
+			continue;
+		}
+
+		if(programHeader->p_type != PT_LOAD || programHeader->p_vaddr == 0)
+			continue;
+
+		MemorySection section = 
+		{
+			.PhysicalAddress = programHeader->p_paddr,
+			.VirtualAddress = programHeader->p_vaddr,
+			.Size = (programHeader->p_memsz + 0xFFF) & 0xFFFFF000,
+			.Domain = 0,
+			.AccessRights = AP_RWUSER,
+			.IsCached = 1
+		};
+
+		if(MapMemory(&section) != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+
+		ret = SeekFD(fd, (s32)programHeader->p_offset, 0);
+		if(ret < 0)
+			goto cleanup_launch;
+
+		ret = ReadFD(fd, (void*)programHeader->p_vaddr, programHeader->p_filesz);
+		if(ret != (s32)programHeader->p_filesz)
+			goto cleanup_launch;
+
+		//if the filecontent < the memory size we need to clear it
+		if(ret < (s32)programHeader->p_memsz)
+			memset((void*)programHeader->p_vaddr, 0, programHeader->p_memsz - (u32)ret);
+
+		//unknown flags
+		switch(programHeader->p_flags)
+		{
+			case 2:
+				section.AccessRights = AP_RWUSER;
+				break;
+			case 0:
+				section.AccessRights = AP_ROM;
+				break;
+			case 1:
+			default:
+				section.AccessRights = AP_ROUSER;
+				break;
+		}
+
+		section.Domain = FLAGSTODOMAIN(programHeader->p_flags << 6);
+		if(MapMemory(&section) != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+
+		//map virtual address
+		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
+		section.IsCached = 0;
+		if(MapMemory(&section) != 0)
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
+
+		//no idea why but hey, you do you IOS
+		ret = elfHeader->e_phnum;
+	}
+
+	ret = 0;
+	DCFlushAll();
+	ICInvalidateAll();
+	AhbFlushFrom(AHB_1);
+	AhbFlushTo(AHB_1);
+
+	if(noteLength == 0)
+		goto cleanup_launch;
+
+	ret = SeekFD(fd, (s32)noteOffset, 0);
+	if(ret < 0)
+		goto cleanup_launch;
+
+	ret = ReadFD(fd, noteHeader, noteLength);
+	if(ret != (s32)noteLength)
+		goto cleanup_launch;
+
+	ret = 0;
+	const u32 noteSize = noteHeader->n_descsz / sizeof(ModuleInfo);
+	const ModuleInfo* module = (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
+	for(u32 index = 0; index < noteSize; index++)
+	{		
+		u32 threadId = (u32)CreateThread(module[index].EntryPoint, (void*)module[index].UserId, (u32*)module[index].StackAddress, module[index].StackSize, module[index].Priority, 1);
+		Threads[threadId].ProcessId = module[index].UserId;
+		
+		//wtf IOS?
+		u32 currentProcessId = CurrentThread->ProcessId;
+		CurrentThread->ProcessId = 0;
+		StartThread(threadId);
+		CurrentThread->ProcessId = currentProcessId;
+	}	
+
+cleanup_launch:
+	if(fd >= 0)
+		CloseFD(fd);
+
+	if(programHeaders)
+		FreeOnHeap(0, programHeaders);
+	
+	if(elfHeader)
+		FreeOnHeap(0, elfHeader);
+	
+	if(noteHeader)
+		FreeOnHeap(0, noteHeader);
+
 	return ret;
 }

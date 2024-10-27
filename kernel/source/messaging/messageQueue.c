@@ -14,7 +14,7 @@
 #include "interrupt/irq.h"
 #include "scheduler/threads.h"
 #include "memory/memory.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];

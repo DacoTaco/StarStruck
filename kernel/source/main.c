@@ -22,6 +22,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "core/hollywood.h"
 #include "core/gpio.h"
 #include "core/pll.h"
+#include "core/iosElf.h"
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "memory/ahb.h"
@@ -35,7 +36,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "crypto/iosc.h"
 #include "crypto/sha.h"
 #include "utils.h"
-#include "elf.h"
 
 #include "sdhc.h"
 #include "ff.h"
@@ -172,7 +172,7 @@ void kernel_main( void )
 		if(ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 		
-		printk("load segment @ [%08x, %08x] (%d bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
+		printk("load segment @ [%08lx, %08lx] (%ld bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz, header.p_memsz);
 
 		//clear memory that didn't have stuff loaded in from the elf
 		if(header.p_filesz < header.p_memsz)

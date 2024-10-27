@@ -105,4 +105,5 @@ u32 GetUID(void);
 s32 SetUID(u32 pid, u32 uid);
 u16 GetGID(void);
 s32 SetGID(u32 pid, u16 gid);
+s32 LaunchRM(const char* path);
 #endif

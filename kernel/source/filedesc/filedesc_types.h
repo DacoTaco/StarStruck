@@ -12,7 +12,7 @@
 #define __FILEDESC_TYPES_H__
 
 #include "messaging/ipc.h"
-#include "messaging/message_queue.h"
+#include "messaging/messageQueue.h"
 #include "messaging/resourceManager.h"
 
 typedef union {

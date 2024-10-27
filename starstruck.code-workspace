@@ -34,8 +34,6 @@
 			"kernel/**": true,
 			"core/**": true,
 			"elfloader/**": true,
-			"modules/**": true,
-			"tools/**": true,
 			"sdk/**": true,
 			"**/.git": true,
 			"**/.svn": true,
