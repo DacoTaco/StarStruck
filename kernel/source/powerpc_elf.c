@@ -9,6 +9,7 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <elf.h>
 #include <string.h>
 #include <ios/gecko.h>
 
@@ -18,7 +19,6 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "utils.h"
 #include "ff.h"
 #include "powerpc_elf.h"
-#include "elf.h"
 
 #define PPC_MEM1_END	(0x017fffff)
 #define PPC_MEM2_START	(0x10000000)
@@ -78,7 +78,7 @@ int powerpc_boot_file(const char *path)
 	}
 
 	if (_check_physaddr(elfhdr.e_entry) < 0) {
-		gecko_printf("Invalid entry point! 0x%08x\n", elfhdr.e_entry);
+		gecko_printf("Invalid entry point! 0x%08lx\n", elfhdr.e_entry);
 		return -102;
 	}
 
@@ -110,17 +110,17 @@ int powerpc_boot_file(const char *path)
 
 	while (count--) {
 		if (phdr->p_type != PT_LOAD) {
-			gecko_printf("Skipping PHDR of type %d\n", phdr->p_type);
+			gecko_printf("Skipping PHDR of type %ld\n", phdr->p_type);
 		} else {
 			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0) {
-				gecko_printf("PHDR out of bounds [0x%08x...0x%08x]\n",
+				gecko_printf("PHDR out of bounds [0x%08lx...0x%08lx]\n",
 								phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
 				return -106;
 			}
 
 			void *dst = (void *) phdr->p_paddr;
 
-			gecko_printf("LOAD 0x%x @0x%08x [0x%x]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
+			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
 			fres = f_lseek(&fd, phdr->p_offset);
 			if (fres != FR_OK)
 				return -fres;
@@ -158,7 +158,7 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 	}
 
 	if (_check_physaddr(ehdr->e_entry) < 0) {
-		gecko_printf("Invalid entry point! 0x%08x\n", ehdr->e_entry);
+		gecko_printf("Invalid entry point! 0x%08lx\n", ehdr->e_entry);
 		return -102;
 	}
 
@@ -186,15 +186,15 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 
 	while (count--) {
 		if (phdr->p_type != PT_LOAD) {
-			gecko_printf("Skipping PHDR of type %d\n", phdr->p_type);
+			gecko_printf("Skipping PHDR of type %ld\n", phdr->p_type);
 		} else {
 			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0) {
-				gecko_printf("PHDR out of bounds [0x%08x...0x%08x]\n",
+				gecko_printf("PHDR out of bounds [0x%08lx...0x%08lx]\n",
 								phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
 				return -106;
 			}
 
-			gecko_printf("LOAD 0x%x @0x%08x [0x%x]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
+			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
 			memcpy((void *) phdr->p_paddr, &addr[phdr->p_offset],
 					phdr->p_filesz);
 		}
