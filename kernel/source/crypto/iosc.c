@@ -123,7 +123,7 @@ static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 			return IOSC_EINVAL;
 
 		KeyringEntries[keyringIndex].IsUsed = 0;
-		const s16 nextKeyringIndex = KeyringEntries[keyringIndex].KeyNextPartIndex;
+		const s16 nextKeyringIndex = (s16)KeyringEntries[keyringIndex].KeyNextPartIndex;
 		Keyring_ClearEntryData((u16)keyringIndex);
 
 		keyringIndex = nextKeyringIndex;

@@ -283,7 +283,7 @@ restore_and_return:
 
 s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags)
 {
-	const s32 irqState = DisableInterrupts();
+	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
 
 	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
@@ -294,7 +294,7 @@ s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags)
 }
 s32 ReceiveMessageUnsafe(const u32 queueId, void **message, u32 flags)
 {
-	const s32 irqState = DisableInterrupts();
+	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
 
 	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
