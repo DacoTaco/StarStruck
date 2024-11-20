@@ -620,7 +620,7 @@ s32 LaunchRM(const char* path)
 		goto cleanup_launch;
 	}
 
-	if(elfHeader->e_machine != EM_ARM || elfHeader->e_type != ET_EXEC || elfHeader->e_version != 1 || (elfHeader->e_flags && 0x21) != 0)
+	if(elfHeader->e_machine != EM_ARM || elfHeader->e_type != ET_EXEC || elfHeader->e_version != 1 || (elfHeader->e_flags & 0x21) != 0)
 	{
 		ret = IPC_EINVAL;
 		goto cleanup_launch;
