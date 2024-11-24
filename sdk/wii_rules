@@ -17,11 +17,11 @@ CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -ffunction-sections -pi
 ASFLAGS = $(ARCH) 
 LDFLAGS = $(ARCH) -n -nostartfiles -nodefaultlibs
 LIBDIRS = 
-
+SDKLIBS  = $(SDKDIR)/lib/libc.a $(SDKDIR)/lib/libm.a $(SDKDIR)/lib/libg.a 
 
 %.elf:
 	$(SILENTMSG) linking $(notdir $@)
-	$(SILENTCMD)$(LD) $(LIB_DIR) $(LDFLAGS) $(SPECSFLAGS) $(OFILES) -o $@ $(LIBPATHS) $(LIBS) -lgcc 
+	$(SILENTCMD)$(LD) $(LIB_DIR) $(LDFLAGS) $(SPECSFLAGS) $(OFILES) -o $@ $(LIBPATHS) $(LIBS) -lgcc $(SDKLIBS)
 	$(SILENTCMD)$(NM) -CSn $@ > $(notdir $*.lst)
 	
 %.a:

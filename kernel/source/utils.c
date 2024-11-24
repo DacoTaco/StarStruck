@@ -8,9 +8,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include <stdarg.h>
 #include <types.h>
-#include <vsprintf.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <ios/gecko.h>
 #include <ios/processor.h>
 

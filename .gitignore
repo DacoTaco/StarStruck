@@ -13,3 +13,5 @@ git_version.h
 **/lib/
 **/sdk/include/**
 tools/ppcloader/build/
+**/sdk/lib
+**/sdk/include

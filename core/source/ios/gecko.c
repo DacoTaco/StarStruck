@@ -13,7 +13,8 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "ios/processor.h"
 #include "ios/gecko.h"
 #include "types.h"
-#include "vsprintf.h"
+#include <stdio.h>
+#include <stdarg.h>
 #include "string.h"
 #include "elf.h"
 
