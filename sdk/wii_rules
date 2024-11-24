@@ -13,15 +13,16 @@ endif
 LIB_INC = -I $(SDKDIR)/include
 LIB_DIR = -L $(SDKDIR)/lib
 ARCH 	= -mbig-endian -mcpu=arm926ej-s
-CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
+CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -nostdlib -fno-builtin -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
+CXXFLAGS = $(CFLAGS)
 ASFLAGS = $(ARCH) 
 LDFLAGS = $(ARCH) -n -nostartfiles -nodefaultlibs
 LIBDIRS = 
-
+SDKLIBS = $(SDKDIR)/lib/libc.a $(SDKDIR)/lib/libm.a $(SDKDIR)/lib/libg.a -lgcc
 
 %.elf:
 	$(SILENTMSG) linking $(notdir $@)
-	$(SILENTCMD)$(LD) $(LIB_DIR) $(LDFLAGS) $(SPECSFLAGS) $(OFILES) -o $@ $(LIBPATHS) $(LIBS) -lgcc 
+	$(SILENTCMD)$(LD) $(OFILES) $(LDFLAGS) $(LIB_DIR) $(SPECSFLAGS) $(LIBPATHS) $(LIBS) $(SDKLIBS) -o $@
 	$(SILENTCMD)$(NM) -CSn $@ > $(notdir $*.lst)
 	
 %.a:

@@ -95,6 +95,10 @@ SECTIONS
 		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .rodata.*)
 		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .gnu.linkonce.r*)
 		. = ALIGN(4);
+		*(.ARM.extab* .gnu.linkonce.armextab.*)
+	    __exidx_start = .;
+	    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+	    __exidx_end = .;
 	} > kernel : rodata
 
 	.data.sram (NOLOAD) : ALIGN(4)

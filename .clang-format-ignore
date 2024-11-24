@@ -1,5 +1,4 @@
 # Skip MINI's files
-core/source/vsprintf.c
 kernel/source/boot2_mini.c
 kernel/source/boot2.h
 kernel/source/diskio.c

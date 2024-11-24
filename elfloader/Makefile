@@ -36,10 +36,13 @@ ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(TARGET).map
 endif
 
+
+LDFLAGS += -Wl,--no-warn-rwx-segments
+
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lcore
+LIBS	:= 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

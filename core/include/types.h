@@ -42,7 +42,6 @@ typedef u32 size_t;
 #define StaticAssert _Static_assert
 #endif
 
-#define NULL       ((void *)0)
 #define ALIGNED(x) __attribute__((aligned(x)))
 
 #define STACK_ALIGN(type, name, cnt, alignment)                                   \

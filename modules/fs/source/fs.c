@@ -11,6 +11,8 @@
 
 #include "fs.h"
 
+char TestData[500] __attribute__((section(".module.data"))) = { 1, 2, 3 };
+
 int main(void)
 {
 	u32 messageQueueMessages[8] ALIGNED(0x10);
@@ -25,7 +27,7 @@ int main(void)
 
 	while (1)
 	{
-		s32 ret = OSReceiveMessage(messageQueueId, &message, 0);
+		s32 ret = OSReceiveMessage(messageQueueId, &TestData, 0);
 		if (ret < 0)
 			break;
 	}

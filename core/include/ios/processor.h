@@ -185,9 +185,6 @@ u32 GetCurrentStatusRegister(void);
 u32 GetSavedStatusRegister();
 void BusyDelay(u32 delay);
 void debug_output(u8 byte);
-int sprintf(char *str, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-int snprintf(char *str, size_t size, const char *fmt, ...)
-    __attribute__((format(printf, 3, 4)));
 
 #endif
 #endif

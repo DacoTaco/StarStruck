@@ -8,10 +8,11 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#include "types.h"
-#include "vsprintf.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
+#include "types.h"
 #include "ios/syscalls.h"
 #include "ios/printk.h"
 

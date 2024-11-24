@@ -11,6 +11,8 @@
 
 #include "es.h"
 
+char TestData[500] __attribute__ ((section (".module.data"))) = { 1,2,3};
+
 int main(void)
 {
 	u32 *message;
@@ -29,7 +31,7 @@ int main(void)
 
 	while (1)
 	{
-		OSReceiveMessage(EsMessageQueueId, &message, 0);
+		OSReceiveMessage(EsMessageQueueId, &TestData, 0);
 	}
 	return 0;
 }

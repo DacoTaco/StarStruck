@@ -9,6 +9,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <stdio.h>
 #include <ios/errno.h>
 #include <ios/processor.h>
 #include <string.h>

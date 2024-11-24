@@ -70,6 +70,10 @@ SECTIONS
 		*(.rodata)
 		*(.roda)
 		*(.rodata.*)
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
+	    __exidx_start = .;
+	    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+	    __exidx_end = .;
 		. = ALIGN(4);
 		__module_end = .;
 	} :ro
