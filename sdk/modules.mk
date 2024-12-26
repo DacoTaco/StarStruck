@@ -2,8 +2,7 @@
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	+= -DCAN_HAZ_USBGECKO -D__PRIORITY=$(PRIORITY)
-CFLAGS	+= $(INCLUDE)
+CFLAGS	+= -D__PRIORITY=$(PRIORITY) $(INCLUDE)
 ASFLAGS	+= $(CFLAGS)
 SOURCES	+= $(SDKDIR)/modules/
 
@@ -20,13 +19,13 @@ LDFLAGS += -Wl,-T$(TARGET).ld -Wl,--section-start,.module=$(VIRTUALADDR)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lcore -lgcc 
+LIBS	:= -lcore
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../../$(COREDIR) $(SDKDIR)
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

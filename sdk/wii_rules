@@ -1,0 +1,31 @@
+ifeq ($(strip $(DEVKITARM)),)
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+endif
+
+include $(DEVKITARM)/base_rules
+
+ifeq ($(SPECS),)
+SPECSFLAGS = -specs $(SDKDIR)/starlet.specs
+else
+SPECSFLAGS = -specs $(SPECS)
+endif
+
+LIB_INC = -I $(SDKDIR)/include -I $(SDKDIR)/../core/include
+LIB_DIR = -L $(SDKDIR)/../core/lib
+ARCH 	= -mbig-endian -mcpu=arm926ej-s
+CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
+ASFLAGS = $(ARCH) 
+LDFLAGS = $(ARCH) -n -nostartfiles -nodefaultlibs
+LIBDIRS = 
+
+
+%.elf:
+	$(SILENTMSG) linking $(notdir $@)
+	$(SILENTCMD)$(LD) $(LIB_DIR) $(LDFLAGS) $(SPECSFLAGS) $(OFILES) -o $@ $(LIBPATHS) $(LIBS) -lgcc 
+	$(SILENTCMD)$(NM) -CSn $@ > $(notdir $*.lst)
+	
+%.a:
+	$(SILENTMSG) archiving $(notdir $@)
+	$(SILENTCMD)rm -f $@
+	$(SILENTCMD)$(AR) -rc $@ $(OFILES)
+	$(SILENTCMD)$(RANLIB) $@

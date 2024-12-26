@@ -1,0 +1,8 @@
+
+#include the common that does most of the work
+include $(SDKDIR)/wii_rules
+
+#set code to be compiled as thumb code
+CFLAGS  := $(CFLAGS) -mthumb
+LDFLAGS := $(LDFLAGS) -mthumb
+

@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
 endif
 
-include $(SDKDIR)/starstruck.mk
+include $(SDKDIR)/starstruck_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -19,8 +19,7 @@ include $(SDKDIR)/starstruck.mk
 #
 #---------------------------------------------------------------------------------
 TARGET			:= armboot
-LDSCRIPT 		= kernel.ld
-MAKEBIN 		= tools/makebin.py
+MAKEBIN 		:= tools/makebin.py
 BUILD			:= build
 SOURCES			:= source $(wildcard source/*/)
 INCLUDES		:= source
@@ -30,40 +29,27 @@ MODULES			:= fs es
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CFLAGS += -DCAN_HAZ_USBGECKO
-# disables debug spew over usbgecko
-#CFLAGS += -DNDEBUG
-# enables LFCR linefeeds for usbgecko output, useful for some terminal apps
-#CFLAGS += -DGECKO_LFCR
-# uses the 'safe' version of the usbgecko receive and send functions
-#CFLAGS += -DGECKO_SAFE
-
 MODULESPATH = ../modules
 MODULESCRIPT = iosModules
 CFLAGS	+= $(INCLUDE)
 CXXFLAGS = $(CFLAGS)
 ASFLAGS += $(CFLAGS)
-LDFLAGS += -Wl,--no-warn-rwx-segments
+LDFLAGS += -Wl,--no-warn-rwx-segments -L ../tools/ -T kernel.ld
 
 ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(notdir $@).map
 endif
 
-ifneq ($(LDSCRIPT),)
-LDFLAGS += -Wl,-T$(LDSCRIPT)
-endif
-
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lcore -lgcc 
+LIBS	:= -lcore
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../$(COREDIR) ../tools
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

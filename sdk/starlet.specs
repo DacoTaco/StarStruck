@@ -1,0 +1,4 @@
+%rename link base_link
+
+*link:
+%(base_link) --use-blx --gc-sections

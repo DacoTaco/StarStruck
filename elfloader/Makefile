@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
 endif
 
-include $(SDKDIR)/starlet.mk
+include $(SDKDIR)/wii_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -19,40 +19,33 @@ include $(SDKDIR)/starlet.mk
 #
 #---------------------------------------------------------------------------------
 TARGET			:= elfloader
-LDSCRIPT 		= stub.ld
-MAKEBIN 		= tools/makebin.py
 BUILD			:= build
 SOURCES			:= source
 INCLUDES		:= source
 DATA			:= data
 
-
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS += -fpic
-CFLAGS	+=	$(INCLUDE)
+CFLAGS += -fpic $(INCLUDE)
 ASFLAGS += $(CFLAGS)
+LDFLAGS += -Wl,--no-warn-rwx-segments
 
 ifeq ($(NOMAPFILE),)
 LDFLAGS += -Wl,-Map,$(TARGET).map
 endif
 
-ifneq ($(LDSCRIPT),)
-LDFLAGS += -Wl,-T../$(LDSCRIPT)
-endif
-
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lcore -lgcc 
+LIBS	:= -lcore
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../$(COREDIR)
+LIBDIRS	:= ../../core
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -62,6 +55,7 @@ LIBDIRS	:=	../../$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
+export SPECS	 		 =	../elfloader.specs
 export OUTPUT			:=	$(CURDIR)/$(TARGET)
 export OUTPUT_BIN		:=	$(CURDIR)/$(TARGET)
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \

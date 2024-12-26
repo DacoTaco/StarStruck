@@ -57,7 +57,8 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(KERNELDIR),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -69,7 +70,7 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-STARLETFILES:=	armboot.bin
+BINFILES	+=	$(foreach dir,$(KERNELDIR),$(notdir $(wildcard $(dir)/*.bin)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -81,7 +82,6 @@ else
 endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(addsuffix .o,$(STARLETFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) 				
 
@@ -128,10 +128,6 @@ DEPENDS	:=	$(OFILES:.o=.d)
 $(OUTPUT).dol: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
-armboot: armboot.bin.o
-armboot.bin.o : ../$(KERNELDIR)/armboot.bin
-	@echo $(notdir $<)
-	$(bin2o)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .bin extension
 #---------------------------------------------------------------------------------

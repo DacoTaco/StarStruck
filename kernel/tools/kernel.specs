@@ -1,0 +1,6 @@
+%include <../../sdk/starlet.specs>
+
+%rename link old_link
+
+*link:
+%(old_link) -T kernel.ld%s

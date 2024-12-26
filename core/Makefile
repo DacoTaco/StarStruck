@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../sdk
 endif
 
-include $(SDKDIR)/starstruck.mk
+include $(SDKDIR)/starstruck_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -19,6 +19,7 @@ include $(SDKDIR)/starstruck.mk
 #
 #---------------------------------------------------------------------------------
 TARGET		:= libcore
+OUTPUTDIR	:= lib
 BUILD		:= build
 SOURCES		:= source $(wildcard source/*/)
 INCLUDES	:= include
@@ -27,8 +28,7 @@ DATA		:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS 	+= -DCAN_HAZ_USBGECKO -fpie
-CFLAGS	+=	$(INCLUDE)
+CFLAGS 	+= -fpie $(INCLUDE)
 ASFLAGS += $(CFLAGS)
 
 #---------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ LIBS	:= -lgcc
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-export LIBDIRS	:=	$(COREDIR)
+export LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -50,7 +50,7 @@ export LIBDIRS	:=	$(COREDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/$(OUTPUTDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -88,6 +88,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 #---------------------------------------------------------------------------------
 $(BUILD): ./include/git_version.h
 	@[ -d $@ ] || mkdir -p $@
+	$(SILENTCMD) mkdir -p $(OUTPUTDIR)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
 
 ./include/git_version.h: describesimple.sh
@@ -97,7 +98,7 @@ $(BUILD): ./include/git_version.h
 #---------------------------------------------------------------------------------
 clean:
 	$(SILENTCMD)echo clean ...
-	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a ./include/git_version.h 
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUTDIR) ./include/git_version.h 
 
 
 #---------------------------------------------------------------------------------
@@ -106,7 +107,7 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).a	:	$(OFILES)
+$(OUTPUT).a	: $(OFILES)
 
 #we don't want gcc to rewrite our code in string.c. it would cause GCC to replace some parts of memset with a call to memset
 #that... isn't correct for obvious reasons :)

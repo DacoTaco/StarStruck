@@ -15,7 +15,7 @@ endif
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	../../../$(COREDIR) $(SDKDIR)
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

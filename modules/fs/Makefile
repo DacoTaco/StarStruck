@@ -5,7 +5,7 @@ ifeq ($(SDKDIR),)
 SDKDIR = ../../sdk
 endif
 
-include $(SDKDIR)/starstruck.mk
+include $(SDKDIR)/starstruck_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output

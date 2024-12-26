@@ -35,6 +35,7 @@
 			"core/**": true,
 			"elfloader/**": true,
 			"sdk/**": true,
+			"**/lib/**": true,
 			"**/.git": true,
 			"**/.svn": true,
 			"**/.hg": true,

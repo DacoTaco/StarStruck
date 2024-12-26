@@ -10,8 +10,6 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
-#ifdef CAN_HAZ_USBGECKO
-
 #include "ios/processor.h"
 #include "ios/gecko.h"
 #include "types.h"
@@ -79,8 +77,6 @@ static u32 _gecko_getid(void)
 	write32(EXI1_CSR, 0);
 	return i;
 }
-
-#ifndef NDEBUG
 static u32 _gecko_sendbyte(u8 sendbyte)
 {
 	u32 i = 0;
@@ -89,7 +85,6 @@ static u32 _gecko_sendbyte(u8 sendbyte)
 		return 1; // Return 1 if byte was sent
 	return 0;
 }
-#endif
 
 u32 _gecko_recvbyte(u8 *recvbyte)
 {
@@ -104,7 +99,7 @@ u32 _gecko_recvbyte(u8 *recvbyte)
 	return 0;
 }
 
-#if !defined(NDEBUG) && defined(GECKO_SAFE)
+#if defined(GECKO_SAFE)
 static u32 _gecko_checksend(void)
 {
 	u32 i = 0;
@@ -145,7 +140,7 @@ void gecko_flush(void)
 	while(_gecko_recvbyte(&tmp));
 }
 
-#if !defined(NDEBUG) && !defined(GECKO_SAFE)
+#if !defined(GECKO_SAFE)
 static u32 gecko_sendbuffer(const void *buffer, u32 size)
 {
 	u32 left = size;
@@ -154,12 +149,8 @@ static u32 gecko_sendbuffer(const void *buffer, u32 size)
 	while(left>0) {
 		if(!_gecko_sendbyte(*ptr))
 			break;
-		if(*ptr == '\n') {
-#ifdef GECKO_LFCR
-			_gecko_sendbyte('\r');
-#endif
+		if(*ptr == '\n')
 			break;
-		}
 		ptr++;
 		left--;
 	}
@@ -167,7 +158,7 @@ static u32 gecko_sendbuffer(const void *buffer, u32 size)
 }
 #endif
 
-#if !defined(NDEBUG) && defined(GECKO_SAFE)
+#if defined(GECKO_SAFE)
 static u32 gecko_sendbuffer_safe(const void *buffer, u32 size)
 {
 	u32 left = size;
@@ -180,12 +171,8 @@ static u32 gecko_sendbuffer_safe(const void *buffer, u32 size)
 		if(_gecko_checksend()) {
 			if(!_gecko_sendbyte(*ptr))
 				break;
-			if(*ptr == '\n') {
-#ifdef GECKO_LFCR
-				_gecko_sendbyte('\r');
-#endif
+			if(*ptr == '\n')
 				break;
-			}
 			ptr++;
 			left--;
 		}
@@ -242,6 +229,3 @@ u32 gecko_printf(const char *fmt, ...)
 #endif
 }
 #endif
-
-#endif
-

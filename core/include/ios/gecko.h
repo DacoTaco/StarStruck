@@ -14,8 +14,6 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #ifndef __GECKOCORE_H__
 #define __GECKOCORE_H__
 
-#ifdef CAN_HAZ_USBGECKO
-
 #include "types.h"
 
 extern u8 gecko_found;
@@ -24,20 +22,7 @@ u8 gecko_enable_console(const u8 enable);
 u32 gecko_checkrecv(void);
 u32 _gecko_recvbyte(u8 *recvbyte);
 void gecko_flush(void);
-
-#ifdef NDEBUG
-#define gecko_printf(...) do { } while(0)
-#else
 u32 gecko_printf(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-#endif
-
-#else
-#define gecko_init(...) do { } while(0)
-#define gecko_enable_console(...) do { } while(0)
-#define gecko_printf(...) do { } while(0)
-#define gecko_timer(...) do { } while(0)
-#define gecko_checkrecv(...) do { } while(0)
-#endif
 
 #endif
 
