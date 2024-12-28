@@ -46,7 +46,7 @@
 #define ARGEXTRACT_EVEN_LOOP_BODY(x, y, ...) __VA_OPT__(,) y
 #define ARGEXTRACT_FULL_LOOP_BODY(x, y, ...) __VA_OPT__(,) x y
 
-// this creates a function withe the _Inner suffix, and extracts every pair inside arguments to its argument list
+// this creates a function with the _Inner suffix, and extracts every pair inside arguments to its argument list
 #define DEFINE_FD_FUNCS(rettype, name, arguments) \
 	rettype name ## FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments), MessageQueue* messageQueue, IpcMessage* message); \
 	WRAP_INNER_CALL(rettype, name, arguments)
