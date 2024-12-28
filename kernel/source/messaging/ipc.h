@@ -47,6 +47,9 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 
+// IpcMessageArray contains 1 message per thread (= MAX_THREADS), plus these extra messages
+#define IPC_EXTRA_MESSAGES	128
+
 extern IpcMessage* IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];

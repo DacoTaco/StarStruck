@@ -43,9 +43,9 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	if (ThreadMessageUsageArray[currentThreadId] == thread_open_msg_limit)
 		return IPC_EMAX;
 
-	for (int i = 0; i < 128; ++i)
+	for (int i = 0; i < IPC_EXTRA_MESSAGES; ++i)
 	{
-		IpcMessage *destination = &IpcMessageArray[100 + i];
+		IpcMessage *destination = &IpcMessageArray[MAX_THREADS + i];
 		if (destination->IsInQueue)
 			continue;
 
