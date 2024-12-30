@@ -12,8 +12,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __IPC_H__
-#define __IPC_H__
+#pragma once
 
 #include "types.h"
 #include "ios/ipc.h"
@@ -54,12 +53,12 @@ extern unsigned ThreadMessageUsageArray[MAX_THREADS];
 extern ThreadInfo* IpcHandlerThread;
 extern u32 IpcHandlerThreadId;
 
+#ifndef MIOS
 void IpcInit(void);
 void IpcHandler(void);
+#endif
+
 s32 ResourceReply(IpcMessage* message, s32 requestReturnValue);
 s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
 
 void ipc_shutdown(void);
-
-#endif
-

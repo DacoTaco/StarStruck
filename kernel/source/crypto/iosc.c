@@ -21,6 +21,8 @@
 #include <ios/errno.h>
 #include <ios/ipc.h>
 
+#ifndef MIOS
+
 static u32 IOSC_BOOT2_DummyVersion = 0;
 static u32 IOSC_BOOT2_DummyUnk1 = 0;
 static u32 IOSC_BOOT2_DummyUnk2 = 0;
@@ -483,3 +485,5 @@ s32 IOSC_GetSignatureSize(u32* signatureSize, u32 keyHandle)
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
+
+#endif

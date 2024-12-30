@@ -33,11 +33,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "sdhc.h"
 #include "sdmmc.h"
 #include "boot2.h"
-#include "powerpc.h"
 #include "panic.h"
-
-#define STARSTRUCK_VERSION__MAJOR 1
-#define STARSTRUCK_VERSION__MINOR 4
 
 // These defines are for the ARMCTRL regs
 // See http://wiibrew.org/wiki/Hardware/IPC
@@ -152,6 +148,8 @@ static int ValidateAddress(const void* const ptr, const u32 size)
 		printk("IPC: failed buf check: ptr=%08x len=%d\n", addr, size);
 	return ret;
 }
+
+#ifndef MIOS
 
 void IpcHandler(void)
 {
@@ -368,6 +366,8 @@ void IpcInit(void)
 	write32(HW_IPC_ARMCTRL, ( IPC_ARM_IX1 | IPC_ARM_IX2 ));
 	IpcInitMessageQueues();
 }
+
+#endif
 
 s32 ResourceReply(IpcMessage* message, s32 requestReturnValue)
 {

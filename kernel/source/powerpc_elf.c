@@ -12,10 +12,11 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include <elf.h>
 #include <string.h>
 #include <ios/gecko.h>
+#include <ios/processor.h>
 
 #include "core/hollywood.h"
 #include "memory/memory.h"
-#include "powerpc.h"
+#include "peripherals/powerpc.h"
 #include "utils.h"
 #include "ff.h"
 #include "powerpc_elf.h"
@@ -137,7 +138,9 @@ int powerpc_boot_file(const char *path)
 
 	gecko_printf("ELF load done, booting PPC...\n");
 	powerpc_upload_stub(elfhdr.e_entry);
-	powerpc_reset();
+	PPCSoftReset();
+	udelay(100000);
+	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 	gecko_printf("PPC booted!\n");
 
 	return 0;
@@ -205,7 +208,9 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 
 	gecko_printf("ELF load done, booting PPC...\n");
 	powerpc_upload_stub(ehdr->e_entry);
-	powerpc_reset();
+	PPCSoftReset();
+	udelay(100000);
+	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 	gecko_printf("PPC booted!\n");
 
 	return 0;

@@ -22,7 +22,7 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "crypto/otp.h"
 #include "nand.h"
 #include "string.h"
-#include "powerpc.h"
+#include "peripherals/powerpc.h"
 #include "utils.h"
 #include "panic.h"
 #include "boot2.h"

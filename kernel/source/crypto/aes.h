@@ -8,8 +8,8 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __AES_H__
-#define __AES_H__
+#pragma once
+#ifndef MIOS
 
 #define AES_DEVICE_NAME "/dev/aes"
 #define AES_DEVICE_NAME_SIZE sizeof(AES_DEVICE_NAME)

@@ -78,6 +78,7 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	AhbFlushFrom,				//0x002F
 	AhbFlushTo,					//0x0030
 	ClearAndEnableIPCInterrupt,	//0x0031
+#ifndef MIOS
 	ClearAndEnableDIInterrupt,	//0x0032
 	ClearAndEnableSDInterrupt,	//0x0033
 	ClearAndEnableEvent,		//0x0034
@@ -156,6 +157,7 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	0x00000000,					//0x007D
 	0x00000000,					//0x007E
 	0x00000000,					//0x007F
+#endif
 };
 
 //We implement syscalls using the SVC/SWI instruction. 

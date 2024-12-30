@@ -16,9 +16,11 @@
 #include "memory/memory.h"
 #include "messaging/messageQueue.h"
 
+#ifndef MIOS
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
 extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
+#endif
 
 MessageQueue MessageQueues[MAX_MESSAGEQUEUES] SRAM_DATA;
 
@@ -33,11 +35,13 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 		goto restore_and_return;
 	}
 
+#ifndef MIOS
 	if(CheckMemoryPointer(ptr, numberOfMessages*sizeof(u32), 4, CurrentThread->ProcessId, 0) < 0)
 	{
 		queueId = IPC_EINVAL;
 		goto restore_and_return;
-	}	
+	}
+#endif
 	
 	while(queueId < MAX_MESSAGEQUEUES)
 	{	
@@ -108,10 +112,14 @@ s32 JamMessage(const u32 queueId, void* message, u32 flags)
    	else
 		messageQueue->First--;
 
+#ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
+#endif
 	messageQueue->QueueHeap[messageQueue->First] = message;
 	DCFlushRange(messageQueue->QueueHeap[messageQueue->First], 4);
+#ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[CurrentThread->ProcessId]);
+#endif
 	messageQueue->Used++;
 	if(messageQueue->ReceiveThreadQueue.NextThread != NULL )
 		UnblockThread(&messageQueue->ReceiveThreadQueue, 0);
@@ -174,11 +182,15 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 	if(queueSize <= heapIndex)
 		heapIndex = heapIndex - queueSize;
 	
+#ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[0]);
+#endif
 	messageQueue->QueueHeap[heapIndex] = message;
 	DCFlushRange(&messageQueue->QueueHeap[heapIndex], 4);
 	messageQueue->Used++;
+#ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[CurrentThread->ProcessId]);
+#endif
 	if(messageQueue->ReceiveThreadQueue.NextThread != NULL )
 		UnblockThread(&messageQueue->ReceiveThreadQueue, 0);
 
@@ -196,10 +208,12 @@ s32 ReceiveMessage(const u32 queueId, void** message, u32 flags)
 		goto restore_and_return;
 	}
 	
+#ifndef MIOS
 	ret = CheckMemoryPointer(message, 4, 4, CurrentThread->ProcessId, 0);
 	if(ret < 0)
 		goto restore_and_return;
-	
+#endif
+
 	if(MessageQueues[queueId].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;

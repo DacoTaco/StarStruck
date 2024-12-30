@@ -73,6 +73,7 @@ GP_EEP						0x00003C00
 #define GP_PPC_DEFAULT_ON 	(GP_DEFAULT_ON & GP_OWNER_PPC)
 #define GP_EEPROM			(GP_EEP_MISO | GP_EEP_MOSI | GP_EEP_CLK | GP_EEP_CS)
 
+void InitializeGPIO(void);
 void ConfigureGPIO(void);
 void ResetGPIODevices(void);
 

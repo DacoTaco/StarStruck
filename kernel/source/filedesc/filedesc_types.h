@@ -8,8 +8,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __FILEDESC_TYPES_H__
-#define __FILEDESC_TYPES_H__
+#pragma once
 
 #include "messaging/ipc.h"
 #include "messaging/messageQueue.h"
@@ -25,13 +24,18 @@ typedef struct {
 	ResourceManager* BelongsToResource;
 } FileDescriptor;
 
+#ifdef MIOS
+#define MAX_PROCESS_FDS 0x4
+#else
 #define MAX_PROCESS_FDS 0x18
+#endif
 
 typedef FileDescriptor ProcessFileDescriptors_t[MAX_PROCESS_FDS];
 typedef ProcessFileDescriptors_t AllProcessesFileDescriptors_t[MAX_PROCESSES];
 
+#ifndef MIOS
 extern FileDescriptor AesFileDescriptor;
 extern FileDescriptor ShaFileDescriptor;
-extern FileDescriptorPath* FiledescPathArray;
-
 #endif
+
+extern FileDescriptorPath* FiledescPathArray;

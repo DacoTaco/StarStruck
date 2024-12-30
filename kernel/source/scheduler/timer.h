@@ -11,7 +11,17 @@
 #include <types.h>
 #include "messaging/messageQueue.h"
 
+#ifdef MIOS
+
+#define MAX_TIMERS		0x08
+#define TIMERSTACKSIZE	0x100
+
+#else
+
 #define MAX_TIMERS		0x100
+#define TIMERSTACKSIZE	0x00
+
+#endif
 
 typedef struct TimerInfo
 {
@@ -34,6 +44,7 @@ CHECK_SIZE(TimerInfo, 0x1C);
 
 extern TimerInfo* CurrentTimer;
 extern u32 PreviousTimerValue;
+extern const u8* TimerMainStack;
 
 void TimerHandler(void);
 void QueueTimer(TimerInfo* timerInfo);
