@@ -42,7 +42,7 @@ u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10) = { 0 };
 ThreadQueue SchedulerQueue ALIGNED(0x04) = { .NextThread = &ThreadStartingState };
-ThreadInfo ThreadStartingState ALIGNED(0x04) = {.Priority = 0x00};
+ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = (u32)-1 };
 ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
@@ -114,16 +114,16 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 	ThreadInfo* nextThread = threadQueue->NextThread;	
 	u32 threadPriority = thread->Priority;
 	u32 nextPriority = nextThread->Priority;
-	ThreadQueue* previousThread = threadQueue;
+	ThreadInfo** previousThread = &threadQueue->NextThread;
 
-	while(threadPriority < nextPriority)
+	while((s32)threadPriority < (s32)nextPriority)
 	{
-		previousThread = (ThreadQueue*)&nextThread->NextThread;
+		previousThread = &nextThread->NextThread;
 		nextThread = nextThread->NextThread;
 		nextPriority = nextThread->Priority;
 	}
 
-	previousThread->NextThread = thread;
+	*previousThread = thread;
 	thread->ThreadQueue = threadQueue;
 	thread->NextThread = nextThread;
 	return;
