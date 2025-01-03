@@ -61,15 +61,15 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	return IPC_EMAX;
 }
 
-static bool IOSFD_CheckIdValidForProcess(const s32 fd)
+static bool IsIdValidForProcess(const s32 id)
 {
 #ifdef MIOS
-	if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[GetProcessID()][fd].BelongsToResource == NULL)
+	if (id >= MAX_PROCESS_FDS || ProcessFileDescriptors[GetProcessID()][id].BelongsToResource == NULL)
 		return false;
 #else
-	if (!(0x10000 <= fd && fd < 0x10002))
+	if (!(0x10000 <= id && id < 0x10002))
 	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
+		if (id >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][id].BelongsToResource == NULL)
 			return false;
 	}
 #endif
@@ -77,22 +77,22 @@ static bool IOSFD_CheckIdValidForProcess(const s32 fd)
 	return true;
 }
 
-static FileDescriptor* IOSFD_GetProcessFdFromId(const s32 fd)
+static FileDescriptor* GetProcessFd(const s32 id)
 {
 #ifdef MIOS
-	return &ProcessFileDescriptors[GetProcessID()][fd];
+	return &ProcessFileDescriptors[GetProcessID()][id];
 #else
-	if (fd == 0x10000) {
+	if (id == 0x10000) {
 		return &AesFileDescriptor;
 	}
-	else if (fd == 0x10001) {
+	else if (id == 0x10001) {
 		return &ShaFileDescriptor;
 	}
 	else if (CurrentThread == IpcHandlerThread) {
-		return &ProcessFileDescriptors[15][fd];
+		return &ProcessFileDescriptors[15][id];
 	}
 	else {
-		return &ProcessFileDescriptors[GetProcessID()][fd];
+		return &ProcessFileDescriptors[GetProcessID()][id];
 	}
 #endif
 }
@@ -162,7 +162,7 @@ s32 OpenFD_Inner(const char* path, AccessMode mode)
 
 int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -172,7 +172,7 @@ int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_CLOSE;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -198,7 +198,7 @@ finish:
 
 int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -208,7 +208,7 @@ int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMess
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_READ;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -238,7 +238,7 @@ finish:
 
 int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -248,7 +248,7 @@ int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, 
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_WRITE;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -278,7 +278,7 @@ finish:
 
 int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -288,7 +288,7 @@ int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue* messageQueue, Ipc
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_SEEK;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -313,7 +313,7 @@ finish:
 
 int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -323,7 +323,7 @@ int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLengt
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_IOCTL;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -359,7 +359,7 @@ finish:
 
 int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, MessageQueue* messageQueue, IpcMessage* message, const int checkBeforeSend)
 {
-	if (!IOSFD_CheckIdValidForProcess(fd))
+	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
 
 	IpcMessage* currentMessage = NULL;
@@ -369,7 +369,7 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = IOSFD_GetProcessFdFromId(fd);
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_IOCTLV;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
