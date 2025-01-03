@@ -66,7 +66,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 
 #define IPC_MAX_FILENAME	0x1300
 
-#define MAX_IPCMESSAGES (MAX_THREADS + 128)
+#define MAX_IPCMESSAGES (MAX_THREADS + IPC_EXTRA_MESSAGES)
 
 extern const u32 __ipc_heap_start;
 IpcMessage* IpcMessageArray = NULL;
