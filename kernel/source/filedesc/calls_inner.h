@@ -8,8 +8,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __FILEDESC_CALLS_INNER_H__
-#define __FILEDESC_CALLS_INNER_H__
+#pragma once
 
 #include "filedesc_types.h"
 #include "interrupt/irq.h"
@@ -47,7 +46,7 @@
 #define ARGEXTRACT_EVEN_LOOP_BODY(x, y, ...) __VA_OPT__(,) y
 #define ARGEXTRACT_FULL_LOOP_BODY(x, y, ...) __VA_OPT__(,) x y
 
-// this creates a function withe the _Inner suffix, and extracts every pair inside arguments to its argument list
+// this creates a function with the _Inner suffix, and extracts every pair inside arguments to its argument list
 #define DEFINE_FD_FUNCS(rettype, name, arguments) \
 	rettype name ## FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments), MessageQueue* messageQueue, IpcMessage* message); \
 	WRAP_INNER_CALL(rettype, name, arguments)
@@ -58,7 +57,5 @@ DEFINE_FD_FUNCS(s32, Write, (s32, fd)(const void *, buf)(u32, len))
 DEFINE_FD_FUNCS(s32, Seek, (s32, fd)(s32, offset)(s32, origin))
 DEFINE_FD_FUNCS(s32, Ioctl, (s32, fd)(u32, requestId)(void *, inputBuffer)(u32, inputBufferLength)(void *, outputBuffer)(u32, outputBufferLength))
 DEFINE_FD_FUNCS(s32, Ioctlv, (s32, fd)(u32, requestId)(u32, vectorInputCount)(u32, vectorIOCount)(IoctlvMessageData *, vectors))
-
-#endif
 
 s32 OpenFD_Inner(const char* path, AccessMode mode);

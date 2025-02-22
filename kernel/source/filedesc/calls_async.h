@@ -8,8 +8,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __FILEDESC_CALLS_ASYNC_H__
-#define __FILEDESC_CALLS_ASYNC_H__
+#pragma once
 
 #include "filedesc_types.h"
 
@@ -22,5 +21,3 @@ s32 WriteFDAsync(s32 fd, const void *buf, u32 len, u32 messageQueueId, IpcMessag
 s32 SeekFDAsync(s32 fd, s32 offset, s32 origin, u32 messageQueueId, IpcMessage* message);
 s32 IoctlFDAsync(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, u32 messageQueueId, IpcMessage* message);
 s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message);
-
-#endif

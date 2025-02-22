@@ -77,6 +77,7 @@ extern const u32 __headers_size[];
 extern const u32 __crypto_addr[];
 extern const u32 __crypto_size[];
 
+#ifndef MIOS
 u8* heapCurrent = (u8*)__kmalloc_heap_start;
 u8* heapEnd = (u8*)__kmalloc_heap_end;
 
@@ -113,6 +114,7 @@ static ProcessMemorySection HWRegistersMemoryMaps[] =
 	{0x07,	{ 0x0D070000, 0x0D070000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 	{0x0B,	{ 0x0D080000, 0x0D080000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 };
+#endif
 
 void DCFlushRange(const void *start, u32 size)
 {
@@ -145,12 +147,14 @@ void DCFlushAll(void)
 
 void DCInvalidateRange(const void* start, u32 size)
 {
+#ifndef MIOS
 	u32 pid = CurrentThread->ProcessId;
 	if(CheckMemoryPointer(start, size, 4, pid, 0) != 0)
 	{
 		gecko_printf("bad invalidate requested: %08x (%d)\n", (u32)start, size);
 		return;
 	}
+#endif
 
 	if(size == 0)
 		return;
@@ -209,6 +213,16 @@ void mem_shutdown(void)
 	TlbInvalidate();
 	RestoreInterrupts(cookie);
 }
+
+void ProtectMemory(int enable, void *start, void *end)
+{
+	write16(MEM_PROT, enable?1:0);
+	write16(MEM_PROT_START, (((u32)start) & 0xFFFFFFF) >> 12);
+	write16(MEM_PROT_END, (((u32)end) & 0xFFFFFFF) >> 12);
+	udelay(10);
+}
+
+#ifndef MIOS
 
 void* KMalloc(u32 size)
 {
@@ -511,14 +525,6 @@ s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainP
 	return ret;
 }
 
-void ProtectMemory(int enable, void *start, void *end)
-{
-	write16(MEM_PROT, enable?1:0);
-	write16(MEM_PROT_START, (((u32)start) & 0xFFFFFFF) >> 12);
-	write16(MEM_PROT_END, (((u32)end) & 0xFFFFFFF) >> 12);
-	udelay(10);
-}
-
 s32 InitializeMemory(void)
 {
 	u32 cr;
@@ -557,7 +563,7 @@ s32 InitializeMemory(void)
 	
 	//init all dacr values for all processes
 	//default is domain no access besides domain 8 & 15 (client) -> 0x40010000;
-	for(s32 i = 0; i <= 0x13; i++)
+	for(s32 i = 0; i < MAX_PROCESSES; i++)
 		DomainAccessControlTable[i] = DOMAIN_VALUE(8, DOMAIN_CLIENT) | DOMAIN_VALUE(15, DOMAIN_CLIENT);
 	
 	DomainAccessControlTable[0] = 0x55555555; //PID 0 = client access in all domains
@@ -604,4 +610,58 @@ ret_init:
 
 	RestoreInterrupts(cookie);
 	return ret;
+}
+
+#endif
+
+void SetMemoryRegistryValue(u32 offset, u16 value)
+{
+	write16(MEM_REG_BASE + (offset * 2), value);
+}
+
+u16 GetMemoryRegistryValue(u32 offset)
+{
+	return read16(MEM_REG_BASE + (offset * 2));
+}
+
+void SetDDRRegistryValue(u16 addr, u16 data)
+{
+	//set address, get to flush it, and set data
+	SetMemoryRegistryValue(0x3a, addr);
+	GetMemoryRegistryValue(0x3a);
+	SetMemoryRegistryValue(0x3b, data);
+}
+
+u16 GetDDRRegistryValue(u16 addr)
+{  
+  SetMemoryRegistryValue(0x3a, addr);
+  GetMemoryRegistryValue(0x3a);
+  return GetMemoryRegistryValue(0x3b);
+}
+
+void SetDDRSEQData(u16 data, u16 addr)
+{
+	SetDDRRegistryValue(0x163, data);
+	GetDDRRegistryValue(0x163);
+	SetDDRRegistryValue(0x162, addr);
+}
+
+void SetMemoryCompatabilityMode()
+{
+	SetDDRRegistryValue(0x100, 1);
+}
+
+void ConfigureDDRMemory(void)
+{
+	SetDDRRegistryValue(0x10b, 7);
+	SetDDRSEQData(0x15, 0x00);
+	SetDDRSEQData(0x18, 0x01);
+	SetDDRSEQData(0x19, 0x00);
+	SetDDRSEQData(0x4a, 0x0E);
+	SetDDRSEQData(0x0f, 0x08);
+	SetDDRSEQData(0x03, 0x0E);
+	SetDDRSEQData(0x49, 0x0E);
+	udelay(2);
+	SetDDRSEQData(0x49, 0x0F);
+	udelay(2);
 }

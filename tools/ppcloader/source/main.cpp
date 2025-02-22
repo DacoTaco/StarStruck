@@ -130,6 +130,7 @@ int main(int argc, char **argv)
 			ioctlv* params = NULL;
 			try
 			{
+				__IOS_ShutdownSubsystems();
 				void *mini = (void*)0x90100000;
 				memcpy(mini, armboot_bin, armboot_bin_size);
 				DCFlushRange( mini, armboot_bin_size );
@@ -160,6 +161,14 @@ int main(int argc, char **argv)
 				if(ret < 0)
 					throw "failed to send SHA init : " + std::to_string(ret);
 
+				//invalidate fd as its no longer valid
+				fd = -1;
+
+				//this is stuff done by libogc when reloading IOS, this is copy paste of that :)
+				raw_irq_handler_t irq_handler;
+				__MaskIrq(IRQ_PI_ACR);
+				irq_handler = IRQ_Free(IRQ_PI_ACR);
+
 				//wait for IPC to come back online. for mini this doesn't matter, but for IOS kernels it most certainly does.
 				for (u32 counter = 0; !(read32(0x0d000004) & 2); counter++) 
 				{
@@ -169,6 +178,8 @@ int main(int argc, char **argv)
 						break;
 				}
 
+				IRQ_Request(IRQ_PI_ACR, irq_handler, NULL);
+    			__UnmaskIrq(IRQ_PI_ACR);
 				__IPC_Reinitialize();
 				gprintf("IPC reinit\n");
 			}

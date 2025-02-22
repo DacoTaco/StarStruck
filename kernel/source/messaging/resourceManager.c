@@ -49,11 +49,13 @@ s32 RegisterResourceManager(const char* devicePath, const u32 queueid)
 		goto returnRegisterResource;
 	}
 
+#ifndef MIOS
 	if(CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;
 	}
+#endif
 
 	if(MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
 	{
@@ -85,11 +87,13 @@ s32 RegisterResourceManager(const char* devicePath, const u32 queueid)
 	ResourceManagers[resourceManagerId].ProcessId = CurrentThread->ProcessId;
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 
+#ifndef MIOS
 	if(!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
 		AesFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
 
 	if(!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
 		ShaFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
+#endif
 
 returnRegisterResource:
 	RestoreInterrupts(interrupts);

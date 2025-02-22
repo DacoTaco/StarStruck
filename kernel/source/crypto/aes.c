@@ -24,7 +24,7 @@
 #include "messaging/ipc.h"
 #include "filedesc/filedesc_types.h"
 
-FileDescriptor AesFileDescriptor SRAM_BSS;
+#ifndef MIOS
 
 typedef enum 
 { 
@@ -208,3 +208,5 @@ receiveMessageError:
 			break;
 	}
 }
+
+#endif

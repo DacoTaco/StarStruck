@@ -28,17 +28,21 @@
 
 extern const u32 __thread_stacks_area_start[];
 extern const u32 __thread_stacks_area_size[];
+
+#ifndef MIOS
 extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
 extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
+#endif
+
 void EndThread();
 #define STACK_SIZE		0x400
 
 u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
-ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10);
-ThreadQueue SchedulerQueue ALIGNED(0x04) = { &ThreadStartingState };
-ThreadInfo ThreadStartingState ALIGNED(0x04) = {.Priority = 0x00};
+ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10) = { 0 };
+ThreadQueue SchedulerQueue ALIGNED(0x04) = { .NextThread = &ThreadStartingState };
+ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = (u32)-1 };
 ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
@@ -52,9 +56,11 @@ static inline u32 _GetThreadID(ThreadInfo* thread)
 
 void InitializeThreadContext()
 {
+#ifndef MIOS
 	//copy function to mem2 where everything can access it
 	ThreadEndFunction = KMalloc(0x10);
 	memcpy(ThreadEndFunction, EndThread, 0x10);
+#endif
 
 	//Initilize thread structures & set stack pointers
 	for(u16 i = 0; i < MAX_PROCESSES; i++)
@@ -63,6 +69,8 @@ void InitializeThreadContext()
 		ProcessGID[i] = i;
 	}
 
+#ifndef MIOS
+
 	memset((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
 	for(u16 i = 0; i < MAX_THREADS; i++)
@@ -70,6 +78,8 @@ void InitializeThreadContext()
 		//gcc works by having a downwards stack, hence setting the stack to the upper limit
 		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (u32)(STACK_SIZE*(i+1));
 	}
+
+#endif
 }
 
 //Scheduler
@@ -104,16 +114,16 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 	ThreadInfo* nextThread = threadQueue->NextThread;	
 	u32 threadPriority = thread->Priority;
 	u32 nextPriority = nextThread->Priority;
-	ThreadQueue* previousThread = threadQueue;
+	ThreadInfo** previousThread = &threadQueue->NextThread;
 
-	while(threadPriority < nextPriority)
+	while((s32)threadPriority < (s32)nextPriority)
 	{
-		previousThread = (ThreadQueue*)&nextThread->NextThread;
+		previousThread = &nextThread->NextThread;
 		nextThread = nextThread->NextThread;
 		nextPriority = nextThread->Priority;
 	}
 
-	previousThread->NextThread = thread;
+	*previousThread = thread;
 	thread->ThreadQueue = threadQueue;
 	thread->NextThread = nextThread;
 	return;
@@ -134,10 +144,12 @@ void ScheduleYield( void )
 	CurrentThread = ThreadQueue_PopThread(&SchedulerQueue);
 	CurrentThread->ThreadState = Running;
 
+#ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[CurrentThread->ProcessId]);
 	MemoryTranslationTable[0xD0] = (u32)HardwareRegistersAccessTable[CurrentThread->ProcessId];
 	TlbInvalidate();
 	FlushMemory();
+#endif
 
 	__asm__ volatile (
 		"\
@@ -197,12 +209,20 @@ s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priorit
 	int threadId = 0;
 	u32 irqState = DisableInterrupts();
 
+#ifdef MIOS
+	if(priority >= 0x80)
+	{
+		threadId = IPC_EINVAL;
+		goto restore_and_return;
+	}
+#else
 	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (CurrentThread != NULL && priority > CurrentThread->InitialPriority))
 	{
 		threadId = IPC_EINVAL;
 		goto restore_and_return;
 	}
-		
+#endif
+
 	ThreadInfo* selectedThread;	
 	while(threadId < MAX_THREADS)
 	{
@@ -222,13 +242,19 @@ s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priorit
 	selectedThread->ProcessId = (CurrentThread == NULL) ? 0 : CurrentThread->ProcessId;
 	selectedThread->ThreadState = Stopped;
 	selectedThread->Priority = priority;
-	selectedThread->InitialPriority = priority;
 	selectedThread->ThreadContext.ProgramCounter = main;
 	selectedThread->ThreadContext.Registers[0] = (u32)arg;
+
+#ifdef MIOS
+	selectedThread->ThreadContext.LinkRegister = (u32)EndThread;
+	selectedThread->ThreadContext.StackPointer = (u32)stack_top;
+#else
+	selectedThread->InitialPriority = priority;
 	selectedThread->ThreadContext.LinkRegister = (u32)ThreadEndFunction;
 	selectedThread->ThreadContext.StackPointer = stack_top == NULL
 		? selectedThread->DefaultThreadStack 
 		: (u32)stack_top;
+#endif
 		
 	//set thread state correctly
 	selectedThread->ThreadContext.StatusRegister = ((main & 0x01) == 1)
@@ -494,9 +520,11 @@ s32 SetThreadPriority( const u32 threadId, u32 priority )
 	if( CurrentThread != NULL && CurrentThread->ProcessId != 0 && thread->ProcessId != CurrentThread->ProcessId)
 		goto return_error;
 	
+#ifndef MIOS
 	if(priority >= thread->InitialPriority)
 		goto return_error;
-	
+#endif
+
 	if(thread->Priority == priority)
 		goto restore_and_return;
 	
@@ -578,6 +606,7 @@ restore_and_return:
 	RestoreInterrupts(irqState);
 	return ret;
 }
+#ifndef MIOS
 s32 LaunchRM(const char* path)
 {
 	if(GetUID() != 0)
@@ -761,3 +790,5 @@ cleanup_launch:
 
 	return ret;
 }
+
+#endif

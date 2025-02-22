@@ -32,6 +32,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "scheduler/threads.h"
 #include "interrupt/irq.h"
 #include "peripherals/usb.h"
+#include "peripherals/powerpc.h"
 #include "crypto/aes.h"
 #include "crypto/iosc.h"
 #include "crypto/sha.h"
@@ -50,6 +51,18 @@ extern const u32 __ipc_heap_size[];
 extern const u32 __headers_addr[];
 extern const ModuleInfo __modules[];
 extern const u32 __modules_size;
+
+#ifdef MIOS
+
+#define MAINSTACKSIZE 0x100
+const u8 _mainStack[MAINSTACKSIZE] ALIGNED(32) = {0};
+
+#else
+
+#define MAINSTACKSIZE 0x00
+const u8* _mainStack = NULL;
+
+#endif
 
 void DiThread()
 {
@@ -72,6 +85,34 @@ void DiThread()
 		ReceiveMessage(queueId, (void **)&msg, None);
 	}
 }
+
+#ifdef MIOS
+
+void kernel_main( void )
+{
+	printk("Compat mode kernel thread init\n");
+
+	//create IRQ Timer handler thread
+	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack, TIMERSTACKSIZE, 0x7E, 1);
+	u32 threadId = (u32)ret;
+	//set thread to run as a system thread
+	if(ret >= 0)
+		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+	
+	if( ret < 0 || StartThread(threadId) < 0 )
+		panic("failed to start IRQ thread!\n");
+
+	//Boot the PPC content
+	PPCStart();
+
+	udelay(1000);
+	ClearAndEnableIPCInterrupt(0x0F);
+  	SetThreadPriority(0, 0);
+	printk("Compat mode idle thread started\n");
+	while( true ) {}
+}
+
+#else
 
 void kernel_main( void )
 {
@@ -241,8 +282,14 @@ shutdown:
 	asm("bx\t%0": : "r" (vector));
 }
 
+#endif
+
 void SetStarletClock()
 {
+#ifdef MIOS
+	write32(HW_IOSTRCTRL0, 0x65244A);
+	write32(HW_IOSTRCTRL1, 0x46A024);
+#else
 	u32 hardwareVersion = 0;
 	u32 hardwareRevision = 0;
 	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
@@ -257,6 +304,7 @@ void SetStarletClock()
 		write32(HW_IOSTRCTRL0, (read32(HW_IOSTRCTRL0) & 0xFF000000 ) | 0x292449);
 		write32(HW_IOSTRCTRL1, (read32(HW_IOSTRCTRL1) & 0xFE000000) | 0x46A012);
 	}
+#endif
 }
 
 void InitialiseSystem( void )
@@ -264,42 +312,63 @@ void InitialiseSystem( void )
 	u32 hardwareVersion = 0;
 	u32 hardwareRevision = 0;
 	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
-	//something to do with flipper?
+#ifdef MIOS
+	IsWiiMode = 0;
+#else
+	IsWiiMode = 1;
+#endif
+	//Enable PPC EXI control
 	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 	
+#ifndef MIOS
 	//enable protection on our MEM2 addresses & SRAM
 	ProtectMemory(1, (void*)0x13620000, (void*)0x1FFFFFFF);
-	
+
 	//????
 	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF );
+#endif
 	
 	//set some hollywood ahb registers????
 	if(hardwareVersion == 1 && hardwareRevision == 0)
 		write32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF000F) | 1);
 	
+#ifndef MIOS
 	// ¯\_(ツ)_/¯
 	write32(HW_AHB_10, 0);
 	
 	//Set boot0 B10 & B11? found in IOS58.
 	set32(HW_BOOT0, 0xC00);
-	
-	//Configure PPL ( phase locked loop )
+#endif
+
+//Configure PPL ( phase locked loop )
+#ifdef MIOS
+	ConfigureAiPLL(1, 1);
+#else	
 	ConfigureAiPLL(0, 0);
 	ConfigureVideoInterfacePLL(0);
-	
+#endif
+
 	//Configure USB Host
 	ConfigureUsbController(hardwareRevision);
-	
+
+#ifndef MIOS	
 	//Configure GPIO pins
 	ConfigureGPIO();
 	ResetGPIODevices();
+#else
+	write32(HW_RESETS, read32(HW_RESETS) | (u32)(~(RSTB_IODI | RSTB_DIRSTB | RSTB_CPU | SRSTB_CPU)));
+#endif
 	
 	//Set clock speed
 	SetStarletClock();
 	
 	//reset registers
+#ifndef MIOS
 	write32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & (( 0xFF000000 | GP_ALL ) ^ GP_DISPIN));
 	write32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
+#else
+	InitializeGPIO();
+#endif
 	write32(HW_ALARM, 0);
 	write32(NAND_CMD, 0);
 	write32(AES_CMD, 0);
@@ -309,9 +378,14 @@ void InitialiseSystem( void )
 	write32(HW_ARMIRQFLAG, 0xFFFFBDFF);
 	write32(HW_ARMIRQMASK, 0);
 	write32(HW_ARMFIQMASK, 0);
-	
+
+#ifndef MIOS
 	gecko_printf("Configuring caches and MMU...\n");
 	InitializeMemory();
+#else
+	//lol, mios explicitly disables the debug interface
+	write32(HW_DBGINTEN, 0);
+#endif
 }
 
 u32 _main(void)
@@ -327,15 +401,23 @@ u32 _main(void)
 	
 	InitialiseSystem();
 
+#ifndef MIOS
 	gecko_printf("IOSflags: %08x %08x %08x\n",
 		read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
 	gecko_printf("          %08x %08x %08x\n",
 		read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
+#endif
 
+#ifdef MIOS
+	ClearAndEnableIPCInterrupt(0x0B);
+
+	gecko_printf("Compat mode IOS...\n");
+
+#else
 	IrqInit();
 	IpcInit();
 	IOSC_Init();
-	
+
 	//currently unknown if these values are used in the kernel itself.
 	//if they are, these need to be replaced with actual stuff from the linker script!
 	write32(MEM1_MEM2PHYSICALSIZE, 0x4000000);
@@ -349,14 +431,15 @@ u32 _main(void)
 	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start + (u32)__ipc_heap_size));
 	DCFlushRange((void*)0x00003100, 0x68);
 	gecko_printf("Updated DDR settings in lomem for current map\n");
-	
+#endif
+
 	//init&start main code next : 
 	//-------------------------------
 	//init thread context handles
 	InitializeThreadContext();
 
 	//create main kernel thread
-	u32 threadId = (u32)CreateThread((u32)kernel_main, NULL, NULL, 0, 0x7F, 1);
+	u32 threadId = (u32)CreateThread((u32)kernel_main, NULL, (u32*)_mainStack, MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 	

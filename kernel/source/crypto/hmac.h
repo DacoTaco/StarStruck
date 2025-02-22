@@ -9,8 +9,8 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __HMAC_H__
-#define __HMAC_H__
+#pragma once
+#ifndef MIOS
 
 #include <types.h>
 #include "crypto/sha.h"

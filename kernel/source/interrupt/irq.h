@@ -25,6 +25,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQ_GPIO1B			10
 #define IRQ_GPIO1			11
 #define IRQ_UNKN12			12
+#define IRQ_UNKNMIOS		15
 #define IRQ_RESET			17
 #define IRQ_DI				18
 #define IRQ_PPCIPC			30
@@ -42,6 +43,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #define IRQF_GPIO1B			((u32)(1<<IRQ_GPIO1B))
 #define IRQF_GPIO1			((u32)(1<<IRQ_GPIO1))
 #define IRQF_UNKN12			((u32)(1<<IRQ_UNKN12))
+#define IRQF_UNKNMIOS		((u32)(1<<IRQ_UNKNMIOS))
 #define IRQF_RESET			((u32)(1<<IRQ_RESET))
 #define IRQF_DI				((u32)(1<<IRQ_DI))
 #define IRQF_IPC			((u32)(1<<IRQ_IPC))
@@ -69,7 +71,6 @@ CHECK_OFFSET(EventHandler, 0x04, Message);
 CHECK_OFFSET(EventHandler, 0x08, ProcessId);
 CHECK_OFFSET(EventHandler, 0x0C, Unknown);
 
-
 void IrqInit(void);
 u32 DisableInterrupts(void);
 void RestoreInterrupts(u32 cookie);
@@ -79,7 +80,11 @@ s32 UnregisterEventHandler(const u8 device);
 s32 ClearAndEnableEvent(u32 inter);
 s32 ClearAndEnableSDInterrupt(const u8 sdio);
 s32 ClearAndEnableDIInterrupt(void);
+#ifdef MIOS
+void ClearAndEnableIPCInterrupt(u32 interrupts);
+#else
 s32 ClearAndEnableIPCInterrupt(void);
+#endif
 
 void irq_shutdown(void);
 void irq_enable(u32 irq);

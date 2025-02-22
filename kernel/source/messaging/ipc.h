@@ -12,8 +12,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __IPC_H__
-#define __IPC_H__
+#pragma once
 
 #include "types.h"
 #include "ios/ipc.h"
@@ -48,18 +47,21 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define IPC_IN_SIZE		32
 #define IPC_OUT_SIZE	32
 
+// IpcMessageArray contains 1 message per thread (= MAX_THREADS), plus these extra messages
+#define IPC_EXTRA_MESSAGES	128
+
 extern IpcMessage* IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];
 extern ThreadInfo* IpcHandlerThread;
 extern u32 IpcHandlerThreadId;
 
+#ifndef MIOS
 void IpcInit(void);
 void IpcHandler(void);
+#endif
+
 s32 ResourceReply(IpcMessage* message, s32 requestReturnValue);
 s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
 
 void ipc_shutdown(void);
-
-#endif
-

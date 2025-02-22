@@ -31,12 +31,20 @@ s32 CreateHeap(void *ptr, u32 size)
 	u32 irqState = DisableInterrupts();
 	s8 heap_index = 0;
 	
+#ifdef MIOS
+	if(ptr == NULL || ((u32)ptr & 0x1f) != 0 || size < 0x30 )
+	{
+		heap_index = IPC_EINVAL;
+		goto restore_and_return;
+	}
+#else
 	if(ptr == NULL || ((u32)ptr & 0x1f) != 0 || size < 0x30 || CheckMemoryPointer(ptr, size, 4, CurrentThread->ProcessId, 0) < 0 )
 	{
 		heap_index = IPC_EINVAL;
 		goto restore_and_return;
 	}
-	
+#endif
+
 	while(heap_index < MAX_HEAP && heaps[heap_index].Heap != NULL)
 		heap_index++;
 	

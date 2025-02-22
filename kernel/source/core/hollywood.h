@@ -112,6 +112,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 // ????
 #define		HW_DIFLAGS			(HW_REG_BASE + 0x180)
+#define		HW_RESET_AHB		(HW_REG_BASE + 0x184)
 #define		HW_SPARE0			(HW_REG_BASE + 0x188)
 #define		HW_BOOT0			(HW_REG_BASE + 0x18c)
 #define		HW_CLOCKS			(HW_REG_BASE + 0x190)
@@ -119,32 +120,59 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 /* Hardware resets */
 #define		HW_RESETS			(HW_REG_BASE + 0x194)
+//System reset. Set to zero to reboot system. 
 #define		RSTBINB				0x00000001
+//CRST? Also seems to reboot system. 
 #define		CRSTB				0x00000002
+//MEM reset B. Also seems to reboot system. 
 #define		RSTB_MEMRSTB		0x00000004
+//DSKPLL reset. Is cleared by IOS before modifying 1b8, and set again afterwards 
 #define		RSTB_DSKPLL			0x00000008
+//PowerPC SRESET (release first) 
 #define		RSTB_CPU			0x00000010
+//PowerPC HRESET (release second) 
 #define		SRSTB_CPU			0x00000020
+//SYSPLL reset. If cleared, kills EXI-based starlet experimental proxy. 
 #define		RSTB_SYSPLL			0x00000040
+//Unlock SYSPLL reset? 
 #define		NLCKB_SYSPLL		0x00000080
+//??????
 #define		RSTB_MEMRSTB2		0x00000100
+//???
 #define		RSTB_PI				0x00000200
+//Disk Interface reset B 
 #define		RSTB_DIRSTB			0x00000400
+//MEM reset. If cleared, kills EXI-based starlet experimental proxy. 
 #define		RSTB_MEM			0x00000800
+//GFX TCPE? 
 #define		RSTB_GFXTCPE		0x00001000
+//GFX reset? 
 #define		RSTB_GFX			0x00002000
+//Audio interface I2S3 reset 
 #define		RSTB_AI_I2S3		0x00004000
+//SI IO reset 
 #define		RSTB_IOSI			0x00008000
+//EXI IO reset 
 #define		RSTB_IOEXI			0x00010000
+//Disk Interface IO reset 
 #define		RSTB_IODI			0x00020000
+//MEM IO reset 
 #define		RSTB_IOMEM			0x00040000
+//Processor Interface IO
 #define		RSTB_IOPI			0x00080000
+//Video Interface reset 
 #define		RSTB_VI				0x00100000
+//VI1 reset? 
 #define		RSTB_VI1			0x00200000
+//DSP processor reset
 #define		RSTB_DSP			0x00400000
+//IOP/Starlet reset 
 #define		RSTB_IOP			0x00800000
+//ARM AHB reset. Kills DI, sets slot LED on, hangs starlet... 
 #define		RSTB_AHB			0x01000000
+//External DRAM reset 
 #define		RSTB_EDRAM			0x02000000
+//Unlock external DRAM reset? 
 #define		NLCKB_EDRAM			0x04000000
 #define		HW_RST_UNKN1		0x08000000
 #define		HW_RST_UNKN2		0x10000000
@@ -259,11 +287,19 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 /* MEMORY CONTROLLER Registers */
 
 #define		MEM_REG_BASE		(HW_REG_BASE+0xb4000)
-#define		MEM_PROT			(MEM_REG_BASE+0x20a)
-#define		MEM_PROT_START		(MEM_REG_BASE+0x20c)
-#define		MEM_PROT_END		(MEM_REG_BASE+0x20e)
-#define		MEM_FLUSHREQ		(MEM_REG_BASE+0x228)
-#define		MEM_FLUSHACK		(MEM_REG_BASE+0x22a)
+
+#define		MEM_CONTRL_BASE		(MEM_REG_BASE+0x200)
+#define		MEM_COMPAT			(MEM_CONTRL_BASE)
+#define		MEM_PROT			(MEM_CONTRL_BASE+0x0a)
+#define		MEM_PROT_START		(MEM_CONTRL_BASE+0x0c)
+#define		MEM_PROT_END		(MEM_CONTRL_BASE+0x0e)
+#define		MEM_FLUSHREQ		(MEM_CONTRL_BASE+0x28)
+#define		MEM_FLUSHACK		(MEM_CONTRL_BASE+0x2a)
+
+/* MEMORY INTERFACE Registers */
+/* https://wiibrew.org/wiki/Hardware/Memory_Interface */
+
+#define		MEM_INTERFACE_BASE	(HW_REG_BASE)
 
 #ifndef __ASSEMBLER__
 

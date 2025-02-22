@@ -19,6 +19,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "scheduler/timer.h"
 #include "utils.h"
 
+bool IsWiiMode = true;
+
 //no idea why this has less issues when forced as arm...
 __attribute__((target("arm")))
 void udelay(u32 delay)

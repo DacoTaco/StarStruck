@@ -15,6 +15,8 @@
 #include <string.h>
 #include <ios/processor.h>
 
+#ifndef MIOS
+
 u8 HmacKey[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 
 void HMAC_Panic(const char* msg, void* hash_to_invalidate)
@@ -22,3 +24,5 @@ void HMAC_Panic(const char* msg, void* hash_to_invalidate)
 	memset(hash_to_invalidate, 0xa5, 0x7c00);
 	panic(msg);
 }
+
+#endif

@@ -8,13 +8,16 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __THREADS_H__
-#define __THREADS_H__
-
+#pragma once
 #include <types.h>
 
+#ifdef MIOS
+#define MAX_PROCESSES		4
+#define MAX_THREADS 		8
+#else
 #define MAX_PROCESSES		20
 #define MAX_THREADS 		100
+#endif
 
 typedef enum 
 {
@@ -49,31 +52,46 @@ typedef struct ThreadInfo
 {
 	ThreadContext ThreadContext;
 	struct ThreadInfo* NextThread;
+#ifdef MIOS
+	u32 Priority;
+	u32 ThreadState;
+	u32 Unknown;
+#else
 	u32 InitialPriority;
 	u32 Priority;
 	u32 ThreadState;
+#endif
 	u32 ProcessId;
 	u32 IsDetached;	
 	u32 ReturnValue;
 	struct ThreadQueue* JoinQueue;
 	struct ThreadQueue* ThreadQueue;
 	ThreadContext UserContext;
+#ifndef MIOS
 	u32 DefaultThreadStack;
-} ThreadInfo ALIGNED(0x10);
+#endif
+} ThreadInfo;
 
 CHECK_OFFSET(ThreadInfo, 0x00, ThreadContext);
 CHECK_OFFSET(ThreadInfo, 0x44, NextThread);
-CHECK_OFFSET(ThreadInfo, 0x48, InitialPriority);
-CHECK_OFFSET(ThreadInfo, 0x4C, Priority);
-CHECK_OFFSET(ThreadInfo, 0x50, ThreadState);
 CHECK_OFFSET(ThreadInfo, 0x54, ProcessId);
 CHECK_OFFSET(ThreadInfo, 0x58, IsDetached);
 CHECK_OFFSET(ThreadInfo, 0x5C, ReturnValue);
 CHECK_OFFSET(ThreadInfo, 0x60, JoinQueue);
 CHECK_OFFSET(ThreadInfo, 0x64, ThreadQueue);
 CHECK_OFFSET(ThreadInfo, 0x68, UserContext);
+#ifdef MIOS
+CHECK_OFFSET(ThreadInfo, 0x48, Priority);
+CHECK_OFFSET(ThreadInfo, 0x4C, ThreadState);
+CHECK_OFFSET(ThreadInfo, 0x50, Unknown);
+CHECK_SIZE(ThreadInfo, 0xAC);
+#else
+CHECK_OFFSET(ThreadInfo, 0x48, InitialPriority);
+CHECK_OFFSET(ThreadInfo, 0x4C, Priority);
+CHECK_OFFSET(ThreadInfo, 0x50, ThreadState);
 CHECK_OFFSET(ThreadInfo, 0xAC, DefaultThreadStack);
 CHECK_SIZE(ThreadInfo, 0xB0);
+#endif
 
 typedef struct ThreadQueue
 {
@@ -105,5 +123,7 @@ u32 GetUID(void);
 s32 SetUID(u32 pid, u32 uid);
 u16 GetGID(void);
 s32 SetGID(u32 pid, u16 gid);
+
+#ifndef MIOS
 s32 LaunchRM(const char* path);
 #endif

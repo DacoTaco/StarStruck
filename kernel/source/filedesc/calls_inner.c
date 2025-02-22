@@ -21,6 +21,11 @@
 #include "messaging/ipc.h"
 #include "memory/memory.h"
 
+#ifndef MIOS
+FileDescriptor AesFileDescriptor SRAM_BSS;
+FileDescriptor ShaFileDescriptor SRAM_BSS;
+#endif
+
 static AllProcessesFileDescriptors_t ProcessFileDescriptors SRAM_BSS;
 
 static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadOfThread, IpcMessage **out)
@@ -38,10 +43,10 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	if (ThreadMessageUsageArray[currentThreadId] == thread_open_msg_limit)
 		return IPC_EMAX;
 
-	for(int i = 0; i < 128; ++i)
+	for (int i = 0; i < IPC_EXTRA_MESSAGES; ++i)
 	{
-		IpcMessage *destination = &IpcMessageArray[100 + i];
-		if(destination->IsInQueue)
+		IpcMessage *destination = &IpcMessageArray[MAX_THREADS + i];
+		if (destination->IsInQueue)
 			continue;
 
 		memset(&destination->Request, 0, sizeof(destination->Request));
@@ -56,6 +61,42 @@ static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadO
 	return IPC_EMAX;
 }
 
+static bool IsIdValidForProcess(const s32 id)
+{
+#ifdef MIOS
+	if (id >= MAX_PROCESS_FDS || ProcessFileDescriptors[GetProcessID()][id].BelongsToResource == NULL)
+		return false;
+#else
+	if (!(0x10000 <= id && id < 0x10002))
+	{
+		if (id >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][id].BelongsToResource == NULL)
+			return false;
+	}
+#endif
+
+	return true;
+}
+
+static FileDescriptor* GetProcessFd(const s32 id)
+{
+#ifdef MIOS
+	return &ProcessFileDescriptors[GetProcessID()][id];
+#else
+	if (id == 0x10000) {
+		return &AesFileDescriptor;
+	}
+	else if (id == 0x10001) {
+		return &ShaFileDescriptor;
+	}
+	else if (CurrentThread == IpcHandlerThread) {
+		return &ProcessFileDescriptors[15][id];
+	}
+	else {
+		return &ProcessFileDescriptors[GetProcessID()][id];
+	}
+#endif
+}
+
 s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
 	const u32 currentThreadId = GetThreadID();
@@ -65,13 +106,17 @@ s32 OpenFD_Inner(const char* path, AccessMode mode)
 	if (pathLength >= MAX_PATHLEN)
 		return IPC_EINVAL;
 
-	int ret = CheckMemoryPointer(path, pathLength, 3, currentProcessId, currentProcessId);
+#ifdef MIOS
+	s32 ret = IPC_SUCCESS;
+#else
+	s32 ret = CheckMemoryPointer(path, pathLength, 3, currentProcessId, currentProcessId);
 	if (ret != IPC_SUCCESS)
 		return ret;
+#endif
 
 	strncpy(FiledescPathArray[currentThreadId].DevicePath, path, pathLength + 1);
 
-	for(int i = 0; i < MAX_RESOURCES; ++i)
+	for (int i = 0; i < MAX_RESOURCES; ++i)
 	{
 		ResourceManager* current_resource = &ResourceManagers[i];
 		if (currentProcessId == 15 && current_resource->PpcHasAccessRights == 0 && current_resource->PathLength != 0 && strncmp(path, current_resource->DevicePath, current_resource->PathLength) == 0)
@@ -92,16 +137,16 @@ s32 OpenFD_Inner(const char* path, AccessMode mode)
 		SendMessageCheckReceive(message, current_resource);
 		ret = message->Request.Result;
 
-		if(ret == IPC_ENOENT)
+		if (ret == IPC_ENOENT)
 			continue;
 
 		if (ret < 0)
 			return ret;
 
-		for(int fd_id = 0; fd_id < MAX_PROCESS_FDS; ++fd_id)
+		for (int fd_id = 0; fd_id < MAX_PROCESS_FDS; ++fd_id)
 		{
 			FileDescriptor* current_fd = &ProcessFileDescriptors[currentProcessId][fd_id];
-			if(current_fd->BelongsToResource == NULL)
+			if (current_fd->BelongsToResource == NULL)
 			{
 				current_fd->Id = ret;
 				current_fd->BelongsToResource = current_resource;
@@ -117,12 +162,9 @@ s32 OpenFD_Inner(const char* path, AccessMode mode)
 
 int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -130,28 +172,16 @@ int CloseFD_Inner(s32 fd, MessageQueue* messageQueue, IpcMessage* message)
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* destination = NULL;
-	if (fd == 0x10000) {
-		destination = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		destination = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		destination = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		destination = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_CLOSE;
-	currentMessage->Request.FileDescriptor = destination->Id;
+	currentMessage->Request.FileDescriptor = fd_ptr->Id;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
-	ret = SendMessageCheckReceive(currentMessage, destination->BelongsToResource);
+	ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
 	if (fd < 0x10000)
-		memset(destination, 0, sizeof(*destination));
+		memset(fd_ptr, 0, sizeof(*fd_ptr));
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;
@@ -168,12 +198,9 @@ finish:
 
 int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -181,19 +208,7 @@ int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMess
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = NULL;
-	if (fd == 0x10000) {
-		fd_ptr = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		fd_ptr = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		fd_ptr = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		fd_ptr = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_READ;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -202,9 +217,11 @@ int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue* messageQueue, IpcMess
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
+#ifndef MIOS
 	ret = CheckMemoryPointer(buf, len, 4, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->BelongsToResource->ProcessId);
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 		ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
+#endif
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;
@@ -221,12 +238,9 @@ finish:
 
 int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -234,19 +248,7 @@ int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, 
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = NULL;
-	if (fd == 0x10000) {
-		fd_ptr = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		fd_ptr = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		fd_ptr = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		fd_ptr = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_WRITE;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -255,10 +257,11 @@ int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue* messageQueue, 
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
+#ifndef MIOS
 	ret = CheckMemoryPointer(buf, len, 3, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->BelongsToResource->ProcessId);
-
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 		ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
+#endif
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;
@@ -275,12 +278,9 @@ finish:
 
 int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -288,28 +288,16 @@ int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue* messageQueue, Ipc
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* destination = NULL;
-	if (fd == 0x10000) {
-		destination = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		destination = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		destination = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		destination = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_SEEK;
-	currentMessage->Request.FileDescriptor = destination->Id;
+	currentMessage->Request.FileDescriptor = fd_ptr->Id;
 	currentMessage->Request.Data.Seek.Where = offset;
 	currentMessage->Request.Data.Seek.Whence = origin;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
-	ret = SendMessageCheckReceive(currentMessage, destination->BelongsToResource);
+	ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
 		ret = gotMessageCopy->Request.Result;
 
@@ -325,12 +313,9 @@ finish:
 
 int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, MessageQueue* messageQueue, IpcMessage* message)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -338,19 +323,7 @@ int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLengt
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = NULL;
-	if (fd == 0x10000) {
-		fd_ptr = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		fd_ptr = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		fd_ptr = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		fd_ptr = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_IOCTL;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -362,12 +335,13 @@ int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLengt
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
+#ifndef MIOS
 	ret = CheckMemoryPointer(inputBuffer, inputBufferLength, 3, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->BelongsToResource->ProcessId);
-
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 		ret = CheckMemoryPointer(outputBuffer, outputBufferLength, 4, CurrentThread == IpcHandlerThread ? 15 : GetProcessID(), fd_ptr->BelongsToResource->ProcessId);
+#endif
 
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 		ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
 
 	if (messageQueue == NULL && ret == IPC_SUCCESS)
@@ -385,12 +359,9 @@ finish:
 
 int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, MessageQueue* messageQueue, IpcMessage* message, const int checkBeforeSend)
 {
-	if (!(0x10000 <= fd && fd < 0x10002))
-	{
-		if (fd >= MAX_PROCESS_FDS || ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][fd].BelongsToResource == NULL)
-			return IPC_EINVAL;
-	}
-	
+	if (!IsIdValidForProcess(fd))
+		return IPC_EINVAL;
+
 	IpcMessage* currentMessage = NULL;
 	s32 ret = GetThreadSpecificMsgOrFreeFromExtra(messageQueue != NULL, &currentMessage);
 	IpcMessage* gotMessageCopy = currentMessage;
@@ -398,19 +369,7 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 	if (ret != IPC_SUCCESS)
 		goto finish;
 
-	FileDescriptor* fd_ptr = NULL;
-	if (fd == 0x10000) {
-		fd_ptr = &AesFileDescriptor;
-	}
-	else if (fd == 0x10001) {
-		fd_ptr = &ShaFileDescriptor;
-	}
-	else if (CurrentThread == IpcHandlerThread) {
-		fd_ptr = &ProcessFileDescriptors[15][fd];
-	}
-	else {
-		fd_ptr = &ProcessFileDescriptors[GetProcessID()][fd];
-	}
+	FileDescriptor* fd_ptr = GetProcessFd(fd);
 
 	currentMessage->Request.Command = IOS_IOCTLV;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
@@ -421,21 +380,23 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
+#ifndef MIOS
 	if (checkBeforeSend)
 	{
 		const u32 pid = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 		ret = CheckMemoryPointer(vectors, (vectorInputCount + vectorIOCount) * sizeof(*vectors), 3, pid, fd_ptr->BelongsToResource->ProcessId);
-		for(u32 i = 0; i < vectorInputCount && ret == IPC_SUCCESS; ++i)
+		for (u32 i = 0; i < vectorInputCount && ret == IPC_SUCCESS; ++i)
 		{
 			ret = CheckMemoryPointer(vectors[i].Data, vectors[i].Length, 3, pid, fd_ptr->BelongsToResource->ProcessId);
 		}
-		for(u32 i = 0, j = vectorInputCount; i < vectorIOCount && ret == IPC_SUCCESS; ++i, ++j)
+		for (u32 i = 0, j = vectorInputCount; i < vectorIOCount && ret == IPC_SUCCESS; ++i, ++j)
 		{
 			ret = CheckMemoryPointer(vectors[j].Data, vectors[j].Length, 4, pid, fd_ptr->BelongsToResource->ProcessId);
 		}
 	}
+#endif
 
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 		ret = SendMessageCheckReceive(currentMessage, fd_ptr->BelongsToResource);
 	
 	if (messageQueue == NULL && ret == IPC_SUCCESS)

@@ -8,8 +8,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __IOSC_H__
-#define __IOSC_H__
+#pragma once
 
 #include <types.h>
 #include "crypto/keyring.h"
@@ -22,6 +21,7 @@ s32 IOSC_BOOT2_GetUnk1(void);
 s32 IOSC_BOOT2_GetUnk2(void);
 s32 IOSC_NAND_GetGen(void);
 
+#ifndef MIOS
 // Syscalls start here
 s32 IOSC_CreateObject(u32* key_handle, KeyType type, KeySubtype subtype);
 s32 IOSC_DeleteObject(u32 key_handle);

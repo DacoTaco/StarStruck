@@ -19,6 +19,15 @@
 #include "scheduler/timer.h"
 #include "scheduler/threads.h"
 #include "panic.h"
+#include "utils.h"
+
+#ifdef MIOS
+const u8 _timerStack[TIMERSTACKSIZE] ALIGNED(32) = {0};
+const u8* TimerMainStack = _timerStack;
+#else
+const u8* TimerMainStack = NULL;
+#endif
+
 
 u32 timerFrequency = 0;
 TimerInfo timers[MAX_TIMERS] SRAM_DATA ALIGNED(0x10);
@@ -28,6 +37,7 @@ u32 PreviousTimerValue = 0;
 
 u32 ConvertDelayToTicks(u32 delay)
 {
+#ifndef MIOS
 	u32 clk = GetCoreClock();
 
 	//from what i gather, it uses the clk values (which are mode & hardware rev depended) to decide the formula
@@ -42,6 +52,12 @@ u32 ConvertDelayToTicks(u32 delay)
 
 	//fallback
 	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 7);
+#else
+	if(IsWiiMode == 0)
+		return (delay >> 2) + delay + (delay >> 6);
+
+	return (delay >> 1) + delay + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 8) + (delay >> 9) + (delay >> 10) + (delay >> 0xc);
+#endif
 }
 
 void QueueTimer(TimerInfo* timerInfo)

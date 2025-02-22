@@ -12,6 +12,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define __TYPES_H__
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef unsigned char u8;
 typedef unsigned short u16;

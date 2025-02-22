@@ -16,8 +16,9 @@
 
 #include "utils.h"
 
-void _initGPIO()
+void InitializeGPIO()
 {
+#ifndef MIOS
 	//set who (ARM or PPC and ARM) can access which GPIO pin
 	//1 = PPC & Starlet
 	//0 = Starlet only
@@ -33,6 +34,23 @@ void _initGPIO()
 	
 	//enable all gpio
 	set32(HW_GPIO1ENABLE, GP_ALL);
+#else
+	//set who (ARM or PPC and ARM) can access which GPIO pin
+	//1 = PPC & Starlet
+	//0 = Starlet only
+	write32(HW_GPIO1OWNER, GP_OWNER_PPC );
+
+	//set output values & directions of the starlet registers
+	mask32(HW_GPIO1OUT, GP_ARM_OUTPUTS, GP_ARM_DEFAULT_ON);
+	write32(HW_GPIO1DIR, GP_ARM_OUTPUTS);
+
+	//set output values & directions for the PPC registers
+	mask32(HW_GPIO1BOUT, GP_PPC_OUTPUTS, 0);
+	write32(HW_GPIO1BDIR, GP_PPC_OUTPUTS);
+
+	//enable all gpio
+	write32(HW_GPIO1ENABLE, GP_ALL);
+#endif
 	udelay(2000);
 	
 	//enable the power interrupt
@@ -42,7 +60,7 @@ void _initGPIO()
 
 void ConfigureGPIO(void)
 {
-	_initGPIO();
+	InitializeGPIO();
 	
 	//why ios, why. you just enabled them all? -_-
 	set32(HW_GPIO1ENABLE, read32(HW_GPIO1ENABLE) | GP_EEPROM);

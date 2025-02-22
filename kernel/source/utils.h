@@ -11,6 +11,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <types.h>
+extern bool IsWiiMode;
+
 void udelay(u32 d);
 
 #endif
