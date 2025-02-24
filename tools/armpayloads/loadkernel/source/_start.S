@@ -1,4 +1,4 @@
-.section .text
+.section .init
 .globl _start
 .thumb
 _start:
