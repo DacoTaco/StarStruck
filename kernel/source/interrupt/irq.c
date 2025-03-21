@@ -127,16 +127,16 @@ void ClearAndEnableIPCInterrupt(u32 interrupts)
 	u32 inter = DisableInterrupts();
 	u32 flags = 0;
 
-	if(interrupts == 0x0B)
+	if(interrupts == IRQ_GPIO1)
 	{
 		write32(HW_GPIO1INTFLAG, 1);
 		flags = IRQF_GPIO1;
 	}
-	else if(interrupts < 0xC && interrupts == 0x06)
+	else if(interrupts < IRQ_UNKN12 && interrupts == IRQ_OHCI1)
 		flags = IRQF_OHCI1;
-	else if(interrupts == 0x0F)
+	else if(interrupts == IRQ_UNKNMIOS)
 		flags = IRQF_UNKNMIOS;
-	else if(interrupts == 0x11)
+	else if(interrupts == IRQ_RESET)
 		flags = IRQF_RESET;
 
 	if(interrupts != 0)
@@ -264,30 +264,33 @@ void IrqHandler(ThreadContext* context)
 		EnqueueEventHandler(IRQ_OHCI1);
 	}
 
-#ifdef MIOS
+	//power button
 	if(flags & IRQF_GPIO1) {
 		//gecko_printf("IRQ: GPIO1\n");
+#ifdef MIOS
 		clear32(HW_ARMIRQMASK, IRQ_GPIO1);
 		//MIOS Executes something here. is it like a reset?
+#else
+		write32(HW_GPIO1INTFLAG, 0xFFFFFF); // shut it up
+		write32(HW_ARMIRQFLAG, IRQF_GPIO1);
+#endif
 	}
 
+#ifdef MIOS
 	if(flags & IRQF_UNKNMIOS) {
-		//gecko_printf("IRQ: GPIO1\n");
+		//gecko_printf("IRQ: UNKNMIOS\n");
 		clear32(HW_ARMIRQMASK, IRQ_UNKNMIOS);
 		//MIOS Executes something here. is it like a reset?
 	}
 #else
+
 	if(flags & IRQF_NAND) {
 		//gecko_printf("IRQ: NAND\n");
 		write32(NAND_CMD, 0x7fffffff); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_NAND);
 		nand_irq();
 	}
-	if(flags & IRQF_GPIO1) {
-		//gecko_printf("IRQ: GPIO1\n");
-		write32(HW_GPIO1INTFLAG, 0xFFFFFF); // shut it up
-		write32(HW_ARMIRQFLAG, IRQF_GPIO1);
-	}
+
 	if(flags & IRQF_GPIO1B) {
 		//gecko_printf("IRQ: GPIO1B\n");
 		write32(HW_GPIO1BINTFLAG, 0xFFFFFF); // shut it up

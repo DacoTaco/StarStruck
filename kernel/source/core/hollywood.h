@@ -287,6 +287,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 /* MEMORY CONTROLLER Registers */
 
 #define		MEM_REG_BASE		(HW_REG_BASE+0xb4000)
+#define		MEM_REFRESH			(MEM_REG_BASE+0x26)
 
 #define		MEM_CONTRL_BASE		(MEM_REG_BASE+0x200)
 #define		MEM_COMPAT			(MEM_CONTRL_BASE)

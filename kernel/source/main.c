@@ -90,8 +90,7 @@ void DiThread()
 
 void kernel_main( void )
 {
-	printk("Compat mode kernel thread init\n");
-
+	gecko_printf("Compat mode kernel thread init\n");
 	//create IRQ Timer handler thread
 	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack, TIMERSTACKSIZE, 0x7E, 1);
 	u32 threadId = (u32)ret;
@@ -106,7 +105,7 @@ void kernel_main( void )
 	PPCStart();
 
 	udelay(1000);
-	ClearAndEnableIPCInterrupt(0x0F);
+	ClearAndEnableIPCInterrupt(IRQ_UNKNMIOS);
   	SetThreadPriority(0, 0);
 	printk("Compat mode idle thread started\n");
 	while( true ) {}
@@ -409,10 +408,9 @@ u32 _main(void)
 #endif
 
 #ifdef MIOS
-	ClearAndEnableIPCInterrupt(0x0B);
+	ClearAndEnableIPCInterrupt(IRQ_GPIO1);
 
 	gecko_printf("Compat mode IOS...\n");
-
 #else
 	IrqInit();
 	IpcInit();
@@ -442,7 +440,7 @@ u32 _main(void)
 	u32 threadId = (u32)CreateThread((u32)kernel_main, NULL, (u32*)_mainStack, MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
-	
+
 	if( threadId != 0 || StartThread(threadId) < 0 )
 		gecko_printf("failed to start kernel(%d)!\n", threadId);
 
