@@ -226,6 +226,47 @@ _aes_encrypt_cleanup_return:
 
 	return ret;
 }
+static s32 _IOSC_GenerateBlockMAC(const ShaContext* context, 
+	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
+	const void *signData, const s32 messageQueueId, IpcMessage* message)
+{
+	if(((u32)inputData & 0x3F) != 0)
+		return -2016;
+
+	//hmac command should be the 0 based command, not the merged command
+	if(hmacCommand >= FinalizeShaState)
+		return -4;
+
+	s32 ret = 0;
+	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x28);
+	if(messageData == NULL)
+	{
+		ret = -22;
+		goto _hmac_generate_cleanup_return;
+	}
+
+	messageData->Length = inputSize;
+	messageData->Data = (void*) inputData;
+	messageData[1].Data = (void*) context;
+	messageData[1].Length = sizeof(ShaContext);
+	messageData[2].Data = (void*) signData;
+	messageData[2].Length = signData == NULL ? 0 : 0x14;
+	messageData[3].Data = (void*)&keyHandle;
+	messageData[3].Length = sizeof(u32);
+	messageData[4].Data = (void*) customData;
+	messageData[4].Length = customDataSize;
+
+	ret = messageQueueId == -1
+		? DispatchIoctlv(SHA_STATIC_FILEDESC, (u32) FinalizeShaState + hmacCommand, 3, 2, messageData)
+		: DispatchIoctlvAsync(SHA_STATIC_FILEDESC, FinalizeShaState + hmacCommand, 3, 2, messageData, (u32)messageQueueId, message);
+
+_hmac_generate_cleanup_return:
+	if(messageData)
+		FreeOnHeap(KernelHeapId, messageData);
+
+	return ret;	
+}
+
 
 static s32 IOSC_SetNewKeyKind(u32* keyHandle, KeyType type, KeySubtype subtype)
 {
@@ -698,6 +739,53 @@ s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const
 s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message)
 {
 	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+}
+
+static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, 
+	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
+	const void *signData, const s32 messageQueueId, IpcMessage* message)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
+
+	do {
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+		
+		ret = IOSC_CheckCurrentProcessCanReadWrite(context, 0x60);
+		if(ret != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanRead(inputData, inputSize);
+		if(ret != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanReadWrite(signData, 0x14);
+		if(ret != IPC_SUCCESS)
+			break;
+		
+		ret = IOSC_CheckCurrentProcessCanRead(customData, 4);
+		if(ret != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_GenerateBlockMAC(context, inputData, inputSize, customData, customDataSize, keyHandle,
+									 hmacCommand, signData, messageQueueId, message);
+	} while(0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+s32 IOSC_GenerateBlockMACAsync(const ShaContext* context, 
+	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
+	const void *signData, const s32 messageQueueId, IpcMessage* message)
+{
+	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize, keyHandle, hmacCommand, signData, messageQueueId, message);
+}
+s32 IOSC_GenerateBlockMAC(const ShaContext* context, 
+	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand, const void *signData)
+{
+	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize, keyHandle, hmacCommand, signData, -1, NULL);
 }
 
 #endif

@@ -138,8 +138,8 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	IOSC_DecryptAsync,			//0x006A
 	IOSC_Decrypt,				//0x006B
 	0x00000000,					//0x006C
-	0x00000000,					//0x006D
-	0x00000000,					//0x006E
+	IOSC_GenerateBlockMAC,		//0x006D
+	IOSC_GenerateBlockMACAsync,	//0x006E
 	0x00000000,					//0x006F
 	0x00000000,					//0x0070
 	0x00000000,					//0x0071

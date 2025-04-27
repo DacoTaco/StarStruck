@@ -29,17 +29,6 @@
 
 #ifndef MIOS
 
-typedef enum 
-{
-	SHA_InitState = 0x00,
-	SHA_ContributeState = 0x01,
-	SHA_FinalizeState = 0x02,
-	HMAC_InitState = 0x03,
-	HMAC_ContributeState = 0x04,
-	HMAC_FinalizeState = 0x05,
-	ShaCommandUnknown = 0x0F
-} ShaIoctlvCommandTypes;
-
 typedef union {
 	struct {
 		u32 Execute : 1;
@@ -379,9 +368,9 @@ void ShaEngineHandler(void)
 					cases 0, 1, 2 handle SHA-1 hashing, with ioctl deciding chainingMode for GenerateSha() call
 					cases 3, 4, 5 handle HMAC verification, with (ioctl - 3) deciding chainingMode for GenerateSha() calls
 					no clue what case 0xF does though*/
-					case SHA_InitState:
-					case SHA_ContributeState:
-					case SHA_FinalizeState:
+					case InitShaState://SHA_InitState:
+					case ContributeShaState:
+					case FinalizeShaState:
 						if(ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
 						
@@ -393,7 +382,7 @@ void ShaEngineHandler(void)
 
 						break;
 
-					case HMAC_InitState:
+					case InitHMacState:
 						ret = GenerateHmac_Init((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[4].Data,
 												ioctlvMessage->Data[4].Length, ioctlvMessage->Data[3].Data,
 												ioctlvMessage->Data[3].Length);
@@ -403,7 +392,7 @@ void ShaEngineHandler(void)
 
 						break;
 
-					case HMAC_ContributeState:
+					case ContributeHMacState:
 						ret = GenerateHmac_Contribute((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[4].Data,
 												ioctlvMessage->Data[4].Length, ioctlvMessage->Data[0].Data,
 												ioctlvMessage->Data[0].Length);
@@ -413,7 +402,7 @@ void ShaEngineHandler(void)
 
 						break;
 
-					case HMAC_FinalizeState:
+					case FinalizeHmacState:
 						ret = GenerateHmac_Finalize((ShaContext*)ioctlvMessage->Data[1].Data, ioctlvMessage->Data[4].Data,
 												ioctlvMessage->Data[4].Length, ioctlvMessage->Data[0].Data,
 												ioctlvMessage->Data[0].Length, ioctlvMessage->Data[3].Data,
@@ -424,7 +413,7 @@ void ShaEngineHandler(void)
 
 						break;
 
-					case ShaCommandUnknown:
+					case UnknownShaCommand:
 						u8* hashCompareAgainst = (u8*)messageData[0].Data;
 						const u8* dataToCheck = (const u8*)messageData[1].Data;
 						const u32 hash_h0_offset = *messageData[2].Data;

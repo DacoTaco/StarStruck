@@ -24,7 +24,16 @@ typedef enum
 	InitShaState = 0x00,
 	ContributeShaState = 0x01,
 	FinalizeShaState = 0x02,
+	UnknownShaCommand = 0x0F
 } ShaCommandType;
+
+typedef enum 
+{
+	InitHMacState = 0x03,
+	ContributeHMacState = 0x04,
+	FinalizeHmacState = 0x05,
+} HMacCommandType;
+
 
 typedef u32 FinalShaHash[SHA_NUM_WORDS];
 CHECK_SIZE(FinalShaHash, 0x14);
