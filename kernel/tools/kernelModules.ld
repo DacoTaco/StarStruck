@@ -23,25 +23,25 @@ SECTIONS
 {
 	.crypto.bss (NOLOAD):
 	{
-		aes* sha* hmac* keyring* (.dynbss)
-		aes* sha* hmac* keyring* (.gnu.linkonce.b*)
-		aes* sha* hmac* keyring* (.bss*)
-		aes* sha* hmac* keyring* (COMMON)
+		aes* sha* hmac* iosc* keyring* (.dynbss)
+		aes* sha* hmac* iosc* keyring* (.gnu.linkonce.b*)
+		aes* sha* hmac* iosc* keyring* (.bss*)
+		aes* sha* hmac* iosc* keyring* (COMMON)
 		. = ALIGN(4);
 	} > crypto :crypto
 
 	.crypto : ALIGN(0x40)
 	{
 		*(.crypto.text*)
-		aes* sha* hmac* keyring* (.text .text.* .gnu.linkonce.t*)
+		aes* sha* hmac* iosc* keyring* (.text .text.* .gnu.linkonce.t*)
 		. = ALIGN(4);
 		*(.crypto.data*)
-		aes* sha* hmac* keyring* (.rodata)
-		aes* sha* hmac* keyring* (.roda)
-		aes* sha* hmac* keyring* (.rodata.*)
-		aes* sha* hmac* keyring* (.data)
-		aes* sha* hmac* keyring* (.data.*)
-		aes* sha* hmac* keyring* (.gnu.linkonce.d*)
+		aes* sha* hmac* iosc* keyring* (.rodata)
+		aes* sha* hmac* iosc* keyring* (.roda)
+		aes* sha* hmac* iosc* keyring* (.rodata.*)
+		aes* sha* hmac* iosc* keyring* (.data)
+		aes* sha* hmac* iosc* keyring* (.data.*)
+		aes* sha* hmac* iosc* keyring* (.gnu.linkonce.d*)
 		. = ALIGN(4);
 	} > crypto :crypto
 }

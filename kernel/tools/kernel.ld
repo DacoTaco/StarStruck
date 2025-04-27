@@ -78,10 +78,10 @@ SECTIONS
 
 	.text : ALIGN(0x10)
 	{
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .text.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .text*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .text.*)
 		*(.gnu.warning)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.t*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .gnu.linkonce.t*)
 		*(.glue_7)
 		*(.glue_7t)
 		. = ALIGN(4);
@@ -89,11 +89,11 @@ SECTIONS
 
 	.rodata : ALIGN(4)
 	{
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .rodata)
 		*all.rodata*(*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .roda)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .rodata.*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.r*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .roda)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .rodata.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .gnu.linkonce.r*)
 		. = ALIGN(4);
 	} > kernel : rodata
 
@@ -107,19 +107,19 @@ SECTIONS
 
 	.data : ALIGN(0x40)
 	{
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .data.*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.d*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .data)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .data.*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .gnu.linkonce.d*)
 		. = ALIGN(4);
 	} > kernel : data
 
 	.bss(NOLOAD) :
 	{
 		__bss_start = . ;
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .dynbss)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .gnu.linkonce.b*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) .bss*)
-		*(EXCLUDE_FILE(aes* sha* hmac* keyring*) COMMON)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .dynbss)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .gnu.linkonce.b*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) .bss*)
+		*(EXCLUDE_FILE(aes* sha* hmac* iosc* keyring*) COMMON)
 		. = ALIGN(4);
 		__bss_end = . ;
 	}  > kernel : data
