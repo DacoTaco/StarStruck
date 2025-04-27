@@ -16,7 +16,9 @@
 #include "crypto/nand.h"
 #include "crypto/seeprom.h"
 #include "interrupt/irq.h"
+#include "filedesc/calls_inner.h"
 #include "memory/memory.h"
+#include "memory/heaps.h"
 #include "messaging/messageQueue.h"
 #include <ios/errno.h>
 #include <ios/ipc.h>
@@ -84,6 +86,145 @@ static inline s32 IOSC_CheckCurrentProcessCanRead(const void* ptr, u32 size)
 static inline s32 IOSC_CheckCurrentProcessCanReadWrite(const void* ptr, u32 size)
 {
 	return CheckMemoryPointer(ptr, size, 4, CurrentThread->ProcessId, 0);
+}
+
+static s32 DispatchIoctlv(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors)
+{
+	u32 flags = DisableInterrupts();
+	s32 ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, NULL, NULL, 0);
+
+	RestoreInterrupts(flags);
+	return ret;
+}
+
+static s32 DispatchIoctlvAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message)
+{
+	u32 flags = DisableInterrupts();
+	s32 ret = 0;
+	if(messageQueueId >= MAX_MESSAGEQUEUES)
+	{
+		ret = -1;
+		goto _return_cleanup_dispatchIoctlvAsync;
+	}
+
+	if(MessageQueues[messageQueueId].ProcessId != CurrentThread->ProcessId)
+	{
+		return -4;
+		goto _return_cleanup_dispatchIoctlvAsync;
+	}
+
+	ret = CheckMemoryPointer(message, 0x20, 4, MessageQueues[messageQueueId].ProcessId, 0);
+	if(ret != 0)
+		goto _return_cleanup_dispatchIoctlvAsync;
+
+	ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, &MessageQueues[messageQueueId], message, 0);
+
+_return_cleanup_dispatchIoctlvAsync:
+	RestoreInterrupts(flags);
+	return ret;
+}
+
+static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 MessageQueueId, IpcMessage* message )
+{
+	if(((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
+		return -2016;
+
+	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	if(keyBlob == NULL)
+		return -22;
+	
+	s32 ret = 0;
+	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
+	if(messageData == NULL)
+	{
+		ret = -22;
+		goto _aes_decrypt_cleanup_return;
+	}
+
+	u32 keyRingSize = 0;
+	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
+	if(ret != 0)
+		goto _aes_decrypt_cleanup_return;
+
+	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
+	if(ret != 0)
+	{
+		ret = -21;
+		goto _aes_decrypt_cleanup_return;
+	}
+
+	messageData->Data = (void*)inputData;
+	messageData->Length = dataSize;
+	messageData[1].Data = keyBlob;
+	messageData[1].Length = 0x10;
+	messageData[2].Data = outputData;
+	messageData[2].Length = dataSize;
+	messageData[3].Data = ivData;
+	messageData[3].Length = 0x10;
+
+	ret = (s32)MessageQueueId == -1
+		? DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData)
+		: DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData, MessageQueueId, (IpcMessage*)message);
+
+_aes_decrypt_cleanup_return:
+	if(keyBlob)
+		FreeOnHeap(KernelHeapId, keyBlob);
+	
+	if(messageData)
+		FreeOnHeap(KernelHeapId, messageData);
+
+	return ret;
+}
+static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 MessageQueueId, IpcMessage* message )
+{
+	if(((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
+		return -2016;
+
+	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	if(keyBlob == NULL)
+		return -22;
+
+	s32 ret = 0;
+	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
+	if(messageData == NULL)
+	{
+		ret = -22;
+		goto _aes_encrypt_cleanup_return;
+	}
+
+	u32 keyRingSize = 0;
+	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
+	if(ret != 0)
+		goto _aes_encrypt_cleanup_return;
+
+	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
+	if(ret != 0)
+	{
+		ret = -21;
+		goto _aes_encrypt_cleanup_return;
+	}
+
+	messageData->Data = (void*)inputData;
+	messageData->Length = dataSize;
+	messageData[1].Data = keyBlob;
+	messageData[1].Length = 0x10;
+	messageData[2].Data = outputData;
+	messageData[2].Length = dataSize;
+	messageData[3].Data = ivData;
+	messageData[3].Length = 0x10;
+
+	ret = (s32)MessageQueueId == -1
+		? DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData)
+		: DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData, MessageQueueId, (IpcMessage*)message);
+
+_aes_encrypt_cleanup_return:
+	if(keyBlob)
+		FreeOnHeap(KernelHeapId, keyBlob);
+	
+	if(messageData)
+		FreeOnHeap(KernelHeapId, messageData);
+
+	return ret;
 }
 
 static s32 IOSC_SetNewKeyKind(u32* keyHandle, KeyType type, KeySubtype subtype)
@@ -484,6 +625,79 @@ s32 IOSC_GetSignatureSize(u32* signatureSize, u32 keyHandle)
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
+}
+
+static inline s32 IOSC_EncryptInner(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
+
+	do {
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanReadWrite(outputData, dataSize);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanRead(inputData, dataSize);
+		if (ret != IPC_SUCCESS)
+			break;
+		
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_Encrypt(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+	} while(0);
+	
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+static inline s32 IOSC_DecryptInner(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
+
+	do {
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanReadWrite(outputData, dataSize);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_CheckCurrentProcessCanRead(inputData, dataSize);
+		if (ret != IPC_SUCCESS)
+			break;
+		
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_Decrypt(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+	} while(0);
+	
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+s32 IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData)
+{
+	return IOSC_EncryptInner(keyHandle, ivData, inputData, dataSize, outputData, (u32)-1, NULL);
+}
+s32 IOSC_EncryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message)
+{
+	return IOSC_EncryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+}
+s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData)
+{
+	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, (u32)-1, NULL);
+}
+s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message)
+{
+	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
 }
 
 #endif

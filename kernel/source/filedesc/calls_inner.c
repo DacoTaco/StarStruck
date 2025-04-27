@@ -82,10 +82,10 @@ static FileDescriptor* GetProcessFd(const s32 id)
 #ifdef MIOS
 	return &ProcessFileDescriptors[GetProcessID()][id];
 #else
-	if (id == 0x10000) {
+	if (id == AES_STATIC_FILEDESC) {
 		return &AesFileDescriptor;
 	}
-	else if (id == 0x10001) {
+	else if (id == SHA_STATIC_FILEDESC) {
 		return &ShaFileDescriptor;
 	}
 	else if (CurrentThread == IpcHandlerThread) {

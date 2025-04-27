@@ -133,10 +133,10 @@ static const void* syscall_handlers[]  __attribute__ ((section (".syscalls"))) =
 	IOSC_GetSignatureSize,		//0x0065
 	0x00000000,					//0x0066
 	0x00000000,					//0x0067
-	0x00000000,					//0x0068
-	0x00000000,					//0x0069
-	0x00000000,					//0x006A
-	0x00000000,					//0x006B
+	IOSC_EncryptAsync,			//0x0068
+	IOSC_Encrypt,				//0x0069
+	IOSC_DecryptAsync,			//0x006A
+	IOSC_Decrypt,				//0x006B
 	0x00000000,					//0x006C
 	0x00000000,					//0x006D
 	0x00000000,					//0x006E

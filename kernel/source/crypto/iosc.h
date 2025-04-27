@@ -11,6 +11,8 @@
 #pragma once
 
 #include <types.h>
+#include <ios/ipc.h>
+
 #include "crypto/keyring.h"
 
 void IOSC_InitInformation(void);
@@ -28,5 +30,9 @@ s32 IOSC_DeleteObject(u32 key_handle);
 s32 IOSC_GetData(u32 keyHandle, u32* value);
 s32 IOSC_GetKeySize(u32* keysize, u32 keyHandle);
 s32 IOSC_GetSignatureSize(u32* signatureSize, u32 keyHandle);
+s32 IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData);
+s32 IOSC_EncryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message);
+s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData);
+s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const u32 messageQueueId, IpcMessage* message);
 
 #endif

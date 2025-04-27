@@ -17,6 +17,9 @@
 #define WRAP_INNER_CALL(...)
 #endif
 
+#define AES_STATIC_FILEDESC 0x10000
+#define SHA_STATIC_FILEDESC 0x10001
+
 // begins the extraction:
 // expands ARGEXTRACT_X arguments [aka ARGEXTRACT_X (abc, def)(ijk, lmn)] to
 // ARGEXTRACT_X_LOOP_BODY(abc, def,) ARGEXTRACT_X_LOOP_B(ijk, lmn)_END
@@ -59,3 +62,4 @@ DEFINE_FD_FUNCS(s32, Ioctl, (s32, fd)(u32, requestId)(void *, inputBuffer)(u32, 
 DEFINE_FD_FUNCS(s32, Ioctlv, (s32, fd)(u32, requestId)(u32, vectorInputCount)(u32, vectorIOCount)(IoctlvMessageData *, vectors))
 
 s32 OpenFD_Inner(const char* path, AccessMode mode);
+int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, MessageQueue* messageQueue, IpcMessage* message, const int checkBeforeSend);
