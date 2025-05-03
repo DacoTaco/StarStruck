@@ -80,8 +80,8 @@ void *_main(void *base)
 	elf += hdr->hdrsize + hdr->loadersize;
 	
 	debug_output(0xF1);
-	mem_setswap(1);
-	disable_boot0(1);
+	mem_setswap();
+	disable_boot0();
 	
 	entry = loadelf(elf);
 	debug_output(0xC1);
