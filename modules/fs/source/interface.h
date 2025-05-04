@@ -6,8 +6,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __INTERFACE_H_
-#define __INTERFACE_H_
+#pragma once
 
 #include <types.h>
 
@@ -70,19 +69,20 @@ CHECK_OFFSET(NandCommandInformation, 0x15, InputAddress);
 
 typedef struct {
 	u32 NandSizeBitShift;
-	u32 Unknown;
+	u32 BlockSizeBitShift;
 	u32 PageSizeBitShift;
 	u32 EccSizeBitShift;
     u8 Unknown2[8];
-	u16 Unknown3;
+	u16 EccDataCheckByteOffset;
 	u8 Padding[2];
 } NandSizeInformation;
 CHECK_SIZE(NandSizeInformation, 0x1C);
 CHECK_OFFSET(NandSizeInformation, 0x00, NandSizeBitShift);
+CHECK_OFFSET(NandSizeInformation, 0x04, BlockSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x08, PageSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x0C, EccSizeBitShift);
 CHECK_OFFSET(NandSizeInformation, 0x10, Unknown2);
-CHECK_OFFSET(NandSizeInformation, 0x18, Unknown3);
+CHECK_OFFSET(NandSizeInformation, 0x18, EccDataCheckByteOffset);
 CHECK_OFFSET(NandSizeInformation, 0x1a, Padding);
 
 typedef struct {
@@ -164,9 +164,10 @@ CHECK_OFFSET(NandCommandLog, 0x14, ErrorIndex);
 extern u32 IrqMessageQueueId;
 extern u32 IoscMessageQueueId;
 extern NandInformation SelectedNandChip;
+extern NandSizeInformation SelectedNandSizeInfo;
 
 s32 InitializeNand();
+s32 SelectNandSize(bool selectNandSize);
 s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc);
 s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc);
 s32 CheckNandBlock(u8 block);
-#endif

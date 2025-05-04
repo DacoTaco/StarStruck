@@ -18,7 +18,7 @@ s32 TranslateErrno(s32 errno)
 	switch(errno)
 	{
 		default: return FS_NOTIMPL;
-		case 0: return 0;
+		case IPC_SUCCESS: return IPC_SUCCESS;
 		case IPC_EINVAL: return FS_EINVAL;
 		case IPC_ECC: return FS_EAGAIN;
 		case IPC_ECC_CRIT: return FS_EIO;
