@@ -6,8 +6,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __FS_ERRORS_H__
-#define __FS_ERRORS_H__
+#pragma once
 
 #include "types.h"
 
@@ -45,5 +44,3 @@
 #define FS_EBUSY					-118				// Resource busy
 
 s32 TranslateErrno(s32 errno);
-
-#endif

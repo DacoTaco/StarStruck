@@ -6,8 +6,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __INTERFACE_H_
-#define __INTERFACE_H_
+#pragma once
 
 #include <types.h>
 
@@ -164,9 +163,10 @@ CHECK_OFFSET(NandCommandLog, 0x14, ErrorIndex);
 extern u32 IrqMessageQueueId;
 extern u32 IoscMessageQueueId;
 extern NandInformation SelectedNandChip;
+extern NandSizeInformation SelectedNandSizeInfo;
 
 s32 InitializeNand();
+s32 SelectNandSize(bool selectNandSize);
 s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc);
 s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc);
 s32 CheckNandBlock(u8 block);
-#endif
