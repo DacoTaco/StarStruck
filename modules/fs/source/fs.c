@@ -7,12 +7,14 @@
 */
 
 #include <errno.h>
+#include <ios/errno.h>
 #include <ios/processor.h>
 #include <ios/syscalls.h>
 #include <ios/printk.h>
 
 #include "interface.h"
 #include "fs.h"
+#include "fileSystem.h"
 
 int main(void)
 {
@@ -20,18 +22,14 @@ int main(void)
 	u32* message;
 	printk("$IOSVersion:  FFSP: %s %s 64M $", __DATE__, __TIME__);
 	s32 ret = OSCreateMessageQueue((void**)&messageQueueMessages, 8);
-	if(ret < 0)
-		return ret;
-	
 	u32 messageQueueId = (u32)ret;
-	ret = OSRegisterResourceManager("/dev/boot2", messageQueueId);
-	if(ret < 0)
+	if(ret >= 0) ret = OSRegisterResourceManager("/dev/boot2", messageQueueId);
+	if(ret >= 0) ret = OSRegisterResourceManager("/", messageQueueId);
+	if(ret < IPC_SUCCESS)
 		return ret;
 	
-	if(InitializeNand() == 0)
-	{
-
-	}
+	ret = InitializeNand();
+	if(ret == IPC_SUCCESS) ret = InitializeSuperBlockInfo(1);
 
 	while(1)
 	{

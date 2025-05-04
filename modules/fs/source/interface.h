@@ -6,8 +6,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __INTERFACE_H_
-#define __INTERFACE_H_
+#pragma once
 
 #include <types.h>
 
@@ -169,4 +168,3 @@ s32 InitializeNand();
 s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc);
 s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8 writeEcc);
 s32 CheckNandBlock(u8 block);
-#endif

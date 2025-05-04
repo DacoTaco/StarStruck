@@ -5,6 +5,7 @@
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
+
 #include <ios/errno.h>
 #include <string.h>
 #include <ios/processor.h>
@@ -650,10 +651,11 @@ void SetNandAddress(u32 pageOffset, u32 pageNumber)
 	if ((s32)pageNumber != -1)  
 		write32(NAND_ADDR1, pageNumber);
 }
+
 s32 SendNandCommand(u8 cmd, u32 address, u32 flags, u32 dataLength)
 {
 	if(cmd == UNUSED_CMD)
-		return -4;
+		return IPC_EINVAL;
 
 	s32 ret = 0;
 	const NandCommand command = {
@@ -676,7 +678,7 @@ s32 SendNandCommand(u8 cmd, u32 address, u32 flags, u32 dataLength)
 		ret = OSReceiveMessage(IrqMessageQueueId, &message, 0);
 		if(ret != 0 || message != 1)
 		{
-			ret = -9;
+			ret = IPC_UNKNOWN;
 			goto return_error;
 		}
 	}
@@ -687,7 +689,7 @@ s32 SendNandCommand(u8 cmd, u32 address, u32 flags, u32 dataLength)
 	}
 
 	if(!READ_CMD().Fields.HasError)
-		return 0;
+		return IPC_SUCCESS;
 
 	ret = -1;
 return_error:
@@ -706,7 +708,7 @@ return_error:
 s32 InitializeNand()
 {
 	if(IsInitialized())
-		return 0;
+		return IPC_SUCCESS;
 
 	// enable NAND controller
 	write32(NAND_CONF, read32(NAND_CONF) | 0x08000000);
@@ -714,7 +716,7 @@ s32 InitializeNand()
 	s32 ret = OSCreateMessageQueue(&_irqMessageQueue, 4);
 	if(ret < 0)
 	{
-		ret = -9;
+		ret = IPC_UNKNOWN;
 		goto return_init;
 	}
 
@@ -722,7 +724,7 @@ s32 InitializeNand()
 	ret = OSCreateMessageQueue(&_ioscMessage, 1);
 	if(ret < 0)
 	{
-		ret = -9;
+		ret = IPC_UNKNOWN;
 		goto destroy_irq_return;
 	}
 
@@ -766,7 +768,7 @@ s32 InitializeNand()
 
 	if(index >= 10)
 	{
-		ret = -9;
+		ret = IPC_UNKNOWN;
 		goto destroy_and_return;
 	}
 
@@ -799,9 +801,10 @@ s32 ReadNandStatus(void)
 
 	OSAhbFlushFrom(AHB_NAND);
 	OSAhbFlushTo(AHB_STARLET);
-	if((s32)(_nandInfoBuffer[0] << 0x1F) < 0 )
-		return IPC_BADBLOCK;
-	return 0;
+
+	return (s32)(_nandInfoBuffer[0] << 0x1F) < 0
+		? IPC_BADBLOCK
+		: IPC_SUCCESS;
 }
 s32 GetNandSizeInfo(NandSizeInformation* dest)
 {
@@ -809,10 +812,10 @@ s32 GetNandSizeInfo(NandSizeInformation* dest)
 		return IPC_EINVAL;
 	
 	if(!IsInitialized())
-		return -10;
+		return IPC_NOTREADY;
 	
 	memcpy(dest, &SelectedNandChip.Info.SizeInfo, sizeof(NandSizeInformation));
-	return 0;
+	return IPC_SUCCESS;
 }
 s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 {
@@ -850,7 +853,7 @@ s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 		u32 unknown = syndrome >> 0x10;
 		//is it still recoverable?
 		if((((syndrome | 0xFFFFF000) ^ unknown) & 0xFFFF) != 0xFFFF)
-			return -12;
+			return IPC_ECC_CRIT;
 		
 		//select bit 3-12
 		u32 location = (unknown >> 3) & 0x1FF;
@@ -880,7 +883,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, u8 readEcc)
 
 	if(!IsInitialized())
 	{
-		ret = -10;
+		ret = IPC_NOTREADY;
 		goto return_read;
 	}
 
@@ -954,7 +957,7 @@ s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, u8
 
 	if(!IsInitialized())
 	{
-		ret = -10;
+		ret = IPC_NOTREADY;
 		goto return_write;
 	}
 
@@ -1068,7 +1071,7 @@ s32 CheckNandBlock(u8 block)
 		return IPC_EINVAL;
 	
 	if(InterfaceStates[0].Initialized == 0)
-		return -10;
+		return IPC_NOTREADY;
 	
 	s32 ret;
 	u32 unkn = (u32)(block >> (((u8)SelectedNandChip.Info.SizeInfo.Unknown - 0x0E) & 0xFF)) 
@@ -1110,7 +1113,7 @@ s32 CheckNandBlock(u8 block)
 		}
 
 		if (_eccBuffer[SelectedNandChip.Info.SizeInfo.Unknown3] != 0xff)
-          return IPC_EUNKN;
+          return IPC_BADBLOCK;
 	}
 
 	return ret;
