@@ -19,8 +19,8 @@ s32 TranslateErrno(s32 errno)
 	{
 		default:
 			return FS_NOTIMPL;
-		case 0:
-			return 0;
+		case IPC_SUCCESS:
+			return IPC_SUCCESS;
 		case IPC_EINVAL:
 			return FS_EINVAL;
 		case IPC_ECC:
