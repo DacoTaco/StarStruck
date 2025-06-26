@@ -60,6 +60,11 @@ _SYSCALL OSWriteFDAsync,			0x0026
 _SYSCALL OSSeekFDAsync,				0x0027
 _SYSCALL OSIoctlFDAsync,			0x0028
 _SYSCALL OSIoctlvFDAsync,			0x0029
+_SYSCALL OSResourceReply,			0x002A
+_SYSCALL OSSetUID,					0x002B
+_SYSCALL OSGetUID,					0x002C
+_SYSCALL OSSetGID,					0x002D
+_SYSCALL OSGetGID,					0x002E
 
 /* this is a special svc syscall. its the only syscall left in IOS. only used for printk too */
 .thumb

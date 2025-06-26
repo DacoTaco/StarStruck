@@ -51,6 +51,11 @@ s32 OSWriteFDAsync(s32 fd, const void *buf, u32 len, u32 messageQueueId, IpcMess
 s32 OSSeekFDAsync(s32 fd, s32 offset, s32 origin, u32 messageQueueId, IpcMessage* message);
 s32 OSIoctlFDAsync(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, u32 messageQueueId, IpcMessage* message);
 s32 OSIoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message);
+s32 OSResourceReply(IpcMessage* message, s32 requestReturnValue);
+u32 OSGetUID(void);
+s32 OSSetUID(u32 pid, u32 uid);
+u16 OSGetGID(void);
+s32 OSSetGID(u32 pid, u16 gid);
 
 //special IOS syscall to print something to debug device
 void OSPrintk(const char* str);
