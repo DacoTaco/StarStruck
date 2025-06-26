@@ -160,7 +160,7 @@ static s32 SEEPROM_WaitNotBusy(void)
 	SEEPROM_SendZeros(2);
 	if(timeout == 100)
 	{
-		ret = -9; // IPC_?
+		ret = IPC_UNKNOWN;
 	}
 
 	return ret;

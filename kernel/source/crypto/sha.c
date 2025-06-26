@@ -194,7 +194,7 @@ static s32 VerifyHashesArray(const void* hashData, u32 sizeHashElement, u32 amou
 			break;
 
 		if (memcmp(outputHash, hashPtr, 0x14) != 0) {
-			ret = -20; /// TODO: figure out error value
+			ret = IPC_CHECKVALUE;
 			break;
 		}
 
@@ -224,7 +224,7 @@ static s32 GenerateHmac_DerivedKeyPad(const void* signer, const u32 signerSize, 
 	keyResult = Keyring_GetKey(signerHandle, HmacKey, keySize);
 	if (keyResult != IPC_SUCCESS)
 	{
-		return -21; /// TODO: figure out error value
+		return IPC_INTERNALFAIL; /// TODO: figure out error value
 	}
 
 	memcpy(HmacKeyPrePad, HmacKey, 0x14);

@@ -131,13 +131,13 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 
 	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
 	if(keyBlob == NULL)
-		return -22;
+		return IPC_ENOMEM;
 	
 	s32 ret = 0;
 	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
 	if(messageData == NULL)
 	{
-		ret = -22;
+		ret = IPC_ENOMEM;
 		goto _aes_decrypt_cleanup_return;
 	}
 
@@ -149,7 +149,7 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
 	if(ret != 0)
 	{
-		ret = -21;
+		ret = IPC_INTERNALFAIL;
 		goto _aes_decrypt_cleanup_return;
 	}
 
@@ -182,13 +182,13 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 
 	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
 	if(keyBlob == NULL)
-		return -22;
+		return IPC_ENOMEM;
 
 	s32 ret = 0;
 	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
 	if(messageData == NULL)
 	{
-		ret = -22;
+		ret = IPC_ENOMEM;
 		goto _aes_encrypt_cleanup_return;
 	}
 
@@ -200,7 +200,7 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
 	if(ret != 0)
 	{
-		ret = -21;
+		ret = IPC_INTERNALFAIL;
 		goto _aes_encrypt_cleanup_return;
 	}
 
@@ -241,7 +241,7 @@ static s32 _IOSC_GenerateBlockMAC(const ShaContext* context,
 	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x28);
 	if(messageData == NULL)
 	{
-		ret = -22;
+		ret = IPC_ENOMEM;
 		goto _hmac_generate_cleanup_return;
 	}
 

@@ -17,8 +17,21 @@
 #define IPC_ENOENT					-6					// File not found
 #define IPC_EQUEUEEMPTY				-7					// Queue Empty
 #define IPC_EQUEUEFULL				-8					// Queue full
-#define IPC_EIO						-12					// ECC error
+#define IPC_UNKNOWN					-9					// Unknown error
+#define IPC_NOTREADY				-10					// Not ready
+#define IPC_ECC						-11					// ECC Error
+#define IPC_ECC_CRIT				-12					// ECC Critical Error
+#define IPC_BADBLOCK				-13					// Bad block
+#define IPC_INVALID_OBJTYPE			-14					// Invalid object type
+#define IPC_INVALID_RNG				-15					// Invalid RNG
+#define IPC_INVALID_FLAG			-16					// Invalid flag
+#define IPC_INVALID_FORMAT			-17					// Invalid format
+#define IPC_INVALID_VERSION			-18					// Invalid version
+#define IPC_INVALID_SIGNER			-19					// Invalid signer
+#define IPC_CHECKVALUE				-20					// Check Value failed
+#define IPC_INTERNALFAIL			-21					// Internal failure
 #define IPC_ENOMEM					-22					// Alloc failed during request
+#define IPC_INVALIDSIZE				-23					// invalid size
 
 #define FS_EINVAL					-101				// Invalid path
 #define FS_EACCESS					-102				// Permission denied
