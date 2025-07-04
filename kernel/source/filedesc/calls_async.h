@@ -14,10 +14,10 @@
 
 // these functions are implemented through calls_inner.h via a template in calls_async.c
 // the actual work done is in calls_inner.c by the <name>FD_Inner functions
-s32 OpenFDAsync(const char* path, s32 mode, u32 messageQueueId, IpcMessage* message);
-s32 CloseFDAsync(s32 fd, u32 messageQueueId, IpcMessage* message);
-s32 ReadFDAsync(s32 fd, void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
-s32 WriteFDAsync(s32 fd, const void *buf, u32 len, u32 messageQueueId, IpcMessage* message);
-s32 SeekFDAsync(s32 fd, s32 offset, s32 origin, u32 messageQueueId, IpcMessage* message);
-s32 IoctlFDAsync(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, u32 messageQueueId, IpcMessage* message);
-s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, u32 messageQueueId, IpcMessage* message);
+s32 OpenFDAsync(const char* path, s32 mode, s32 messageQueueId, IpcMessage* message);
+s32 CloseFDAsync(s32 fd, s32 messageQueueId, IpcMessage* message);
+s32 ReadFDAsync(s32 fd, void *buf, u32 len, s32 messageQueueId, IpcMessage* message);
+s32 WriteFDAsync(s32 fd, const void *buf, u32 len, s32 messageQueueId, IpcMessage* message);
+s32 SeekFDAsync(s32 fd, s32 offset, s32 origin, s32 messageQueueId, IpcMessage* message);
+s32 IoctlFDAsync(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLength, void *outputBuffer, u32 outputBufferLength, s32 messageQueueId, IpcMessage* message);
+s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, s32 messageQueueId, IpcMessage* message);

@@ -43,13 +43,13 @@ typedef enum
 extern MessageQueue MessageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
-s32 DestroyMessageQueue(const u32 queueId);
-s32 JamMessage(const u32 queueId, void* message, u32 flags);
-s32 SendMessage(const u32 queueId, void* message, u32 flags);
+s32 DestroyMessageQueue(const s32 queueId);
+s32 JamMessage(const s32 queueId, void* message, u32 flags);
+s32 SendMessage(const s32 queueId, void* message, u32 flags);
 s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags);
-s32 ReceiveMessage(const u32 queueId, void **message, u32 flags);
+s32 ReceiveMessage(const s32 queueId, void **message, u32 flags);
 s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flags);
-s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags);
-s32 ReceiveMessageUnsafe(const u32 queueId, void **message, u32 flags);
+s32 SendMessageUnsafe(const s32 queueId, void* message, u32 flags);
+s32 ReceiveMessageUnsafe(const s32 queueId, void **message, u32 flags);
 
 #endif

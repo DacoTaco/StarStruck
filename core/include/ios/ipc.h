@@ -142,7 +142,7 @@ typedef struct
 	IpcRequest Request;
 	void *Callback;
 	u32 CallerData;
-	u32 UsedByThreadId;
+	s32 UsedByThreadId;
 	u32 IsInQueue;
 	u32 UsedByProcessId;
 } IpcMessage;

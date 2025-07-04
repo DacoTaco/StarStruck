@@ -154,11 +154,11 @@ s32 ClearAndEnableIPCInterrupt(void)
 }
 #endif
 
-s32 RegisterEventHandler(const u8 device, const u32 queueid, void* message)
+s32 RegisterEventHandler(const u8 device, const s32 queueid, void* message)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
-	if(device >= MAX_DEVICES || queueid >= MAX_MESSAGEQUEUES)
+	if(device >= MAX_DEVICES || queueid < 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;	
