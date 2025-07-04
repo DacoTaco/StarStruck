@@ -39,6 +39,10 @@ _SYSCALL OSSendMessage,				0x000C
 _SYSCALL OSReceiveMessage,			0x000E
 _SYSCALL OSRegisterEventHandler,	0x000F
 _SYSCALL OSUnregisterEventHandler,	0x0010
+_SYSCALL OSCreateTimer,				0x0011
+_SYSCALL OSRestartTimer,			0x0012
+_SYSCALL OSStopTimer,				0x0013
+_SYSCALL OSDestroyTimer,			0x0014
 _SYSCALL OSGetTimerValue,			0x0015
 _SYSCALL OSCreateHeap,				0x0016
 _SYSCALL OSDestroyHeap,				0x0017
