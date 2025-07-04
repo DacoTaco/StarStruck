@@ -46,12 +46,12 @@ ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = (u32)-1 };
 ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
-static inline u32 _GetThreadID(ThreadInfo* thread)
+static inline s32 _GetThreadID(ThreadInfo* thread)
 {
 	u32 offset = (u32)thread - (u32)(&Threads[0]);
 	return offset == 0 
 		? 0 
-		: offset / sizeof(ThreadInfo);
+		: (s32)(offset / sizeof(ThreadInfo));
 }
 
 void InitializeThreadContext()
@@ -270,13 +270,13 @@ restore_and_return:
 	return threadId;	
 }
 
-s32	StartThread(const u32 threadId)
+s32	StartThread(const s32 threadId)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	ThreadQueue* threadQueue = NULL;
 
-	if(threadId >= MAX_THREADS)
+	if(threadId < 0 || threadId >= MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -324,12 +324,12 @@ restore_and_return:
 	return ret;	
 }
 
-s32 CancelThread(const u32 threadId, u32 return_value)
+s32 CancelThread(const s32 threadId, u32 return_value)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(threadId > MAX_THREADS)
+	if(threadId < 0 || threadId > MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -369,12 +369,12 @@ restore_and_return:
 	return ret;
 }
 
-s32 JoinThread(const u32 threadId, u32* returnedValue)
+s32 JoinThread(const s32 threadId, u32* returnedValue)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(threadId >= MAX_THREADS)
+	if(threadId < 0 || threadId >= MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -414,12 +414,12 @@ restore_and_return:
 	return ret;
 }
 
-s32 SuspendThread(const u32 threadId)
+s32 SuspendThread(const s32 threadId)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
-	if(threadId >= MAX_THREADS)
+	if(threadId < 0 || threadId >= MAX_THREADS)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -459,7 +459,7 @@ restore_and_return:
 	return ret;
 }
 
-u32 GetThreadID()
+s32 GetThreadID()
 {
 	return _GetThreadID(CurrentThread);
 }
@@ -469,7 +469,7 @@ u32 GetProcessID()
 	return CurrentThread->ProcessId;
 }
 
-s32 GetThreadPriority( const u32 threadId )
+s32 GetThreadPriority( const s32 threadId )
 {
 	u32 irqState = DisableInterrupts();
 	
@@ -482,7 +482,7 @@ s32 GetThreadPriority( const u32 threadId )
 		goto restore_and_return;
 	}
 	
-	if(threadId >= MAX_THREADS)
+	if(threadId < 0 || threadId >= MAX_THREADS)
 		goto return_error;
 	
 	thread = &Threads[threadId];
@@ -500,14 +500,14 @@ restore_and_return:
 	return ret;
 }
 
-s32 SetThreadPriority( const u32 threadId, u32 priority )
+s32 SetThreadPriority( const s32 threadId, u32 priority )
 {
 	u32 irqState = DisableInterrupts();
 
 	ThreadInfo* thread = NULL;
 	s32 ret = 0;
 	
-	if(threadId > MAX_THREADS || priority >= 0x80 )
+	if(threadId < 0 || threadId > MAX_THREADS || priority >= 0x80 )
 		goto return_error;
 	
 	if( threadId == 0 )
@@ -765,7 +765,7 @@ s32 LaunchRM(const char* path)
 	const ModuleInfo* module = (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
 	for(u32 index = 0; index < noteSize; index++)
 	{		
-		u32 threadId = (u32)CreateThread(module[index].EntryPoint, (void*)module[index].UserId, (u32*)module[index].StackAddress, module[index].StackSize, module[index].Priority, 1);
+		s32 threadId = CreateThread(module[index].EntryPoint, (void*)module[index].UserId, (u32*)module[index].StackAddress, module[index].StackSize, module[index].Priority, 1);
 		Threads[threadId].ProcessId = module[index].UserId;
 		
 		//wtf IOS?

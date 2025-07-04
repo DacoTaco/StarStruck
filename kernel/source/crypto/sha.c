@@ -45,7 +45,7 @@ static u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00
 static FinalShaHash HmacBufferFinal = { 0x00 };
 static u8 HmacKeyPrePad[SHA_BLOCK_SIZE] = { 0x00 };
 static u8 HmacKeyPostPad[SHA_BLOCK_SIZE] = { 0x00 };
-static u32 ShaEventMessageQueueId = 0;
+static s32 ShaEventMessageQueueId = 0;
 
 static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inputSize, const ShaCommandType command, FinalShaHash finalHashBuffer)
 {
@@ -316,7 +316,7 @@ void ShaEngineHandler(void)
 	IpcMessage* ipcReply;
 
 	s32 ret = CreateMessageQueue((void**)&eventMessageQueue, 1);
-	ShaEventMessageQueueId = (u32)ret;
+	ShaEventMessageQueueId = ret;
 	if(ret < 0)
 		panic("Unable to create SHA event queue: %d\n", ret);
 	
@@ -328,7 +328,7 @@ void ShaEngineHandler(void)
 	if(ret < IPC_SUCCESS)
 		panic("Unable to create SHA rm queue: %d\n", ret);
 	
-	const u32 messageQueueId = (u32)ret;
+	const s32 messageQueueId = ret;
 	ret = RegisterResourceManager(SHA_DEVICE_NAME, messageQueueId);
 	if(ret < IPC_SUCCESS)
 		panic("Unable to register resource manager: %d\n", ret);

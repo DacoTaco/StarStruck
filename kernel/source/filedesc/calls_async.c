@@ -25,10 +25,10 @@
 // tells calls_inner.h to produce the <name>FDAsync syscall functions in its include, with this template
 // they all share this exact shape, except Open
 #define WRAP_INNER_CALL(rettype, name, arguments) \
-rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), u32 messageQueueId, IpcMessage* message) { \
+rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), s32 messageQueueId, IpcMessage* message) { \
 	const u32 state = DisableInterrupts(); \
 	rettype ret = IPC_EACCES; \
-	if(messageQueueId < MAX_MESSAGEQUEUES) { \
+	if(messageQueueId >= 0 && messageQueueId < MAX_MESSAGEQUEUES) { \
 		MessageQueue* queue = &MessageQueues[messageQueueId]; \
 		if(IOSFDAsync_CheckPerformInner()) { \
 			ret = name ## FD_Inner(ARGEXTRACT_DO( ARGEXTRACT_EVEN arguments ), queue, message); \
@@ -43,7 +43,7 @@ rettype name ## FDAsync(ARGEXTRACT_DO( ARGEXTRACT_FULL arguments ), u32 messageQ
 
 #include "calls_inner.h"
 
-s32 OpenFDAsync(const char* path, int mode, u32 messageQueueId, IpcMessage* message)
+s32 OpenFDAsync(const char* path, int mode, s32 messageQueueId, IpcMessage* message)
 {
 	s32 ret = IPC_EACCES;
 

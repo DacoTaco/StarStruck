@@ -36,7 +36,7 @@ u32 GetPpcAccessRights(const char* resourcePath)
 		: 0;
 }
 
-s32 RegisterResourceManager(const char* devicePath, const u32 queueid)
+s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;
@@ -50,7 +50,7 @@ s32 RegisterResourceManager(const char* devicePath, const u32 queueid)
 	}
 
 #ifndef MIOS
-	if(CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid >= MAX_MESSAGEQUEUES)
+	if(CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid < 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;

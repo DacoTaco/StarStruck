@@ -73,7 +73,7 @@ void DiThread()
 	if(ret < 0)
 		panic("Unable to create DI thread message queue: %d\n", ret);
 	
-	const u32 queueId = (u32)ret;
+	const s32 queueId = ret;
 	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
 	while(1)
 	{
@@ -93,7 +93,7 @@ void kernel_main( void )
 	gecko_printf("Compat mode kernel thread init\n");
 	//create IRQ Timer handler thread
 	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack, TIMERSTACKSIZE, 0x7E, 1);
-	u32 threadId = (u32)ret;
+	s32 threadId = ret;
 	//set thread to run as a system thread
 	if(ret >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -117,7 +117,7 @@ void kernel_main( void )
 {
 	//create IRQ Timer handler thread
 	s32 ret = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
-	u32 threadId = (u32)ret;
+	s32 threadId = ret;
 	//set thread to run as a system thread
 	if(ret >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
@@ -134,7 +134,7 @@ void kernel_main( void )
 		u32 unknownConfig = dvdConfig >> 2 & 1;
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0)) 
 		{
-			threadId = (u32)CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
+			threadId = CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
 			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
@@ -142,7 +142,7 @@ void kernel_main( void )
 
 	//create AES Engine handler thread & also set it to run as system thread
 	ret = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
-	threadId = (u32)ret;
+	threadId = ret;
 	if(ret >= 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -151,7 +151,7 @@ void kernel_main( void )
 
 	//create SHA Engine handler thread & also set it to run as system thread
 	ret = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
-	threadId = (u32)ret;
+	threadId = ret;
 	if(ret > 0)
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 
@@ -162,12 +162,12 @@ void kernel_main( void )
 
 	//create IPC handler thread & also set it to run as system thread
 	ret = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
-	threadId = (u32)ret;
+	threadId = ret;
 	if(ret > 0)
 	{
 		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 		IpcHandlerThread = &Threads[threadId];
-		IpcHandlerThreadId = (u32)threadId;
+		IpcHandlerThreadId = threadId;
 	}
 
 	if( ret < 0 || StartThread(threadId) < 0 )
@@ -228,7 +228,7 @@ void kernel_main( void )
 		printk("priority = %d, stackSize = %d, stackPtr = %d\n", priority, stackSize, stackTop);
 		printk("starting thread entry: 0x%x\n", main);
 
-		threadId = (u32)CreateThread(main, (void*)arg, (u32*)stackTop, stackSize, priority, 1);
+		threadId = CreateThread(main, (void*)arg, (u32*)stackTop, stackSize, priority, 1);
 		Threads[threadId].ProcessId = arg;
 		StartThread(threadId);
 	}
@@ -437,7 +437,7 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	u32 threadId = (u32)CreateThread((u32)kernel_main, NULL, (u32*)_mainStack, MAINSTACKSIZE, 0x7F, 1);
+	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32*)_mainStack, MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
 

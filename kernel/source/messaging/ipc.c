@@ -77,7 +77,7 @@ static void* IpcMessageQueueDataPtrArray[MAX_THREADS] SRAM_BSS;
 static FileDescriptorPath* FiledescPathPointerArray[MAX_THREADS] SRAM_BSS;
 
 ThreadInfo* IpcHandlerThread = NULL;
-u32 IpcHandlerThreadId = (u32)-1;
+s32 IpcHandlerThreadId = -1;
 
 static IpcMessage* IpcHandlerMessageQueueData[50] SRAM_BSS;
 static IpcRequest IpcHandlerRequest SRAM_BSS;
@@ -160,7 +160,7 @@ void IpcHandler(void)
 	if (ret < 0)
 		return;
 	
-	const u32 messageQueue = (u32)ret;
+	const s32 messageQueue = ret;
 	ret = RegisterEventHandler(IRQ_IPC, messageQueue, &IpcHandlerRequest);
 	if(ret != IPC_SUCCESS)
 		return;

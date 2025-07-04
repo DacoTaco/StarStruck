@@ -70,13 +70,13 @@ restore_and_return:
 	return queueId;
 }
 
-s32 JamMessage(const u32 queueId, void* message, u32 flags)
+s32 JamMessage(const s32 queueId, void* message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	MessageQueue* messageQueue;
 
-	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
+	if(queueId < 0 || queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -129,12 +129,12 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessage(const u32 queueId, void* message, u32 flags)
+s32 SendMessage(const s32 queueId, void* message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
+	if(queueId < 0 || queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -197,12 +197,12 @@ s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 	return 0;
 }
 
-s32 ReceiveMessage(const u32 queueId, void** message, u32 flags)
+s32 ReceiveMessage(const s32 queueId, void** message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
-	if(queueId >= MAX_MESSAGEQUEUES || flags >= Invalid)
+	if(queueId < 0 || queueId >= MAX_MESSAGEQUEUES || flags >= Invalid)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -265,12 +265,12 @@ s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flag
 	return IPC_SUCCESS;
 }
 
-s32 DestroyMessageQueue(const u32 queueId)
+s32 DestroyMessageQueue(const s32 queueId)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 	
-	if(queueId > MAX_MESSAGEQUEUES)
+	if(queueId < 0 || queueId > MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -295,23 +295,23 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessageUnsafe(const u32 queueId, void* message, u32 flags)
+s32 SendMessageUnsafe(const s32 queueId, void* message, u32 flags)
 {
 	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
 
-	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
+	if(queueId >= 0 && queueId < MAX_MESSAGEQUEUES && flags < Invalid)
 		ret = SendMessageToQueue(&MessageQueues[queueId], message, flags);
 
 	RestoreInterrupts(irqState);
 	return ret;
 }
-s32 ReceiveMessageUnsafe(const u32 queueId, void **message, u32 flags)
+s32 ReceiveMessageUnsafe(const s32 queueId, void **message, u32 flags)
 {
 	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
 
-	if(queueId < MAX_MESSAGEQUEUES && flags < Invalid)
+	if(queueId >= 0 && queueId < MAX_MESSAGEQUEUES && flags < Invalid)
 		ret = ReceiveMessageFromQueue(&MessageQueues[queueId], message, flags);
 
 	RestoreInterrupts(irqState);

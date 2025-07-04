@@ -47,7 +47,7 @@ typedef union {
 	u32 Value;
 } AESCommand;
 
-u32 AesEventMessageQueueId = 0;
+s32 AesEventMessageQueueId = 0;
 
 void AesEngineHandler(void)
 {
@@ -60,7 +60,7 @@ void AesEngineHandler(void)
 	IpcMessage* ipcReply;
 
 	ret = CreateMessageQueue((void**)&eventMessageQueue, 1);
-	AesEventMessageQueueId = (u32)ret;
+	AesEventMessageQueueId = ret;
 	if(ret < 0)
 		panic("Unable to create AES event queue: %d\n", ret);
 
@@ -72,7 +72,7 @@ void AesEngineHandler(void)
 	if(ret < 0)
 		panic("Unable to create AES rm queue: %d\n", ret);
 
-	const u32 resourceMessageQueue = (u32)ret;
+	const s32 resourceMessageQueue = ret;
 	ret = RegisterResourceManager(AES_DEVICE_NAME, resourceMessageQueue);
 	if(ret < 0)
 		panic("Unable to register resource manager: %d\n", ret);

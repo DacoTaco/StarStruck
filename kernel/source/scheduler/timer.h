@@ -49,7 +49,7 @@ extern const u8* TimerMainStack;
 void TimerHandler(void);
 void QueueTimer(TimerInfo* timerInfo);
 u32 ConvertDelayToTicks(u32 delay);
-s32 CreateTimer(u32 delayUs, u32 periodUs, const u32 queueid, void *message);
+s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message);
 s32 RestartTimer(s32 timerId, u32 timeUs, u32 repeatTimeUs);
 s32 StopTimer(s32 timerId);
 s32 DestroyTimer(s32 timerId);

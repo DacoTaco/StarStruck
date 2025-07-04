@@ -54,7 +54,7 @@ extern IpcMessage* IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];
 extern ThreadInfo* IpcHandlerThread;
-extern u32 IpcHandlerThreadId;
+extern s32 IpcHandlerThreadId;
 
 #ifndef MIOS
 void IpcInit(void);

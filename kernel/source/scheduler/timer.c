@@ -127,7 +127,7 @@ void TimerHandler(void)
 	if(ret < 0)
 		panic("Unable to create timer message queue: %d\n", ret);
 
-	const u32 timerQueueId = (u32)ret;
+	const s32 timerQueueId = ret;
 	ret = RegisterEventHandler(IRQ_TIMER, timerQueueId, 0);
 	if(ret < 0)
 		panic("Unable to register timer event handler: %d\n", ret);
@@ -218,13 +218,13 @@ void SetTimerAlarm(u32 ticks)
 	return;
 }
 
-s32 CreateTimer(u32 delayUs, u32 periodUs, const u32 queueid, void *message)
+s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
 {
 	s32 ret = 0;
 	u32 interupts = DisableInterrupts();
 	u32 ticks = 0;
 
-	if(queueid > MAX_MESSAGEQUEUES)
+	if(queueid < 0 || queueid > MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto return_create_timer;

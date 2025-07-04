@@ -30,7 +30,7 @@ static AllProcessesFileDescriptors_t ProcessFileDescriptors SRAM_BSS;
 
 static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadOfThread, IpcMessage **out)
 {
-	const unsigned currentThreadId = GetThreadID();
+	const s32 currentThreadId = GetThreadID();
 	if (!useMsgFromExtraInsteadOfThread)
 	{
 		IpcMessage *destination = &IpcMessageArray[currentThreadId];
@@ -99,7 +99,7 @@ static FileDescriptor* GetProcessFd(const s32 id)
 
 s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
-	const u32 currentThreadId = GetThreadID();
+	const s32 currentThreadId = GetThreadID();
 	const u32 currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
 
 	const u32 pathLength = strnlen(path, MAX_PATHLEN);
