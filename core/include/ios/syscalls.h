@@ -16,9 +16,10 @@
 #include "ios/ipc.h"
 #include "ios/ahb.h"
 
-s32 OSCreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
-s32 OSJoinThread(s32 threadId, u32* returnedValue);
-s32 OSStopThread(s32 threadid, u32 returnValue);
+typedef int (*ThreadFunc)(void *arg);
+s32 OSCreateThread(ThreadFunc main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
+s32 OSJoinThread(s32 threadId, int *returnedValue);
+s32 OSStopThread(s32 threadid, int returnValue);
 s32 OSGetThreadId(void);
 s32 OSGetProcessId(void);
 s32 OSStartThread(s32 threadid);
