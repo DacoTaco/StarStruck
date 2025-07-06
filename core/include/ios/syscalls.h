@@ -14,6 +14,7 @@
 #pragma GCC optimize ("O1")
 #include "types.h"
 #include "ios/ipc.h"
+#include "ios/ahb.h"
 
 s32 OSCreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
 s32 OSJoinThread(s32 threadId, u32* returnedValue);
@@ -60,6 +61,15 @@ u32 OSGetUID(void);
 s32 OSSetUID(u32 pid, u32 uid);
 u16 OSGetGID(void);
 s32 OSSetGID(u32 pid, u16 gid);
+void OSAhbFlushFrom(AHBDEV type);
+void OSAhbFlushTo(AHBDEV type);
+
+void OSDCInvalidateRange(const void* start, u32 size);
+void OSDCFlushRange(const void *start, u32 size);
+
+u32 OSVirtualToPhysical(u32 virtualAddress);
+
+s32 OSGetIOSCData(u32 keyHandle, u32* value);
 
 //special IOS syscall to print something to debug device
 void OSPrintk(const char* str);

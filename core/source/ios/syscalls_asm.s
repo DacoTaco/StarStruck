@@ -69,6 +69,15 @@ _SYSCALL OSSetUID,					0x002B
 _SYSCALL OSGetUID,					0x002C
 _SYSCALL OSSetGID,					0x002D
 _SYSCALL OSGetGID,					0x002E
+_SYSCALL OSAhbFlushFrom,			0x002F
+_SYSCALL OSAhbFlushTo,				0x0030
+
+_SYSCALL OSDCInvalidateRange,		0x003F
+_SYSCALL OSDCFlushRange,			0x0040
+
+_SYSCALL OSVirtualToPhysical,		0x004F
+
+_SYSCALL OSGetIOSCData				0x0063
 
 /* this is a special svc syscall. its the only syscall left in IOS. only used for printk too */
 .thumb
