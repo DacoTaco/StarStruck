@@ -87,26 +87,27 @@ u32* MemoryTranslationTable = NULL;
 u32 DomainAccessControlTable[MAX_PROCESSES];
 u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 
-static MemorySection KernelMemoryMaps[] = 
+/* clang-format off */
+static MemorySection KernelMemoryMaps[] =
 {
-	// physical							virtual								size							domain			access		 IsCached
-	{ 0xFFF00000,						0xFFF00000, 						0x00100000, 					0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Starlet sram 
-	{ (u32)__crypto_addr,				(u32)__crypto_addr,					(u32)__crypto_size,				0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Crypto
-	{ (u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_start, 	(u32)__thread_stacks_area_size, 0x0000000F, 	AP_NOUSER, 	0x00000001 }, //Thread stacks
-	{ 0x0D800000, 						0x0D800000, 						0x000D0000, 					0x0000000F, 	AP_ROUSER, 	0x00000000 }, //Hardware registers(AHB mirror)
-	{ 0x00000000, 						0x00000000, 						0x04000000, 					0x00000008, 	AP_RWUSER, 	0x00000001 }, //MEM1 + ???
-	{ 0x10000000, 						0x10000000, 						0x03600000, 					0x00000008, 	AP_RWUSER, 	0x00000001 }, //MEM2
-	{ 0x13870000, 						0x13870000, 						0x00030000, 					0x0000000F, 	AP_RWUSER, 	0x00000000 }, //    ???
-	{ (u32)__ipc_heap_start, 			(u32)__ipc_heap_start, 				(u32)__ipc_heap_size, 			0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IPC Heap
-	{ (u32)__iobuf_heap_area_start, 	(u32)__iobuf_heap_area_start, 		(u32)__iobuf_heap_area_size, 	0x0000000F, 	AP_RWUSER, 	0x00000001 }, //IOBuf ?
-	{ (u32)__kmalloc_heap_start, 		(u32)__kmalloc_heap_start, 			(u32)__kmalloc_heap_size, 		0x0000000F, 	AP_ROUSER, 	0x00000000 }, //KMalloc heap
-	{ (u32)__headers_addr, 				(u32)__headers_addr, 				(u32)__headers_size,			0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Kernel heap & program header storage
-	{ 0x13F00000, 						0x13F00000, 						0x00100000, 					0x0000000F, 	AP_RWUSER, 	0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
+	// physical							virtual								size							domain		access		 IsCached
+	{ 0xFFF00000,						0xFFF00000,							0x00100000,						0x0000000F,	AP_NOUSER,	0x00000001 }, //Starlet sram
+	{ (u32)__crypto_addr,				(u32)__crypto_addr,					(u32)__crypto_size,				0x0000000F,	AP_NOUSER,	0x00000001 }, //Crypto
+	{ (u32)__thread_stacks_area_start,	(u32)__thread_stacks_area_start,	(u32)__thread_stacks_area_size, 0x0000000F,	AP_NOUSER,	0x00000001 }, //Thread stacks
+	{ 0x0D800000,						0x0D800000,							0x000D0000,						0x0000000F,	AP_ROUSER,	0x00000000 }, //Hardware registers(AHB mirror)
+	{ 0x00000000,						0x00000000,							0x04000000,						0x00000008,	AP_RWUSER,	0x00000001 }, //MEM1 + ???
+	{ 0x10000000,						0x10000000,							0x03600000,						0x00000008,	AP_RWUSER,	0x00000001 }, //MEM2
+	{ 0x13870000,						0x13870000,							0x00030000,						0x0000000F,	AP_RWUSER,	0x00000000 }, //    ???
+	{ (u32)__ipc_heap_start,			(u32)__ipc_heap_start,				(u32)__ipc_heap_size,			0x0000000F,	AP_RWUSER,	0x00000001 }, //IPC Heap
+	{ (u32)__iobuf_heap_area_start,		(u32)__iobuf_heap_area_start,		(u32)__iobuf_heap_area_size,	0x0000000F,	AP_RWUSER,	0x00000001 }, //IOBuf ?
+	{ (u32)__kmalloc_heap_start,		(u32)__kmalloc_heap_start,			(u32)__kmalloc_heap_size,		0x0000000F,	AP_ROUSER,	0x00000000 }, //KMalloc heap
+	{ (u32)__headers_addr,				(u32)__headers_addr,				(u32)__headers_size,			0x0000000F,	AP_RWUSER,	0x00000001 }, //Kernel heap & program header storage
+	{ 0x13F00000,						0x13F00000,							0x00100000,						0x0000000F,	AP_RWUSER,	0x00000001 }, //Todo : delete this, this is temp while developing to store data like boot2
 };
 
-static ProcessMemorySection HWRegistersMemoryMaps[] = 
+static ProcessMemorySection HWRegistersMemoryMaps[] =
 {
-	  // 		physical	virtual		size		domain		access	  IsCached
+	  //		physical	virtual		size		domain		access	  IsCached
 	{0x00,	{ 0x0D000000, 0x0D000000, 0x000D0000, 0x0000000F, AP_NOUSER, 0x00000000 }},
 	{0x02,	{ 0x0D010000, 0x0D010000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 	{0x03,	{ 0x0D806000, 0x0D006000, 0x00001000, 0x0000000F, AP_RWUSER, 0x00000000 }},
@@ -114,6 +115,7 @@ static ProcessMemorySection HWRegistersMemoryMaps[] =
 	{0x07,	{ 0x0D070000, 0x0D070000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 	{0x0B,	{ 0x0D080000, 0x0D080000, 0x00010000, 0x0000000F, AP_RWUSER, 0x00000000 }},
 };
+/* clang-format on */
 #endif
 
 void DCFlushRange(const void *start, u32 size)
