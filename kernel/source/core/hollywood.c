@@ -10,6 +10,7 @@
 
 #include <types.h>
 #include <ios/processor.h>
+#include <math.h>
 #include "core/hollywood.h"
 
 void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision)
@@ -18,59 +19,6 @@ void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision)
 	//eh? isnt this the same as '(version & 0x000000F0) >> 4' ?
 	*hardwareVersion = (version << 24) >> 28;
 	*hardwareRevision = version & 0x0F;
-}
-
-//unknown WTF this is about...
-u32 NumberMagic(u32 param_1, u32 param_2)
-{
-	if(param_2 == 0 || param_1 > param_2)
-		return 0;
-
-	u32 ret = 0;
-	u32 unknwn = 0;
-
-	while(param_2 < 0x10000000 && (param_2 < param_1)) 
-	{
-		param_2 = param_2 << 4;
-		unknwn = unknwn << 4;
-	}
-
-	while (param_2 < 0x80000000 && (param_2 < param_1))
-	{
-		param_2 = param_2 << 1;
-		unknwn = unknwn << 1;
-	}
-
-	while(1) 
-	{
-		if (param_2 <= param_1) 
-		{
-			param_1 -= param_2;
-			ret |= unknwn;
-		}
-		if (param_2 >> 1 <= param_1) 
-		{
-			param_1 -= param_2 >> 1;
-			ret |= unknwn >> 1;
-		}
-		if (param_2 >> 2 <= param_1) 
-		{
-			param_1 -= param_2 >> 2;
-			ret |= unknwn >> 2;
-		}
-		if (param_2 >> 3 <= param_1)
-		{
-			param_1 -= param_2 >> 3;
-			ret |= unknwn >> 3;
-		}
-
-		unknwn = unknwn >> 4;
-		if (param_1 == 0 || unknwn == 0)
-			break;
-		param_2 = param_2 >> 4;
-	}
-
-	return ret;
 }
 
 u32 GetCoreClock(void)
@@ -88,17 +36,17 @@ u32 GetCoreClock(void)
 	if(hwVer < 2)
 	{
 		if((read32(HW_CLOCKS) & 1) != 0)
-			return NumberMagic(0xF30, read32(HW_PLLSYSEXT) & 0x1FF);
+			return division_uint(0xF30, read32(HW_PLLSYSEXT) & 0x1FF);
 
 		clk = 0xF30;
 	}
 	else
 	{
 		if((read32(HW_CLOCKS) & 1) != 0)
-			return NumberMagic(0x798, read32(HW_PLLSYSEXT) & 0x1FF);
+			return division_uint(0x798, read32(HW_PLLSYSEXT) & 0x1FF);
 		
 		clk = 0x798;
 	}
 
-	return NumberMagic(clk, (read32(HW_PLLSYS) << 5) >> 0x17);
+	return division_uint(clk, (read32(HW_PLLSYS) << 5) >> 0x17);
 }
