@@ -10,7 +10,9 @@
 */
 
 #include <ios/errno.h>
+#include <ios/keyring.h>
 #include <string.h>
+
 #include "crypto/keyring.h"
 #include "crypto/otp.h"
 #include "crypto/seeprom.h"

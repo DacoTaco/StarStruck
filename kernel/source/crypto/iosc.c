@@ -9,6 +9,10 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <ios/errno.h>
+#include <ios/ipc.h>
+#include <ios/keyring.h>
+
 #include "crypto/iosc.h"
 #include "crypto/otp.h"
 #include "crypto/keyring.h"
@@ -20,8 +24,6 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "messaging/messageQueue.h"
-#include <ios/errno.h>
-#include <ios/ipc.h>
 
 #ifndef MIOS
 
