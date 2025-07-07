@@ -17,7 +17,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-tags: true
+          fetch-depth: '200'
+
+      #workaround for the github checkout not fully working right with containers
+      #see : https://github.com/actions/checkout/issues/2031
+      - name: Add git safe directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Build
         run: |
