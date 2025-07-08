@@ -221,7 +221,7 @@ void kernel_main( void )
 	{
 		u32 main = __modules[i].EntryPoint;
 		u32 stackSize = __modules[i].StackSize;
-		u32 priority = __modules[i].Priority;
+		s32 priority = __modules[i].Priority;
 		u32 stackTop = __modules[i].StackAddress;
 		u32 arg = __modules[i].UserId;
 		 

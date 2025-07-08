@@ -42,7 +42,7 @@ u32 ProcessUID[MAX_PROCESSES] = { 0 };
 u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10) = { 0 };
 ThreadQueue SchedulerQueue ALIGNED(0x04) = { .NextThread = &ThreadStartingState };
-ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = (u32)-1 };
+ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = -1 };
 ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
 void* ThreadEndFunction = NULL;
 
@@ -112,11 +112,11 @@ void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread )
 		return;
 
 	ThreadInfo* nextThread = threadQueue->NextThread;	
-	u32 threadPriority = thread->Priority;
-	u32 nextPriority = nextThread->Priority;
+	s32 threadPriority = thread->Priority;
+	s32 nextPriority = nextThread->Priority;
 	ThreadInfo** previousThread = &threadQueue->NextThread;
 
-	while((s32)threadPriority < (s32)nextPriority)
+	while(threadPriority < nextPriority)
 	{
 		previousThread = &nextThread->NextThread;
 		nextThread = nextThread->NextThread;
@@ -204,19 +204,19 @@ void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 }
 
 //IOS Handlers
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached)
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
 {
 	int threadId = 0;
 	u32 irqState = DisableInterrupts();
 
 #ifdef MIOS
-	if(priority >= 0x80)
+	if((u32)priority >= 0x80)
 	{
 		threadId = IPC_EINVAL;
 		goto restore_and_return;
 	}
 #else
-	if(priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (CurrentThread != NULL && priority > CurrentThread->InitialPriority))
+	if((u32)priority >= 0x80 || (stack_top != NULL && stacksize == 0) || (CurrentThread != NULL && priority > CurrentThread->InitialPriority))
 	{
 		threadId = IPC_EINVAL;
 		goto restore_and_return;
@@ -478,7 +478,7 @@ s32 GetThreadPriority( const s32 threadId )
 	
 	if(threadId == 0 && CurrentThread != NULL)
 	{
-		ret = (s32)CurrentThread->Priority;
+		ret = CurrentThread->Priority;
 		goto restore_and_return;
 	}
 	
@@ -490,7 +490,7 @@ s32 GetThreadPriority( const s32 threadId )
 	if( CurrentThread != NULL && CurrentThread->ProcessId != 0 && thread->ProcessId != CurrentThread->ProcessId)
 		goto return_error;
 	
-	ret = (s32)thread->Priority;
+	ret = thread->Priority;
 	goto restore_and_return;
 	
 return_error:
@@ -500,14 +500,14 @@ restore_and_return:
 	return ret;
 }
 
-s32 SetThreadPriority( const s32 threadId, u32 priority )
+s32 SetThreadPriority( const s32 threadId, s32 priority )
 {
 	u32 irqState = DisableInterrupts();
 
 	ThreadInfo* thread = NULL;
 	s32 ret = 0;
 	
-	if(threadId < 0 || threadId > MAX_THREADS || priority >= 0x80 )
+	if(threadId < 0 || threadId > MAX_THREADS || (u32)priority >= 0x80 )
 		goto return_error;
 	
 	if( threadId == 0 )

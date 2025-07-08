@@ -53,12 +53,12 @@ typedef struct ThreadInfo
 	ThreadContext ThreadContext;
 	struct ThreadInfo* NextThread;
 #ifdef MIOS
-	u32 Priority;
+	s32 Priority;
 	u32 ThreadState;
 	u32 Unknown;
 #else
-	u32 InitialPriority;
-	u32 Priority;
+	s32 InitialPriority;
+	s32 Priority;
 	u32 ThreadState;
 #endif
 	u32 ProcessId;
@@ -110,7 +110,7 @@ s32 YieldCurrentThread( ThreadQueue* threadQueue );
 void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
 ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue);
 void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread );
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 CancelThread(const s32 threadId, u32 return_value);
 s32 JoinThread(const s32 threadId, u32* returnedValue);
 s32 SuspendThread(const s32 threadId);
@@ -118,7 +118,7 @@ s32 StartThread(const s32 threadId);
 s32 GetThreadID(void);
 u32 GetProcessID(void);
 s32 GetThreadPriority(const s32 threadId);
-s32 SetThreadPriority(const s32 threadId, u32 priority);
+s32 SetThreadPriority(const s32 threadId, s32 priority);
 u32 GetUID(void);
 s32 SetUID(u32 pid, u32 uid);
 u16 GetGID(void);
