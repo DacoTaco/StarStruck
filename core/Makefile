@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = $(CURDIR)/../sdk
+export SDKDIR = $(CURDIR)/../sdk
 endif
 
 include $(SDKDIR)/starstruck_rules
@@ -87,6 +87,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 #---------------------------------------------------------------------------------
 $(BUILD): ./include/git_version.h
+	@echo $(origin SDKDIR) $(SDKDIR) $(CURDIR)
 	@[ -d $@ ] || mkdir -p $@
 	$(SILENTCMD) mkdir -p $(OUTPUTDIR)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
@@ -108,6 +109,7 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).a	: $(OFILES)
+	@echo $(origin SDKDIR) $(SDKDIR) $(CURDIR)
 
 #we don't want gcc to rewrite our code in string.c. it would cause GCC to replace some parts of memset with a call to memset
 #that... isn't correct for obvious reasons :)
