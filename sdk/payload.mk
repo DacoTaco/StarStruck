@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS	+= $(INCLUDE) -fno-asynchronous-unwind-tables -fno-builtin
+CFLAGS	+= $(INCLUDE) -fno-asynchronous-unwind-tables -fno-builtin -fpic
 CXXFLAGS = $(CFLAGS)
 ASFLAGS += $(CFLAGS)
 ifeq ($(BUILD),)
@@ -16,6 +16,7 @@ endif
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 LIBDIRS	:=
+LIBS	:= -lcore
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -63,7 +64,7 @@ export INCLUDE			:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 clean:

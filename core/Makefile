@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = ../sdk
+SDKDIR = $(CURDIR)/../sdk
 endif
 
 include $(SDKDIR)/starstruck_rules
@@ -89,7 +89,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 $(BUILD): ./include/git_version.h
 	@[ -d $@ ] || mkdir -p $@
 	$(SILENTCMD) mkdir -p $(OUTPUTDIR)
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 ./include/git_version.h: describesimple.sh
 	$(SILENTCMD)echo "  GITVER    $@"

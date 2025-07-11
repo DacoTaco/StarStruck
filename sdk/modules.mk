@@ -75,7 +75,7 @@ export LIBPATHS			:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) SDKDIR=../$(SDKDIR) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #check if files changed, if so -> build
 $(TARGET): $(BUILD) $(OUTPUTPATH)/$(TARGET)_module.ld
