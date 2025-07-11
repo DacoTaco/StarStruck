@@ -36,7 +36,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 export TARGET			:=	$(notdir $(CURDIR))
 export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym.elf
-export OUTPUT_STRIPPED	:=	$(CURDIR)/$(TARGET).elf
+export OUTPUT_STRIPPED		:=	$(CURDIR)/$(TARGET).elf
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
@@ -85,7 +85,7 @@ $(OUTPUTPATH)/$(TARGET)_module.ld: $(OUTPUT_STRIPPED)
 	@if [ -z $(OUTPUTPATH) ]; then\
 		echo "OUTPUTPATH is a required variable to build module binary data"; \
 		false; \
-    fi
+	fi
 	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .note=$(OUTPUTPATH)/$(TARGET)_notes.bin $(OUTPUT_STRIPPED)
 	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .module=$(OUTPUTPATH)/$(TARGET)_module.bin $(OUTPUT_STRIPPED)
 	$(SILENTCMD)$(OBJCOPY) -I elf32-big --dump-section .module.data=$(OUTPUTPATH)/$(TARGET)_moduleData.bin $(OUTPUT_STRIPPED)

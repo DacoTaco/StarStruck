@@ -1,3 +1,5 @@
+SDKDIR=$(CURDIR)/sdk
+
 all:
 	$(MAKE) -C core
 	$(MAKE) -C elfloader

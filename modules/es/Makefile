@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = ../../sdk
+SDKDIR = $(CURDIR)/../../sdk
 endif
 
 include $(SDKDIR)/starstruck_rules
