@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS	+= $(INCLUDE) -fno-asynchronous-unwind-tables -fno-builtin -fpic
+CFLAGS	+= $(INCLUDE) -fno-asynchronous-unwind-tables -fpic
 CXXFLAGS = $(CFLAGS)
 ASFLAGS += $(CFLAGS)
 ifeq ($(BUILD),)
