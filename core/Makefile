@@ -34,7 +34,7 @@ ASFLAGS += $(CFLAGS)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lgcc
+LIBS	:=
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -111,7 +111,7 @@ $(OUTPUT).a	: $(OFILES)
 
 #we don't want gcc to rewrite our code in string.c. it would cause GCC to replace some parts of memset with a call to memset
 #that... isn't correct for obvious reasons :)
-string.o: 		CFLAGS += -fno-builtin
+#string.o: 		CFLAGS += -fno-builtin
 
 #---------------------------------------------------------------------------------
 # The bin2o rule should be copied and modified
