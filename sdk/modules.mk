@@ -4,7 +4,6 @@
 
 CFLAGS	+= -D__PRIORITY=$(PRIORITY) $(INCLUDE)
 ASFLAGS	+= $(CFLAGS)
-SOURCES	+= $(SDKDIR)/modules/
 
 ifeq ($(BUILD),)
 BUILD	:= build
@@ -38,7 +37,8 @@ export TARGET			:=	$(notdir $(CURDIR))
 export OUTPUT			:=	$(CURDIR)/$(TARGET)-sym.elf
 export OUTPUT_STRIPPED		:=	$(CURDIR)/$(TARGET).elf
 export VPATH			:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-							$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+					$(SDKDIR)/modules/
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -62,7 +62,8 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES 			:= $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+# _startup.s is assumed to be in sdk/modules
+export OFILES 			:= _startup.o $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export INCLUDE			:= $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 						   $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 						   -I$(CURDIR)/$(BUILD) -I$(SDKDIR)/modules

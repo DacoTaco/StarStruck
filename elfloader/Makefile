@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = $(CURDIR)/../sdk
+export SDKDIR = $(CURDIR)/../sdk
 endif
 
 include $(SDKDIR)/wii_rules

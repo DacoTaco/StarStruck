@@ -1,4 +1,4 @@
-SDKDIR=$(CURDIR)/sdk
+export SDKDIR=$(CURDIR)/sdk
 
 all:
 	$(MAKE) -C core
