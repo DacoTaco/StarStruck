@@ -14,14 +14,16 @@
 #include "messaging/messageQueue.h"
 #include "messaging/resourceManager.h"
 
-typedef union {
+typedef union
+{
 	char DevicePath[MAX_PATHLEN];
 } FileDescriptorPath;
 CHECK_SIZE(FileDescriptorPath, MAX_PATHLEN);
 
-typedef struct {
+typedef struct
+{
 	s32 Id;
-	ResourceManager* BelongsToResource;
+	ResourceManager *BelongsToResource;
 } FileDescriptor;
 
 #ifdef MIOS
@@ -38,4 +40,4 @@ extern FileDescriptor AesFileDescriptor;
 extern FileDescriptor ShaFileDescriptor;
 #endif
 
-extern FileDescriptorPath* FiledescPathArray;
+extern FileDescriptorPath *FiledescPathArray;

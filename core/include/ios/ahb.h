@@ -11,7 +11,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #ifndef __IOS_AHB_H__
 #define __IOS_AHB_H__
 
-typedef enum {
+typedef enum
+{
 	AHB_STARLET = 0, //or MEM2 or some controller or bus or ??
 	AHB_1 = 1, //ppc or something else???
 	AHB_UNKN2 = 2, //Unknown

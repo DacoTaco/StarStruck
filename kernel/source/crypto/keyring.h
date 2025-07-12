@@ -36,10 +36,11 @@ typedef enum
 
 #define RSA4096_ROOTKEY 0x0FFFFFFF
 
-typedef struct {
-	// most significant 4 bits (u8 value >> 4)
+typedef struct
+{
+ // most significant 4 bits (u8 value >> 4)
 	u8 Type : 4;
-	// least significant 4 bits (u8 value & 0xf)
+ // least significant 4 bits (u8 value & 0xf)
 	u8 Subtype : 4;
 } KeyKind;
 CHECK_SIZE(KeyKind, 0x01);
@@ -88,7 +89,7 @@ void Keyring_Init(void);
 
 void Keyring_ClearEntryData(u32 keyEntryHandle);
 s16 Keyring_GetKeyIndexFitSize(const u32 keySize);
-s32 Keyring_GetHandleFitSize(u32* keyHandle, const u32 keySize);
+s32 Keyring_GetHandleFitSize(u32 *keyHandle, const u32 keySize);
 
 s32 Keyring_FindKeySize(u32 *keySize, u32 keyHandle);
 s32 Keyring_GetSignatureSize(u32 *publicKeySize, u32 keyHandle);
@@ -106,11 +107,11 @@ s32 Keyring_SetKey(u32 keyHandle, const void *data, u32 keySize);
 s32 Keyring_GetKey(u32 keyHandle, void *keyPtr, u32 keySize);
 
 s32 Keyring_SetKeyOwnerProcess(u32 keyHandle, u32 owner);
-s32 Keyring_GetKeyOwnerProcess(u32 keyHandle, u32* owner);
+s32 Keyring_GetKeyOwnerProcess(u32 keyHandle, u32 *owner);
 
 s32 Keyring_SetKeyZeroes(u32 keyHandle, u32 zeroes);
 s32 Keyring_SetKeyZeroesIfAnyPrivate(u32 keyHandle, u32 zeroes);
-s32 Keyring_GetKeyZeroes(u32 keyHandle, u32* zeroes);
-s32 Keyring_GetKeyZeroesIfAnyPrivate(u32 keyHandle, u32* zeroes);
+s32 Keyring_GetKeyZeroes(u32 keyHandle, u32 *zeroes);
+s32 Keyring_GetKeyZeroesIfAnyPrivate(u32 keyHandle, u32 *zeroes);
 
 #endif

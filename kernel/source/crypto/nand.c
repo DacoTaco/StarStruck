@@ -13,10 +13,10 @@
 #include "crypto/seeprom.h"
 #include <ios/errno.h>
 
-u16 NAND_ComputeCounterChecksum(const NAND_Counter* data)
+u16 NAND_ComputeCounterChecksum(const NAND_Counter *data)
 {
 	u16 sum = 0;
-	for(u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
+	for (u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
 	{
 		sum += data->Data[i];
 	}
