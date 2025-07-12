@@ -17,10 +17,13 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 //domain are in the elf flags in bit 21-24 (0x0xx00000)
 #define FLAGSTODOMAIN(flags) ((flags) >> 0x14)
 
-#define ELFMAGIC ((ELFMAG0 << 24) | (ELFMAG1 << 16) | (ELFMAG2 << 8) | (ELFMAG3))
-#define IOSELFINFO ((ELFCLASS32 << 24) | (ELFDATA2MSB << 16) | (01 << 8) | (ELFOSABI_ARM))
+#define ELFMAGIC \
+	((ELFMAG0 << 24) | (ELFMAG1 << 16) | (ELFMAG2 << 8) | (ELFMAG3))
+#define IOSELFINFO \
+	((ELFCLASS32 << 24) | (ELFDATA2MSB << 16) | (01 << 8) | (ELFOSABI_ARM))
 
-typedef struct {
+typedef struct
+{
 	u32 hdrsize;
 	u32 loadersize;
 	u32 elfsize;
@@ -30,4 +33,3 @@ typedef struct {
 CHECK_SIZE(ioshdr, 0x10);
 
 #endif
-

@@ -34,26 +34,26 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
    Even still, you are encouraged to add in sanity checks and version
    checking to prevent strange bugs or even data loss.  --bushing */
 
-#define IPC_DEV_SYS		0x00
-#define IPC_DEV_NAND	0x01
-#define IPC_DEV_SDHC	0x02
-#define IPC_DEV_KEYS	0x03
-#define IPC_DEV_AES		0x04
-#define IPC_DEV_BOOT2	0x05
-#define IPC_DEV_PPC		0x06
-#define IPC_DEV_SDMMC	0x07
-#define IPC_DEV_ES		0x08
+#define IPC_DEV_SYS        0x00
+#define IPC_DEV_NAND       0x01
+#define IPC_DEV_SDHC       0x02
+#define IPC_DEV_KEYS       0x03
+#define IPC_DEV_AES        0x04
+#define IPC_DEV_BOOT2      0x05
+#define IPC_DEV_PPC        0x06
+#define IPC_DEV_SDMMC      0x07
+#define IPC_DEV_ES         0x08
 
-#define IPC_IN_SIZE		32
-#define IPC_OUT_SIZE	32
+#define IPC_IN_SIZE        32
+#define IPC_OUT_SIZE       32
 
 // IpcMessageArray contains 1 message per thread (= MAX_THREADS), plus these extra messages
-#define IPC_EXTRA_MESSAGES	128
+#define IPC_EXTRA_MESSAGES 128
 
-extern IpcMessage* IpcMessageArray;
+extern IpcMessage *IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];
-extern ThreadInfo* IpcHandlerThread;
+extern ThreadInfo *IpcHandlerThread;
 extern s32 IpcHandlerThreadId;
 
 #ifndef MIOS
@@ -61,7 +61,7 @@ void IpcInit(void);
 void IpcHandler(void);
 #endif
 
-s32 ResourceReply(IpcMessage* message, s32 requestReturnValue);
-s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
+s32 ResourceReply(IpcMessage *message, s32 requestReturnValue);
+s32 SendMessageCheckReceive(IpcMessage *message, ResourceManager *resource);
 
 void ipc_shutdown(void);

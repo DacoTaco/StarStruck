@@ -13,8 +13,10 @@
 
 #include <types.h>
 
-typedef struct {
-	union {
+typedef struct
+{
+	union
+	{
 		u32 NandGen; // matches offset 0x8 in nand SFFS blocks
 		u16 Data[2];
 	} __attribute__((packed));
@@ -24,7 +26,7 @@ CHECK_SIZE(NAND_Counter, 6);
 CHECK_OFFSET(NAND_Counter, 0x00, Data);
 CHECK_OFFSET(NAND_Counter, 0x04, Checksum);
 
-u16 NAND_ComputeCounterChecksum(const NAND_Counter* data);
+u16 NAND_ComputeCounterChecksum(const NAND_Counter *data);
 
 s32 NAND_GetGen(void);
 s32 NAND_UpdateGen(void);
