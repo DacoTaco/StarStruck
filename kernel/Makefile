@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(SDKDIR),)
-SDKDIR = ../sdk
+export SDKDIR = $(CURDIR)/../sdk
 endif
 
 include $(SDKDIR)/starstruck_rules
@@ -106,7 +106,7 @@ ifeq ($(wildcard $(ELFLOADER)),)
 	@exit 1
 endif
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile SDKDIR=../$(SDKDIR)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #rule to make the module files required to be embed in the kernel binary
 $(MODULESCRIPT).ld:
