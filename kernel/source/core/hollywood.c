@@ -12,18 +12,18 @@
 #include <ios/processor.h>
 #include "core/hollywood.h"
 
-void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision)
+void GetHollywoodVersion(u32 *hardwareVersion, u32 *hardwareRevision)
 {
 	u32 version = read32(HW_VERSION);
-	//eh? isnt this the same as '(version & 0x000000F0) >> 4' ?
+ //eh? isnt this the same as '(version & 0x000000F0) >> 4' ?
 	*hardwareVersion = (version << 24) >> 28;
 	*hardwareRevision = version & 0x0F;
 }
 
 u32 GetCoreClock(void)
 {
-	//gamecube mode?
-	if((s32)(read32(HW_CLOCKS) << 0x1E) < 0)
+ //gamecube mode?
+	if ((s32)(read32(HW_CLOCKS) << 0x1E) < 0)
 		return 0xA2;
 
 	u32 clk = 0;
@@ -31,18 +31,18 @@ u32 GetCoreClock(void)
 	u32 hwVer = 0;
 	GetHollywoodVersion(&hwVer, &hwRev);
 
-	if(hwVer < 2)
+	if (hwVer < 2)
 	{
-		if((read32(HW_CLOCKS) & 1) != 0)
+		if ((read32(HW_CLOCKS) & 1) != 0)
 			return 0xF30 / read32(HW_PLLSYSEXT) & 0x1FF;
 
 		clk = 0xF30;
 	}
 	else
 	{
-		if((read32(HW_CLOCKS) & 1) != 0)
+		if ((read32(HW_CLOCKS) & 1) != 0)
 			return 0x798 / read32(HW_PLLSYSEXT) & 0x1FF;
-		
+
 		clk = 0x798;
 	}
 

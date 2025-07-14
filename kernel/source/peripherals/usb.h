@@ -14,12 +14,11 @@
 #include <types.h>
 
 //unknown usb host controller registers. once known -> hollywood.h
-#define		USB_REG_A4		(USB_REG_BASE+0x00a4)
-#define		USB_REG_B0		(USB_REG_BASE+0x00b0)
-#define		USB_REG_B4		(USB_REG_BASE+0x00b4)
-#define		USB_REG_CC		(USB_REG_BASE+0x00cc)
+#define USB_REG_A4 (USB_REG_BASE + 0x00a4)
+#define USB_REG_B0 (USB_REG_BASE + 0x00b0)
+#define USB_REG_B4 (USB_REG_BASE + 0x00b4)
+#define USB_REG_CC (USB_REG_BASE + 0x00cc)
 
 void ConfigureUsbController(u32 hardwareRevision);
 
 #endif
-

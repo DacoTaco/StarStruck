@@ -17,31 +17,34 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #include "interrupt/undefined.h"
 #include "panic.h"
 
-const char *exceptions[] = {
-	"RESET", "UNDEFINED INSTR", "SWI", "INSTR ABORT", "DATA ABORT",
-	"RESERVED", "IRQ", "FIQ", "(unknown exception type)"
-};
+const char *exceptions[] = { "RESET",
+	                         "UNDEFINED INSTR",
+	                         "SWI",
+	                         "INSTR ABORT",
+	                         "DATA ABORT",
+	                         "RESERVED",
+	                         "IRQ",
+	                         "FIQ",
+	                         "(unknown exception type)" };
 
-const char *aborts[] = {
-	"UNDEFINED",
-	"Alignment",
-	"UNDEFINED",
-	"Alignment",
-	"UNDEFINED",
-	"Translation",
-	"UNDEFINED",
-	"Translation",
-	"External abort",
-	"Domain",
-	"External abort",
-	"Domain",
-	"External abort on translation (first level)",
-	"Permission",
-	"External abort on translation (second level)",
-	"Permission"
-};
+const char *aborts[] = { "UNDEFINED",
+	                     "Alignment",
+	                     "UNDEFINED",
+	                     "Alignment",
+	                     "UNDEFINED",
+	                     "Translation",
+	                     "UNDEFINED",
+	                     "Translation",
+	                     "External abort",
+	                     "Domain",
+	                     "External abort",
+	                     "Domain",
+	                     "External abort on translation (first level)",
+	                     "Permission",
+	                     "External abort on translation (second level)",
+	                     "Permission" };
 
-u8 domvalid[] = {0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1};
+u8 domvalid[] = { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
 
 void SetupExceptionsStack(void);
 
@@ -55,14 +58,16 @@ void initializeExceptions(void)
 
 void ExceptionHandler(u32 type, u32 spsr, u32 *regs)
 {
-	(void) spsr;
+	(void)spsr;
 
-	if (type > 8) type = 8;
+	if (type > 8)
+		type = 8;
 	gecko_printf("\nException %d (%s):\n", type, exceptions[type]);
 
 	u32 pc, fsr;
 
-	switch(type) {
+	switch (type)
+	{
 		case 1: // UND
 		case 2: // SWI
 		case 3: // INSTR ABORT
@@ -89,27 +94,33 @@ void ExceptionHandler(u32 type, u32 spsr, u32 *regs)
 	gecko_printf("TTBR: %08x\n", GetTranslationTableBaseRegister());
 	gecko_printf("DACR: %08x\n", GetDomainAccessControlRegister());
 
-	switch (type) {
+	switch (type)
+	{
 		case 3: // INSTR ABORT
-		case 4: // DATA ABORT 
-			if(type == 3)
+		case 4: // DATA ABORT
+			if (type == 3)
 				fsr = GetInstructionFaultStatusRegister();
 			else
 				fsr = GetDataFaultStatusRegister();
-			gecko_printf("Abort type: %s\n", aborts[fsr&0xf]);
-			if(domvalid[fsr&0xf])
-				gecko_printf("Domain: %d\n", (fsr>>4)&0xf);
-			if(type == 4)
+			gecko_printf("Abort type: %s\n", aborts[fsr & 0xf]);
+			if (domvalid[fsr & 0xf])
+				gecko_printf("Domain: %d\n", (fsr >> 4) & 0xf);
+			if (type == 4)
 				gecko_printf("Address: 0x%08x\n", GetFaultAddressRegister());
-		break;
-		default: break;
+			break;
+		default:
+			break;
 	}
 
-	if(type != 3) {
+	if (type != 3)
+	{
 		gecko_printf("Code dump:\n");
-		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc-16, read32(pc-16), read32(pc-12), read32(pc-8), read32(pc-4));
-		gecko_printf("%08x: *%08x %08x %08x %08x\n", pc, read32(pc), read32(pc+4), read32(pc+8), read32(pc+12));
-		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc+16, read32(pc+16), read32(pc+20), read32(pc+24), read32(pc+28));
+		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc - 16, read32(pc - 16),
+		             read32(pc - 12), read32(pc - 8), read32(pc - 4));
+		gecko_printf("%08x: *%08x %08x %08x %08x\n", pc, read32(pc),
+		             read32(pc + 4), read32(pc + 8), read32(pc + 12));
+		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc + 16, read32(pc + 16),
+		             read32(pc + 20), read32(pc + 24), read32(pc + 28));
 	}
 	panic2(0, PANIC_EXCEPTION);
 }

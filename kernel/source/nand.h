@@ -14,12 +14,12 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 #include "messaging/ipc.h"
 
-#define PAGE_SIZE		2048
-#define PAGE_SPARE_SIZE		64
-#define ECC_BUFFER_SIZE		(PAGE_SPARE_SIZE+16)
-#define ECC_BUFFER_ALLOC	(PAGE_SPARE_SIZE+32)
-#define BLOCK_SIZE		64
-#define NAND_MAX_PAGE		0x40000
+#define PAGE_SIZE        2048
+#define PAGE_SPARE_SIZE  64
+#define ECC_BUFFER_SIZE  (PAGE_SPARE_SIZE + 16)
+#define ECC_BUFFER_ALLOC (PAGE_SPARE_SIZE + 32)
+#define BLOCK_SIZE       64
+#define NAND_MAX_PAGE    0x40000
 
 void nand_irq(void);
 
@@ -32,12 +32,11 @@ void nand_write_page(u32 pageno, void *data, void *ecc);
 void nand_erase_block(u32 pageno);
 void nand_wait(void);
 
-#define NAND_ECC_OK 0
-#define NAND_ECC_CORRECTED 1
+#define NAND_ECC_OK            0
+#define NAND_ECC_CORRECTED     1
 #define NAND_ECC_UNCORRECTABLE -1
 
 int nand_correct(u32 pageno, void *data, void *ecc);
 void nand_initialize(void);
 
 #endif
-
