@@ -64,6 +64,10 @@ u16 OSGetGID(void);
 s32 OSSetGID(u32 pid, u16 gid);
 void OSAhbFlushFrom(AHBDEV type);
 void OSAhbFlushTo(AHBDEV type);
+s32 OSClearAndEnableIPCInterrupt(void);
+s32 OSClearAndEnableDIInterrupt(void);
+s32 OSClearAndEnableSDInterrupt(u8 sdio);
+s32 OSClearAndEnableEvent(u32 event);
 
 void OSDCInvalidateRange(const void* start, u32 size);
 void OSDCFlushRange(const void *start, u32 size);
