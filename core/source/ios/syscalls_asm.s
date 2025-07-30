@@ -71,6 +71,10 @@ _SYSCALL OSSetGID,					0x002D
 _SYSCALL OSGetGID,					0x002E
 _SYSCALL OSAhbFlushFrom,			0x002F
 _SYSCALL OSAhbFlushTo,				0x0030
+_SYSCALL OSClearAndEnableIPCInterrupt,	0x0031
+_SYSCALL OSClearAndEnableDIInterrupt,	0x0032
+_SYSCALL OSClearAndEnableSDInterrupt,	0x0033
+_SYSCALL OSClearAndEnableEvent,		0x0034
 
 _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040

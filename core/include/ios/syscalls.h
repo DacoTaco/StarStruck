@@ -17,7 +17,7 @@
 #include "ios/ahb.h"
 
 typedef int (*ThreadFunc)(void *arg);
-s32 OSCreateThread(ThreadFunc main, void *arg, u32 *stack_top, u32 stacksize, u32 priority, u32 detached);
+s32 OSCreateThread(ThreadFunc main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 OSJoinThread(s32 threadId, int *returnedValue);
 s32 OSStopThread(s32 threadid, int returnValue);
 s32 OSGetThreadId(void);
@@ -25,7 +25,7 @@ s32 OSGetProcessId(void);
 s32 OSStartThread(s32 threadid);
 void OSYieldThread(void);
 s32 OSGetThreadPriority(s32 threadid);
-s32 OSSetThreadPriority(s32 threadid, u32 priority);
+s32 OSSetThreadPriority(s32 threadid, s32 priority);
 s32 OSCreateMessageQueue(void *ptr, u32 size);
 s32 OSDestroyMessageQueue(s32 queueid);
 s32 OSSendMessage(s32 queueid, void *message, u32 flags);
@@ -64,6 +64,10 @@ u16 OSGetGID(void);
 s32 OSSetGID(u32 pid, u16 gid);
 void OSAhbFlushFrom(AHBDEV type);
 void OSAhbFlushTo(AHBDEV type);
+s32 OSClearAndEnableIPCInterrupt(void);
+s32 OSClearAndEnableDIInterrupt(void);
+s32 OSClearAndEnableSDInterrupt(u8 sdio);
+s32 OSClearAndEnableEvent(u32 event);
 
 void OSDCInvalidateRange(const void* start, u32 size);
 void OSDCFlushRange(const void *start, u32 size);

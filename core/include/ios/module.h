@@ -20,7 +20,7 @@ typedef struct ModuleInfo
 	u32 _entrypointHeader;
 	u32 EntryPoint;
 	u32 _priorityHeader;
-	u32 Priority;
+	s32 Priority;
 	u32 _stackSizeHeader;
 	u32 StackSize;
 	u32 _stackAddressHeader;

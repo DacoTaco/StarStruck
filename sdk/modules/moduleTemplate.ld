@@ -92,7 +92,7 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		__stack = .;
-		. = __stackSize;
+		. += __stackSize;
 		__stackEnd = .;
 	} :bss
 }
