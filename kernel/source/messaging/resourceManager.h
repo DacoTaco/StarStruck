@@ -14,13 +14,13 @@
 #include <types.h>
 
 #define MAX_RESOURCES 0x26
-#define MAX_PATHLEN 0x40
+#define MAX_PATHLEN   0x40
 
 typedef struct
 {
 	char DevicePath[MAX_PATHLEN];
 	u32 PathLength;
-	MessageQueue* MessageQueue;
+	MessageQueue *MessageQueue;
 	u32 ProcessId;
 	u32 PpcHasAccessRights;
 } ResourceManager;
@@ -34,6 +34,6 @@ CHECK_OFFSET(ResourceManager, 0x44, MessageQueue);
 CHECK_OFFSET(ResourceManager, 0x48, ProcessId);
 CHECK_OFFSET(ResourceManager, 0x4C, PpcHasAccessRights);
 
-s32 RegisterResourceManager(const char* devicePath, const s32 queueid);
+s32 RegisterResourceManager(const char *devicePath, const s32 queueid);
 
 #endif

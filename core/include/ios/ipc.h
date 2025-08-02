@@ -13,15 +13,15 @@ Copyright (C) 2021	DacoTaco
 
 #include "types.h"
 
-#define IOS_OPEN			0x01
-#define IOS_CLOSE			0x02
-#define IOS_READ			0x03
-#define IOS_WRITE			0x04
-#define IOS_SEEK			0x05
-#define IOS_IOCTL			0x06
-#define IOS_IOCTLV			0x07
-#define IOS_REPLY			0x08
-#define IOS_INTERRUPT		0x09
+#define IOS_OPEN      0x01
+#define IOS_CLOSE     0x02
+#define IOS_READ      0x03
+#define IOS_WRITE     0x04
+#define IOS_SEEK      0x05
+#define IOS_IOCTL     0x06
+#define IOS_IOCTLV    0x07
+#define IOS_REPLY     0x08
+#define IOS_INTERRUPT 0x09
 
 typedef enum
 {
@@ -33,10 +33,10 @@ typedef enum
 } AccessMode;
 CHECK_SIZE(AccessMode, 4);
 
-#define RELNCH_RELAUNCH 	0x01
-#define RELNCH_BACKGROUND 	0x02
+#define RELNCH_RELAUNCH   0x01
+#define RELNCH_BACKGROUND 0x02
 
-typedef struct 
+typedef struct
 {
 	char *Filepath;
 	AccessMode Mode;
@@ -49,7 +49,8 @@ CHECK_OFFSET(OpenMessage, 0x04, Mode);
 CHECK_OFFSET(OpenMessage, 0x08, UID);
 CHECK_OFFSET(OpenMessage, 0x0C, GID);
 
-typedef struct {
+typedef struct
+{
 	void *Data;
 	u32 Length;
 } ReadMessage;
@@ -57,7 +58,8 @@ CHECK_SIZE(ReadMessage, 0x08);
 CHECK_OFFSET(ReadMessage, 0x00, Data);
 CHECK_OFFSET(ReadMessage, 0x04, Length);
 
-typedef struct {
+typedef struct
+{
 	const void *Data;
 	u32 Length;
 } WriteMessage;
@@ -65,7 +67,8 @@ CHECK_SIZE(WriteMessage, 0x08);
 CHECK_OFFSET(WriteMessage, 0x00, Data);
 CHECK_OFFSET(WriteMessage, 0x04, Length);
 
-typedef struct {
+typedef struct
+{
 	s32 Where;
 	s32 Whence;
 } SeekMessage;
@@ -114,11 +117,13 @@ typedef struct
 {
 	u32 Command;
 	s32 Result;
-	union {
+	union
+	{
 		s32 FileDescriptor;
 		u32 RequestCommand;
 	};
-	union {
+	union
+	{
 		OpenMessage Open;
 		ReadMessage Read;
 		WriteMessage Write;
@@ -135,7 +140,6 @@ CHECK_OFFSET(IpcRequest, 0x08, FileDescriptor);
 CHECK_OFFSET(IpcRequest, 0x08, RequestCommand);
 //all message types and their data
 CHECK_OFFSET(IpcRequest, 0x0C, Data);
-
 
 typedef struct
 {

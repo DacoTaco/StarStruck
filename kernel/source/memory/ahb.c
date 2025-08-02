@@ -21,12 +21,12 @@ u32 _mc_read32(u32 addr)
 {
 	u32 data;
 	u32 tmp130 = 0;
-	// this seems to be a bug workaround
-	if(!(read32(HW_VERSION) & 0xF0))
+ // this seems to be a bug workaround
+	if (!(read32(HW_VERSION) & 0xF0))
 	{
 		tmp130 = read32(HW_ARB_CFG_MC);
 		write32(HW_ARB_CFG_MC, tmp130 | 0x400);
-		// Dummy reads?
+  // Dummy reads?
 		read32(HW_ARB_CFG_ME);
 		read32(HW_ARB_CFG_ME);
 		read32(HW_ARB_CFG_ME);
@@ -35,7 +35,7 @@ u32 _mc_read32(u32 addr)
 	data = read32(addr);
 	read32(HW_VERSION); //???
 
-	if(!(read32(HW_VERSION) & 0xF0))
+	if (!(read32(HW_VERSION) & 0xF0))
 		write32(HW_ARB_CFG_MC, tmp130);
 
 	return data;
@@ -46,39 +46,68 @@ void AhbFlushTo(AHBDEV type)
 {
 	u32 cookie = DisableInterrupts();
 	_ahb_flush_to(type);
-	if(type != AHB_STARLET)
+	if (type != AHB_STARLET)
 		_ahb_flush_to(AHB_STARLET);
 
 	RestoreInterrupts(cookie);
 }
 
 // this is ripped from IOS, because no one can figure out just WTF this thing is doing
-void _ahb_flush_to(AHBDEV dev) 
+void _ahb_flush_to(AHBDEV dev)
 {
 	u32 mask = 0;
-	switch(dev) {
-		case AHB_STARLET: mask = 0x8000; break;
-		case AHB_1: mask = 0x4000; break;
-		case AHB_UNKN2: mask = 0x0001; break;
-		case AHB_NAND: mask = 0x0002; break;
-		case AHB_AES: mask = 0x0004; break;
-		case AHB_SHA1: mask = 0x0008; break;
-		case AHB_UNKN6: mask = 0x0010; break;
-		case AHB_UNKN7: mask = 0x0020; break;
-		case AHB_UNKN8: mask = 0x0040; break;
-		case AHB_SDHC: mask = 0x0080; break;
-		case AHB_UNKN10: mask = 0x0100; break;
-		case AHB_UNKN11: mask = 0x1000; break;
-		case AHB_UNKN12: mask = 0x0000; break;
+	switch (dev)
+	{
+		case AHB_STARLET:
+			mask = 0x8000;
+			break;
+		case AHB_1:
+			mask = 0x4000;
+			break;
+		case AHB_UNKN2:
+			mask = 0x0001;
+			break;
+		case AHB_NAND:
+			mask = 0x0002;
+			break;
+		case AHB_AES:
+			mask = 0x0004;
+			break;
+		case AHB_SHA1:
+			mask = 0x0008;
+			break;
+		case AHB_UNKN6:
+			mask = 0x0010;
+			break;
+		case AHB_UNKN7:
+			mask = 0x0020;
+			break;
+		case AHB_UNKN8:
+			mask = 0x0040;
+			break;
+		case AHB_SDHC:
+			mask = 0x0080;
+			break;
+		case AHB_UNKN10:
+			mask = 0x0100;
+			break;
+		case AHB_UNKN11:
+			mask = 0x1000;
+			break;
+		case AHB_UNKN12:
+			mask = 0x0000;
+			break;
 		default:
 			gecko_printf("ahb_invalidate(%d): Invalid device\n", dev);
 			return;
 	}
-	
+
 	//NOTE: 0xd8b000x, not 0xd8b400x!
 	u32 val = _mc_read32(HW_AHB_08);
-	if(!(val & mask)) {
-		switch(dev) {
+	if (!(val & mask))
+	{
+		switch (dev)
+		{
 			// 2 to 10 in IOS, add more
 			case AHB_UNKN2:
 			case AHB_NAND:
@@ -90,13 +119,12 @@ void _ahb_flush_to(AHBDEV dev)
 			case AHB_UNKN10:
 			case AHB_UNKN11:
 			case AHB_SDHC:
-				while((read32(HW_BOOT0) & 0xF) == 9)
-					set32(HW_SPARE0, 0x10000);
+				while ((read32(HW_BOOT0) & 0xF) == 9) set32(HW_SPARE0, 0x10000);
 				clear32(HW_SPARE0, 0x10000);
 				set32(HW_SPARE0, 0x2000000);
 				mask32(HW_ARB_CFG_M9, 0x7c0, 0x280);
 				set32(HW_ARB_CFG_MD, 0x400);
-				while((read32(HW_BOOT0) & 0xF) != 9);
+				while ((read32(HW_BOOT0) & 0xF) != 9);
 				set32(HW_ARB_CFG_M0, 0x400);
 				set32(HW_ARB_CFG_M1, 0x400);
 				set32(HW_ARB_CFG_M2, 0x400);
@@ -149,7 +177,7 @@ void _ahb_flush_from(AHBDEV dev)
 	u16 ack;
 	int i;
 
-	switch(dev)
+	switch (dev)
 	{
 		case AHB_STARLET:
 		case AHB_1:
@@ -170,14 +198,16 @@ void _ahb_flush_from(AHBDEV dev)
 
 	write16(MEM_FLUSHREQ, req);
 
-	for(i=0;i<1000000;i++) {
+	for (i = 0; i < 1000000; i++)
+	{
 		ack = read16(MEM_FLUSHACK);
 		_ahb_flush_to(AHB_STARLET);
-		if(ack == req)
+		if (ack == req)
 			break;
 	}
 	write16(MEM_FLUSHREQ, 0);
-	if(i>=1000000) {
+	if (i >= 1000000)
+	{
 		gecko_printf("ahb_flush(%d): Flush (0x%x) did not ack!\n", dev, req);
 	}
 done:

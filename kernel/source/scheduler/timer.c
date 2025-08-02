@@ -22,17 +22,16 @@
 #include "utils.h"
 
 #ifdef MIOS
-const u8 _timerStack[TIMERSTACKSIZE] ALIGNED(32) = {0};
-const u8* TimerMainStack = _timerStack;
+const u8 _timerStack[TIMERSTACKSIZE] ALIGNED(32) = { 0 };
+const u8 *TimerMainStack = _timerStack;
 #else
-const u8* TimerMainStack = NULL;
+const u8 *TimerMainStack = NULL;
 #endif
-
 
 u32 timerFrequency = 0;
 TimerInfo timers[MAX_TIMERS] SRAM_DATA ALIGNED(0x10);
 TimerInfo initialTimer = { 0, 0, NULL, NULL, 0, &initialTimer, &initialTimer };
-TimerInfo* CurrentTimer ALIGNED(0x10) = &initialTimer;
+TimerInfo *CurrentTimer ALIGNED(0x10) = &initialTimer;
 u32 PreviousTimerValue = 0;
 
 u32 ConvertDelayToTicks(u32 delay)
@@ -41,79 +40,80 @@ u32 ConvertDelayToTicks(u32 delay)
 	u32 clk = GetCoreClock();
 
 	//from what i gather, it uses the clk values (which are mode & hardware rev depended) to decide the formula
-	if(clk == 0x51)
+	if (clk == 0x51)
 		return (delay >> 1) + (delay >> 3) + (delay >> 7);
-	else if(clk == 0x36)
+	else if (clk == 0x36)
 		return (delay >> 2) + (delay >> 3) + (delay >> 5) + (delay >> 6);
-	else if(clk == 0x6C)
+	else if (clk == 0x6C)
 		return (delay >> 1) + (delay >> 2) + (delay >> 4) + (delay >> 5);
-	else if(clk == 0xA2) //Gamecube mode clk
+	else if (clk == 0xA2) //Gamecube mode clk
 		return (delay >> 2) + (delay >> 6) + delay;
 
 	//fallback
-	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 7);
+	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) +
+	       (delay >> 7);
 #else
-	if(IsWiiMode == 0)
+	if (IsWiiMode == 0)
 		return (delay >> 2) + delay + (delay >> 6);
 
-	return (delay >> 1) + delay + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 8) + (delay >> 9) + (delay >> 10) + (delay >> 0xc);
+	return (delay >> 1) + delay + (delay >> 2) + (delay >> 3) + (delay >> 6) +
+	       (delay >> 8) + (delay >> 9) + (delay >> 10) + (delay >> 0xc);
 #endif
 }
 
-void QueueTimer(TimerInfo* timerInfo)
+void QueueTimer(TimerInfo *timerInfo)
 {
-	if(timerInfo == NULL)
+	if (timerInfo == NULL)
 		return;
 
-	TimerInfo* nextTimer = CurrentTimer->NextTimer;
+	TimerInfo *nextTimer = CurrentTimer->NextTimer;
 	u32 intervalInTicks = timerInfo->IntervalInTicks;
 	u32 timePassed = read32(HW_TIMER) - PreviousTimerValue;
 	PreviousTimerValue = read32(HW_TIMER);
 
 	//if the next timer isn't the current timer & there is still time left -> correct the interval
 	//otherwise make it 0
-	if(nextTimer != CurrentTimer)
+	if (nextTimer != CurrentTimer)
 	{
-		nextTimer->IntervalInTicks = (timePassed < nextTimer->IntervalInTicks)
-			? nextTimer->IntervalInTicks - timePassed
-			: 0;
+		nextTimer->IntervalInTicks = (timePassed < nextTimer->IntervalInTicks) ?
+		                                 nextTimer->IntervalInTicks - timePassed :
+		                                 0;
 	}
 
-	while(1)
+	while (1)
 	{
-		if(nextTimer == CurrentTimer || nextTimer->IntervalInTicks >= intervalInTicks)
+		if (nextTimer == CurrentTimer || nextTimer->IntervalInTicks >= intervalInTicks)
 			break;
-		
+
 		intervalInTicks -= nextTimer->IntervalInTicks;
 		nextTimer = nextTimer->NextTimer;
 	}
-	
+
 	//set timer interval that is left & fix next thread interval
 	timerInfo->IntervalInTicks = intervalInTicks;
-	if(nextTimer != CurrentTimer)
+	if (nextTimer != CurrentTimer)
 		nextTimer->IntervalInTicks = nextTimer->IntervalInTicks - intervalInTicks;
 
 	//shove timer between our previous and next timer
-	TimerInfo* previousTimer = nextTimer->PreviousTimer;
+	TimerInfo *previousTimer = nextTimer->PreviousTimer;
 	timerInfo->PreviousTimer = previousTimer;
 	timerInfo->NextTimer = nextTimer;
 	nextTimer->PreviousTimer = timerInfo;
 	previousTimer->NextTimer = timerInfo;
 
 	//if the current running timer is our previous timer, we need to re-set the timer alarm with the new interval between the 2 timers
-	if(timerInfo->PreviousTimer == CurrentTimer)
+	if (timerInfo->PreviousTimer == CurrentTimer)
 		SetTimerAlarm(timerInfo->IntervalInTicks);
 }
 
 void TimerHandler(void)
 {
-
 	u32 timer_messages[1];
 	s32 ret;
 	u32 interupts = 0;
 	u32 timerTicks = 0;
-	TimerInfo* previousTimer = NULL;
-	TimerInfo* nextTimer = NULL;
+	TimerInfo *previousTimer = NULL;
+	TimerInfo *nextTimer = NULL;
 
 	//IOS sets up the timer here, but we've set it up in the intial timer setup
 	/*CurrentTimer->IntervalInTicks = 0;
@@ -123,30 +123,31 @@ void TimerHandler(void)
 	CurrentTimer->NextTimer = CurrentTimer;
 	CurrentTimer->MessageQueue = NULL;*/
 
-	ret = CreateMessageQueue((void**)&timer_messages, 1);
-	if(ret < 0)
+	ret = CreateMessageQueue((void **)&timer_messages, 1);
+	if (ret < 0)
 		panic("Unable to create timer message queue: %d\n", ret);
 
 	const s32 timerQueueId = ret;
 	ret = RegisterEventHandler(IRQ_TIMER, timerQueueId, 0);
-	if(ret < 0)
+	if (ret < 0)
 		panic("Unable to register timer event handler: %d\n", ret);
-	
-	while(1)
+
+	while (1)
 	{
 		//wait for an irq message, which signals us to do our work
 		do
 		{
 			ret = ReceiveMessage(timerQueueId, (void **)0x0, None);
-		} while (ret != 0);
+		}
+		while (ret != 0);
 
 		//lets not get interrupted while processing the timer message
 		interupts = DisableInterrupts();
 
-		TimerInfo* timerInfo = CurrentTimer->NextTimer;
-		while(timerInfo != CurrentTimer)
+		TimerInfo *timerInfo = CurrentTimer->NextTimer;
+		while (timerInfo != CurrentTimer)
 		{
-			while(1)
+			while (1)
 			{
 				timerTicks = PreviousTimerValue;
 				PreviousTimerValue = read32(HW_TIMER);
@@ -154,7 +155,7 @@ void TimerHandler(void)
 
 				//will the next timer trigger before next loop?
 				//if so, fix its interval and set the hardware timer
-				if(timerTicks < timerInfo->IntervalInTicks)
+				if (timerTicks < timerInfo->IntervalInTicks)
 				{
 					timerTicks = timerInfo->IntervalInTicks - timerTicks;
 					timerInfo->IntervalInTicks = timerTicks;
@@ -173,24 +174,26 @@ void TimerHandler(void)
 				nextTimer->PreviousTimer = previousTimer;
 				timerInfo->PreviousTimer = NULL;
 
-				if(interval != 0)
+				if (interval != 0)
 				{
 					interval = ConvertDelayToTicks(interval);
-					if(timerInfo->IntervalInTicks + interval < timerTicks)
+					if (timerInfo->IntervalInTicks + interval < timerTicks)
 						timerTicks = 1;
 					else
-						timerTicks = ((timerInfo->IntervalInTicks - timerTicks) + interval) - 1;
-					
+						timerTicks =
+						    ((timerInfo->IntervalInTicks - timerTicks) + interval) - 1;
+
 					timerInfo->IntervalInTicks = timerTicks;
 					QueueTimer(timerInfo);
 				}
 
-				if(timerInfo->MessageQueue == NULL)
+				if (timerInfo->MessageQueue == NULL)
 					break;
 
-				SendMessageToQueue(timerInfo->MessageQueue, timerInfo->Message, RegisteredEventHandler);
+				SendMessageToQueue(timerInfo->MessageQueue, timerInfo->Message,
+				                   RegisteredEventHandler);
 				timerInfo = CurrentTimer->NextTimer;
-				if(timerInfo == CurrentTimer)
+				if (timerInfo == CurrentTimer)
 					goto _reset_previous_and_continue;
 			}
 		}
@@ -224,28 +227,28 @@ s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
 	u32 interupts = DisableInterrupts();
 	u32 ticks = 0;
 
-	if(queueid < 0 || queueid > MAX_MESSAGEQUEUES)
+	if (queueid < 0 || queueid > MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto return_create_timer;
 	}
 
-	if(MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
+	if (MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto return_create_timer;
 	}
 
 	ret = 0;
-	while(ret < MAX_TIMERS)
+	while (ret < MAX_TIMERS)
 	{
-		if(timers[ret].MessageQueue == NULL)
+		if (timers[ret].MessageQueue == NULL)
 			break;
-		
+
 		ret++;
 	}
 
-	if (ret >= MAX_TIMERS) 
+	if (ret >= MAX_TIMERS)
 	{
 		ret = IPC_EMAX;
 		goto return_create_timer;
@@ -254,13 +257,13 @@ s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
 	timers[ret].Message = message;
 	timers[ret].MessageQueue = &MessageQueues[queueid];
 	timers[ret].IntervalInµs = periodUs;
-	if(delayUs != 0)
+	if (delayUs != 0)
 		periodUs = delayUs;
 
 	ticks = ConvertDelayToTicks(periodUs);
 	timers[ret].IntervalInTicks = ticks;
 	timers[ret].ProcessId = CurrentThread->ProcessId;
-	if(ticks != 0)
+	if (ticks != 0)
 		QueueTimer(&timers[ret]);
 
 return_create_timer:
@@ -272,29 +275,29 @@ s32 RestartTimer(s32 timerId, u32 timeUs, u32 repeatTimeUs)
 	u32 interupts = DisableInterrupts();
 	s32 ret = 0;
 
-	if(timerId >= MAX_TIMERS)
+	if (timerId >= MAX_TIMERS)
 	{
 		ret = IPC_EINVAL;
 		goto return_restart_timer;
 	}
 
-	if(timers[timerId].ProcessId != CurrentThread->ProcessId)
+	if (timers[timerId].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto return_restart_timer;
 	}
 
-	if( timers[timerId].IntervalInµs != 0 || timers[timerId].IntervalInTicks != 0 || 
-		timers[timerId].NextTimer != NULL || timers[timerId].PreviousTimer != NULL)
+	if (timers[timerId].IntervalInµs != 0 || timers[timerId].IntervalInTicks != 0 ||
+	    timers[timerId].NextTimer != NULL || timers[timerId].PreviousTimer != NULL)
 		goto return_restart_timer;
 
 	timers[timerId].IntervalInµs = repeatTimeUs;
-	if(timeUs != 0)
+	if (timeUs != 0)
 		repeatTimeUs = timeUs;
-		
+
 	u32 ticks = ConvertDelayToTicks(repeatTimeUs);
 	timers[timerId].IntervalInTicks = ticks;
-	if(ticks != 0)
+	if (ticks != 0)
 		QueueTimer(&timers[timerId]);
 
 return_restart_timer:
@@ -305,41 +308,43 @@ s32 StopOrDestroyTimer(s32 timerId, s32 destroyTimer)
 {
 	s32 ret = 0;
 	u32 interupts = DisableInterrupts();
-	TimerInfo* timerInfo = NULL;
-	TimerInfo* nextTimer = NULL;
-	TimerInfo* previousTimer = NULL;
+	TimerInfo *timerInfo = NULL;
+	TimerInfo *nextTimer = NULL;
+	TimerInfo *previousTimer = NULL;
 	u32 prevTimerValue = PreviousTimerValue;
 
-	if(timerId > MAX_TIMERS)
+	if (timerId > MAX_TIMERS)
 	{
 		ret = IPC_EINVAL;
 		goto return_stop_timer;
 	}
 
 	timerInfo = &timers[timerId];
-	if(timerInfo->ProcessId != CurrentThread->ProcessId)
+	if (timerInfo->ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto return_stop_timer;
 	}
 
 	nextTimer = timerInfo->NextTimer;
-	if(nextTimer == NULL)
+	if (nextTimer == NULL)
 		goto clear_timer;
 
-	if(nextTimer != CurrentTimer)
+	if (nextTimer != CurrentTimer)
 		goto clear_previousTimer;
 
 	//if we are destroying the next timer, we need to recalculate all the timer timings
-	if(CurrentTimer->NextTimer == timerInfo)
+	if (CurrentTimer->NextTimer == timerInfo)
 	{
 		PreviousTimerValue = read32(HW_TIMER);
-		if(nextTimer->IntervalInTicks + timerInfo->IntervalInTicks <= read32(HW_TIMER - prevTimerValue))
+		if (nextTimer->IntervalInTicks + timerInfo->IntervalInTicks <=
+		    read32(HW_TIMER - prevTimerValue))
 		{
 			nextTimer->IntervalInTicks = 0;
 			goto clear_previousTimer;
 		}
-		prevTimerValue = nextTimer->IntervalInTicks + (timerInfo->IntervalInTicks - read32(HW_TIMER) - prevTimerValue);
+		prevTimerValue = nextTimer->IntervalInTicks +
+		                 (timerInfo->IntervalInTicks - read32(HW_TIMER) - prevTimerValue);
 	}
 	else
 		PreviousTimerValue = nextTimer->IntervalInTicks + timerInfo->IntervalInTicks;
@@ -354,7 +359,7 @@ clear_previousTimer:
 
 //clear the timer struct
 clear_timer:
-	if(destroyTimer)
+	if (destroyTimer)
 		memset(timerInfo, 0, sizeof(TimerInfo));
 	else
 	{

@@ -66,6 +66,8 @@
 		},
 		"editor.insertSpaces": false,
 		"editor.detectIndentation": false,
+		"editor.formatOnSave": true,
+		"editor.formatOnPaste": true,
 		"files.eol": "\n",
 	},
 	"extensions": {

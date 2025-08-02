@@ -22,7 +22,6 @@ u8 gecko_enable_console(const u8 enable);
 u32 gecko_checkrecv(void);
 u32 _gecko_recvbyte(u8 *recvbyte);
 void gecko_flush(void);
-u32 gecko_printf(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+u32 gecko_printf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 #endif
-

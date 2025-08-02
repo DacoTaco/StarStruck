@@ -15,9 +15,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include <ios/ahb.h>
 
 //this is just pure guessing. once confirmed -> hollywood.h
-#define		HW_AHB_BASE		(HW_REG_BASE + 0xb0000)
-#define		HW_AHB_08		(HW_AHB_BASE + 0x08)
-#define		HW_AHB_10		(HW_AHB_BASE + 0x10)
+#define HW_AHB_BASE (HW_REG_BASE + 0xb0000)
+#define HW_AHB_08   (HW_AHB_BASE + 0x08)
+#define HW_AHB_10   (HW_AHB_BASE + 0x10)
 
 //Syscalls
 void AhbFlushFrom(AHBDEV type);

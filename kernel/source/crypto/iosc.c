@@ -33,9 +33,10 @@ static u32 IOSC_BOOT2_DummyUnk2 = 0;
 static u32 IOSC_NAND_DummyGen = 0;
 static u32 IOSC_SEEPROM_DummyPRNGSeed = 0;
 
-typedef struct {
+typedef struct
+{
 	u32 val0;
-	void* message;
+	void *message;
 	s32 messageQueueId;
 	u32 val3;
 	u32 rngSeed;
@@ -44,7 +45,7 @@ typedef struct {
 static IOSC_InformationHolder IOSC_Information;
 // provisional size, is located at the end of the kernel section
 extern u32 __ioscstack_addr[];
-#define IOSC_SafeStackEnd (u32)__ioscstack_addr
+#define IOSC_SafeStackEnd (u32) __ioscstack_addr
 
 extern void IOSC_SwapStack(u32 currentStackBase, u32 newStackBase);
 
@@ -62,82 +63,90 @@ static s32 IOSC_SendEmptyMessageToQueue(const s32 queueId)
 }
 static s32 IOSC_DiscardMessageFromQueue(const s32 queueId)
 {
-	IpcMessage* receivedMessage = NULL;
-	s32 ret = ReceiveMessageUnsafe(queueId, (void**)&receivedMessage, None);
+	IpcMessage *receivedMessage = NULL;
+	s32 ret = ReceiveMessageUnsafe(queueId, (void **)&receivedMessage, None);
 	return ret;
 }
 static inline s32 IOSC_CheckCurrentProcessOwnsKey(u32 keyHandle)
 {
-	if(keyHandle == RSA4096_ROOTKEY)
+	if (keyHandle == RSA4096_ROOTKEY)
 		return IPC_SUCCESS;
 
 	u32 ownerProcess = 0;
 	s32 ret = Keyring_GetKeyOwnerProcess(keyHandle, &ownerProcess);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return ret;
 
-	if(((1 << (CurrentThread->ProcessId & 0xff)) & ownerProcess) == 0)
+	if (((1 << (CurrentThread->ProcessId & 0xff)) & ownerProcess) == 0)
 		return IOSC_EACCES;
 
 	return IPC_SUCCESS;
 }
-static inline s32 IOSC_CheckCurrentProcessCanRead(const void* ptr, u32 size)
+static inline s32 IOSC_CheckCurrentProcessCanRead(const void *ptr, u32 size)
 {
 	return CheckMemoryPointer(ptr, size, 3, CurrentThread->ProcessId, 0);
 }
-static inline s32 IOSC_CheckCurrentProcessCanReadWrite(const void* ptr, u32 size)
+static inline s32 IOSC_CheckCurrentProcessCanReadWrite(const void *ptr, u32 size)
 {
 	return CheckMemoryPointer(ptr, size, 4, CurrentThread->ProcessId, 0);
 }
 
-static s32 DispatchIoctlv(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors)
+static s32 DispatchIoctlv(s32 fd, u32 requestId, u32 vectorInputCount,
+                          u32 vectorIOCount, IoctlvMessageData *vectors)
 {
 	u32 flags = DisableInterrupts();
-	s32 ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, NULL, NULL, 0);
+	s32 ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount,
+	                                 vectorIOCount, vectors, NULL, NULL, 0);
 
 	RestoreInterrupts(flags);
 	return ret;
 }
 
-static s32 DispatchIoctlvAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData *vectors, s32 messageQueueId, IpcMessage* message)
+static s32 DispatchIoctlvAsync(s32 fd, u32 requestId, u32 vectorInputCount,
+                               u32 vectorIOCount, IoctlvMessageData *vectors,
+                               s32 messageQueueId, IpcMessage *message)
 {
 	u32 flags = DisableInterrupts();
 	s32 ret = 0;
-	if(messageQueueId >= MAX_MESSAGEQUEUES)
+	if (messageQueueId >= MAX_MESSAGEQUEUES)
 	{
 		ret = -1;
 		goto _return_cleanup_dispatchIoctlvAsync;
 	}
 
-	if(MessageQueues[messageQueueId].ProcessId != CurrentThread->ProcessId)
+	if (MessageQueues[messageQueueId].ProcessId != CurrentThread->ProcessId)
 	{
 		return -4;
 		goto _return_cleanup_dispatchIoctlvAsync;
 	}
 
 	ret = CheckMemoryPointer(message, 0x20, 4, MessageQueues[messageQueueId].ProcessId, 0);
-	if(ret != 0)
+	if (ret != 0)
 		goto _return_cleanup_dispatchIoctlvAsync;
 
-	ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, &MessageQueues[messageQueueId], message, 0);
+	ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors,
+	                             &MessageQueues[messageQueueId], message, 0);
 
 _return_cleanup_dispatchIoctlvAsync:
 	RestoreInterrupts(flags);
 	return ret;
 }
 
-static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 MessageQueueId, IpcMessage* message )
+static s32 _IOSC_Decrypt(const u32 keyHandle, void *ivData, const void *inputData,
+                         const u32 dataSize, void *outputData,
+                         const s32 MessageQueueId, IpcMessage *message)
 {
-	if(((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
+	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
-	if(keyBlob == NULL)
+	void *keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	if (keyBlob == NULL)
 		return IPC_ENOMEM;
-	
+
 	s32 ret = 0;
-	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
-	if(messageData == NULL)
+	IoctlvMessageData *messageData =
+	    (IoctlvMessageData *)AllocateOnHeap(KernelHeapId, 0x20);
+	if (messageData == NULL)
 	{
 		ret = IPC_ENOMEM;
 		goto _aes_decrypt_cleanup_return;
@@ -145,17 +154,17 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 
 	u32 keyRingSize = 0;
 	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
-	if(ret != 0)
+	if (ret != 0)
 		goto _aes_decrypt_cleanup_return;
 
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
-	if(ret != 0)
+	if (ret != 0)
 	{
 		ret = IPC_INTERNALFAIL;
 		goto _aes_decrypt_cleanup_return;
 	}
 
-	messageData->Data = (void*)inputData;
+	messageData->Data = (void *)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
 	messageData[1].Length = 0x10;
@@ -164,31 +173,35 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData[3].Data = ivData;
 	messageData[3].Length = 0x10;
 
-	ret = MessageQueueId == -1
-		? DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData)
-		: DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData, MessageQueueId, (IpcMessage*)message);
+	ret = MessageQueueId == -1 ?
+	          DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData) :
+	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
+	                              MessageQueueId, (IpcMessage *)message);
 
 _aes_decrypt_cleanup_return:
-	if(keyBlob)
+	if (keyBlob)
 		FreeOnHeap(KernelHeapId, keyBlob);
-	
-	if(messageData)
+
+	if (messageData)
 		FreeOnHeap(KernelHeapId, messageData);
 
 	return ret;
 }
-static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 MessageQueueId, IpcMessage* message )
+static s32 _IOSC_Encrypt(const u32 keyHandle, void *ivData, const void *inputData,
+                         const u32 dataSize, void *outputData,
+                         const s32 MessageQueueId, IpcMessage *message)
 {
-	if(((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
+	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
-	if(keyBlob == NULL)
+	void *keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	if (keyBlob == NULL)
 		return IPC_ENOMEM;
 
 	s32 ret = 0;
-	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x20);
-	if(messageData == NULL)
+	IoctlvMessageData *messageData =
+	    (IoctlvMessageData *)AllocateOnHeap(KernelHeapId, 0x20);
+	if (messageData == NULL)
 	{
 		ret = IPC_ENOMEM;
 		goto _aes_encrypt_cleanup_return;
@@ -196,17 +209,17 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 
 	u32 keyRingSize = 0;
 	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
-	if(ret != 0)
+	if (ret != 0)
 		goto _aes_encrypt_cleanup_return;
 
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
-	if(ret != 0)
+	if (ret != 0)
 	{
 		ret = IPC_INTERNALFAIL;
 		goto _aes_encrypt_cleanup_return;
 	}
 
-	messageData->Data = (void*)inputData;
+	messageData->Data = (void *)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
 	messageData[1].Length = 0x10;
@@ -215,84 +228,89 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData[3].Data = ivData;
 	messageData[3].Length = 0x10;
 
-	ret = MessageQueueId == -1
-		? DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData)
-		: DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData, MessageQueueId, (IpcMessage*)message);
+	ret = MessageQueueId == -1 ?
+	          DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData) :
+	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
+	                              MessageQueueId, (IpcMessage *)message);
 
 _aes_encrypt_cleanup_return:
-	if(keyBlob)
+	if (keyBlob)
 		FreeOnHeap(KernelHeapId, keyBlob);
-	
-	if(messageData)
+
+	if (messageData)
 		FreeOnHeap(KernelHeapId, messageData);
 
 	return ret;
 }
-static s32 _IOSC_GenerateBlockMAC(const ShaContext* context, 
-	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
-	const void *signData, const s32 messageQueueId, IpcMessage* message)
+static s32 _IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
+                                  const u32 inputSize, const void *customData,
+                                  const u32 customDataSize, const u32 keyHandle,
+                                  const u32 hmacCommand, const void *signData,
+                                  const s32 messageQueueId, IpcMessage *message)
 {
-	if(((u32)inputData & 0x3F) != 0)
+	if (((u32)inputData & 0x3F) != 0)
 		return -2016;
 
-	//hmac command should be the 0 based command, not the merged command
-	if(hmacCommand >= FinalizeShaState)
+ //hmac command should be the 0 based command, not the merged command
+	if (hmacCommand >= FinalizeShaState)
 		return -4;
 
 	s32 ret = 0;
-	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x28);
-	if(messageData == NULL)
+	IoctlvMessageData *messageData =
+	    (IoctlvMessageData *)AllocateOnHeap(KernelHeapId, 0x28);
+	if (messageData == NULL)
 	{
 		ret = IPC_ENOMEM;
 		goto _hmac_generate_cleanup_return;
 	}
 
 	messageData->Length = inputSize;
-	messageData->Data = (void*) inputData;
-	messageData[1].Data = (void*) context;
+	messageData->Data = (void *)inputData;
+	messageData[1].Data = (void *)context;
 	messageData[1].Length = sizeof(ShaContext);
-	messageData[2].Data = (void*) signData;
+	messageData[2].Data = (void *)signData;
 	messageData[2].Length = signData == NULL ? 0 : 0x14;
-	messageData[3].Data = (void*)&keyHandle;
+	messageData[3].Data = (void *)&keyHandle;
 	messageData[3].Length = sizeof(u32);
-	messageData[4].Data = (void*) customData;
+	messageData[4].Data = (void *)customData;
 	messageData[4].Length = customDataSize;
 
-	ret = messageQueueId == -1
-		? DispatchIoctlv(SHA_STATIC_FILEDESC, (u32) FinalizeShaState + hmacCommand, 3, 2, messageData)
-		: DispatchIoctlvAsync(SHA_STATIC_FILEDESC, FinalizeShaState + hmacCommand, 3, 2, messageData, messageQueueId, message);
+	ret = messageQueueId == -1 ?
+	          DispatchIoctlv(SHA_STATIC_FILEDESC, (u32)FinalizeShaState + hmacCommand,
+	                         3, 2, messageData) :
+	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, FinalizeShaState + hmacCommand,
+	                              3, 2, messageData, messageQueueId, message);
 
 _hmac_generate_cleanup_return:
-	if(messageData)
+	if (messageData)
 		FreeOnHeap(KernelHeapId, messageData);
 
-	return ret;	
+	return ret;
 }
 
-
-static s32 IOSC_SetNewKeyKind(u32* keyHandle, KeyType type, KeySubtype subtype)
+static s32 IOSC_SetNewKeyKind(u32 *keyHandle, KeyType type, KeySubtype subtype)
 {
 	u32 size = 0;
 	s32 ret = Keyring_GetKeySizeFromType(type, subtype, &size);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return IOSC_FAIL_ALLOC;
 
 	ret = Keyring_GetHandleFitSize(keyHandle, size);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return IOSC_FAIL_ALLOC;
 
-	ret = Keyring_SetKeyKind(*keyHandle, (KeyKind){.Type = type, .Subtype = subtype});
-	if(ret != IPC_SUCCESS)
+	ret = Keyring_SetKeyKind(*keyHandle, (KeyKind){ .Type = type, .Subtype = subtype });
+	if (ret != IPC_SUCCESS)
 		return IOSC_FAIL_ALLOC;
-	
+
 	return IPC_SUCCESS;
 }
 static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 {
-	if(keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
+	if (keyHandle >= KEYRING_METADATA_TOTAL_ENTRIES)
 		return IOSC_EINVAL;
 
-	if(!KeyringMetadata[keyHandle].IsUsed)
+	if (!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
 	KeyringMetadata[keyHandle].IsUsed = 0;
@@ -300,10 +318,10 @@ static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 	if (keyringIndex == -1)
 		return IPC_SUCCESS;
 
-	if(keyringIndex >= KEYRING_TOTAL_ENTRIES)
+	if (keyringIndex >= KEYRING_TOTAL_ENTRIES)
 		return IOSC_EINVAL;
 
-	while(keyringIndex < KEYRING_TOTAL_ENTRIES)
+	while (keyringIndex < KEYRING_TOTAL_ENTRIES)
 	{
 		if (!KeyringEntries[keyringIndex].IsUsed)
 			return IOSC_EINVAL;
@@ -313,7 +331,7 @@ static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 		Keyring_ClearEntryData((u16)keyringIndex);
 
 		keyringIndex = nextKeyringIndex;
-		if(keyringIndex == 0)
+		if (keyringIndex == 0)
 			break;
 	}
 
@@ -321,13 +339,13 @@ static s32 IOSC_DeleteKeyringEntry(u32 keyHandle)
 }
 static s32 IOSC_DeleteCustomKey(u32 keyHandle)
 {
-	if(keyHandle < KEYRING_CUSTOM_START_INDEX)
+	if (keyHandle < KEYRING_CUSTOM_START_INDEX)
 		return IOSC_EACCES;
 
-	if(keyHandle == RSA4096_ROOTKEY)
+	if (keyHandle == RSA4096_ROOTKEY)
 		return IOSC_EACCES;
-	
-	if(IOSC_DeleteKeyringEntry(keyHandle) != IPC_SUCCESS)
+
+	if (IOSC_DeleteKeyringEntry(keyHandle) != IPC_SUCCESS)
 		return IOSC_FAIL_ALLOC;
 
 	return IPC_SUCCESS;
@@ -335,10 +353,10 @@ static s32 IOSC_DeleteCustomKey(u32 keyHandle)
 void IOSC_InitInformation(void)
 {
 	s32 messageQueueId = CreateMessageQueue(&IOSC_Information.message, 1);
-	if(messageQueueId >= 0)
+	if (messageQueueId >= 0)
 	{
 		s32 result = SendMessage(messageQueueId, NULL, RegisteredEventHandler);
-		if(result != 0)
+		if (result != 0)
 		{
 			DestroyMessageQueue(messageQueueId);
 			messageQueueId = result;
@@ -352,36 +370,36 @@ void IOSC_InitInformation(void)
 }
 s32 IOSC_Init(void)
 {
-	// bitset of ProcessIDs allowed to access this key
+ // bitset of ProcessIDs allowed to access this key
 	const u32 HandlesAndOwners[][2] = {
-		{KEYRING_CONST_NG_PRIVATE_KEY, 3},
-		{KEYRING_CONST_NG_ID, RSA4096_ROOTKEY},
-		{KEYRING_CONST_NAND_KEY, 5},
-		{KEYRING_CONST_NAND_HMAC, 5},
-		{KEYRING_CONST_OTP_COMMON_KEY, 3},
-		{KEYRING_CONST_BOOT2_VERSION, 3},
-		{KEYRING_CONST_BOOT2_UNK1, 3},
-		{KEYRING_CONST_BOOT2_UNK2, 3},
-		{KEYRING_CONST_NAND_GEN, 5},
-		{KEYRING_CONST_OTP_RNG_SEED, 3},
-		{KEYRING_CONST_SD_PRIVATE_KEY, 3},
-		{KEYRING_CONST_EEPROM_COMMON_KEY, 3},
+		{ KEYRING_CONST_NG_PRIVATE_KEY, 3 },
+		{ KEYRING_CONST_NG_ID, RSA4096_ROOTKEY },
+		{ KEYRING_CONST_NAND_KEY, 5 },
+		{ KEYRING_CONST_NAND_HMAC, 5 },
+		{ KEYRING_CONST_OTP_COMMON_KEY, 3 },
+		{ KEYRING_CONST_BOOT2_VERSION, 3 },
+		{ KEYRING_CONST_BOOT2_UNK1, 3 },
+		{ KEYRING_CONST_BOOT2_UNK2, 3 },
+		{ KEYRING_CONST_NAND_GEN, 5 },
+		{ KEYRING_CONST_OTP_RNG_SEED, 3 },
+		{ KEYRING_CONST_SD_PRIVATE_KEY, 3 },
+		{ KEYRING_CONST_EEPROM_COMMON_KEY, 3 },
 	};
 
 	const u32 HandlesAndZeroes[][2] = {
-		{KEYRING_CONST_NG_PRIVATE_KEY, 0},
-		{KEYRING_CONST_NAND_KEY, 0},
-		{KEYRING_CONST_NAND_HMAC, 0},
-		{KEYRING_CONST_OTP_COMMON_KEY, 0},
-		{KEYRING_CONST_EEPROM_COMMON_KEY, 0},
-		{KEYRING_CONST_OTP_RNG_SEED, 0},
-		{KEYRING_CONST_SD_PRIVATE_KEY, 0},
+		{ KEYRING_CONST_NG_PRIVATE_KEY, 0 },
+		{ KEYRING_CONST_NAND_KEY, 0 },
+		{ KEYRING_CONST_NAND_HMAC, 0 },
+		{ KEYRING_CONST_OTP_COMMON_KEY, 0 },
+		{ KEYRING_CONST_EEPROM_COMMON_KEY, 0 },
+		{ KEYRING_CONST_OTP_RNG_SEED, 0 },
+		{ KEYRING_CONST_SD_PRIVATE_KEY, 0 },
 	};
 
 	Keyring_Init();
 
 	s32 ret = IPC_SUCCESS;
-	for(u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndZeroes); ++i)
+	for (u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndZeroes); ++i)
 	{
 		const u32 handle = HandlesAndZeroes[i][0];
 		const u32 zeroes = HandlesAndZeroes[i][1];
@@ -389,7 +407,7 @@ s32 IOSC_Init(void)
 	}
 
 	ret = IPC_SUCCESS;
-	for(u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndOwners); ++i)
+	for (u32 i = 0; ret == IPC_SUCCESS && i < ARRAY_LENGTH(HandlesAndOwners); ++i)
 	{
 		const u32 handle = HandlesAndOwners[i][0];
 		const u32 owner = HandlesAndOwners[i][1];
@@ -403,7 +421,7 @@ s32 IOSC_BOOT2_GetVersion(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = (s32)IOSC_BOOT2_DummyVersion;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = BOOT2_GetVersion();
 	}
@@ -414,7 +432,7 @@ s32 IOSC_BOOT2_GetUnk1(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = (s32)IOSC_BOOT2_DummyUnk1;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = BOOT2_GetUnk1();
 	}
@@ -425,7 +443,7 @@ s32 IOSC_BOOT2_GetUnk2(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = (s32)IOSC_BOOT2_DummyUnk1; // not Unk2. yes, this is a bug in IOS 58
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = BOOT2_GetUnk2();
 	}
@@ -436,7 +454,7 @@ s32 IOSC_NAND_GetGen(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = (s32)IOSC_NAND_DummyGen;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = NAND_GetGen();
 	}
@@ -447,7 +465,7 @@ s32 IOSC_SEEPROM_GetPRNGSeed(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = (s32)IOSC_SEEPROM_DummyPRNGSeed;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = SEEPROM_GetPRNGSeed();
 	}
@@ -459,9 +477,9 @@ s32 IOSC_BOOT2_UpdateVersion(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = 0;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
-		if(BOOT2_GetVersion() + 1 < 0x100)
+		if (BOOT2_GetVersion() + 1 < 0x100)
 		{
 			ret = BOOT2_UpdateVersion();
 		}
@@ -481,9 +499,9 @@ s32 IOSC_BOOT2_UpdateUnk1(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = 0;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
-		if(BOOT2_GetUnk1() + 1 < 0x100)
+		if (BOOT2_GetUnk1() + 1 < 0x100)
 		{
 			ret = BOOT2_UpdateUnk1();
 		}
@@ -503,9 +521,9 @@ s32 IOSC_BOOT2_UpdateUnk2(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = 0;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
-		if(BOOT2_GetUnk2() + 1 < 0x100)
+		if (BOOT2_GetUnk2() + 1 < 0x100)
 		{
 			ret = BOOT2_UpdateUnk2();
 		}
@@ -525,9 +543,9 @@ s32 IOSC_NAND_UpdateGen(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = 0;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
-		if(NAND_GetGen() != -2)
+		if (NAND_GetGen() != -2)
 		{
 			ret = NAND_UpdateGen();
 		}
@@ -547,7 +565,7 @@ s32 IOSC_SEEPROM_UpdatePRNGSeed(void)
 {
 	const u32 cookie = DisableInterrupts();
 	s32 ret = 0;
-	if(OTP_IsSet())
+	if (OTP_IsSet())
 	{
 		ret = SEEPROM_UpdatePRNGSeed();
 	}
@@ -559,35 +577,40 @@ s32 IOSC_SEEPROM_UpdatePRNGSeed(void)
 	return ret;
 }
 
-#define IOSC_BEGIN_SAFETY_WRAPPER(mainRetVarName, secondaryRetVarName) \
+#define IOSC_BEGIN_SAFETY_WRAPPER(mainRetVarName, secondaryRetVarName)                   \
 	secondaryRetVarName = IOSC_DiscardMessageFromQueue(IOSC_Information.messageQueueId); \
-	mainRetVarName = IOSC_EACCES; \
-	if(secondaryRetVarName == IPC_SUCCESS) { \
+	mainRetVarName = IOSC_EACCES;                                                        \
+	if (secondaryRetVarName == IPC_SUCCESS)                                              \
+	{                                                                                    \
 		IOSC_SwapStack(CurrentThread->DefaultThreadStack, IOSC_SafeStackEnd);
 
-
-#define IOSC_END_SAFETY_WRAPPER(mainRetVarName, secondaryRetVarName) \
-	} \
-	IOSC_SwapStack(IOSC_SafeStackEnd, CurrentThread->DefaultThreadStack); \
+#define IOSC_END_SAFETY_WRAPPER(mainRetVarName, secondaryRetVarName)                     \
+	}                                                                                    \
+	IOSC_SwapStack(IOSC_SafeStackEnd, CurrentThread->DefaultThreadStack);                \
 	secondaryRetVarName = IOSC_SendEmptyMessageToQueue(IOSC_Information.messageQueueId); \
-	if (secondaryRetVarName != IPC_SUCCESS && mainRetVarName == IPC_SUCCESS) { mainRetVarName = IOSC_EACCES; }
+	if (secondaryRetVarName != IPC_SUCCESS && mainRetVarName == IPC_SUCCESS)             \
+	{                                                                                    \
+		mainRetVarName = IOSC_EACCES;                                                    \
+	}
 
-s32 IOSC_CreateObject(u32* keyHandle, KeyType type, KeySubtype subtype)
+s32 IOSC_CreateObject(u32 *keyHandle, KeyType type, KeySubtype subtype)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
 
-	do {
+	do
+	{
 		ret = IOSC_CheckCurrentProcessCanReadWrite(keyHandle, sizeof(u32));
-		if(ret != IPC_SUCCESS)
+		if (ret != IPC_SUCCESS)
 			break;
 
 		ret = IOSC_SetNewKeyKind(keyHandle, type, subtype);
-		if(ret != IPC_SUCCESS)
+		if (ret != IPC_SUCCESS)
 			break;
 
 		ret = Keyring_SetKeyOwnerProcess(*keyHandle, 1 << (CurrentThread->ProcessId & 0xff));
-	} while(0);
+	}
+	while (0);
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
@@ -605,17 +628,18 @@ s32 IOSC_DeleteObject(u32 keyHandle)
 	return ret;
 }
 
-s32 IOSC_GetData(u32 keyHandle, u32* value)
+s32 IOSC_GetData(u32 keyHandle, u32 *value)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
 
-	do {
+	do
+	{
 		ret = IOSC_CheckCurrentProcessCanReadWrite(value, sizeof(u32));
 		if (ret != IPC_SUCCESS)
 			break;
 
-		if(keyHandle >= KEYRING_CUSTOM_START_INDEX && keyHandle != RSA4096_ROOTKEY)
+		if (keyHandle >= KEYRING_CUSTOM_START_INDEX && keyHandle != RSA4096_ROOTKEY)
 		{
 			ret = IOSC_EACCES;
 			keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
@@ -624,17 +648,19 @@ s32 IOSC_GetData(u32 keyHandle, u32* value)
 		}
 
 		ret = Keyring_GetKeyMetadataIfOthers(keyHandle, value);
-	} while(0);
+	}
+	while (0);
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-s32 IOSC_GetKeySize(u32* keySize, u32 keyHandle)
+s32 IOSC_GetKeySize(u32 *keySize, u32 keyHandle)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
 
-	do {
+	do
+	{
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
@@ -644,17 +670,19 @@ s32 IOSC_GetKeySize(u32* keySize, u32 keyHandle)
 			break;
 
 		ret = Keyring_FindKeySize(keySize, keyHandle);
-	} while(0);
+	}
+	while (0);
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-s32 IOSC_GetSignatureSize(u32* signatureSize, u32 keyHandle)
+s32 IOSC_GetSignatureSize(u32 *signatureSize, u32 keyHandle)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
 
-	do {
+	do
+	{
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
@@ -664,18 +692,22 @@ s32 IOSC_GetSignatureSize(u32* signatureSize, u32 keyHandle)
 			break;
 
 		ret = Keyring_GetSignatureSize(signatureSize, keyHandle);
-	} while(0);
+	}
+	while (0);
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
 
-static inline s32 IOSC_EncryptInner(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 messageQueueId, IpcMessage* message)
+static inline s32 IOSC_EncryptInner(const u32 keyHandle, void *ivData, const void *inputData,
+                                    const u32 dataSize, void *outputData,
+                                    const s32 messageQueueId, IpcMessage *message)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
 
-	do {
+	do
+	{
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
@@ -687,23 +719,28 @@ static inline s32 IOSC_EncryptInner(const u32 keyHandle, void* ivData, const voi
 		ret = IOSC_CheckCurrentProcessCanRead(inputData, dataSize);
 		if (ret != IPC_SUCCESS)
 			break;
-		
+
 		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = _IOSC_Encrypt(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
-	} while(0);
-	
+		ret = _IOSC_Encrypt(keyHandle, ivData, inputData, dataSize, outputData,
+		                    messageQueueId, message);
+	}
+	while (0);
+
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-static inline s32 IOSC_DecryptInner(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 messageQueueId, IpcMessage* message)
+static inline s32 IOSC_DecryptInner(const u32 keyHandle, void *ivData, const void *inputData,
+                                    const u32 dataSize, void *outputData,
+                                    const s32 messageQueueId, IpcMessage *message)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
 
-	do {
+	do
+	{
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
@@ -715,79 +752,102 @@ static inline s32 IOSC_DecryptInner(const u32 keyHandle, void* ivData, const voi
 		ret = IOSC_CheckCurrentProcessCanRead(inputData, dataSize);
 		if (ret != IPC_SUCCESS)
 			break;
-		
+
 		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = _IOSC_Decrypt(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
-	} while(0);
-	
+		ret = _IOSC_Decrypt(keyHandle, ivData, inputData, dataSize, outputData,
+		                    messageQueueId, message);
+	}
+	while (0);
+
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-s32 IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData)
+s32 IOSC_Encrypt(const u32 keyHandle, void *ivData, const void *inputData,
+                 const u32 dataSize, void *outputData)
 {
 	return IOSC_EncryptInner(keyHandle, ivData, inputData, dataSize, outputData, -1, NULL);
 }
-s32 IOSC_EncryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 messageQueueId, IpcMessage* message)
+s32 IOSC_EncryptAsync(const u32 keyHandle, void *ivData, const void *inputData,
+                      const u32 dataSize, void *outputData,
+                      const s32 messageQueueId, IpcMessage *message)
 {
-	return IOSC_EncryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+	return IOSC_EncryptInner(keyHandle, ivData, inputData, dataSize, outputData,
+	                         messageQueueId, message);
 }
-s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData)
+s32 IOSC_Decrypt(const u32 keyHandle, void *ivData, const void *inputData,
+                 const u32 dataSize, void *outputData)
 {
 	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, -1, NULL);
 }
-s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData, const s32 messageQueueId, IpcMessage* message)
+s32 IOSC_DecryptAsync(const u32 keyHandle, void *ivData, const void *inputData,
+                      const u32 dataSize, void *outputData,
+                      const s32 messageQueueId, IpcMessage *message)
 {
-	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
+	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData,
+	                         messageQueueId, message);
 }
 
-static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, 
-	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
-	const void *signData, const s32 messageQueueId, IpcMessage* message)
+static inline s32
+IOSC_GenerateBlockMACInner(const ShaContext *context, const void *inputData,
+                           const u32 inputSize, const void *customData,
+                           const u32 customDataSize, const u32 keyHandle,
+                           const u32 hmacCommand, const void *signData,
+                           const s32 messageQueueId, IpcMessage *message)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
 	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet);
 
-	do {
+	do
+	{
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
-		
+
 		ret = IOSC_CheckCurrentProcessCanReadWrite(context, 0x60);
-		if(ret != IPC_SUCCESS)
+		if (ret != IPC_SUCCESS)
 			break;
 
 		ret = IOSC_CheckCurrentProcessCanRead(inputData, inputSize);
-		if(ret != IPC_SUCCESS)
+		if (ret != IPC_SUCCESS)
 			break;
 
 		ret = IOSC_CheckCurrentProcessCanReadWrite(signData, 0x14);
-		if(ret != IPC_SUCCESS)
-			break;
-		
-		ret = IOSC_CheckCurrentProcessCanRead(customData, 4);
-		if(ret != IPC_SUCCESS)
+		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = _IOSC_GenerateBlockMAC(context, inputData, inputSize, customData, customDataSize, keyHandle,
-									 hmacCommand, signData, messageQueueId, message);
-	} while(0);
+		ret = IOSC_CheckCurrentProcessCanRead(customData, 4);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_GenerateBlockMAC(context, inputData, inputSize, customData,
+		                             customDataSize, keyHandle, hmacCommand,
+		                             signData, messageQueueId, message);
+	}
+	while (0);
 
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-s32 IOSC_GenerateBlockMACAsync(const ShaContext* context, 
-	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand,
-	const void *signData, const s32 messageQueueId, IpcMessage* message)
+s32 IOSC_GenerateBlockMACAsync(const ShaContext *context, const void *inputData,
+                               const u32 inputSize, const void *customData,
+                               const u32 customDataSize, const u32 keyHandle,
+                               const u32 hmacCommand, const void *signData,
+                               const s32 messageQueueId, IpcMessage *message)
 {
-	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize, keyHandle, hmacCommand, signData, messageQueueId, message);
+	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData,
+	                                  customDataSize, keyHandle, hmacCommand,
+	                                  signData, messageQueueId, message);
 }
-s32 IOSC_GenerateBlockMAC(const ShaContext* context, 
-	const void *inputData, const u32 inputSize, const void *customData, const u32 customDataSize, const u32 keyHandle, const u32 hmacCommand, const void *signData)
+s32 IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
+                          const u32 inputSize, const void *customData,
+                          const u32 customDataSize, const u32 keyHandle,
+                          const u32 hmacCommand, const void *signData)
 {
-	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize, keyHandle, hmacCommand, signData, -1, NULL);
+	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize,
+	                                  keyHandle, hmacCommand, signData, -1, NULL);
 }
 
 #endif

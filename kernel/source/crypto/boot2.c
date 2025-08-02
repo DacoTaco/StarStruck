@@ -12,10 +12,10 @@
 #include "crypto/seeprom.h"
 #include <ios/errno.h>
 
-u16 BOOT2_ComputeCounterChecksum(const BOOT2_Counter* data)
+u16 BOOT2_ComputeCounterChecksum(const BOOT2_Counter *data)
 {
 	u16 sum = 0;
-	for(u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
+	for (u32 i = 0; i < ARRAY_LENGTH(data->Data); ++i)
 	{
 		sum += data->Data[i];
 	}
@@ -28,7 +28,7 @@ s32 BOOT2_GetVersion(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 	{
 		ret = data.Version;
 	}
@@ -41,7 +41,7 @@ s32 BOOT2_GetUnk1(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 	{
 		ret = data.Unk1;
 	}
@@ -54,7 +54,7 @@ s32 BOOT2_GetUnk2(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret == IPC_SUCCESS)
+	if (ret == IPC_SUCCESS)
 	{
 		ret = data.Unk2;
 	}
@@ -68,12 +68,12 @@ s32 BOOT2_UpdateVersion(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return ret;
 
 	data.Version += 1;
 	data.UpdateTag += 1;
-	data.Checksum =  BOOT2_ComputeCounterChecksum(&data);
+	data.Checksum = BOOT2_ComputeCounterChecksum(&data);
 	ret = SEEPROM_BOOT2_UpdateCounter(&data, counter_write_index);
 
 	return ret;
@@ -84,12 +84,12 @@ s32 BOOT2_UpdateUnk1(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return ret;
 
 	data.Unk1 += 1;
 	data.UpdateTag += 1;
-	data.Checksum =  BOOT2_ComputeCounterChecksum(&data);
+	data.Checksum = BOOT2_ComputeCounterChecksum(&data);
 	ret = SEEPROM_BOOT2_UpdateCounter(&data, counter_write_index);
 
 	return ret;
@@ -100,12 +100,12 @@ s32 BOOT2_UpdateUnk2(void)
 	s32 counter_write_index = -1;
 
 	s32 ret = SEEPROM_BOOT2_GetCounter(&data, &counter_write_index);
-	if(ret != IPC_SUCCESS)
+	if (ret != IPC_SUCCESS)
 		return ret;
 
 	data.Unk2 += 1;
 	data.UpdateTag += 1;
-	data.Checksum =  BOOT2_ComputeCounterChecksum(&data);
+	data.Checksum = BOOT2_ComputeCounterChecksum(&data);
 	ret = SEEPROM_BOOT2_UpdateCounter(&data, counter_write_index);
 
 	return ret;

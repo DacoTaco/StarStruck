@@ -16,4 +16,3 @@ int powerpc_boot_file(const char *path);
 int powerpc_boot_mem(const u8 *addr, u32 len);
 
 #endif
-

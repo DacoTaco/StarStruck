@@ -14,4 +14,3 @@
 s32 UndefinedInstructionHandler(unsigned instruction, unsigned *regs);
 
 #endif
-

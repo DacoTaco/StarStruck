@@ -13,9 +13,12 @@
 
 #include <types.h>
 
-typedef struct {
-	union {
-		struct {
+typedef struct
+{
+	union
+	{
+		struct
+		{
 			u8 Version;
 			u8 Unk1;
 			u8 Unk2;
@@ -30,7 +33,7 @@ CHECK_SIZE(BOOT2_Counter, 10);
 CHECK_OFFSET(BOOT2_Counter, 0x00, Data);
 CHECK_OFFSET(BOOT2_Counter, 0x08, Checksum);
 
-u16 BOOT2_ComputeCounterChecksum(const BOOT2_Counter* counter);
+u16 BOOT2_ComputeCounterChecksum(const BOOT2_Counter *counter);
 
 s32 BOOT2_GetVersion(void);
 s32 BOOT2_GetUnk1(void);

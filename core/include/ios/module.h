@@ -15,7 +15,7 @@
 
 typedef struct ModuleInfo
 {
-    u32 _userIdHeader;
+	u32 _userIdHeader;
 	u32 UserId;
 	u32 _entrypointHeader;
 	u32 EntryPoint;
@@ -35,11 +35,17 @@ CHECK_OFFSET(struct ModuleInfo, 0x24, StackAddress);
 CHECK_SIZE(struct ModuleInfo, 0x28);
 
 //unused as we generate the module info in link script, but shows how the module info is structured in the notes section of the elf
-#define MODULE_INFO(userId, entrypoint, priority, stackAddress, stackSize) const struct ModuleInfo moduleInfo  __attribute__ ((section (".note"))) = \
-{ ._userIdHeader = 0x0B, .UserId = userId, \
- ._entrypointHeader = 0x09, .EntryPoint = entrypoint, \
- ._priorityHeader = 0x7D, .Priority = priority, \
- ._stackAddressHeader = 0x7F, .StackAddress = stackAddress, \
- ._stackSizeHeader = 0x7E, .StackSize = stackSize }
+#define MODULE_INFO(userId, entrypoint, priority, stackAddress, stackSize)  \
+	const struct ModuleInfo moduleInfo                                      \
+	    __attribute__((section(".note"))) = { ._userIdHeader = 0x0B,        \
+		                                      .UserId = userId,             \
+		                                      ._entrypointHeader = 0x09,    \
+		                                      .EntryPoint = entrypoint,     \
+		                                      ._priorityHeader = 0x7D,      \
+		                                      .Priority = priority,         \
+		                                      ._stackAddressHeader = 0x7F,  \
+		                                      .StackAddress = stackAddress, \
+		                                      ._stackSizeHeader = 0x7E,     \
+		                                      .StackSize = stackSize }
 
 #endif

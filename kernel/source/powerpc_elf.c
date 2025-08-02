@@ -21,13 +21,14 @@ Copyright (C) 2009			Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "ff.h"
 #include "powerpc_elf.h"
 
-#define PPC_MEM1_END	(0x017fffff)
-#define PPC_MEM2_START	(0x10000000)
-#define PPC_MEM2_END	(0x13400000)
+#define PPC_MEM1_END   (0x017fffff)
+#define PPC_MEM2_START (0x10000000)
+#define PPC_MEM2_END   (0x13400000)
 
-#define PHDR_MAX 10
+#define PHDR_MAX       10
 
-static int _check_physaddr(u32 addr) {
+static int _check_physaddr(u32 addr)
+{
 	if ((addr >= PPC_MEM2_START) && (addr <= PPC_MEM2_END))
 		return 2;
 
@@ -37,16 +38,18 @@ static int _check_physaddr(u32 addr) {
 	return -1;
 }
 
-static int _check_physrange(u32 addr, u32 len) {
-	switch (_check_physaddr(addr)) {
-	case 1:
-		if ((addr + len) < PPC_MEM1_END)
-			return 1;
-		break;
-	case 2:
-		if ((addr + len) < PPC_MEM2_END)
-			return 2;
-		break;
+static int _check_physrange(u32 addr, u32 len)
+{
+	switch (_check_physaddr(addr))
+	{
+		case 1:
+			if ((addr + len) < PPC_MEM1_END)
+				return 1;
+			break;
+		case 2:
+			if ((addr + len) < PPC_MEM2_END)
+				return 2;
+			break;
 	}
 
 	return -1;
@@ -66,29 +69,37 @@ int powerpc_boot_file(const char *path)
 		return -fres;
 
 	fres = f_read(&fd, &elfhdr, sizeof(elfhdr), &read);
-	
+
 	if (fres != FR_OK)
 		return -fres;
 
 	if (read != sizeof(elfhdr))
 		return -100;
 
-	if (memcmp("\x7F" "ELF\x01\x02\x01\x00\x00",elfhdr.e_ident,9)) {
-		gecko_printf("Invalid ELF header! 0x%02x 0x%02x 0x%02x 0x%02x\n",elfhdr.e_ident[0], elfhdr.e_ident[1], elfhdr.e_ident[2], elfhdr.e_ident[3]);
+	if (memcmp("\x7F"
+	           "ELF\x01\x02\x01\x00\x00",
+	           elfhdr.e_ident, 9))
+	{
+		gecko_printf("Invalid ELF header! 0x%02x 0x%02x 0x%02x 0x%02x\n",
+		             elfhdr.e_ident[0], elfhdr.e_ident[1], elfhdr.e_ident[2],
+		             elfhdr.e_ident[3]);
 		return -101;
 	}
 
-	if (_check_physaddr(elfhdr.e_entry) < 0) {
+	if (_check_physaddr(elfhdr.e_entry) < 0)
+	{
 		gecko_printf("Invalid entry point! 0x%08lx\n", elfhdr.e_entry);
 		return -102;
 	}
 
-	if (elfhdr.e_phoff == 0 || elfhdr.e_phnum == 0) {
+	if (elfhdr.e_phoff == 0 || elfhdr.e_phnum == 0)
+	{
 		gecko_printf("ELF has no program headers!\n");
 		return -103;
 	}
 
-	if (elfhdr.e_phnum > PHDR_MAX) {
+	if (elfhdr.e_phnum > PHDR_MAX)
+	{
 		gecko_printf("ELF has too many (%d) program headers!\n", elfhdr.e_phnum);
 		return -104;
 	}
@@ -97,11 +108,11 @@ int powerpc_boot_file(const char *path)
 	if (fres != FR_OK)
 		return -fres;
 
-	fres = f_read(&fd, phdrs, sizeof(phdrs[0])*elfhdr.e_phnum, &read);
+	fres = f_read(&fd, phdrs, sizeof(phdrs[0]) * elfhdr.e_phnum, &read);
 	if (fres != FR_OK)
 		return -fres;
 
-	if (read != sizeof(phdrs[0])*elfhdr.e_phnum)
+	if (read != sizeof(phdrs[0]) * elfhdr.e_phnum)
 		return -105;
 
 	u16 count = elfhdr.e_phnum;
@@ -109,19 +120,25 @@ int powerpc_boot_file(const char *path)
 
 	powerpc_hang();
 
-	while (count--) {
-		if (phdr->p_type != PT_LOAD) {
+	while (count--)
+	{
+		if (phdr->p_type != PT_LOAD)
+		{
 			gecko_printf("Skipping PHDR of type %ld\n", phdr->p_type);
-		} else {
-			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0) {
+		}
+		else
+		{
+			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0)
+			{
 				gecko_printf("PHDR out of bounds [0x%08lx...0x%08lx]\n",
-								phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
+				             phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
 				return -106;
 			}
 
-			void *dst = (void *) phdr->p_paddr;
+			void *dst = (void *)phdr->p_paddr;
 
-			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
+			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset,
+			             phdr->p_paddr, phdr->p_filesz);
 			fres = f_lseek(&fd, phdr->p_offset);
 			if (fres != FR_OK)
 				return -fres;
@@ -151,28 +168,33 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 	if (len < sizeof(Elf32_Ehdr))
 		return -100;
 
-	Elf32_Ehdr *ehdr = (Elf32_Ehdr *) addr;
+	Elf32_Ehdr *ehdr = (Elf32_Ehdr *)addr;
 
-	if (memcmp("\x7F" "ELF\x01\x02\x01\x00\x00", ehdr->e_ident, 9)) {
+	if (memcmp("\x7F"
+	           "ELF\x01\x02\x01\x00\x00",
+	           ehdr->e_ident, 9))
+	{
 		gecko_printf("Invalid ELF header! 0x%02x 0x%02x 0x%02x 0x%02x\n",
-						ehdr->e_ident[0], ehdr->e_ident[1],
-						ehdr->e_ident[2], ehdr->e_ident[3]);
+		             ehdr->e_ident[0], ehdr->e_ident[1], ehdr->e_ident[2],
+		             ehdr->e_ident[3]);
 		return -101;
 	}
 
-	if (_check_physaddr(ehdr->e_entry) < 0) {
+	if (_check_physaddr(ehdr->e_entry) < 0)
+	{
 		gecko_printf("Invalid entry point! 0x%08lx\n", ehdr->e_entry);
 		return -102;
 	}
 
-	if (ehdr->e_phoff == 0 || ehdr->e_phnum == 0) {
+	if (ehdr->e_phoff == 0 || ehdr->e_phnum == 0)
+	{
 		gecko_printf("ELF has no program headers!\n");
 		return -103;
 	}
 
-	if (ehdr->e_phnum > PHDR_MAX) {
-		gecko_printf("ELF has too many (%d) program headers!\n",
-						ehdr->e_phnum);
+	if (ehdr->e_phnum > PHDR_MAX)
+	{
+		gecko_printf("ELF has too many (%d) program headers!\n", ehdr->e_phnum);
 		return -104;
 	}
 
@@ -180,26 +202,31 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 	if (len < ehdr->e_phoff + count * sizeof(Elf32_Phdr))
 		return -105;
 
-	Elf32_Phdr *phdr = (Elf32_Phdr *) &addr[ehdr->e_phoff];
+	Elf32_Phdr *phdr = (Elf32_Phdr *)&addr[ehdr->e_phoff];
 
-	// TODO: add more checks here
-	// - loaded ELF overwrites itself?
+ // TODO: add more checks here
+ // - loaded ELF overwrites itself?
 
 	powerpc_hang();
 
-	while (count--) {
-		if (phdr->p_type != PT_LOAD) {
+	while (count--)
+	{
+		if (phdr->p_type != PT_LOAD)
+		{
 			gecko_printf("Skipping PHDR of type %ld\n", phdr->p_type);
-		} else {
-			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0) {
+		}
+		else
+		{
+			if (_check_physrange(phdr->p_paddr, phdr->p_memsz) < 0)
+			{
 				gecko_printf("PHDR out of bounds [0x%08lx...0x%08lx]\n",
-								phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
+				             phdr->p_paddr, phdr->p_paddr + phdr->p_memsz);
 				return -106;
 			}
 
-			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset, phdr->p_paddr, phdr->p_filesz);
-			memcpy((void *) phdr->p_paddr, &addr[phdr->p_offset],
-					phdr->p_filesz);
+			gecko_printf("LOAD 0x%lx @0x%08lx [0x%lx]\n", phdr->p_offset,
+			             phdr->p_paddr, phdr->p_filesz);
+			memcpy((void *)phdr->p_paddr, &addr[phdr->p_offset], phdr->p_filesz);
 		}
 		phdr++;
 	}
@@ -215,4 +242,3 @@ int powerpc_boot_mem(const u8 *addr, u32 len)
 
 	return 0;
 }
-

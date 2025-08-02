@@ -11,7 +11,7 @@
 #ifndef __ES_H__
 #define __ES_H__
 
-#define ES_DEVICE_NAME "/dev/es"
+#define ES_DEVICE_NAME      "/dev/es"
 #define ES_DEVICE_NAME_SIZE sizeof(ES_DEVICE_NAME)
 
 #endif

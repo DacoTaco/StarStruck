@@ -23,14 +23,13 @@ typedef u8 u_char;
 typedef u32 bus_space_tag_t;
 typedef u32 bus_space_handle_t;
 
-#define MIN(a, b) (((a)>(b))?(b):(a))
+#define MIN(a, b) (((a) > (b)) ? (b) : (a))
 
 #define wakeup(...)
 
 #define bzero(mem, size) memset(mem, 0, size)
 
 #define ISSET(var, mask) (((var) & (mask)) ? 1 : 0)
-#define SET(var, mask) ((var) |= (mask))
+#define SET(var, mask)   ((var) |= (mask))
 
 #endif
-
