@@ -29,16 +29,14 @@ const u32 PPC_LaunchBS1[0x10] = {
 	0x7C7B03A6, //mtspr 0x1b, r3
 	0x4C000064, //rfi
 	0x00000000, //padding
-	0x00000000,
-	0x00000000,
-	0x00000000,
+	0x00000000, 0x00000000, 0x00000000,
 };
 
 //code that will let me PPC start execution @ 0x80000100, which is the exception vector
 const u32 PPC_LaunchExceptionVector[0x0C] = {
 	0x7c631a78, //xor r3, r3, r3
 	0x7c73fba6, //mtspr 0x3f3, r3
-	0x4c00012c, //isync 
+	0x4c00012c, //isync
 	0x3c400000, //lis r2, 0
 	0x60420100, //ori r2, r2, 0x100
 	0x7c5a03a6, //mtspr 0x1a, r2
@@ -46,8 +44,7 @@ const u32 PPC_LaunchExceptionVector[0x0C] = {
 	0x7cbb03a6, //mtspr 0x1b, r5
 	0x4c000064, //rfi
 	0x60000000, //nop
-	0x60000000,
-	0x60000000,
+	0x60000000, 0x60000000,
 };
 
 //code that will let me PPC start execution @ 0x80000100, which is the exception vector
@@ -56,7 +53,7 @@ const u32 PPC_LaunchExceptionVector2[0x0D] = {
 	0x7c631a78, //xor r3, r3, r3
 	0x6463D7B0, //oris r3, r3, 0xd7b0
 	0x7c73fba6, //mtspr 0x3f3, r3
-	0x4c00012c, //isync 
+	0x4c00012c, //isync
 	0x3c400000, //lis r2, 0
 	0x60420100, //ori r2, r2, 0x100
 	0x7c5a03a6, //mtspr 0x1a, r2
@@ -64,14 +61,13 @@ const u32 PPC_LaunchExceptionVector2[0x0D] = {
 	0x7cbb03a6, //mtspr 0x1b, r5
 	0x4c000064, //rfi
 	0x60000000, //nop
-	0x60000000,
-	0x60000000,
+	0x60000000, 0x60000000,
 };
 
 void PPCSoftReset(void)
 {
 	// enable the broadway IPC interrupt
-	write32(HW_PPCIRQMASK, (1<<30));
+	write32(HW_PPCIRQMASK, (1 << 30));
 	clear32(HW_RESETS, SRSTB_CPU | RSTB_CPU);
 	udelay(0x0F);
 	set32(HW_RESETS, SRSTB_CPU);
@@ -79,23 +75,23 @@ void PPCSoftReset(void)
 	set32(HW_RESETS, SRSTB_CPU | RSTB_CPU);
 }
 
-void PPCLoad(const void* code, u32 codeSize)
+void PPCLoad(const void *code, u32 codeSize)
 {
-	if(codeSize <= 1)
+	if (codeSize <= 1)
 		return;
 
 	u32 oldExiValue = read32(HW_EXICTRL);
 	u32 sizeToCopy = 0x0F;
-	if(codeSize > 0x10)
+	if (codeSize > 0x10)
 	{
 		write32(HW_EXICTRL, read32(HW_EXICTRL) | 1);
-		printk("Warning: only loading %d instrs into EXI boot code", 0x10);	
-	}	
+		printk("Warning: only loading %d instrs into EXI boot code", 0x10);
+	}
 	else
 		sizeToCopy = codeSize;
-	
+
 	u32 codeAddr = (u32)code;
-	for(u32 addr = EXI_BOOT_BASE; addr < addr+sizeToCopy; addr += 4)
+	for (u32 addr = EXI_BOOT_BASE; addr < addr + sizeToCopy; addr += 4)
 	{
 		write32(addr, codeAddr);
 		codeAddr += 4;
@@ -104,12 +100,12 @@ void PPCLoad(const void* code, u32 codeSize)
 	write32(HW_EXICTRL, oldExiValue);
 }
 
-void PPCLoadCode(s8 mode, const void* code, u32 codeSize)
+void PPCLoadCode(s8 mode, const void *code, u32 codeSize)
 {
-	const void* codeToLaunch = NULL;
-	if(code == NULL || codeSize == 0)
+	const void *codeToLaunch = NULL;
+	if (code == NULL || codeSize == 0)
 	{
-		if(mode == 0)
+		if (mode == 0)
 		{
 			codeToLaunch = PPC_LaunchExceptionVector;
 			codeSize = sizeof(PPC_LaunchExceptionVector);
@@ -162,15 +158,15 @@ void PPCStart(void)
 	write32(MEM1_INITSEMAPHORE, 0xdeadbeef);
 
 	write32(MEM1_EXCEPTIONVECTOR, 0x1800000);
-	write32(MEM1_EXCEPTIONVECTOR+4, 0x1800000);
-	write32(MEM1_EXCEPTIONVECTOR+8, 0x81800000);
+	write32(MEM1_EXCEPTIONVECTOR + 4, 0x1800000);
+	write32(MEM1_EXCEPTIONVECTOR + 8, 0x81800000);
 	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT(0x17400000));
 	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT(0x17400000));
 	write32(MEM1_MEMORYSIZE, 0x1800000);
 	write32(MEM1_SIMMEMORYSIZE, 0x1800000);
 	write32(MEM1_HEAPLOW, 0x00);
 	write32(MEM1_HEAPLOW, 0x81800000);
-	
+
 	write32(MEM_COMPAT, 0x00);
 	udelay(1);
 	write32(MEM1_0080, 0x09142001);
@@ -188,15 +184,19 @@ void PPCStart(void)
 	AhbFlushFrom(AHB_1);
 
 	//set some DIFlags that *might* have to do with the hardware its disabling & reenabling
-	write32(HW_RESETS, read32(HW_RESETS) | (u32)(~(RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 | RSTB_GFX | RSTB_GFXTCPE | RSTB_PI)));
+	write32(HW_RESETS, read32(HW_RESETS) |
+	                       (u32)(~(RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 |
+	                               RSTB_GFX | RSTB_GFXTCPE | RSTB_PI)));
 	udelay(1);
 	mask32(HW_DIFLAGS, 0x07EF8F, 0x30);
 	udelay(1);
-	set32(HW_RESETS, (RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 | RSTB_GFX | RSTB_GFXTCPE | RSTB_PI));
+	set32(HW_RESETS, (RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 |
+	                  RSTB_GFX | RSTB_GFXTCPE | RSTB_PI));
 	udelay(1);
 
 	//setup some GPIOS that make no sense for GC mode
-	mask32(HW_GPIO1OUT, GP_AVE_SDA | GP_AVE_SCL | GP_SENSORBAR | GP_SLOTLED, read32(HW_GPIO1BOUT));
+	mask32(HW_GPIO1OUT, GP_AVE_SDA | GP_AVE_SCL | GP_SENSORBAR | GP_SLOTLED,
+	       read32(HW_GPIO1BOUT));
 	write32(HW_GPIO1OWNER, 0);
 	write32(HW_GPIO1DIR, GP_OUTPUTS);
 
@@ -207,22 +207,20 @@ void PPCStart(void)
 	PPCSoftReset();
 	debug_output(0xCE);
 	BusyDelay(8000);
-	while(!read32(MEM1_30F8))
-		AhbFlushTo(AHB_STARLET);
-	
+	while (!read32(MEM1_30F8)) AhbFlushTo(AHB_STARLET);
+
 	mask32(HW_DIFLAGS, 0x601000, 0x600040);
 	udelay(1);
 	write32(MEM1_30F8, 0x00);
 	AhbFlushFrom(AHB_1);
 	SetMemoryCompatabilityMode();
 	write32(HW_DIFLAGS, read32(HW_DIFLAGS) & (DIFLAGS_BOOT_CODE | 0x80000));
-	
+
 	return;
 }
 #else
 void PPCStart(void)
 {
-
 }
 #endif
 
@@ -247,8 +245,7 @@ void powerpc_upload_stub(u32 entry)
 	// rfi
 	write32(EXI_BOOT_BASE + 4 * 5, 0x4c000064);
 
-	for (i = 6; i < 0x10; ++i)
-		write32(EXI_BOOT_BASE + 4 * i, 0);
+	for (i = 6; i < 0x10; ++i) write32(EXI_BOOT_BASE + 4 * i, 0);
 
 	set32(HW_DIFLAGS, DIFLAGS_BOOT_CODE);
 	set32(HW_AHBPROT, 0xFFFFFFFF);

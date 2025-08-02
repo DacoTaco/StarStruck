@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define __GECKO_H___
 
 #ifdef __cplusplus
-   extern "C" {
+extern "C" {
 #endif /* __cplusplus */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,14 +41,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define gdprintf(...)
 #endif
 
-void CheckForGecko( void );
-void gprintf( const char *str, ... );
-void SetDumpDebug( u8 value );
-void InitGDBDebug( void );
+void CheckForGecko(void);
+void gprintf(const char *str, ...);
+void SetDumpDebug(u8 value);
+void InitGDBDebug(void);
 
 #ifdef __cplusplus
-   }
+}
 #endif /* __cplusplus */
 
 #endif
-

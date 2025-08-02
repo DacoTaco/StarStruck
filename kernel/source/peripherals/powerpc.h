@@ -17,7 +17,7 @@ extern const u32 PPC_LaunchExceptionVector[0x0C];
 extern const u32 PPC_LaunchExceptionVector2[0x0D];
 
 void PPCSoftReset(void);
-void PPCLoadCode(s8 mode, const void* code, u32 codeSize);
+void PPCLoadCode(s8 mode, const void *code, u32 codeSize);
 void PPCStart(void);
 
 //old mini stuff

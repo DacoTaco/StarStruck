@@ -24,8 +24,8 @@ typedef struct HeapBlock
 {
 	HeapBlockState BlockState;
 	u32 Size;
-	struct HeapBlock* PreviousBlock;
-	struct HeapBlock* NextBlock;
+	struct HeapBlock *PreviousBlock;
+	struct HeapBlock *NextBlock;
 } HeapBlock;
 CHECK_SIZE(HeapBlock, 0x10);
 CHECK_OFFSET(HeapBlock, 0x00, BlockState);
@@ -35,10 +35,10 @@ CHECK_OFFSET(HeapBlock, 0x0C, NextBlock);
 
 typedef struct
 {
-	void* Heap;
+	void *Heap;
 	u32 ProcessId;
 	u32 Size;
-	HeapBlock* FirstBlock;
+	HeapBlock *FirstBlock;
 } HeapInfo;
 CHECK_SIZE(HeapInfo, 0x10);
 CHECK_OFFSET(HeapInfo, 0x00, Heap);
@@ -50,8 +50,8 @@ extern s32 KernelHeapId;
 
 s32 CreateHeap(void *ptr, u32 size);
 s32 DestroyHeap(s32 heapid);
-void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment);
-void* AllocateOnHeap(s32 heapid, u32 size);
-s32 FreeOnHeap(s32 heapid, void* ptr);
+void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment);
+void *AllocateOnHeap(s32 heapid, u32 size);
+s32 FreeOnHeap(s32 heapid, void *ptr);
 
 #endif

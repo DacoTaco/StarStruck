@@ -11,7 +11,7 @@ Copyright (C) 2021	DacoTaco
 #pragma once
 
 #if !__ASSEMBLER__
-    #error This header file is only for use in assembly files!
+#error This header file is only for use in assembly files!
 #endif // !__ASSEMBLER__
 
 /* clang-format off */
@@ -38,7 +38,6 @@ Copyright (C) 2021	DacoTaco
 #else
 #define _BL bl
 #endif
-
 
 #ifdef __thumb__
 #define _THUMBMODE_

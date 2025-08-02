@@ -26,32 +26,39 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "utils.h"
 #include "elf.h"
 
-typedef struct {
+typedef struct
+{
 	u32 hdrsize;
 	u32 loadersize;
 	u32 elfsize;
 	u32 argument;
 } ioshdr;
 
-#define	HW_MEMMIRR	0xd800060
-#define	HW_BOOT0	0xd80018C
+#define HW_MEMMIRR 0xd800060
+#define HW_BOOT0   0xd80018C
 
 extern void debug_output(u8 byte);
 
-void *loadelf(const u8 *elf) {
-	if(memcmp("\x7F" "ELF\x01\x02\x01",elf,7)) {
+void *loadelf(const u8 *elf)
+{
+	if (memcmp("\x7F"
+	           "ELF\x01\x02\x01",
+	           elf, 7))
+	{
 		panic(0xE3);
 	}
-	
-	Elf32_Ehdr *ehdr = (Elf32_Ehdr*)elf;
-	if(ehdr->e_phoff == 0) {
+
+	Elf32_Ehdr *ehdr = (Elf32_Ehdr *)elf;
+	if (ehdr->e_phoff == 0)
+	{
 		panic(0xE4);
 	}
 	int count = ehdr->e_phnum;
-	Elf32_Phdr *phdr = (Elf32_Phdr*)(elf + ehdr->e_phoff);
-	while(count--)
+	Elf32_Phdr *phdr = (Elf32_Phdr *)(elf + ehdr->e_phoff);
+	while (count--)
 	{
-		if(phdr->p_type == PT_LOAD) {
+		if (phdr->p_type == PT_LOAD)
+		{
 			const void *src = elf + phdr->p_offset;
 			memcpy(phdr->p_paddr, src, phdr->p_filesz);
 		}
@@ -72,19 +79,18 @@ static inline void mem_setswap()
 
 void *_main(void *base)
 {
-	ioshdr *hdr = (ioshdr*)base;
+	ioshdr *hdr = (ioshdr *)base;
 	u8 *elf;
 	void *entry;
-	
-	elf = (u8*) base;
+
+	elf = (u8 *)base;
 	elf += hdr->hdrsize + hdr->loadersize;
-	
+
 	debug_output(0xF1);
 	mem_setswap();
 	disable_boot0();
-	
+
 	entry = loadelf(elf);
 	debug_output(0xC1);
 	return entry;
 }
-

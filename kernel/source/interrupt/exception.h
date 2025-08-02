@@ -18,4 +18,3 @@ void initializeExceptions(void);
 void ExceptionHandler(u32 type, u32 spsr, u32 *regs);
 
 #endif
-

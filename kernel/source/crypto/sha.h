@@ -14,12 +14,12 @@
 
 #include <types.h>
 
-#define SHA_DEVICE_NAME 		"/dev/sha"
-#define SHA_DEVICE_NAME_SIZE 	sizeof(SHA_DEVICE_NAME)
-#define SHA_BLOCK_SIZE 			0x40
-#define SHA_NUM_WORDS 			5
+#define SHA_DEVICE_NAME      "/dev/sha"
+#define SHA_DEVICE_NAME_SIZE sizeof(SHA_DEVICE_NAME)
+#define SHA_BLOCK_SIZE       0x40
+#define SHA_NUM_WORDS        5
 
-typedef enum 
+typedef enum
 {
 	InitShaState = 0x00,
 	ContributeShaState = 0x01,
@@ -27,13 +27,12 @@ typedef enum
 	UnknownShaCommand = 0x0F
 } ShaCommandType;
 
-typedef enum 
+typedef enum
 {
 	InitHMacState = 0x03,
 	ContributeHMacState = 0x04,
 	FinalizeHmacState = 0x05,
 } HMacCommandType;
-
 
 typedef u32 FinalShaHash[SHA_NUM_WORDS];
 CHECK_SIZE(FinalShaHash, 0x14);
@@ -42,7 +41,7 @@ CHECK_SIZE(FinalShaHash, 0x14);
 typedef struct
 {
 	u32 ShaStates[SHA_NUM_WORDS];
-	u64 Length;	//length in bits of total data contributed to SHA-1 hash
+	u64 Length; //length in bits of total data contributed to SHA-1 hash
 } ShaContext;
 #pragma pack(pop)
 CHECK_SIZE(ShaContext, 0x1C);

@@ -12,14 +12,14 @@
 #include <types.h>
 
 #ifdef MIOS
-#define MAX_PROCESSES		4
-#define MAX_THREADS 		8
+#define MAX_PROCESSES 4
+#define MAX_THREADS   8
 #else
-#define MAX_PROCESSES		20
-#define MAX_THREADS 		100
+#define MAX_PROCESSES 20
+#define MAX_THREADS   100
 #endif
 
-typedef enum 
+typedef enum
 {
 	Unset = 0,
 	Ready = 1,
@@ -32,8 +32,8 @@ typedef enum
 
 //Note : do -NOT- mess with these types. this is the order of the registers and how the irq asm code pushes them on the stack
 //messing with these without the asm WILL break everything.
-typedef struct 
-{	
+typedef struct
+{
 	u32 StatusRegister;
 	u32 Registers[13];
 	u32 StackPointer;
@@ -51,7 +51,7 @@ CHECK_SIZE(ThreadContext, 0x44);
 typedef struct ThreadInfo
 {
 	ThreadContext ThreadContext;
-	struct ThreadInfo* NextThread;
+	struct ThreadInfo *NextThread;
 #ifdef MIOS
 	s32 Priority;
 	u32 ThreadState;
@@ -62,10 +62,10 @@ typedef struct ThreadInfo
 	u32 ThreadState;
 #endif
 	u32 ProcessId;
-	u32 IsDetached;	
+	u32 IsDetached;
 	u32 ReturnValue;
-	struct ThreadQueue* JoinQueue;
-	struct ThreadQueue* ThreadQueue;
+	struct ThreadQueue *JoinQueue;
+	struct ThreadQueue *ThreadQueue;
 	ThreadContext UserContext;
 #ifndef MIOS
 	u32 DefaultThreadStack;
@@ -95,24 +95,25 @@ CHECK_SIZE(ThreadInfo, 0xB0);
 
 typedef struct ThreadQueue
 {
-	ThreadInfo* NextThread;
+	ThreadInfo *NextThread;
 } ThreadQueue;
 
 extern ThreadInfo Threads[MAX_THREADS];
-extern ThreadInfo* CurrentThread;
+extern ThreadInfo *CurrentThread;
 extern ThreadInfo ThreadStartingState;
 extern ThreadQueue SchedulerQueue;
 
 void InitializeThreadContext(void);
-void ScheduleYield( void );
-void YieldThread( void );
-s32 YieldCurrentThread( ThreadQueue* threadQueue );
-void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
-ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue);
-void ThreadQueue_PushThread( ThreadQueue* threadQueue, ThreadInfo* thread );
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached);
+void ScheduleYield(void);
+void YieldThread(void);
+s32 YieldCurrentThread(ThreadQueue *threadQueue);
+void UnblockThread(ThreadQueue *threadQueue, s32 returnValue);
+ThreadInfo *ThreadQueue_PopThread(ThreadQueue *queue);
+void ThreadQueue_PushThread(ThreadQueue *threadQueue, ThreadInfo *thread);
+s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize,
+                 s32 priority, u32 detached);
 s32 CancelThread(const s32 threadId, u32 return_value);
-s32 JoinThread(const s32 threadId, u32* returnedValue);
+s32 JoinThread(const s32 threadId, u32 *returnedValue);
 s32 SuspendThread(const s32 threadId);
 s32 StartThread(const s32 threadId);
 s32 GetThreadID(void);
@@ -125,5 +126,5 @@ u16 GetGID(void);
 s32 SetGID(u32 pid, u16 gid);
 
 #ifndef MIOS
-s32 LaunchRM(const char* path);
+s32 LaunchRM(const char *path);
 #endif

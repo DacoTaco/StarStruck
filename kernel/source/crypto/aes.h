@@ -11,7 +11,7 @@
 #pragma once
 #ifndef MIOS
 
-#define AES_DEVICE_NAME "/dev/aes"
+#define AES_DEVICE_NAME      "/dev/aes"
 #define AES_DEVICE_NAME_SIZE sizeof(AES_DEVICE_NAME)
 
 void AesEngineHandler(void);

@@ -19,9 +19,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "utils.h"
 #include "panic.h"
 
-#define PANIC_ON	200000
-#define PANIC_OFF	300000
-#define PANIC_INTER	1000000
+#define PANIC_ON    200000
+#define PANIC_OFF   300000
+#define PANIC_INTER 1000000
 
 void panic(const char *fmt, ...)
 {
@@ -47,12 +47,14 @@ void panic2(int mode, ...)
 	clear32(HW_GPIO1DIR, GP_SLOTLED);
 	clear32(HW_GPIO1OWNER, GP_SLOTLED);
 
-	while(1) {
+	while (1)
+	{
 		va_start(ap, mode);
-		
-		while(1) {
+
+		while (1)
+		{
 			arg = va_arg(ap, int);
-			if(arg < 0)
+			if (arg < 0)
 				break;
 			set32(HW_GPIO1OUT, GP_SLOTLED);
 			udelay((u32)arg * PANIC_ON);
@@ -60,12 +62,11 @@ void panic2(int mode, ...)
 			udelay(PANIC_OFF);
 
 			gecko_printf("PANIIIIIIIIC!!!");
-			*(u32*)HW_RESETS &= (u32)~RSTBINB;
+			*(u32 *)HW_RESETS &= (u32)~RSTBINB;
 		}
-		
+
 		va_end(ap);
-		
+
 		udelay(PANIC_INTER);
 	}
 }
-

@@ -16,27 +16,28 @@
 #include "peripherals/usb.h"
 #include "utils.h"
 
-static u8 _usbConfigurations[] = { 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x0F, 0x00, 0x00 };
+static u8 _usbConfigurations[] = { 0x02, 0x00, 0x00, 0x00, 0x04, 0x00,
+	                               0x00, 0x00, 0x05, 0x0F, 0x00, 0x00 };
 
 void _configureUsbController(u32 hardwareRevision)
 {
 	if (hardwareRevision > 2)
 		hardwareRevision = 2;
-	
+
 	//IOS does something weird here. it has an array somewhere with the following data
 	//data : 02 00 00 00 04 00 00 00 05 0F 00 00
 	//yet it only loads 1 or 2 bytes? o.O
-	//code in ghidra : 
+	//code in ghidra :
 	/* 	_USB_REG_B0 = (((byte)ARRAY_ffff9ea8[hardwareRevision * 4] & 0xf) * 5 - 4 & 0xff) << 8 | 0x20000;
 		_USB_REG_B4 = ((byte)ARRAY_ffff9ea8[hardwareRevision * 4] & 0xf) << 8 | ((byte)ARRAY_ffff9ea8[hardwareRevision * 4 + 1] & 0xf) << 0x17 | 0x2014;*/
-		
-	//result on wii : rev 1 -> B0 = 0x21018, B4 : 0x2414	
+
+	//result on wii : rev 1 -> B0 = 0x21018, B4 : 0x2414
 	u32 index = hardwareRevision << 2;
 	u8 value = _usbConfigurations[index] & 0x0F;
-	u8 subValue = _usbConfigurations[index+1] & 0x0F;
+	u8 subValue = _usbConfigurations[index + 1] & 0x0F;
 
 	//yay, usb controller magic values!
-	write32(USB_REG_B0, ((((value * 5) -4) & 0xFF) << 8) | 0x20000);	
+	write32(USB_REG_B0, ((((value * 5) - 4) & 0xFF) << 8) | 0x20000);
 	write32(USB_REG_B4, value << 8 | subValue << 0x17 | 0x2014);
 }
 
@@ -44,9 +45,9 @@ void ConfigureUsbController(u32 hardwareRevision)
 {
 	write32(HW_USBFRCRST, 0xFE);
 	udelay(2);
-	
+
 	ConfigureUsbHostPLL();
-	
+
 	write32(HW_USBFRCRST, 0xF6);
 	udelay(50);
 	write32(HW_USBFRCRST, 0xF4);
@@ -63,7 +64,7 @@ void ConfigureUsbController(u32 hardwareRevision)
 	udelay(1);
 
 	_configureUsbController(hardwareRevision);
-	if(hardwareRevision < 2)
+	if (hardwareRevision < 2)
 	{
 		write32(USB_REG_A4, 0x26);
 		udelay(1);
@@ -79,7 +80,7 @@ void ConfigureUsbController(u32 hardwareRevision)
 		udelay(1);
 		write32(USB_REG_A4, 0x4023);
 	}
-	
+
 	udelay(20);
 	write32(USB_REG_CC, 0x111);
 }

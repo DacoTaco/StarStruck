@@ -42,31 +42,33 @@ typedef u32 size_t;
 #define StaticAssert _Static_assert
 #endif
 
-#define NULL ((void *)0)
+#define NULL       ((void *)0)
 #define ALIGNED(x) __attribute__((aligned(x)))
 
-#define STACK_ALIGN(type, name, cnt, alignment)         \
-	u8 _al__##name[((sizeof(type)*(cnt)) + (alignment) + \
-	(((sizeof(type)*(cnt))%(alignment)) > 0 ? ((alignment) - \
-	((sizeof(type)*(cnt))%(alignment))) : 0))]; \
-	type *name = (type*)(((u32)(_al__##name)) + ((alignment) - (( \
-	(u32)(_al__##name))&((alignment)-1))))
+#define STACK_ALIGN(type, name, cnt, alignment)                                   \
+	u8 _al__##name[((sizeof(type) * (cnt)) + (alignment) +                        \
+	                (((sizeof(type) * (cnt)) % (alignment)) > 0 ?                 \
+	                     ((alignment) - ((sizeof(type) * (cnt)) % (alignment))) : \
+	                     0))];                                                    \
+	type *name = (type *)(((u32)(_al__##name)) +                                  \
+	                      ((alignment) - (((u32)(_al__##name)) & ((alignment) - 1))))
 
+#define INT_MAX             ((int)0x7fffffff)
+#define UINT_MAX            ((unsigned int)0xffffffff)
 
-#define INT_MAX ((int)0x7fffffff)
-#define UINT_MAX ((unsigned int)0xffffffff)
+#define LONG_MAX            INT_MAX
+#define ULONG_MAX           UINT_MAX
 
-#define LONG_MAX INT_MAX
-#define ULONG_MAX UINT_MAX
+#define LLONG_MAX           0x7fffffffffffffffLL
+#define ULLONG_MAX          0xffffffffffffffffULL
 
-#define LLONG_MAX 0x7fffffffffffffffLL
-#define ULLONG_MAX 0xffffffffffffffffULL
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 
-#define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
+#define CHECK_SIZE(Type, Size) \
+	StaticAssert(sizeof(Type) == Size, #Type " must be " #Size " bytes")
 
-#define CHECK_SIZE(Type, Size) StaticAssert(sizeof(Type) == Size, #Type " must be " #Size " bytes")
-
-#define CHECK_OFFSET(Type, Offset, Field) StaticAssert(offsetof(Type, Field) == Offset, #Type "::" #Field " must be at offset " #Offset)
+#define CHECK_OFFSET(Type, Offset, Field)         \
+	StaticAssert(offsetof(Type, Field) == Offset, \
+	             #Type "::" #Field " must be at offset " #Offset)
 
 #endif
-
