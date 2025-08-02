@@ -15,36 +15,39 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "gpio.h"
 #include "utils.h"
 
-#define		HW_TIMER			0x0d800010
-#define		HW_GPIO1BOUT		0x0d8000C0
+#define HW_TIMER     0x0d800010
+#define HW_GPIO1BOUT 0x0d8000C0
 
 extern void debug_output(u8 byte);
 
 void udelay(u32 d)
 {
-	// should be good to max .2% error
+ // should be good to max .2% error
 	u32 ticks = d * 19 / 10;
 
-	if(ticks < 2)
+	if (ticks < 2)
 		ticks = 2;
 
 	u32 now = read32(HW_TIMER);
 
-	u32 then = now  + ticks;
+	u32 then = now + ticks;
 
-	if(then < now) {
-		while(read32(HW_TIMER) >= now);
+	if (then < now)
+	{
+		while (read32(HW_TIMER) >= now);
 		now = read32(HW_TIMER);
 	}
 
-	while(now < then) {
+	while (now < then)
+	{
 		now = read32(HW_TIMER);
 	}
 }
 
 void panic(u8 v)
 {
-	while(1) {
+	while (1)
+	{
 		debug_output(v);
 		set32(HW_GPIO1BOUT, GP_SLOTLED);
 		udelay(500000);
@@ -53,4 +56,3 @@ void panic(u8 v)
 		udelay(500000);
 	}
 }
-

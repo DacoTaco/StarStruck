@@ -9,7 +9,8 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-enum {
+enum
+{
 	KEYRING_CONST_NG_PRIVATE_KEY,
 	KEYRING_CONST_NG_ID,
 	KEYRING_CONST_NAND_KEY,

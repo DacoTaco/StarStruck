@@ -1,0 +1,14 @@
+# Skip MINI's files
+core/source/vsprintf.c
+kernel/source/boot2_mini.c
+kernel/source/boot2.h
+kernel/source/diskio.c
+kernel/source/diskio.h
+kernel/source/ff.c
+kernel/source/ff.h
+kernel/source/nand_mini.c
+kernel/source/sdhc.c
+
+# Skip files from BSD
+core/include/errno.h
+

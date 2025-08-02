@@ -22,7 +22,7 @@ typedef struct
 	u32 Used;
 	u32 First;
 	u32 QueueSize;
-	void** QueueHeap;
+	void **QueueHeap;
 } MessageQueue;
 CHECK_SIZE(MessageQueue, 0x1C);
 CHECK_OFFSET(MessageQueue, 0x00, ReceiveThreadQueue);
@@ -44,12 +44,12 @@ extern MessageQueue MessageQueues[MAX_MESSAGEQUEUES];
 
 s32 CreateMessageQueue(void **ptr, u32 numberOfMessages);
 s32 DestroyMessageQueue(const s32 queueId);
-s32 JamMessage(const s32 queueId, void* message, u32 flags);
-s32 SendMessage(const s32 queueId, void* message, u32 flags);
-s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags);
+s32 JamMessage(const s32 queueId, void *message, u32 flags);
+s32 SendMessage(const s32 queueId, void *message, u32 flags);
+s32 SendMessageToQueue(MessageQueue *messageQueue, void *message, u32 flags);
 s32 ReceiveMessage(const s32 queueId, void **message, u32 flags);
-s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void **message, u32 flags);
-s32 SendMessageUnsafe(const s32 queueId, void* message, u32 flags);
+s32 ReceiveMessageFromQueue(MessageQueue *messageQueue, void **message, u32 flags);
+s32 SendMessageUnsafe(const s32 queueId, void *message, u32 flags);
 s32 ReceiveMessageUnsafe(const s32 queueId, void **message, u32 flags);
 
 #endif

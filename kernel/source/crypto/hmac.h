@@ -17,6 +17,6 @@
 
 extern u8 HmacKey[SHA_BLOCK_SIZE];
 
-void HMAC_Panic(const char* msg, void* hash_to_invalidate);
+void HMAC_Panic(const char *msg, void *hash_to_invalidate);
 
 #endif

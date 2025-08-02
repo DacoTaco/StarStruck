@@ -11,9 +11,10 @@ Copyright (C) 2021	DacoTaco
 #pragma once
 
 #if !__ASSEMBLER__
-    #error This header file is only for use in assembly files!
+#error This header file is only for use in assembly files!
 #endif // !__ASSEMBLER__
 
+/* clang-format off */
 #macro comes from devkitPro's libctru
 #thanks fincs!
 #this macro adds a few macros and directives to functions that are handy or required 
@@ -30,13 +31,13 @@ Copyright (C) 2021	DacoTaco
 .macro END_ASM_FUNC
     .endfunc
 .endm
+/* clang-format on */
 
 #ifdef __thumb__
 #define _BL blx
 #else
 #define _BL bl
 #endif
-
 
 #ifdef __thumb__
 #define _THUMBMODE_

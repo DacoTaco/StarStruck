@@ -24,58 +24,59 @@ static u32 hashTableSalt = 0;
 static u32 hashTableCount = 0;
 ResourceManager ResourceManagers[MAX_RESOURCES] SRAM_BSS;
 
-u32 GetPpcAccessRights(const char* resourcePath)
+u32 GetPpcAccessRights(const char *resourcePath)
 {
 	u32 salt = hashTableSalt;
-	for(; *resourcePath != '\0'; resourcePath++)
+	for (; *resourcePath != '\0'; resourcePath++)
 		salt = salt ^ (((salt * 128) + (u32)(*resourcePath)) + (salt >> 5));
 
 	u32 hashIndex = salt % hashTableCount;
-	return ((hashTableCount == 0) || (1 << hashTable[hashIndex] & salt) != 0)
-		? 1
-		: 0;
+	return ((hashTableCount == 0) || (1 << hashTable[hashIndex] & salt) != 0) ? 1 : 0;
 }
 
-s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
+s32 RegisterResourceManager(const char *devicePath, const s32 queueid)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;
 	u32 devicePathLen = strnlen(devicePath, MAX_PATHLEN);
 	s32 resourceManagerId;
 
-	if(devicePathLen >= MAX_PATHLEN)
+	if (devicePathLen >= MAX_PATHLEN)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;
 	}
 
 #ifndef MIOS
-	if(CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 || queueid < 0 || queueid >= MAX_MESSAGEQUEUES)
+	if (CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId,
+	                       CurrentThread->ProcessId) != 0 ||
+	    queueid < 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
 		goto returnRegisterResource;
 	}
 #endif
 
-	if(MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
+	if (MessageQueues[queueid].ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EACCES;
 		goto returnRegisterResource;
 	}
 
-	for(resourceManagerId = 0; resourceManagerId < MAX_DEVICES; resourceManagerId++)
+	for (resourceManagerId = 0; resourceManagerId < MAX_DEVICES; resourceManagerId++)
 	{
-		if(strncmp(devicePath, ResourceManagers[resourceManagerId].DevicePath, MAX_PATHLEN-1) == 0)
+		if (strncmp(devicePath, ResourceManagers[resourceManagerId].DevicePath,
+		            MAX_PATHLEN - 1) == 0)
 		{
 			ret = IPC_EEXIST;
 			goto returnRegisterResource;
 		}
 
-		if(ResourceManagers[resourceManagerId].DevicePath[0] == '\0')
+		if (ResourceManagers[resourceManagerId].DevicePath[0] == '\0')
 			break;
 	}
 
-	if(resourceManagerId >= MAX_DEVICES)
+	if (resourceManagerId >= MAX_DEVICES)
 	{
 		ret = IPC_EMAX;
 		goto returnRegisterResource;
@@ -88,10 +89,10 @@ s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 
 #ifndef MIOS
-	if(!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
+	if (!memcmp(devicePath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE))
 		AesFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
 
-	if(!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
+	if (!memcmp(devicePath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE))
 		ShaFileDescriptor.BelongsToResource = &ResourceManagers[resourceManagerId];
 #endif
 
