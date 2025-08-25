@@ -1997,7 +1997,7 @@ int main(void)
 	             OHCI_SET(CTRL_CBSR, 3);
 
 	/* No idea what this does */
-	s_ehci_regs->chickenbits |= EHCI_CHICKENBITS_INIT;
+	s_ehci_regs->ChickenBits |= EHCI_CHICKENBITS_INIT;
 
 	s32 priority = OSGetThreadPriority(0);
 	rc = OSCreateThread((ThreadFunc)thread_worker, module, s_worker_thread_stack,
