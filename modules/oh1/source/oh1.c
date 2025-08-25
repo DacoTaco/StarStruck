@@ -900,7 +900,8 @@ static int device_configure(oh1_module_ctrl *module, s8 device_index,
 		return rc;
 
 	device_set_max_packet_size(device_index, dev_desc->bMaxPacketSize0);
-	/* TODO: why are we doing this twice? */
+	//some devices' descriptors are too big for the standard packet size
+	//this is why we do a fetch, set max packet size, then fetch again
 	rc = get_usb_descriptor0(module, device_index, device_index, dev_desc);
 	if (rc != 0)
 		return rc;
