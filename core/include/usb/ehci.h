@@ -33,9 +33,9 @@ typedef struct
 	u32 FrameIndex; //0x0d04001c FRINDEX
 	u32 CtrlDsSegment; //0x0d040020
 	u32 PeriodicListBase; //0x0d040024
-	u32 AsyncIcListAddr; //0x0d040028
+	u32 AsyncListAddr; //0x0d040028
 	u32 Unknown[0x09]; //0x0d04002c - 0x0d04004c
-	u32 PrConfigFlag; //0x0d040050
+	u32 PortConfigFlag; //0x0d040050
 	u32 PortControl; //0x0d040054 PORTSC or PORT_CTRL
 	u32 Unknown2[0x0E]; //0x0d040058 - 0x0d04008C
 	u32 MiscelaneousControl0; //0x0d040090
@@ -65,9 +65,9 @@ CHECK_OFFSET(EhciRegisters, 0x18, UsbInterrupt);
 CHECK_OFFSET(EhciRegisters, 0x1C, FrameIndex);
 CHECK_OFFSET(EhciRegisters, 0x20, CtrlDsSegment);
 CHECK_OFFSET(EhciRegisters, 0x24, PeriodicListBase);
-CHECK_OFFSET(EhciRegisters, 0x28, AsyncIcListAddr);
+CHECK_OFFSET(EhciRegisters, 0x28, AsyncListAddr);
 CHECK_OFFSET(EhciRegisters, 0x2C, Unknown);
-CHECK_OFFSET(EhciRegisters, 0x50, PrConfigFlag);
+CHECK_OFFSET(EhciRegisters, 0x50, PortConfigFlag);
 CHECK_OFFSET(EhciRegisters, 0x54, PortControl);
 CHECK_OFFSET(EhciRegisters, 0x58, Unknown2);
 CHECK_OFFSET(EhciRegisters, 0x90, MiscelaneousControl0);

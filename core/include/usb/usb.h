@@ -172,10 +172,10 @@ IOS. printk - printk implementation in ios
 /*
  * Endpoints
  */
-#define USB_ENDPOINT_NUMBER_MASK       0x0f /* in bEndpointAddress */
+#define USB_ENDPOINT_NUMBER_MASK       0x0f /* in EndpointAddress */
 #define USB_ENDPOINT_DIR_MASK          0x80
 
-#define USB_ENDPOINT_XFERTYPE_MASK     0x03 /* in bmAttributes */
+#define USB_ENDPOINT_XFERTYPE_MASK     0x03 /* in Attributes */
 #define USB_ENDPOINT_XFER_CONTROL      0
 #define USB_ENDPOINT_XFER_ISOC         1
 #define USB_ENDPOINT_XFER_BULK         2
@@ -188,7 +188,7 @@ IOS. printk - printk implementation in ios
 #define USB_EP_MAXP_MULT(m) \
 	(((m) & USB_EP_MAXP_MULT_MASK) >> USB_EP_MAXP_MULT_SHIFT)
 
-/* The USB 3.0 spec redefines bits 5:4 of bmAttributes as interrupt ep type. */
+/* The USB 3.0 spec redefines bits 5:4 of Attributes as interrupt ep type. */
 #define USB_ENDPOINT_INTRTYPE          0x30
 #define USB_ENDPOINT_INTR_PERIODIC     (0 << 4)
 #define USB_ENDPOINT_INTR_NOTIFICATION (1 << 4)
@@ -253,7 +253,7 @@ IOS. printk - printk implementation in ios
 #define USB_DT_CS_INTERFACE             (USB_TYPE_CLASS | USB_DT_INTERFACE)
 #define USB_DT_CS_ENDPOINT              (USB_TYPE_CLASS | USB_DT_ENDPOINT)
 
-/* USB device class codes (bDeviceClass) */
+/* USB device class codes (DeviceClass) */
 #define USB_DEVICE_CLASS_DEVICE         0x0
 #define USB_DEVICE_CLASS_AUDIO          0x1
 #define USB_DEVICE_CLASS_COMM           0x2
@@ -266,106 +266,91 @@ IOS. printk - printk implementation in ios
 
 /* Just to remind us that such fields are in little-endian encoding */
 typedef u16 le16;
-
-typedef struct usb_configuration_desc_t usb_configuration_desc;
-
-struct usb_configuration_desc_t
+typedef struct
 {
-	u8 bLength;
-	u8 bDescriptorType;
-	le16 wTotalLength;
-	u8 bNumInterfaces;
-	u8 bConfigurationValue;
-	u8 iConfiguration;
-	u8 bmAttributes;
-	u8 bMaxPower;
-};
+	u8 Length;
+	u8 DescriptorType;
+	le16 TotalLength;
+	u8 NumberOfInterfaces;
+	u8 ConfigurationValue;
+	u8 InterfaceConfiguration;
+	u8 Attributes; //bitmap of attributes
+	u8 MaxPower;
+} UsbConfigurationDescriptor;
 
-typedef struct usb_device_desc_t usb_device_desc;
-
-struct usb_device_desc_t
+typedef struct
 {
-	u8 bLength;
-	u8 bDescriptorType;
-	le16 bcdUSB;
-	u8 bDeviceClass;
-	u8 bDeviceSubClass;
-	u8 bDeviceProtocol;
-	u8 bMaxPacketSize0;
-	le16 idVendor;
-	le16 idProduct;
-	le16 bcdDevice;
-	u8 iManufacturer;
-	u8 iProduct;
-	u8 iSerialNumber;
-	u8 bNumConfigurations;
-};
+	u8 Length;
+	u8 DescriptorType;
+	le16 USB; //binary coded decimal
+	u8 DeviceClass;
+	u8 DeviceSubClass;
+	u8 DeviceProtocol;
+	u8 MaxPacketSize0;
+	le16 VendorId;
+	le16 ProductId;
+	le16 Device; //device, binary coded decimal
+	u8 Manufacturer;
+	u8 Product;
+	u8 SerialNumber;
+	u8 NumberOfConfigurations;
+} UsbDeviceDescriptor;
 
-typedef struct usb_ctrl_message_t usb_ctrl_message;
-
-struct usb_ctrl_message_t
+typedef struct
 {
-	u8 bmRequestType;
-	u8 bmRequest;
-	le16 wValue;
-	le16 wIndex;
-	le16 wLength;
+	u8 RequestType; //bitmapped request type
+	u8 Request; //bitmapped request
+	le16 Value;
+	le16 Index;
+	le16 Length;
 	union
 	{
-		char data[8];
-		/* This is the struct describing the data format for the OH1 module */
+		char Data[8];
+		/* This is the struct describing the Data format for the OH1 module */
 		struct
 		{
-			void *data;
-			u8 endpoint;
-			s8 device_index; /* TODO: It seems to be never read, though */
-		} oh1;
+			void *Data;
+			u8 Endpoint;
+			s8 DeviceIndex; /* TODO: It seems to be never read, though */
+		} Oh1;
 	};
-};
+} USBControlMessage;
 
-typedef struct usb_endpoint_desc_t usb_endpoint_desc;
-
-struct usb_endpoint_desc_t
+typedef struct
 {
-	u8 bLength;
-	u8 bDescriptorType;
-	u8 bEndpointAddress;
-	u8 bmAttributes;
-	u16 wMaxPacketSize;
-	u8 bInterval;
-};
+	u8 Length;
+	u8 DescriptorType;
+	u8 EndpointAddress;
+	u8 Attributes;
+	u16 MaxPacketSize;
+	u8 Interval;
+} UsbEndpointDescriptor;
 
-typedef struct usb_interface_desc_t usb_interface_desc;
-
-struct usb_interface_desc_t
+typedef struct
 {
-	u8 bLength;
-	u8 bDescriptorType;
-	u8 bInterfaceNumber;
-	u8 bAlternateSetting;
-	u8 bNumEndpoints;
-	u8 bInterfaceClass;
-	u8 bInterfaceSubClass;
-	u8 bInterfaceProtocol;
-	u8 iInterface;
-};
+	u8 Length;
+	u8 DescriptorType;
+	u8 InterfaceNumber;
+	u8 AlternateSetting;
+	u8 NumberOfEndpoints;
+	u8 InterfaceClass;
+	u8 InterfaceSubClass;
+	u8 InterfaceProtocol;
+	u8 Interface;
+} UsbInterfaceDescriptor;
 
-typedef struct usb_descriptor_header_t usb_descriptor_header;
-
-struct usb_descriptor_header_t
+typedef struct
 {
-	u8 bLength;
-	u8 bDescriptorType;
-};
+	u8 Length;
+	u8 DescriptorType;
+} UsbDescriptorHeader;
 
-typedef union usb_descriptor_u usb_descriptor;
-
-union usb_descriptor_u
+typedef union
 { // Union for USB descriptors
-	struct usb_descriptor_header_t header;
-	struct usb_configuration_desc_t conf;
-	struct usb_endpoint_desc_t endp;
-	struct usb_interface_desc_t iface;
-};
+	UsbDescriptorHeader Header;
+	UsbConfigurationDescriptor Configuration;
+	UsbEndpointDescriptor Endpoint;
+	UsbInterfaceDescriptor Interface;
+} UsbDescriptor;
 
 #endif

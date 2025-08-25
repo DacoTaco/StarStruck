@@ -14,9 +14,6 @@ IOS. printk - printk implementation in ios
 #include "types.h"
 #include "usb/usb.h"
 
-typedef struct ohci_endpoint_descriptor_t ohci_endpoint_descriptor;
-typedef struct ohci_transfer_descriptor_t ohci_transfer_descriptor;
-
 #define ED_SET(field, value) \
 	(((value) & ED_##field##_MASK) << ED_##field##_SHIFT)
 #define ED_GET(field, var) (((var) >> ED_##field##_SHIFT) & ED_##field##_MASK)
@@ -47,19 +44,19 @@ typedef struct ohci_transfer_descriptor_t ohci_transfer_descriptor;
 #define ED_C         (0x02U) /* toggle carry */
 #define ED_H         (0x01U) /* halted */
 
-struct ohci_endpoint_descriptor_t
+typedef struct OhciEndpointDescriptor_t
 {
 	u32 dw0;
 
  /* Lower 4 bits are ignored and available for the driver */
-	void *td_tail;
+	void *Tail;
 
  /* Bits 2 and 3 need to be zero; bits 0 and 1 are ED_C and ED_H */
-	void *td_head;
+	void *Head;
 
  /* Lower 4 bits are ignored and available for the driver */
-	struct ohci_endpoint_descriptor_t *ed_next;
-};
+	struct OhciEndpointDescriptor_t *Next;
+} OhciEndpointDescriptor;
 
 #define TD_SET(field, value) \
 	(((u32)(value) & TD_##field##_MASK) << TD_##field##_SHIFT)
@@ -85,13 +82,13 @@ struct ohci_endpoint_descriptor_t
 /* BufferRounding */
 #define TD_R               (1 << 18)
 
-struct ohci_transfer_descriptor_t
+typedef struct OhciTransferDescriptor_t
 {
 	u32 dw0;
-	void *current_buffer;
-	struct ohci_transfer_descriptor_t *td_next;
-	void *buffer_last;
-};
+	void *CurrentBuffer;
+	struct OhciTransferDescriptor_t *Next;
+	void *LastBuffer;
+} OhciTransferDescriptor;
 
 /*
  * Hardware transfer status codes -- CC from td->hwINFO or td->hwPSW
@@ -112,24 +109,26 @@ struct ohci_transfer_descriptor_t
     /* 0x0E, 0x0F reserved for HCD */
 #define TD_NOTACCESSED    0x0F
 
-typedef struct ohci_hcca_t ohci_hcca;
-
-struct ohci_hcca_t
+typedef struct
 {
-	void *interrupt_table[32];
-	u16 frame_number;
-	u16 zero_pad;
-	struct ohci_transfer_descriptor_t *done_head;
-	u8 reserved[120];
-};
+	void *InterruptTable[32];
+	u16 FrameNumber;
+	u16 Padding;
+	OhciTransferDescriptor *HeadDone;
+	u8 Reserved[120];
+} OhciHcca;
+CHECK_SIZE(OhciHcca, 0x100);
+CHECK_OFFSET(OhciHcca, 0x00, InterruptTable);
+CHECK_OFFSET(OhciHcca, 0x80, FrameNumber);
+CHECK_OFFSET(OhciHcca, 0x82, Padding);
+CHECK_OFFSET(OhciHcca, 0x84, HeadDone);
+CHECK_OFFSET(OhciHcca, 0x88, Reserved);
 
-typedef struct ohci_transfer_descriptor_isoc_t ohci_transfer_descriptor_isoc;
-
-struct ohci_transfer_descriptor_isoc_t
+typedef struct
 {
-	ohci_transfer_descriptor header;
-	u16 offset_pws[8];
-};
+	OhciTransferDescriptor Header;
+	u16 PwsOffset[8];
+} OhciTransferDescriptorIsoc;
 
 #define OHCI_SET(field, value) \
 	(((value) & OHCI_##field##_MASK) << OHCI_##field##_SHIFT)
@@ -213,31 +212,53 @@ struct ohci_transfer_descriptor_isoc_t
 /* These bits are reserved; the Wii uses them for flagging */
 #define RH_PS_WII31                0x80000000
 
-typedef struct ohci_regs_t ohci_regs;
-struct ohci_regs_t
+typedef struct
 {
-	u32 rev;
-	u32 ctrl;
-	u32 cmdstat;
-	u32 intstat;
-	u32 inten;
-	u32 intdis;
-	struct ohci_hcca_t *hcca;
-	u32 percur;
-	struct ohci_endpoint_descriptor_t *ctrlhd;
-	u32 ctrlcur;
-	struct ohci_endpoint_descriptor_t *blkhd;
-	u32 blkcur;
-	u32 dnhd;
-	u32 fmint;
-	u32 fmrem;
-	u32 fmnum;
-	u32 perst;
-	u32 lsthresh;
-	u32 rhdesca;
-	u32 rhdescb;
-	u32 rhstat;
-	u32 rhportXstat[107];
-};
+	u32 Revision;
+	u32 Control;
+	u32 CommandStatus;
+	u32 InterruptStatus;
+	u32 EnableInterrupts;
+	u32 DisableInterrupts;
+	OhciHcca *Hcca;
+	u32 PeriodicCurrentEndpoint;
+	OhciEndpointDescriptor *ControlHeadEndpoint;
+	u32 ControlCurrentEndpoint;
+	OhciEndpointDescriptor *BulkHeadEndpoint;
+	u32 BulkCurrentEndpoint;
+	u32 DoneHead;
+	u32 FrameInterrupt;
+	u32 FrameRemaining;
+	u32 FrameNumber;
+	u32 PeriodicStart;
+	u32 LowSpeedThresHold;
+	u32 RootHubDiscriptorA;
+	u32 RootHubDiscriptorB;
+	u32 RootHubStatus;
+	u32 RootHubPortStatus[107];
+} OhciRegs;
+CHECK_SIZE(OhciRegs, 0x200);
+CHECK_OFFSET(OhciRegs, 0x00, Revision);
+CHECK_OFFSET(OhciRegs, 0x04, Control);
+CHECK_OFFSET(OhciRegs, 0x08, CommandStatus);
+CHECK_OFFSET(OhciRegs, 0x0c, InterruptStatus);
+CHECK_OFFSET(OhciRegs, 0x10, EnableInterrupts);
+CHECK_OFFSET(OhciRegs, 0x14, DisableInterrupts);
+CHECK_OFFSET(OhciRegs, 0x18, Hcca);
+CHECK_OFFSET(OhciRegs, 0x1c, PeriodicCurrentEndpoint);
+CHECK_OFFSET(OhciRegs, 0x20, ControlHeadEndpoint);
+CHECK_OFFSET(OhciRegs, 0x24, ControlCurrentEndpoint);
+CHECK_OFFSET(OhciRegs, 0x28, BulkHeadEndpoint);
+CHECK_OFFSET(OhciRegs, 0x2c, BulkCurrentEndpoint);
+CHECK_OFFSET(OhciRegs, 0x30, DoneHead);
+CHECK_OFFSET(OhciRegs, 0x34, FrameInterrupt);
+CHECK_OFFSET(OhciRegs, 0x38, FrameRemaining);
+CHECK_OFFSET(OhciRegs, 0x3c, FrameNumber);
+CHECK_OFFSET(OhciRegs, 0x40, PeriodicStart);
+CHECK_OFFSET(OhciRegs, 0x44, LowSpeedThresHold);
+CHECK_OFFSET(OhciRegs, 0x48, RootHubDiscriptorA);
+CHECK_OFFSET(OhciRegs, 0x4c, RootHubDiscriptorB);
+CHECK_OFFSET(OhciRegs, 0x50, RootHubStatus);
+CHECK_OFFSET(OhciRegs, 0x54, RootHubPortStatus);
 
 #endif

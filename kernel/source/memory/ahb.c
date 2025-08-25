@@ -91,7 +91,7 @@ void _ahb_flush_to(AHBDEV dev)
 		case AHB_UNKN10:
 			mask = 0x0100;
 			break;
-		case AHB_UNKN11:
+		case AHB_OHCI:
 			mask = 0x1000;
 			break;
 		case AHB_UNKN12:
@@ -117,7 +117,7 @@ void _ahb_flush_to(AHBDEV dev)
 			case AHB_UNKN7:
 			case AHB_UNKN8:
 			case AHB_UNKN10:
-			case AHB_UNKN11:
+			case AHB_OHCI:
 			case AHB_SDHC:
 				while ((read32(HW_BOOT0) & 0xF) == 9) set32(HW_SPARE0, 0x10000);
 				clear32(HW_SPARE0, 0x10000);
