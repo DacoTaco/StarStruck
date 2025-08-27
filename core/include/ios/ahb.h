@@ -24,7 +24,7 @@ typedef enum
 	AHB_UNKN8 = 8, //Unknown
 	AHB_SDHC = 9,
 	AHB_UNKN10 = 0x0A, //Unknown
-	AHB_UNKN11 = 0x0B, //Unknown
+	AHB_OHCI = 0x0B, //Unknown
 	AHB_UNKN12 = 0x0C, //Unknown
 } AHBDEV;
 
