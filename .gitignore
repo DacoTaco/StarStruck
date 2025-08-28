@@ -10,4 +10,6 @@ git_version.h
 *.a
 *.lst
 **/build/*
+**/lib/
+**/sdk/include/**
 tools/ppcloader/build/

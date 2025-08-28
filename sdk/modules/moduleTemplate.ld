@@ -8,13 +8,14 @@
 
 OUTPUT_FORMAT("elf32-bigarm");
 OUTPUT_ARCH(arm);
-EXTERN(_startup);
-ENTRY(_startup);
+EXTERN(_module_startup);
+ENTRY(_module_startup);
 
 __physicalAddress = __PHYSADDR__;
 __priority = __PRIORITY__;
 __processId = __PROCESSID__;
 __stackSize = __STACKSIZE__;
+PROVIDE (__priority = __priority);
 
 /* 
     Flags:
@@ -62,7 +63,7 @@ SECTIONS
 	/* Program */
 	.module : AT(__physicalAddress) ALIGN(4) 
 	{
-		KEEP (*_startup.o)
+		KEEP (*_module_startup.o)
 		*(.module.init)
 		*(.module)
 		*(.text .text.* .gnu.linkonce.t*)

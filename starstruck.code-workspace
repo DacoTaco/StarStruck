@@ -28,14 +28,12 @@
 			"path": "sdk"
 		}
 	],
-	"settings":
-	{
+	"settings": {
 		"files.exclude": {
 			"kernel/**": true,
 			"core/**": true,
 			"elfloader/**": true,
 			"sdk/**": true,
-			"**/lib/**": true,
 			"**/.git": true,
 			"**/.svn": true,
 			"**/.hg": true,

@@ -10,8 +10,8 @@ else
 SPECSFLAGS = -specs $(SPECS)
 endif
 
-LIB_INC = -I $(SDKDIR)/include -I $(SDKDIR)/../core/include
-LIB_DIR = -L $(SDKDIR)/../core/lib
+LIB_INC = -I $(SDKDIR)/include
+LIB_DIR = -L $(SDKDIR)/lib
 ARCH 	= -mbig-endian -mcpu=arm926ej-s
 CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
 ASFLAGS = $(ARCH) 

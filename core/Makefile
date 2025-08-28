@@ -19,10 +19,11 @@ include $(SDKDIR)/starstruck_rules
 #
 #---------------------------------------------------------------------------------
 TARGET		:= libcore
-OUTPUTDIR	:= lib
+INSTALLDIR	:= ../sdk
 BUILD		:= build
 SOURCES		:= source $(wildcard source/*/)
 INCLUDES	:= include
+LIBHEADERS	:= include
 DATA		:=
 
 #---------------------------------------------------------------------------------
@@ -50,12 +51,16 @@ export LIBDIRS	:=
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(OUTPUTDIR)/$(TARGET)
+export OUTPUT		:=	$(CURDIR)/$(INSTALLDIR)/lib/$(TARGET)
+export HEADEROUTPUT	:=	$(CURDIR)/$(INSTALLDIR)/include
+export HEADERSPATH	:=	$(shell realpath $(LIBHEADERS))
+export HEADERS 		:=	git_version.h $(foreach dir, $(LIBHEADERS), $(foreach file, $(shell find $(dir) -name '*.h'), $(subst $(dir)/,,$(file)))) \
+						$(foreach dir, $(LIBHEADERS), $(foreach file, $(shell find $(dir) -name '*.hpp'), $(subst $(dir)/,,$(file)))) \
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export VPATH		:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+						$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+export DEPSDIR		:=	$(CURDIR)/$(BUILD)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
@@ -77,18 +82,17 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES := $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES 	:= 	$(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD)
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD): ./include/git_version.h
 	@[ -d $@ ] || mkdir -p $@
-	$(SILENTCMD) mkdir -p $(OUTPUTDIR)
+	$(SILENTCMD) mkdir -p $(dir $(OUTPUT)) $(HEADEROUTPUT)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 ./include/git_version.h: describesimple.sh
@@ -98,15 +102,29 @@ $(BUILD): ./include/git_version.h
 #---------------------------------------------------------------------------------
 clean:
 	$(SILENTCMD)echo clean ...
-	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUTDIR) ./include/git_version.h 
-
+	$(SILENTCMD)rm -fr $(BUILD) $(OUTPUT).a ./include/git_version.h $(addprefix $(HEADEROUTPUT)/,$(HEADERS))
 
 #---------------------------------------------------------------------------------
 else
 
+# Copy headers function, this will copy the header, which is in $(1)
+define CopyHeader =
+$(HEADEROUTPUT)/$(1): $(HEADERSPATH)/$(1)
+	$(SILENTMSG) copying $1...
+	$(SILENTCMD) mkdir -p $(dir $(HEADEROUTPUT)/$(1))
+	$(SILENTCMD)cp $$^ $$@
+endef
+
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+
+#$(addprefix $(HEADEROUTPUT)/,$(HEADERS))
+all: $(OUTPUT).a $(addprefix $(HEADEROUTPUT)/,$(HEADERS))
+
+# Use the function to create our targets
+$(foreach file,$(HEADERS),$(eval $(call CopyHeader,$(file))))
+
 $(OUTPUT).a	: $(OFILES)
 
 #---------------------------------------------------------------------------------

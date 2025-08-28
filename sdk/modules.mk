@@ -62,8 +62,7 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-# _startup.s is assumed to be in sdk/modules
-export OFILES 			:= _startup.o $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES 			:= $(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export INCLUDE			:= $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 						   $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 						   -I$(CURDIR)/$(BUILD) -I$(SDKDIR)/modules

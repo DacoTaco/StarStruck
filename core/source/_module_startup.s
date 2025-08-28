@@ -2,18 +2,19 @@
 
 .extern main
 .extern __stackEnd
+.extern __priority
 .extern OSSetThreadPriority
-.globl _startup
+.globl _module_startup
 .section .module.init
 
-_startup:
+_module_startup:
 #setup stack
 ldr		sp, =__stackEnd
 #setup thread priority
 mov		r5, r0
 mov		r6, lr
 mov		r0, #0x00
-mov		r1, #__PRIORITY
+ldr		r1, =__priority
 bl		OSSetThreadPriority
 mov		r0, r5
 mov		lr, r6
