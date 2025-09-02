@@ -33,6 +33,8 @@
 			"kernel/**": true,
 			"core/**": true,
 			"elfloader/**": true,
+			"modules/**": true,
+			"tools/**": false, /*false, due to problems of also hiding tools in kernel folder*/
 			"sdk/**": true,
 			"**/.git": true,
 			"**/.svn": true,
