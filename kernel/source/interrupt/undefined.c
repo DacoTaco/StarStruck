@@ -19,11 +19,11 @@ s32 UndefinedInstructionHandler(unsigned instruction)
 	//the instruction is 0xE6000010 | (syscall_num << 5).
 	//so if we do the reverse, we have a syscall
 	u16 syscall = ((instruction & ~0xE6000010) >> 5) & 0xFFFF;
-	ThreadContext context = CurrentThread->UserContext;
+	ThreadContext *context = &CurrentThread->UserContext;
 	if (CurrentThread != NULL && (instruction >> 16) == 0xE600 && syscall < 0xFF)
 	{
 		gecko_printf("Nintendo syscall detected ( 0x%08X - %04X ) @ 0x%08X\n",
-		             instruction, syscall, context.ProgramCounter);
+		             instruction, syscall, context->ProgramCounter);
 		s32 ret = HandleSyscall(syscall & 0xFF);
 
 		if (ret != -666)
@@ -33,6 +33,6 @@ s32 UndefinedInstructionHandler(unsigned instruction)
 	}
 
 	//actual invalid instruction lol.
-	ExceptionHandler(1, 0, (u32 *)&context);
+	ExceptionHandler(1, 0, (u32 *)context);
 	return 0;
 }
