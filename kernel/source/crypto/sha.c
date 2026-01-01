@@ -175,7 +175,7 @@ static s32 VerifyHashesArray(const void *hashData, u32 sizeHashElement,
 		return IPC_SUCCESS;
 
 	/* If the data is too large the hash is bad, returns -6 */
-	if (sizeHashElement > 0x10000)
+	if (sizeHashElement > MAX_HMAC_CHUNK_SIZE)
 		return IPC_EINVAL;
 
 	FinalShaHash outputHash;

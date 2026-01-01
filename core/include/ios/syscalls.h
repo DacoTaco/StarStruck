@@ -15,8 +15,11 @@
 #include "types.h"
 #include "ios/ipc.h"
 #include "ios/ahb.h"
+#include "ios/sha.h"
+#include "ios/messageQueue.h"
 
 typedef int (*ThreadFunc)(void *arg);
+
 s32 OSCreateThread(ThreadFunc main, void *arg, u32 *stack_top, u32 stacksize,
                    s32 priority, u32 detached);
 s32 OSJoinThread(s32 threadId, int *returnedValue);
@@ -29,8 +32,8 @@ s32 OSGetThreadPriority(s32 threadid);
 s32 OSSetThreadPriority(s32 threadid, s32 priority);
 s32 OSCreateMessageQueue(void *ptr, u32 size);
 s32 OSDestroyMessageQueue(s32 queueid);
-s32 OSSendMessage(s32 queueid, void *message, u32 flags);
-s32 OSReceiveMessage(s32 queueid, void *message, u32 flags);
+s32 OSSendMessage(s32 queueid, void *message, MessageQueueFlags flags);
+s32 OSReceiveMessage(s32 queueid, void *message, MessageQueueFlags flags);
 s32 OSRegisterEventHandler(u8 device, s32 queueid, void *message);
 s32 OSUnregisterEventHandler(u8 device);
 s32 OSCreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message);
@@ -80,9 +83,29 @@ void OSDCFlushRange(const void *start, u32 size);
 
 u32 OSVirtualToPhysical(u32 virtualAddress);
 
+// IOSC Crypto syscalls
+s32 OSIOSCCreateObject(u32 *keyHandle, u32 type, u32 subtype);
+s32 OSIOSCDeleteObject(u32 keyHandle);
 s32 OSGetIOSCData(u32 keyHandle, u32 *value);
+s32 OSIOSCGetKeySize(u32 *keySize, u32 keyHandle);
+s32 OSIOSCGetSignatureSize(u32 *signatureSize, u32 keyHandle);
+s32 OSIOSCEncrypt(u32 keyHandle, void *ivData, const void *inputData,
+                  u32 dataSize, void *outputData);
+s32 OSIOSCEncryptAsync(u32 keyHandle, void *ivData, const void *inputData, u32 dataSize,
+                       void *outputData, s32 messageQueueId, IpcMessage *message);
+s32 OSIOSCDecrypt(u32 keyHandle, void *ivData, const void *inputData,
+                  u32 dataSize, void *outputData);
+s32 OSIOSCDecryptAsync(u32 keyHandle, void *ivData, const void *inputData, u32 dataSize,
+                       void *outputData, s32 messageQueueId, IpcMessage *message);
+s32 OSIOSCGenerateBlockMAC(ShaContext *context, const void *inputData, u32 inputSize,
+                           const void *customData, u32 customDataSize, u32 keyHandle,
+                           HMacCommandType hmacCommand, void *signData);
+s32 OSIOSCGenerateBlockMACAsync(ShaContext *context, const void *inputData, u32 inputSize,
+                                const void *customData, u32 customDataSize, u32 keyHandle,
+                                HMacCommandType hmacCommand, void *signData,
+                                s32 messageQueueId, IpcMessage *message);
 
-//special IOS syscall to print something to debug device
+// Special IOS syscall to print something to debug device
 void OSPrintk(const char *str);
 
 #pragma GCC pop_options

@@ -12,6 +12,7 @@
 #define __MESSAGE_QUEUE_H__
 
 #include <types.h>
+#include <ios/messageQueue.h>
 #include "scheduler/threads.h"
 
 typedef struct
@@ -32,12 +33,6 @@ CHECK_OFFSET(MessageQueue, 0x0C, Used);
 CHECK_OFFSET(MessageQueue, 0x10, First);
 CHECK_OFFSET(MessageQueue, 0x14, QueueSize);
 CHECK_OFFSET(MessageQueue, 0x18, QueueHeap);
-typedef enum
-{
-	None = 0,
-	RegisteredEventHandler = 1,
-	Invalid = 2
-} MessageQueueFlags;
 
 #define MAX_MESSAGEQUEUES 0x100
 extern MessageQueue MessageQueues[MAX_MESSAGEQUEUES];

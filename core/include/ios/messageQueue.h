@@ -1,23 +1,21 @@
 /*
 	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
-	sha - the sha engine in starlet
+	messageQueue - message queue
 
 	Copyright (C) 2021	DacoTaco
-	Copyright (C) 2023	Jako
 
 # This code is licensed to you under the terms of the GNU GPL, version 2;
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#pragma once
-#ifndef MIOS
+#ifndef __IOS_MESSAGE_QUEUE_H__
+#define __IOS_MESSAGE_QUEUE_H__
 
-#include <types.h>
-#include <ios/sha.h>
-
-#define SHA_DEVICE_NAME      "/dev/sha"
-#define SHA_DEVICE_NAME_SIZE sizeof(SHA_DEVICE_NAME)
-
-void ShaEngineHandler(void);
+typedef enum
+{
+	None = 0,
+	RegisteredEventHandler = 1,
+	Invalid = 2
+} MessageQueueFlags;
 
 #endif

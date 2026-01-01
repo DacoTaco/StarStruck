@@ -81,7 +81,17 @@ _SYSCALL OSDCFlushRange,			0x0040
 
 _SYSCALL OSVirtualToPhysical,		0x004F
 
-_SYSCALL OSGetIOSCData				0x0063
+_SYSCALL OSIOSCCreateObject,		0x005B
+_SYSCALL OSIOSCDeleteObject,		0x005C
+_SYSCALL OSGetIOSCData,				0x0063
+_SYSCALL OSIOSCGetKeySize,			0x0064
+_SYSCALL OSIOSCGetSignatureSize,	0x0065
+_SYSCALL OSIOSCEncryptAsync,		0x0068
+_SYSCALL OSIOSCEncrypt,				0x0069
+_SYSCALL OSIOSCDecryptAsync,		0x006A
+_SYSCALL OSIOSCDecrypt,				0x006B
+_SYSCALL OSIOSCGenerateBlockMAC,	0x006D
+_SYSCALL OSIOSCGenerateBlockMACAsync, 0x006E
 
 /* this is a special svc syscall. its the only syscall left in IOS. only used for printk too */
 .thumb
