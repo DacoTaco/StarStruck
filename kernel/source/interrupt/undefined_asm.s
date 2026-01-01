@@ -25,7 +25,10 @@ BEGIN_ASM_FUNC UndefinedInstructionVector
 #always get the last 4 bytes that were executed. this is because a UNDF syscall is 4 bytes long
 	ldr		r0,[lr,#-4]
 
+	mov		r8, sp
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
+	ldr		r8, [r8, #0x44]
+	mov		sp, r8
 	blx		UndefinedInstructionHandler
 	msr		cpsr_c, #0xdb
 

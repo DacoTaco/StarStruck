@@ -30,8 +30,13 @@ BEGIN_ASM_FUNC SupervisorCallVector
 	ldr		r0,[lr,#-4]
 	bic		r0,r0,#0xFF000000
 #endif
+#save stackpointer, as we will need it later to go fetch the DefaultStackPointer (for syscall stuff)
+	mov		r8, sp
 #now that we have all our information saved, lets switch to system mode (which shares state with user mode, including stack and registers)
 	msr		cpsr_c, #SPSR_SYSTEM_MODE
+#load in the DefaultStackPointer
+	ldr		r8, [r8, #0x44]
+	mov		sp, r8
 	
 #syscall handler.
 	blx		HandleSyscall
