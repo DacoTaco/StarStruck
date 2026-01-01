@@ -235,7 +235,7 @@ void kernel_main(void)
 		u32 stackTop = __modules[i].StackAddress;
 		u32 arg = __modules[i].UserId;
 
-		printk("priority = %d, stackSize = %d, stackPtr = %d\n", priority, stackSize, stackTop);
+		printk("priority = %d, stackSize = %d, stackPtr = %x\n", priority, stackSize, stackTop);
 		printk("starting thread entry: 0x%x\n", main);
 
 		threadId = CreateThread(main, (void *)arg, (u32 *)stackTop, stackSize, priority, 1);
