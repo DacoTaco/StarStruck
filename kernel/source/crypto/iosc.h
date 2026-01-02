@@ -43,10 +43,10 @@ s32 IOSC_DecryptAsync(const u32 keyHandle, void *ivData, const void *inputData,
 s32 IOSC_GenerateBlockMACAsync(const ShaContext *context, const void *inputData,
                                const u32 inputSize, const void *customData,
                                const u32 customDataSize, const u32 keyHandle,
-                               const u32 hmacCommand, const void *signData,
+                               const HMacCommandType hmacCommand, const void *signData,
                                const s32 messageQueueId, IpcMessage *message);
 s32 IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
                           const u32 inputSize, const void *customData,
                           const u32 customDataSize, const u32 keyHandle,
-                          const u32 hmacCommand, const void *signData);
+                          const HMacCommandType hmacCommand, const void *signData);
 #endif

@@ -245,15 +245,15 @@ _aes_encrypt_cleanup_return:
 static s32 _IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
                                   const u32 inputSize, const void *customData,
                                   const u32 customDataSize, const u32 keyHandle,
-                                  const u32 hmacCommand, const void *signData,
+                                  const HMacCommandType hmacCommand, const void *signData,
                                   const s32 messageQueueId, IpcMessage *message)
 {
 	if (((u32)inputData & 0x3F) != 0)
 		return -2016;
 
  //hmac command should be the 0 based command, not the merged command
-	if (hmacCommand >= FinalizeShaState)
-		return -4;
+	if (hmacCommand > FinalizeHmacState)
+		return IPC_EINVAL;
 
 	s32 ret = 0;
 	IoctlvMessageData *messageData =
@@ -276,10 +276,9 @@ static s32 _IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputDa
 	messageData[4].Length = customDataSize;
 
 	ret = messageQueueId == -1 ?
-	          DispatchIoctlv(SHA_STATIC_FILEDESC, (u32)FinalizeShaState + hmacCommand,
-	                         3, 2, messageData) :
-	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, FinalizeShaState + hmacCommand,
-	                              3, 2, messageData, messageQueueId, message);
+	          DispatchIoctlv(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData) :
+	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, hmacCommand, 3, 2,
+	                              messageData, messageQueueId, message);
 
 _hmac_generate_cleanup_return:
 	if (messageData)
@@ -794,7 +793,7 @@ static inline s32
 IOSC_GenerateBlockMACInner(const ShaContext *context, const void *inputData,
                            const u32 inputSize, const void *customData,
                            const u32 customDataSize, const u32 keyHandle,
-                           const u32 hmacCommand, const void *signData,
+                           const HMacCommandType hmacCommand, const void *signData,
                            const s32 messageQueueId, IpcMessage *message)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
@@ -834,7 +833,7 @@ IOSC_GenerateBlockMACInner(const ShaContext *context, const void *inputData,
 s32 IOSC_GenerateBlockMACAsync(const ShaContext *context, const void *inputData,
                                const u32 inputSize, const void *customData,
                                const u32 customDataSize, const u32 keyHandle,
-                               const u32 hmacCommand, const void *signData,
+                               const HMacCommandType hmacCommand, const void *signData,
                                const s32 messageQueueId, IpcMessage *message)
 {
 	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData,
@@ -844,7 +843,7 @@ s32 IOSC_GenerateBlockMACAsync(const ShaContext *context, const void *inputData,
 s32 IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
                           const u32 inputSize, const void *customData,
                           const u32 customDataSize, const u32 keyHandle,
-                          const u32 hmacCommand, const void *signData)
+                          const HMacCommandType hmacCommand, const void *signData)
 {
 	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize,
 	                                  keyHandle, hmacCommand, signData, -1, NULL);
