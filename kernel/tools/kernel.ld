@@ -100,6 +100,9 @@ SECTIONS
 	.data.sram (NOLOAD) : ALIGN(4)
 	{
 		__data_sram_start = . ;
+		*threads.o(.data.sram)
+		*messageQueue.o(.data.sram)
+		*timers.o(.data.sram)
 		*(.data.sram)
 		. = ALIGN(4);
 		__data_sram_end = . ;
