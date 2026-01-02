@@ -121,7 +121,7 @@ void TimerHandler(void)
 	CurrentTimer->Message = NULL;
 	CurrentTimer->PreviousTimer = CurrentTimer;
 	CurrentTimer->NextTimer = CurrentTimer;
-	CurrentTimer->MessageQueue = NULL;*/
+	CurrentTimer->Queue = NULL;*/
 
 	ret = CreateMessageQueue((void **)&timer_messages, 1);
 	if (ret < 0)
@@ -187,10 +187,10 @@ void TimerHandler(void)
 					QueueTimer(timerInfo);
 				}
 
-				if (timerInfo->MessageQueue == NULL)
+				if (timerInfo->Queue == NULL)
 					break;
 
-				SendMessageToQueue(timerInfo->MessageQueue, timerInfo->Message,
+				SendMessageToQueue(timerInfo->Queue, timerInfo->Message,
 				                   RegisteredEventHandler);
 				timerInfo = CurrentTimer->NextTimer;
 				if (timerInfo == CurrentTimer)
@@ -242,7 +242,7 @@ s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
 	ret = 0;
 	while (ret < MAX_TIMERS)
 	{
-		if (timers[ret].MessageQueue == NULL)
+		if (timers[ret].Queue == NULL)
 			break;
 
 		ret++;
@@ -255,7 +255,7 @@ s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
 	}
 
 	timers[ret].Message = message;
-	timers[ret].MessageQueue = &MessageQueues[queueid];
+	timers[ret].Queue = &MessageQueues[queueid];
 	timers[ret].IntervalInµs = periodUs;
 	if (delayUs != 0)
 		periodUs = delayUs;

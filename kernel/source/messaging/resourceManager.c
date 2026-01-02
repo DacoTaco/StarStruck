@@ -84,7 +84,7 @@ s32 RegisterResourceManager(const char *devicePath, const s32 queueid)
 
 	memcpy(ResourceManagers[resourceManagerId].DevicePath, devicePath, devicePathLen + 1);
 	ResourceManagers[resourceManagerId].PathLength = devicePathLen;
-	ResourceManagers[resourceManagerId].MessageQueue = &MessageQueues[queueid];
+	ResourceManagers[resourceManagerId].Queue = &MessageQueues[queueid];
 	ResourceManagers[resourceManagerId].ProcessId = CurrentThread->ProcessId;
 	ResourceManagers[resourceManagerId].PpcHasAccessRights = GetPpcAccessRights(devicePath);
 

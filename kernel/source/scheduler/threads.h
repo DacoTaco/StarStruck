@@ -50,7 +50,7 @@ CHECK_SIZE(ThreadContext, 0x44);
 
 typedef struct ThreadInfo
 {
-	ThreadContext ThreadContext;
+	ThreadContext Context;
 	struct ThreadInfo *NextThread;
 #ifdef MIOS
 	s32 Priority;
@@ -72,7 +72,7 @@ typedef struct ThreadInfo
 #endif
 } ThreadInfo;
 
-CHECK_OFFSET(ThreadInfo, 0x00, ThreadContext);
+CHECK_OFFSET(ThreadInfo, 0x00, Context);
 CHECK_OFFSET(ThreadInfo, 0x44, NextThread);
 CHECK_OFFSET(ThreadInfo, 0x54, ProcessId);
 CHECK_OFFSET(ThreadInfo, 0x58, IsDetached);

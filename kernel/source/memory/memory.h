@@ -80,11 +80,11 @@ CHECK_SIZE(MemorySection, 0x18);
 typedef struct
 {
 	u32 ProcessId;
-	MemorySection MemorySection;
+	MemorySection Section;
 } ProcessMemorySection;
 
 CHECK_OFFSET(ProcessMemorySection, 0x00, ProcessId);
-CHECK_OFFSET(ProcessMemorySection, 0x04, MemorySection);
+CHECK_OFFSET(ProcessMemorySection, 0x04, Section);
 CHECK_SIZE(ProcessMemorySection, 0x1C);
 
 typedef enum

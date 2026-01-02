@@ -20,7 +20,7 @@ typedef struct
 {
 	char DevicePath[MAX_PATHLEN];
 	u32 PathLength;
-	MessageQueue *MessageQueue;
+	MessageQueue *Queue;
 	u32 ProcessId;
 	u32 PpcHasAccessRights;
 } ResourceManager;
@@ -30,7 +30,7 @@ extern ResourceManager ResourceManagers[MAX_RESOURCES];
 CHECK_SIZE(ResourceManager, 0x50);
 CHECK_OFFSET(ResourceManager, 0x00, DevicePath);
 CHECK_OFFSET(ResourceManager, 0x40, PathLength);
-CHECK_OFFSET(ResourceManager, 0x44, MessageQueue);
+CHECK_OFFSET(ResourceManager, 0x44, Queue);
 CHECK_OFFSET(ResourceManager, 0x48, ProcessId);
 CHECK_OFFSET(ResourceManager, 0x4C, PpcHasAccessRights);
 

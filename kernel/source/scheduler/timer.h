@@ -27,7 +27,7 @@ typedef struct TimerInfo
 {
 	u32 IntervalInTicks;
 	u32 IntervalInµs;
-	MessageQueue *MessageQueue;
+	MessageQueue *Queue;
 	void *Message;
 	u32 ProcessId;
 	struct TimerInfo *PreviousTimer;
@@ -35,7 +35,7 @@ typedef struct TimerInfo
 } TimerInfo;
 CHECK_OFFSET(TimerInfo, 0x00, IntervalInTicks);
 CHECK_OFFSET(TimerInfo, 0x04, IntervalInµs);
-CHECK_OFFSET(TimerInfo, 0x08, MessageQueue);
+CHECK_OFFSET(TimerInfo, 0x08, Queue);
 CHECK_OFFSET(TimerInfo, 0x0C, Message);
 CHECK_OFFSET(TimerInfo, 0x10, ProcessId);
 CHECK_OFFSET(TimerInfo, 0x14, PreviousTimer);

@@ -99,7 +99,7 @@ void kernel_main(void)
 	s32 threadId = ret;
  //set thread to run as a system thread
 	if (ret >= 0)
-		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start IRQ thread!\n");
@@ -125,7 +125,7 @@ void kernel_main(void)
 	s32 threadId = ret;
  //set thread to run as a system thread
 	if (ret >= 0)
-		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start IRQ thread!\n");
@@ -140,7 +140,7 @@ void kernel_main(void)
 		if ((unknownConfig != 0) && ((~(dvdConfig >> 3) & 1) == 0))
 		{
 			threadId = CreateThread((u32)DiThread, NULL, NULL, 0, 0x78, unknownConfig);
-			Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+			Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 			StartThread(threadId);
 		}
 	}
@@ -149,7 +149,7 @@ void kernel_main(void)
 	ret = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	threadId = ret;
 	if (ret >= 0)
-		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start AES thread!\n");
@@ -158,7 +158,7 @@ void kernel_main(void)
 	ret = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	threadId = ret;
 	if (ret > 0)
-		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start SHA thread!\n");
@@ -170,7 +170,7 @@ void kernel_main(void)
 	threadId = ret;
 	if (ret > 0)
 	{
-		Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 		IpcHandlerThread = &Threads[threadId];
 		IpcHandlerThreadId = threadId;
 	}
@@ -453,7 +453,7 @@ u32 _main(void)
 	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32 *)_mainStack,
 	                            MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
-	Threads[threadId].ThreadContext.StatusRegister |= SPSR_SYSTEM_MODE;
+	Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (threadId != 0 || StartThread(threadId) < 0)
 		gecko_printf("failed to start kernel(%d)!\n", threadId);

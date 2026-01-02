@@ -456,7 +456,7 @@ s32 SendMessageCheckReceive(IpcMessage *message, ResourceManager *resource)
 {
 	void *const cb = message->Callback;
 	message->UsedByProcessId = resource->ProcessId;
-	s32 ret = SendMessageToQueue(resource->MessageQueue, message, None);
+	s32 ret = SendMessageToQueue(resource->Queue, message, None);
 
 	if (ret != IPC_SUCCESS || cb != NULL)
 		return ret;

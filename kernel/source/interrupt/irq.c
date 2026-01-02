@@ -182,7 +182,7 @@ s32 RegisterEventHandler(const u8 device, const s32 queueid, void *message)
 
 	eventHandlers[device].Message = message;
 	eventHandlers[device].ProcessId = CurrentThread->ProcessId;
-	eventHandlers[device].MessageQueue = &MessageQueues[queueid];
+	eventHandlers[device].Queue = &MessageQueues[queueid];
 
 restore_and_return:
 	RestoreInterrupts(irqState);
@@ -205,7 +205,7 @@ s32 UnregisterEventHandler(const u8 device)
 		goto restore_and_return;
 	}
 
-	eventHandlers[device].MessageQueue = NULL;
+	eventHandlers[device].Queue = NULL;
 	eventHandlers[device].Message = NULL;
 
 restore_and_return:
@@ -215,7 +215,7 @@ restore_and_return:
 
 void EnqueueEventHandler(s32 device)
 {
-	MessageQueue *queue = eventHandlers[device].MessageQueue;
+	MessageQueue *queue = eventHandlers[device].Queue;
 	if (queue == NULL)
 		return;
 
@@ -232,7 +232,7 @@ void EnqueueEventHandler(s32 device)
 	{
 		ThreadInfo *handlerThread = ThreadQueue_PopThread(&queue->ReceiveThreadQueue);
 		handlerThread->ThreadState = Ready;
-		handlerThread->ThreadContext.Registers[0] = IPC_SUCCESS;
+		handlerThread->Context.Registers[0] = IPC_SUCCESS;
 		ThreadQueue_PushThread(&SchedulerQueue, handlerThread);
 	}
 }

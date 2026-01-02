@@ -167,7 +167,7 @@ __attribute__((target("arm"))) __attribute__((noreturn)) void ScheduleYield(void
 #jump to thread\n\
 		movs 	pc, lr\n"
 	    :
-	    : [threadContext] "r"(CurrentThread), [threadContextOffset] "J"(offsetof(ThreadInfo, ThreadContext)),
+	    : [threadContext] "r"(CurrentThread), [threadContextOffset] "J"(offsetof(ThreadInfo, Context)),
 	      [stackOffset] "J"(offsetof(ThreadInfo, UserContext)));
 	__builtin_unreachable();
 }
@@ -186,7 +186,7 @@ void YieldThread(void)
 void UnblockThread(ThreadQueue *threadQueue, s32 returnValue)
 {
 	ThreadInfo *nextThread = ThreadQueue_PopThread(threadQueue);
-	nextThread->ThreadContext.Registers[0] = (u32)returnValue;
+	nextThread->Context.Registers[0] = (u32)returnValue;
 	nextThread->ThreadState = Ready;
 
 	ThreadQueue_PushThread(&SchedulerQueue, nextThread);
@@ -239,21 +239,21 @@ s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	selectedThread->ProcessId = (CurrentThread == NULL) ? 0 : CurrentThread->ProcessId;
 	selectedThread->ThreadState = Stopped;
 	selectedThread->Priority = priority;
-	selectedThread->ThreadContext.ProgramCounter = main;
-	selectedThread->ThreadContext.Registers[0] = (u32)arg;
+	selectedThread->Context.ProgramCounter = main;
+	selectedThread->Context.Registers[0] = (u32)arg;
 
 #ifdef MIOS
-	selectedThread->ThreadContext.LinkRegister = (u32)EndThread;
-	selectedThread->ThreadContext.StackPointer = (u32)stack_top;
+	selectedThread->Context.LinkRegister = (u32)EndThread;
+	selectedThread->Context.StackPointer = (u32)stack_top;
 #else
 	selectedThread->InitialPriority = priority;
-	selectedThread->ThreadContext.LinkRegister = (u32)ThreadEndFunction;
-	selectedThread->ThreadContext.StackPointer =
+	selectedThread->Context.LinkRegister = (u32)ThreadEndFunction;
+	selectedThread->Context.StackPointer =
 	    stack_top == NULL ? selectedThread->DefaultThreadStack : (u32)stack_top;
 #endif
 
 	//set thread state correctly
-	selectedThread->ThreadContext.StatusRegister =
+	selectedThread->Context.StatusRegister =
 	    ((main & 0x01) == 1) ? (SPSR_USER_MODE | SPSR_THUMB_MODE) : SPSR_USER_MODE;
 	selectedThread->NextThread = NULL;
 	selectedThread->ThreadQueue = NULL;
@@ -350,7 +350,7 @@ s32 CancelThread(const s32 threadId, u32 return_value)
 	else
 		threadToCancel->ThreadState = Unset;
 
-	CurrentThread->ThreadContext.Registers[0] = (u32)ret;
+	CurrentThread->Context.Registers[0] = (u32)ret;
 	if (threadToCancel == CurrentThread)
 		ScheduleYield();
 	else if (CurrentThread->Priority < SchedulerQueue.NextThread->Priority)

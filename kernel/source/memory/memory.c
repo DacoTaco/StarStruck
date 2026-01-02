@@ -422,7 +422,7 @@ s32 MapHardwareRegisters()
 		if (index >= sizeof(HWRegistersMemoryMaps) / sizeof(HWRegistersMemoryMaps[0]))
 			break;
 
-		ret = MapMemory(&HWRegistersMemoryMaps[index].MemorySection);
+		ret = MapMemory(&HWRegistersMemoryMaps[index].Section);
 		if (ret != 0)
 			break;
 

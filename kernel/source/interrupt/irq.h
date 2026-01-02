@@ -44,13 +44,13 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 typedef struct
 {
-	MessageQueue *MessageQueue;
+	MessageQueue *Queue;
 	void *Message;
 	u32 ProcessId;
 	u32 Unknown;
 } EventHandler;
 CHECK_SIZE(EventHandler, 0x10);
-CHECK_OFFSET(EventHandler, 0x00, MessageQueue);
+CHECK_OFFSET(EventHandler, 0x00, Queue);
 CHECK_OFFSET(EventHandler, 0x04, Message);
 CHECK_OFFSET(EventHandler, 0x08, ProcessId);
 CHECK_OFFSET(EventHandler, 0x0C, Unknown);

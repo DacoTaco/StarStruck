@@ -40,9 +40,9 @@ typedef u32 size_t;
 #define StaticAssert static_assert
 #else
 #define StaticAssert _Static_assert
+#define NULL         ((void *)0)
 #endif
 
-#define NULL       ((void *)0)
 #define ALIGNED(x) __attribute__((aligned(x)))
 
 #define STACK_ALIGN(type, name, cnt, alignment)                                   \
@@ -51,7 +51,7 @@ typedef u32 size_t;
 	                     ((alignment) - ((sizeof(type) * (cnt)) % (alignment))) : \
 	                     0))];                                                    \
 	type *name = (type *)(((u32)(_al__##name)) +                                  \
-	                      ((alignment) - (((u32)(_al__##name)) & ((alignment) - 1))))
+	                      ((alignment) - (((u32)(_al__##name)) & ((alignment)-1))))
 
 #define INT_MAX             ((int)0x7fffffff)
 #define UINT_MAX            ((unsigned int)0xffffffff)
