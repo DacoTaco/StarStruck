@@ -149,7 +149,7 @@ SECTIONS
 	{
 		*(.syscalls)
 		. = ALIGN(4);
-	} > sram :svcs
+	} > kernel :svcs
 
 	/DISCARD/ :
 	{
