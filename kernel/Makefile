@@ -37,7 +37,7 @@ ASFLAGS += $(CFLAGS)
 LDFLAGS += -Wl,--no-warn-rwx-segments -L ../tools/ -T kernel.ld
 
 ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(notdir $@).map
+LDFLAGS += -Wl,-Map,$(TARGET).map
 endif
 
 #---------------------------------------------------------------------------------

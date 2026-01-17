@@ -22,7 +22,7 @@ LIBDIRS =
 %.elf:
 	$(SILENTMSG) linking $(notdir $@)
 	$(SILENTCMD)$(LD) $(LIB_DIR) $(LDFLAGS) $(SPECSFLAGS) $(OFILES) -o $@ $(LIBPATHS) $(LIBS) -lgcc 
-	$(SILENTCMD)$(NM) -CSn $@ > $(notdir $*.lst)
+	$(SILENTCMD)$(NM) -CSn $@ > $(notdir $*).lst
 	
 %.a:
 	$(SILENTMSG) archiving $(notdir $@)

@@ -10,7 +10,7 @@ BUILD	:= build
 endif
 
 ifeq ($(NOMAPFILE),)
-LDFLAGS += -Wl,-Map,$(notdir $@).map
+LDFLAGS += -Wl,-Map,$(TARGET).map
 endif
 
 LDFLAGS += -Wl,-T$(TARGET).ld -Wl,--section-start,.module=$(VIRTUALADDR)
