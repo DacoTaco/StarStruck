@@ -67,6 +67,13 @@ CHECK_SIZE(WriteMessage, 0x08);
 CHECK_OFFSET(WriteMessage, 0x00, Data);
 CHECK_OFFSET(WriteMessage, 0x04, Length);
 
+typedef enum
+{
+	SeekSet = 0,
+	SeekCur = 1,
+	SeekEnd = 2
+} SeekMode;
+
 typedef struct
 {
 	s32 Where;

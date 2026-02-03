@@ -64,7 +64,7 @@
 DEFINE_FD_FUNCS(s32, Close, (s32, fd))
 DEFINE_FD_FUNCS(s32, Read, (s32, fd)(void *, buf)(u32, len))
 DEFINE_FD_FUNCS(s32, Write, (s32, fd)(const void *, buf)(u32, len))
-DEFINE_FD_FUNCS(s32, Seek, (s32, fd)(s32, offset)(s32, origin))
+DEFINE_FD_FUNCS(s32, Seek, (s32, fd)(s32, offset)(SeekMode, origin))
 DEFINE_FD_FUNCS(s32, Ioctl,
                 (s32, fd)(u32, requestId)(void *, inputBuffer)(u32, inputBufferLength)(
                     void *, outputBuffer)(u32, outputBufferLength))

@@ -292,7 +292,8 @@ finish:
 	return ret;
 }
 
-int SeekFD_Inner(s32 fd, s32 offset, s32 origin, MessageQueue *messageQueue, IpcMessage *message)
+int SeekFD_Inner(s32 fd, s32 offset, SeekMode origin,
+                 MessageQueue *messageQueue, IpcMessage *message)
 {
 	if (!IsIdValidForProcess(fd))
 		return IPC_EINVAL;
