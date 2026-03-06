@@ -627,6 +627,93 @@ s32 IOSC_DeleteObject(u32 keyHandle)
 	return ret;
 }
 
+// Advance a monotonic hardware counter key to the requested value, then update the
+// keyring metadata. Only keys of type Other / UNKNOWN2 subtype (counters) are
+// accepted; attempting to move a counter backwards returns IOSC_INVALID_VERSION.
+static s32 IOSC_SetData_Inner(u32 keyHandle, u32 value)
+{
+	// NG_ID (handle 1) is explicitly protected from writes
+	if (keyHandle == KEYRING_CONST_NG_ID)
+		return IOSC_EACCES;
+
+	// Only keys of type Other may have their metadata written
+	KeyType keyType = PrivateKey;
+	KeySubtype keySubtype = AES_128;
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+	if (keyType != Other)
+		return IOSC_INVALID_OBJTYPE;
+
+	// Counter-type (UNKNOWN2) keys are monotonic: the new value must be >= current value
+	if (keySubtype == UNKNOWN2)
+	{
+		u32 currentValue = 0;
+		Keyring_GetKeyMetadata(keyHandle, &currentValue);
+		if (value < currentValue)
+			return IOSC_INVALID_VERSION;
+
+		// Select the hardware get/update function pair for this key handle
+		s32 (*getFunc)(void);
+		s32 (*updateFunc)(void);
+		switch (keyHandle)
+		{
+			case KEYRING_CONST_BOOT2_VERSION:
+				getFunc = IOSC_BOOT2_GetVersion;
+				updateFunc = IOSC_BOOT2_UpdateVersion;
+				break;
+			case KEYRING_CONST_BOOT2_UNK1:
+				getFunc = IOSC_BOOT2_GetUnk1;
+				updateFunc = IOSC_BOOT2_UpdateUnk1;
+				break;
+			case KEYRING_CONST_BOOT2_UNK2:
+				getFunc = IOSC_BOOT2_GetUnk2;
+				updateFunc = IOSC_BOOT2_UpdateUnk2;
+				break;
+			case KEYRING_CONST_NAND_GEN:
+				getFunc = IOSC_NAND_GetGen;
+				updateFunc = IOSC_NAND_UpdateGen;
+				break;
+			default:
+				return IOSC_FAIL_INTERNAL;
+		}
+
+		// Increment the hardware counter one step at a time until it reaches the target
+		while ((u32)getFunc() < value)
+		{
+			s32 ret = updateFunc();
+			if (ret != 0)
+				return IOSC_FAIL_INTERNAL;
+		}
+	}
+
+	// Persist the new value into the in-memory keyring metadata
+	u32 data = value;
+	s32 ret = Keyring_SetKeyMetadata(keyHandle, &data);
+	if (ret != 0)
+		return IOSC_FAIL_INTERNAL;
+
+	return IPC_SUCCESS;
+}
+
+s32 IOSC_SetData(u32 keyHandle, u32 value)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		// Verify the calling process owns this key (RSA4096_ROOTKEY is always allowed)
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		ret = IOSC_SetData_Inner(keyHandle, value);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+
 s32 IOSC_GetData(u32 keyHandle, u32 *value)
 {
 	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;

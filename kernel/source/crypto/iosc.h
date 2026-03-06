@@ -27,6 +27,7 @@ s32 IOSC_NAND_GetGen(void);
 // Syscalls start here
 s32 IOSC_CreateObject(u32 *key_handle, KeyType type, KeySubtype subtype);
 s32 IOSC_DeleteObject(u32 key_handle);
+s32 IOSC_SetData(u32 keyHandle, u32 value);
 s32 IOSC_GetData(u32 keyHandle, u32 *value);
 s32 IOSC_GetKeySize(u32 *keysize, u32 keyHandle);
 s32 IOSC_GetSignatureSize(u32 *signatureSize, u32 keyHandle);

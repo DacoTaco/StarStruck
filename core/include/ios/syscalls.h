@@ -86,6 +86,7 @@ u32 OSVirtualToPhysical(u32 virtualAddress);
 // IOSC Crypto syscalls
 s32 OSIOSCCreateObject(u32 *keyHandle, u32 type, u32 subtype);
 s32 OSIOSCDeleteObject(u32 keyHandle);
+s32 OSSetIOSCData(u32 keyHandle, u32 value);
 s32 OSGetIOSCData(u32 keyHandle, u32 *value);
 s32 OSIOSCGetKeySize(u32 *keySize, u32 keyHandle);
 s32 OSIOSCGetSignatureSize(u32 *signatureSize, u32 keyHandle);
