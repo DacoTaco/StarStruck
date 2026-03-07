@@ -57,7 +57,7 @@ SECTIONS
 		LONG(0x7E);
 		LONG(__stackSize);
 		LONG(0x7F);
-		LONG(__stack);
+		LONG(__stackEnd);
 	} :headers :note
 
 	/* Program */
@@ -91,7 +91,7 @@ SECTIONS
 		*(.gnu.linkonce.b*)
 		*(.bss*)
 		*(COMMON)
-		. = ALIGN(4);
+		. = ALIGN(8);
 		__stack = .;
 		. += __stackSize;
 		__stackEnd = .;
