@@ -6,10 +6,6 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __FS_H__
-#define __FS_H__
-
+#pragma once
 #define FS_DEVICE_NAME      "/dev/fs"
 #define FS_DEVICE_NAME_SIZE sizeof(FS_DEVICE_NAME)
-
-#endif
