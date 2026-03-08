@@ -8,12 +8,14 @@
 
 #include <ios/syscalls.h>
 #include "ios/printk.h"
+#include <ios/module.h>
 
 #include "es.h"
 
+MODULE_DATA const unsigned char esDummyData[] = { 0x42 };
+
 int main(void)
 {
-	u32 *message;
 	u32 messageQueueMessages[8] ALIGNED(0x20) = { 0 };
 
 	OSSetThreadPriority(0, 0x50);
@@ -30,7 +32,7 @@ int main(void)
 
 	while (1)
 	{
-		OSReceiveMessage(EsMessageQueueId, &message, 0);
+		OSReceiveMessage(EsMessageQueueId, &esDummyData, 0);
 	}
 	return 0;
 }
