@@ -84,9 +84,6 @@ void InitializeThreadContext()
 //Scheduler
 void ThreadQueue_RemoveThread(ThreadQueue *threadQueue, ThreadInfo *threadToRemove)
 {
-	if (threadQueue == NULL || threadToRemove == NULL)
-		return;
-
 	ThreadInfo *thread = threadQueue->NextThread;
 	while (thread)
 	{
@@ -96,7 +93,7 @@ void ThreadQueue_RemoveThread(ThreadQueue *threadQueue, ThreadInfo *threadToRemo
 			break;
 		}
 
-		threadQueue = (ThreadQueue *)thread->NextThread;
+		threadQueue = (ThreadQueue *)&thread->NextThread;
 		thread = thread->NextThread;
 	}
 
@@ -346,7 +343,15 @@ s32 CancelThread(const s32 threadId, u32 return_value)
 		ThreadQueue_RemoveThread(&SchedulerQueue, threadToCancel);
 
 	if (!threadToCancel->IsDetached)
+	{
 		threadToCancel->ThreadState = Dead;
+		if (threadToCancel->JoinQueue != NULL)
+		{
+			ThreadInfo *joiner = ThreadQueue_PopThread(threadToCancel->JoinQueue);
+			joiner->ThreadState = Ready;
+			ThreadQueue_PushThread(&SchedulerQueue, joiner);
+		}
+	}
 	else
 		threadToCancel->ThreadState = Unset;
 
@@ -393,7 +398,7 @@ s32 JoinThread(const s32 threadId, u32 *returnedValue)
 	if (threadState != Dead)
 	{
 		CurrentThread->ThreadState = Waiting;
-		YieldCurrentThread(&SchedulerQueue);
+		YieldCurrentThread(threadToJoin->JoinQueue);
 		threadState = threadToJoin->ThreadState;
 	}
 
@@ -519,7 +524,7 @@ s32 SetThreadPriority(const s32 threadId, s32 priority)
 		goto return_error;
 
 #ifndef MIOS
-	if (priority >= thread->InitialPriority)
+	if (priority > thread->InitialPriority)
 		goto return_error;
 #endif
 
@@ -529,8 +534,8 @@ s32 SetThreadPriority(const s32 threadId, s32 priority)
 	thread->Priority = priority;
 	if (thread != CurrentThread && thread->ThreadState != Stopped)
 	{
-		ThreadQueue_RemoveThread(&SchedulerQueue, thread);
-		ThreadQueue_PushThread(&SchedulerQueue, thread);
+		ThreadQueue_RemoveThread(thread->ThreadQueue, thread);
+		ThreadQueue_PushThread(thread->ThreadQueue, thread);
 	}
 
 	if (CurrentThread->Priority < SchedulerQueue.NextThread->Priority)
