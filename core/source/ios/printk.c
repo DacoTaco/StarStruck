@@ -12,8 +12,18 @@
 #include "vsprintf.h"
 #include "string.h"
 
+#include "ios/processor.h"
 #include "ios/syscalls.h"
 #include "ios/printk.h"
+#include "ios/gecko.h"
+
+static inline void _printk_output(const char *str)
+{
+	if (SPSR_MODE_MASK(GetCurrentStatusRegister()) == SPSR_USER_MODE)
+		OSPrintk(str);
+	else
+		gecko_printf(str);
+}
 
 int printk(const char *fmt, ...)
 {
@@ -37,13 +47,13 @@ int printk(const char *fmt, ...)
 		s32 chunkSize = index + 15 <= len ? 15 : len - index;
 		memset(syscallBuffer, 0, 16);
 		memcpy(syscallBuffer, &buffer[index], (u32)chunkSize);
-		OSPrintk(syscallBuffer);
+		_printk_output(syscallBuffer);
 
 		index += chunkSize;
 	}
 
 	if (len > 0 && buffer[len - 1] != '\n')
-		OSPrintk("\n\0");
+		_printk_output("\n");
 
 	return len;
 }
