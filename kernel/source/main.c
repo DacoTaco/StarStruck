@@ -250,7 +250,18 @@ void kernel_main(void)
 	u32 vector;
 	FRESULT fres = 0;
 
- //while(1){}
+#define IN_EMULATOR
+#ifdef IN_EMULATOR
+ // unmask IPC IRQ
+	write32(HW_PPCIRQMASK, (1 << 30));
+ // send an ack
+	write32(HW_IPC_ARMCTRL, read32(HW_IPC_ARMCTRL) | 0x08);
+#endif
+
+ //Main IOS loop
+	asm __volatile__("loop:\n\
+			nop\n \
+			b loop");
 
 	boot2_init();
 
