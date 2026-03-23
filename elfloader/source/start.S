@@ -100,18 +100,3 @@ done_bss:
 	mov	pc, r1
 
 .pool
-
-BEGIN_ASM_FUNC debug_output
-	@ load address of port
-	mov	r3, #0xd800000
-	@ load old value
-	ldr	r2, [r3, #0xe0]
-	@ clear debug byte
-	bic	r2, r2, #0xFF0000
-	@ insert new value
-	and	r0, r0, #0xFF
-	orr	r2, r2, r0, LSL #16
-	@ store back
-	str	r2, [r3, #0xe0]
-	mov	pc, lr
-END_ASM_FUNC
