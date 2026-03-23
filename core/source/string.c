@@ -162,18 +162,12 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 	if (len == 0)
 		return dest;
 
-	//these are normal for ARM (r0 - r2 = function arguments)
-	//however, to make sure we have the values in these registers we will redefine them here
+	void *ret = dest;
 	//nintendo's memcpy is very optimised and custom written and its lovely lol
-	register size_t length asm("r3") = len;
-	register void *source asm("r2") = (void *)src;
-	register void *destination asm("r1") = dest;
-	register void *ret asm("r0") = dest;
 
-	if ((((u32)destination | (u32)source) & 0x03) == 0)
+	if ((((u32)dest | (u32)src) & 0x03) == 0)
 	{
-		__asm__ volatile(
-		    "\
+		__asm__ volatile("\
 			#Save the register values that GCC might have used before the asm \n\
 			stmdb		sp!,{r4,r5,r6,r7,r8,r9,r10,r11} \n\
 			#check if we can do a 0x10 copy paste \n\
@@ -198,41 +192,41 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 			b			memcpy_By16 \n\
 			memcpy_end: \n\
 			ldmia		sp!,{r4,r5,r6,r7,r8,r9,r10,r11} \n"
-		    :
-		    : [source] "r"(source), [destination] "r"(destination), [length] "r"(length));
+		                 :
+		                 : [source] "r"(src), [destination] "r"(dest), [length] "r"(len));
 
 		//ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
-		while (length >= 4)
+		while (len >= 4)
 		{
-			*(u32 *)destination = *(u32 *)source;
-			destination += 4;
-			source += 4;
-			length -= 4;
+			*(u32 *)dest = *(u32 *)src;
+			dest += 4;
+			src += 4;
+			len -= 4;
 		}
 	}
 
 	//and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
-	if (destination < (void *)0x1800000)
+	if (dest < (void *)0x1800000)
 	{
-		for (; length != 0; length--)
+		for (; len != 0; len--)
 		{
 			u32 *address = (u32 *)((u32)dest & (u32)~0x03);
 			u32 offset = 24 - ((u32)dest & 0x03) * 8;
-			u8 data = *(u8 *)source;
+			u8 data = *(u8 *)src;
 			*address = (*address & (u32) ~(0xFF << (offset & 0xFF))) |
 			           (data << (offset & 0xFF));
-			destination++;
-			source++;
+			dest++;
+			src++;
 		}
 	}
 	else
 	{
-		while (length != 0)
+		while (len != 0)
 		{
-			*(u8 *)destination = *(u8 *)source;
-			destination++;
-			source++;
-			length--;
+			*(u8 *)dest = *(u8 *)src;
+			dest++;
+			src++;
+			len--;
 		}
 	}
 
