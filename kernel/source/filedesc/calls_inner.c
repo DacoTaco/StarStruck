@@ -69,7 +69,7 @@ static bool IsIdValidForProcess(const s32 id)
 	    ProcessFileDescriptors[GetProcessID()][id].BelongsToResource == NULL)
 		return false;
 #else
-	if (!(0x10000 <= id && id < 0x10002))
+	if (id < AES_STATIC_FILEDESC || id > SHA_STATIC_FILEDESC)
 	{
 		if (id >= MAX_PROCESS_FDS ||
 		    ProcessFileDescriptors[CurrentThread == IpcHandlerThread ? 15 : GetProcessID()][id]

@@ -210,7 +210,7 @@ void kernel_main(void)
 			      section.VirtualAddress, section.Size);
 
   //map cached version
-		section.VirtualAddress |= 0x80000000;
+		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
 		ret = MapMemory(&section);
 		if (ret != 0)
