@@ -916,9 +916,13 @@ IOSC_GenerateBlockMACInner(const ShaContext *context, const void *inputData,
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanRead(customData, 4);
-		if (ret != IPC_SUCCESS)
-			break;
+		// only checks customData when customDataSize != 0 (Contribute/Finalize pass NULL).
+		if (customDataSize != 0)
+		{
+			ret = IOSC_CheckCurrentProcessCanRead(customData, 4);
+			if (ret != IPC_SUCCESS)
+				break;
+		}
 
 		ret = _IOSC_GenerateBlockMAC(context, inputData, inputSize, customData,
 		                             customDataSize, keyHandle, hmacCommand,
