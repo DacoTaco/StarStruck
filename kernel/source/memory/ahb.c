@@ -181,14 +181,23 @@ void _ahb_flush_from(AHBDEV dev)
 	{
 		case AHB_STARLET:
 		case AHB_1:
+		case AHB_OHCI:
 			req = 1;
+			break;
+		case AHB_UNKN2:
+		case AHB_UNKN6:
+			req = 4;
 			break;
 		case AHB_AES:
 		case AHB_SHA1:
+		case AHB_UNKN12:
 			req = 2;
 			break;
 		case AHB_NAND:
 		case AHB_SDHC:
+		case AHB_UNKN7:
+		case AHB_UNKN8:
+		case AHB_UNKN10:
 			req = 8;
 			break;
 		default:
