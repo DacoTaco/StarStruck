@@ -43,7 +43,7 @@ typedef union
 		u32 EnableDataHandling : 1;
 		u32 IsDecryption : 1;
 		u32 Unknown : 14;
-		u32 KeepIV : 1;
+		u32 ChainIV : 1;
 		u32 NumberOfBlocks : 12;
 	} Fields;
 	u32 Value;
@@ -136,7 +136,7 @@ void AesEngineHandler(void)
 							iv++;
 						}
 						IVVector = &ioctlvMessage->Data[3];
-						sourceVector = &ioctlvMessage->Data[0];
+						sourceVector = &ioctlvMessage->Data[1];
 						goto processAesCommand;
 					case COPY:
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 1)
@@ -164,7 +164,7 @@ processAesCommand:
 							            .GenerateIrq = 1,
 							            .EnableDataHandling = ioctl != COPY,
 							            .IsDecryption = ioctl == DECRYPT,
-							            .KeepIV = 0,
+							            .ChainIV = 0,
 							            .NumberOfBlocks =
 							                ((inputData->Length - 0x10U) >> 4) & 0xFFF }
 						};
