@@ -149,19 +149,19 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	if (messageData == NULL)
 	{
 		ret = IPC_ENOMEM;
-		goto _aes_decrypt_cleanup_return;
+		goto _aes_decrypt_error_return;
 	}
 
 	u32 keyRingSize = 0;
 	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
 	if (ret != 0)
-		goto _aes_decrypt_cleanup_return;
+		goto _aes_decrypt_error_return;
 
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
 	if (ret != 0)
 	{
 		ret = IPC_INTERNALFAIL;
-		goto _aes_decrypt_cleanup_return;
+		goto _aes_decrypt_error_return;
 	}
 
 	messageData->Data = (void *)inputData;
@@ -178,7 +178,11 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
 	                              MessageQueueId, (IpcMessage *)message);
 
-_aes_decrypt_cleanup_return:
+ // On success, aes owns keyBlob and messageData and will free them.
+	if (ret == IPC_SUCCESS)
+		return IPC_SUCCESS;
+
+_aes_decrypt_error_return:
 	if (keyBlob)
 		FreeOnHeap(KernelHeapId, keyBlob);
 
@@ -204,19 +208,19 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	if (messageData == NULL)
 	{
 		ret = IPC_ENOMEM;
-		goto _aes_encrypt_cleanup_return;
+		goto _aes_encrypt_error_return;
 	}
 
 	u32 keyRingSize = 0;
 	ret = Keyring_FindKeySize(&keyRingSize, keyHandle);
 	if (ret != 0)
-		goto _aes_encrypt_cleanup_return;
+		goto _aes_encrypt_error_return;
 
 	ret = Keyring_GetKey(keyHandle, keyBlob, keyRingSize);
 	if (ret != 0)
 	{
 		ret = IPC_INTERNALFAIL;
-		goto _aes_encrypt_cleanup_return;
+		goto _aes_encrypt_error_return;
 	}
 
 	messageData->Data = (void *)inputData;
@@ -233,7 +237,11 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
 	                              MessageQueueId, (IpcMessage *)message);
 
-_aes_encrypt_cleanup_return:
+  // On success, aes owns keyBlob and messageData and will free them.
+	if (ret == IPC_SUCCESS)
+		return IPC_SUCCESS;
+
+_aes_encrypt_error_return:
 	if (keyBlob)
 		FreeOnHeap(KernelHeapId, keyBlob);
 
@@ -279,6 +287,10 @@ static s32 _IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputDa
 	          DispatchIoctlv(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData) :
 	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, hmacCommand, 3, 2,
 	                              messageData, messageQueueId, message);
+
+ // On success, the SHA engine owns messageData and will free it
+	if (ret == IPC_SUCCESS)
+		return IPC_SUCCESS;
 
 _hmac_generate_cleanup_return:
 	if (messageData)
