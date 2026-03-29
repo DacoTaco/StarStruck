@@ -16,7 +16,8 @@ size_t strlen(const char *s)
 {
 	size_t len;
 
-	for (len = 0; s[len]; len++);
+	for (len = 0; s[len]; len++)
+		;
 
 	return len;
 }
@@ -25,30 +26,32 @@ size_t strnlen(const char *s, size_t count)
 {
 	size_t len;
 
-	for (len = 0; s[len] && len < count; len++);
+	for (len = 0; s[len] && len < count; len++)
+		;
 
 	return len;
 }
 
 void set_memory(void *dest, const unsigned char data, size_t len)
 {
-	if (dest < (void *)0x1800000)
+	u8 *input = (u8 *)dest;
+	if (input < (u8 *)0x1800000)
 	{
 		for (; len != 0; len--)
 		{
-			u32 *address = (u32 *)((u32)dest & (u32)~0x03);
-			u32 offset = 24 - ((u32)dest & 0x03) * 8;
+			u32 *address = (u32 *)((u32)input & (u32)~0x03);
+			u32 offset = 24 - ((u32)input & 0x03) * 8;
 			*address = (*address & (u32) ~(0xFF << offset)) | (data << offset);
 			;
-			dest++;
+			input++;
 		}
 	}
 	else
 	{
 		for (; len != 0; len--)
 		{
-			*(u8 *)dest = data;
-			dest++;
+			*(u8 *)input = data;
+			input++;
 		}
 	}
 }
@@ -84,7 +87,7 @@ void *memset(void *dest, int character, size_t length)
 	if (length == 0)
 		return dest;
 
-	void *destination = dest;
+	u8 *destination = dest;
 	const u8 data = (u8)character & 0xff;
 	u32 cnt = 0;
 
@@ -100,7 +103,7 @@ void *memset(void *dest, int character, size_t length)
 
 		set_memory(dest, data, cnt);
 		length -= cnt;
-		destination = (void *)((u32)dest & 0xFFFFFFFC) + 4;
+		destination = (u8 *)((u32)dest & 0xFFFFFFFC) + 4;
 	}
 
 	//align destination to 16 bytes
@@ -120,7 +123,7 @@ void *memset(void *dest, int character, size_t length)
 		if (alignedCnt != 0)
 		{
 			u16 alignedData = (u16)(data | (data << 8));
-			u32 *address = destination;
+			u32 *address = (u32 *)destination;
 			for (; 3 < alignedCnt; alignedCnt -= 4)
 			{
 				*address = (u32)(alignedData | alignedData << 0x10);
@@ -163,9 +166,11 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 		return dest;
 
 	void *ret = dest;
+	u8 *input = (u8 *)dest;
+	u8 *source = (u8 *)src;
 	//nintendo's memcpy is very optimised and custom written and its lovely lol
 
-	if ((((u32)dest | (u32)src) & 0x03) == 0)
+	if ((((u32)input | (u32)source) & 0x03) == 0)
 	{
 		__asm__ volatile("\
 			#Save the register values that GCC might have used before the asm \n\
@@ -193,39 +198,39 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 			memcpy_end: \n\
 			ldmia		sp!,{r4,r5,r6,r7,r8,r9,r10,r11} \n"
 		                 :
-		                 : [source] "r"(src), [destination] "r"(dest), [length] "r"(len));
+		                 : [source] "r"(source), [destination] "r"(input), [length] "r"(len));
 
 		//ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
 		while (len >= 4)
 		{
-			*(u32 *)dest = *(u32 *)src;
-			dest += 4;
-			src += 4;
+			*(u32 *)input = *(u32 *)source;
+			input += 4;
+			source += 4;
 			len -= 4;
 		}
 	}
 
 	//and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
-	if (dest < (void *)0x1800000)
+	if (input < (u8 *)0x1800000)
 	{
 		for (; len != 0; len--)
 		{
-			u32 *address = (u32 *)((u32)dest & (u32)~0x03);
-			u32 offset = 24 - ((u32)dest & 0x03) * 8;
-			u8 data = *(u8 *)src;
+			u32 *address = (u32 *)((u32)input & (u32)~0x03);
+			u32 offset = 24 - ((u32)input & 0x03) * 8;
+			u8 data = *(u8 *)source;
 			*address = (*address & (u32) ~(0xFF << (offset & 0xFF))) |
 			           (data << (offset & 0xFF));
-			dest++;
-			src++;
+			input++;
+			source++;
 		}
 	}
 	else
 	{
 		while (len != 0)
 		{
-			*(u8 *)dest = *(u8 *)src;
-			dest++;
-			src++;
+			*(u8 *)input = *(u8 *)source;
+			input++;
+			source++;
 			len--;
 		}
 	}
@@ -250,7 +255,8 @@ int strcmp(const char *s1, const char *s2)
 {
 	size_t i;
 
-	for (i = 0; s1[i] && s1[i] == s2[i]; i++);
+	for (i = 0; s1[i] && s1[i] == s2[i]; i++)
+		;
 
 	return s1[i] - s2[i];
 }
@@ -259,7 +265,8 @@ int strncmp(const char *s1, const char *s2, size_t n)
 {
 	size_t i;
 
-	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++);
+	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++)
+		;
 	if (i == n)
 		return 0;
 	return s1[i] - s2[i];

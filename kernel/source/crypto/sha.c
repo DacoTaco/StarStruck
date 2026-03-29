@@ -111,7 +111,7 @@ static s32 GenerateSha(ShaContext *hashContext, const void *input, const u32 inp
 		memset(LastBlockBuffer, 0, (SHA_BLOCK_SIZE * 2));
 		u32 lastBlockLength = inputSize - flooredDataSize;
 		if (lastBlockLength != 0)
-			memcpy(LastBlockBuffer, input + flooredDataSize, lastBlockLength);
+			memcpy(LastBlockBuffer, (u8 *)input + flooredDataSize, lastBlockLength);
 
 		LastBlockBuffer[lastBlockLength] = 0x80; //Demarcates end of last block's data and beginning of padding
 		hashContext->Length += lastBlockLength * 8;

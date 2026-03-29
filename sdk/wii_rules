@@ -13,7 +13,7 @@ endif
 LIB_INC = -I $(SDKDIR)/include
 LIB_DIR = -L $(SDKDIR)/lib
 ARCH 	= -mbig-endian -mcpu=arm926ej-s
-CFLAGS 	= $(ARCH) -Wall -Wextra -Os -fomit-frame-pointer -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
+CFLAGS 	= $(ARCH) -Wall -Wextra -Os -Wpointer-arith -fomit-frame-pointer -ffunction-sections -pipe -g -Wconversion $(LIB_INC)
 ASFLAGS = $(ARCH) 
 LDFLAGS = $(ARCH) -n -nostartfiles -nodefaultlibs
 LIBDIRS = 

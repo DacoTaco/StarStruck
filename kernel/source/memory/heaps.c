@@ -229,15 +229,15 @@ s32 FreeOnHeap(s32 heapid, void *ptr)
 	}
 
 	//verify the pointer address
-	if (ptr < (heaps[heapid].Heap + sizeof(HeapBlock)) ||
-	    ptr >= (heaps[heapid].Heap + heaps[heapid].Size))
+	if ((u8 *)ptr < ((u8 *)heaps[heapid].Heap + sizeof(HeapBlock)) ||
+	    (u8 *)ptr >= ((u8 *)heaps[heapid].Heap + heaps[heapid].Size))
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
 	//verify the block that the pointer belongs to
-	HeapBlock *blockToFree = (HeapBlock *)(ptr - sizeof(HeapBlock));
+	HeapBlock *blockToFree = (HeapBlock *)((u8 *)ptr - sizeof(HeapBlock));
 
 	if (blockToFree->BlockState == HeapBlockAligned)
 		blockToFree = blockToFree->NextBlock;

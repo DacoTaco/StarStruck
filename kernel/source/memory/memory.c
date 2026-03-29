@@ -54,12 +54,12 @@ Copyright (C) 2021			DacoTaco
 
 #define MEMBLOCK_COUNT(start, end)  ((end - start) / LINESIZE)
 #define ALIGN_FORWARD(addr) \
-	((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE - 1))))
+	((typeof(addr))((((u32)(addr)) + (LINESIZE)-1) & (~(u32)(LINESIZE - 1))))
 #define ALIGN_BACKWARD(addr) \
 	((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE - 1))))
 
-void _dc_inval_entries(const void *start, int count);
-void _dc_flush_entries(const void *start, int count);
+void _dc_inval_entries(const void *start, u32 count);
+void _dc_flush_entries(const void *start, u32 count);
 void _dc_flush(void);
 void _ic_invalidate(void);
 void _dc_invalidate(void);
@@ -130,7 +130,7 @@ void DCFlushRange(const void *start, u32 size)
 	{
 		start = ALIGN_BACKWARD(start);
 		void *end = ALIGN_FORWARD(((u8 *)start) + size);
-		_dc_flush_entries(start, MEMBLOCK_COUNT(start, end));
+		_dc_flush_entries(start, MEMBLOCK_COUNT((u32)start, (u32)end));
 	}
 	else
 		_dc_flush();
@@ -168,7 +168,7 @@ void DCInvalidateRange(const void *start, u32 size)
 	{
 		start = ALIGN_BACKWARD(start);
 		void *end = ALIGN_FORWARD(((u8 *)start) + size);
-		_dc_inval_entries(start, MEMBLOCK_COUNT(start, end));
+		_dc_inval_entries(start, MEMBLOCK_COUNT((u32)start, (u32)end));
 	}
 	else
 		_dc_invalidate();
