@@ -138,10 +138,11 @@ s32 OpenFD_Inner(const char *path, AccessMode mode)
 
 		IpcMessage *message = &IpcMessageArray[currentThreadId];
 		message->Request.Command = IOS_OPEN;
-		message->Request.Data.Open.Filepath = FiledescPathArray[currentThreadId].DevicePath;
-		message->Request.Data.Open.Mode = mode;
-		message->Request.Data.Open.UID = GetUID();
-		message->Request.Data.Open.GID = GetGID();
+		message->Request.Message.Open.Filepath =
+		    FiledescPathArray[currentThreadId].DevicePath;
+		message->Request.Message.Open.Mode = mode;
+		message->Request.Message.Open.UID = GetUID();
+		message->Request.Message.Open.GID = GetGID();
 		message->Callback = NULL;
 		message->CallerData = 0;
 
@@ -223,8 +224,8 @@ int ReadFD_Inner(s32 fd, void *buf, u32 len, MessageQueue *messageQueue, IpcMess
 
 	currentMessage->Request.Command = IOS_READ;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
-	currentMessage->Request.Data.Read.Data = buf;
-	currentMessage->Request.Data.Read.Length = len;
+	currentMessage->Request.Message.Read.MessageData = buf;
+	currentMessage->Request.Message.Read.Length = len;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
@@ -266,8 +267,8 @@ int WriteFD_Inner(s32 fd, const void *buf, u32 len, MessageQueue *messageQueue,
 
 	currentMessage->Request.Command = IOS_WRITE;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
-	currentMessage->Request.Data.Write.Data = buf;
-	currentMessage->Request.Data.Write.Length = len;
+	currentMessage->Request.Message.Write.MessageData = buf;
+	currentMessage->Request.Message.Write.Length = len;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
@@ -309,8 +310,8 @@ int SeekFD_Inner(s32 fd, s32 offset, SeekMode origin,
 
 	currentMessage->Request.Command = IOS_SEEK;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
-	currentMessage->Request.Data.Seek.Where = offset;
-	currentMessage->Request.Data.Seek.Whence = origin;
+	currentMessage->Request.Message.Seek.Where = offset;
+	currentMessage->Request.Message.Seek.Whence = origin;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
@@ -346,11 +347,11 @@ int IoctlFD_Inner(s32 fd, u32 requestId, void *inputBuffer, u32 inputBufferLengt
 
 	currentMessage->Request.Command = IOS_IOCTL;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
-	currentMessage->Request.Data.Ioctl.Ioctl = requestId;
-	currentMessage->Request.Data.Ioctl.InputBuffer = inputBuffer;
-	currentMessage->Request.Data.Ioctl.InputLength = inputBufferLength;
-	currentMessage->Request.Data.Ioctl.IoBuffer = outputBuffer;
-	currentMessage->Request.Data.Ioctl.IoLength = outputBufferLength;
+	currentMessage->Request.Message.Ioctl.Ioctl = requestId;
+	currentMessage->Request.Message.Ioctl.InputBuffer = inputBuffer;
+	currentMessage->Request.Message.Ioctl.InputLength = inputBufferLength;
+	currentMessage->Request.Message.Ioctl.IoBuffer = outputBuffer;
+	currentMessage->Request.Message.Ioctl.IoLength = outputBufferLength;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 
@@ -398,10 +399,10 @@ int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vect
 
 	currentMessage->Request.Command = IOS_IOCTLV;
 	currentMessage->Request.FileDescriptor = fd_ptr->Id;
-	currentMessage->Request.Data.Ioctlv.Ioctl = requestId;
-	currentMessage->Request.Data.Ioctlv.InputArgc = vectorInputCount;
-	currentMessage->Request.Data.Ioctlv.IoArgc = vectorIOCount;
-	currentMessage->Request.Data.Ioctlv.Data = vectors;
+	currentMessage->Request.Message.Ioctlv.Ioctl = requestId;
+	currentMessage->Request.Message.Ioctlv.InputArgc = vectorInputCount;
+	currentMessage->Request.Message.Ioctlv.IoArgc = vectorIOCount;
+	currentMessage->Request.Message.Ioctlv.MessageData = vectors;
 	currentMessage->Callback = messageQueue;
 	currentMessage->CallerData = (u32)message;
 

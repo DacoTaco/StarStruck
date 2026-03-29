@@ -118,23 +118,24 @@ static void FlushAndSendRequest(IpcRequest *request)
 	const u32 requestCommand = request->RequestCommand;
 	if (requestCommand == IOS_IOCTL)
 	{
-		DCFlushRange(request->Data.Ioctl.InputBuffer, request->Data.Ioctl.InputLength);
-		DCFlushRange(request->Data.Ioctl.IoBuffer, request->Data.Ioctl.IoLength);
+		DCFlushRange(request->Message.Ioctl.InputBuffer, request->Message.Ioctl.InputLength);
+		DCFlushRange(request->Message.Ioctl.IoBuffer, request->Message.Ioctl.IoLength);
 	}
 	else if (requestCommand == IOS_READ)
 	{
-		DCFlushRange(request->Data.Read.Data, (u32)request->Result);
+		DCFlushRange(request->Message.Read.MessageData, (u32)request->Result);
 	}
 	else if (requestCommand == IOS_IOCTLV)
 	{
 		const u32 totalArgc =
-		    request->Data.Ioctlv.InputArgc + request->Data.Ioctlv.IoArgc;
+		    request->Message.Ioctlv.InputArgc + request->Message.Ioctlv.IoArgc;
 		for (u32 i = 0; i < totalArgc; ++i)
 		{
-			DCFlushRange(request->Data.Ioctlv.Data[i].Data,
-			             request->Data.Ioctlv.Data[i].Length);
+			DCFlushRange(request->Message.Ioctlv.MessageData[i].Data,
+			             request->Message.Ioctlv.MessageData[i].Length);
 		}
-		DCFlushRange(request->Data.Ioctlv.Data, totalArgc * sizeof(IoctlvMessageData));
+		DCFlushRange(request->Message.Ioctlv.MessageData,
+		             totalArgc * sizeof(IoctlvMessageData));
 	}
 
 	IpcCircBuf.BackingArray[IpcCircBuf.PrepareToSendIndex] = request;
@@ -183,7 +184,8 @@ void IpcHandler(void)
 	while (1)
 	{
   //wait for a valid message
-		while (ReceiveMessage(messageQueue, (void **)&messagePointer, None) != IPC_SUCCESS);
+		while (ReceiveMessage(messageQueue, (void **)&messagePointer, None) != IPC_SUCCESS)
+			;
 		messageFromPPC = (void *)read32(HW_IPC_PPCMSG);
 		if (messagePointer->Request.Command == IOS_REPLY)
 		{
@@ -240,24 +242,24 @@ void IpcHandler(void)
 				break;
 
 			case IOS_OPEN:
-				if (!ValidateAddress(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN))
+				if (!ValidateAddress(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
-				DCInvalidateRange(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN);
+				DCInvalidateRange(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN);
 				const u32 pathlen =
-				    strnlen(messageFromPPC->Request.Data.Open.Filepath, MAX_PATHLEN);
+				    strnlen(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN);
 				if (pathlen >= MAX_PATHLEN)
 				{
 					printk("IPC: failed open path check: path=%s len=%d\n",
-					       messageFromPPC->Request.Data.Open.Filepath, pathlen);
+					       messageFromPPC->Request.Message.Open.Filepath, pathlen);
 					ret = IPC_EINVAL;
 					break;
 				}
 
-				ret = OpenFDAsync(messageFromPPC->Request.Data.Open.Filepath,
-				                  messageFromPPC->Request.Data.Open.Mode,
+				ret = OpenFDAsync(messageFromPPC->Request.Message.Open.Filepath,
+				                  messageFromPPC->Request.Message.Open.Mode,
 				                  messageQueue, messageFromPPC);
 				break;
 
@@ -266,96 +268,102 @@ void IpcHandler(void)
 				break;
 
 			case IOS_READ:
-				if (messageFromPPC->Request.Data.Read.Length > 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Data.Read.Data,
-				                     messageFromPPC->Request.Data.Read.Length))
+				if (messageFromPPC->Request.Message.Read.Length > 0 &&
+				    !ValidateAddress(messageFromPPC->Request.Message.Read.MessageData,
+				                     messageFromPPC->Request.Message.Read.Length))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
 
-				ret = ReadFDAsync(filedescId, messageFromPPC->Request.Data.Read.Data,
-				                  messageFromPPC->Request.Data.Read.Length,
+				ret = ReadFDAsync(filedescId,
+				                  messageFromPPC->Request.Message.Read.MessageData,
+				                  messageFromPPC->Request.Message.Read.Length,
 				                  messageQueue, messageFromPPC);
 				break;
 
 			case IOS_WRITE:
-				if (messageFromPPC->Request.Data.Read.Length > 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Data.Read.Data,
-				                     messageFromPPC->Request.Data.Read.Length))
+				if (messageFromPPC->Request.Message.Write.Length > 0 &&
+				    !ValidateAddress(messageFromPPC->Request.Message.Write.MessageData,
+				                     messageFromPPC->Request.Message.Write.Length))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
-				DCInvalidateRange(messageFromPPC->Request.Data.Write.Data,
-				                  messageFromPPC->Request.Data.Write.Length);
+				DCInvalidateRange(messageFromPPC->Request.Message.Write.MessageData,
+				                  messageFromPPC->Request.Message.Write.Length);
 
 				ret = WriteFDAsync(filedescId,
-				                   messageFromPPC->Request.Data.Write.Data,
-				                   messageFromPPC->Request.Data.Write.Length,
+				                   messageFromPPC->Request.Message.Write.MessageData,
+				                   messageFromPPC->Request.Message.Write.Length,
 				                   messageQueue, messageFromPPC);
 				break;
 
 			case IOS_SEEK:
-				ret = SeekFDAsync(filedescId, messageFromPPC->Request.Data.Seek.Where,
-				                  messageFromPPC->Request.Data.Seek.Whence,
+				ret = SeekFDAsync(filedescId,
+				                  messageFromPPC->Request.Message.Seek.Where,
+				                  messageFromPPC->Request.Message.Seek.Whence,
 				                  messageQueue, messageFromPPC);
 				break;
 
 			case IOS_IOCTL:
-				if (messageFromPPC->Request.Data.Ioctl.InputLength != 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Data.Ioctl.InputBuffer,
-				                     messageFromPPC->Request.Data.Ioctl.InputLength))
+				if (messageFromPPC->Request.Message.Ioctl.InputLength != 0 &&
+				    !ValidateAddress(messageFromPPC->Request.Message.Ioctl.InputBuffer,
+				                     messageFromPPC->Request.Message.Ioctl.InputLength))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
-				if (messageFromPPC->Request.Data.Ioctl.IoLength != 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Data.Ioctl.IoBuffer,
-				                     messageFromPPC->Request.Data.Ioctl.IoLength))
+				if (messageFromPPC->Request.Message.Ioctl.IoLength != 0 &&
+				    !ValidateAddress(messageFromPPC->Request.Message.Ioctl.IoBuffer,
+				                     messageFromPPC->Request.Message.Ioctl.IoLength))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
-				DCInvalidateRange(messageFromPPC->Request.Data.Ioctl.InputBuffer,
-				                  messageFromPPC->Request.Data.Ioctl.InputLength);
-				DCInvalidateRange(messageFromPPC->Request.Data.Ioctl.IoBuffer,
-				                  messageFromPPC->Request.Data.Ioctl.IoLength);
+				DCInvalidateRange(messageFromPPC->Request.Message.Ioctl.InputBuffer,
+				                  messageFromPPC->Request.Message.Ioctl.InputLength);
+				DCInvalidateRange(messageFromPPC->Request.Message.Ioctl.IoBuffer,
+				                  messageFromPPC->Request.Message.Ioctl.IoLength);
 
 				ret = IoctlFDAsync(filedescId,
-				                   messageFromPPC->Request.Data.Ioctl.Ioctl,
-				                   messageFromPPC->Request.Data.Ioctl.InputBuffer,
-				                   messageFromPPC->Request.Data.Ioctl.InputLength,
-				                   messageFromPPC->Request.Data.Ioctl.IoBuffer,
-				                   messageFromPPC->Request.Data.Ioctl.IoLength,
+				                   messageFromPPC->Request.Message.Ioctl.Ioctl,
+				                   messageFromPPC->Request.Message.Ioctl.InputBuffer,
+				                   messageFromPPC->Request.Message.Ioctl.InputLength,
+				                   messageFromPPC->Request.Message.Ioctl.IoBuffer,
+				                   messageFromPPC->Request.Message.Ioctl.IoLength,
 				                   messageQueue, messageFromPPC);
 				break;
 
 			case IOS_IOCTLV:
-				const u32 totalArgc = messageFromPPC->Request.Data.Ioctlv.InputArgc +
-				                      messageFromPPC->Request.Data.Ioctlv.IoArgc;
+				const u32 totalArgc = messageFromPPC->Request.Message.Ioctlv.InputArgc +
+
+				                      messageFromPPC->Request.Message.Ioctlv.IoArgc;
 				if (totalArgc != 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Data.Ioctlv.Data,
+				    !ValidateAddress(messageFromPPC->Request.Message.Ioctlv.MessageData,
 				                     totalArgc * sizeof(IoctlvMessageData)))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
 
-				DCInvalidateRange(messageFromPPC->Request.Data.Ioctlv.Data,
+				DCInvalidateRange(messageFromPPC->Request.Message.Ioctlv.MessageData,
 				                  totalArgc * sizeof(IoctlvMessageData));
 				u32 i = 0;
 				for (; i < totalArgc; ++i)
 				{
-					if (messageFromPPC->Request.Data.Ioctlv.Data[i].Length != 0 &&
-					    !ValidateAddress(
-					        messageFromPPC->Request.Data.Ioctlv.Data[i].Data,
-					        messageFromPPC->Request.Data.Ioctlv.Data[i].Length))
+					if (messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length != 0 &&
+					    !ValidateAddress(messageFromPPC->Request.Message.Ioctlv
+					                         .MessageData[i]
+					                         .Data,
+					                     messageFromPPC->Request.Message.Ioctlv
+					                         .MessageData[i]
+					                         .Length))
 						break;
 
 					DCInvalidateRange(
-					    messageFromPPC->Request.Data.Ioctlv.Data[i].Data,
-					    messageFromPPC->Request.Data.Ioctlv.Data[i].Length);
+					    messageFromPPC->Request.Message.Ioctlv.MessageData[i].Data,
+					    messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length);
 				}
 
 				if (i != totalArgc)
@@ -365,10 +373,10 @@ void IpcHandler(void)
 				}
 
 				ret = IoctlvFDAsync(filedescId,
-				                    messageFromPPC->Request.Data.Ioctlv.Ioctl,
-				                    messageFromPPC->Request.Data.Ioctlv.InputArgc,
-				                    messageFromPPC->Request.Data.Ioctlv.IoArgc,
-				                    messageFromPPC->Request.Data.Ioctlv.Data,
+				                    messageFromPPC->Request.Message.Ioctlv.Ioctl,
+				                    messageFromPPC->Request.Message.Ioctlv.InputArgc,
+				                    messageFromPPC->Request.Message.Ioctlv.IoArgc,
+				                    messageFromPPC->Request.Message.Ioctlv.MessageData,
 				                    messageQueue, messageFromPPC);
 				break;
 		}

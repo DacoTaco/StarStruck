@@ -98,7 +98,7 @@ void AesEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(ipcMessage->Request.Data.Open.Filepath,
+				ret = memcmp(ipcMessage->Request.Message.Open.Filepath,
 				             AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
 				if (ret != 0)
 					ret = IPC_ENOENT;
@@ -109,7 +109,7 @@ void AesEngineHandler(void)
 				goto sendReply;
 			case IOS_IOCTLV:
 				ret = IPC_EINVAL;
-				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
+				ioctlvMessage = &ipcMessage->Request.Message.Ioctlv;
 				write32(AES_CMD, 0);
 
 				u32 ioctl = ioctlvMessage->Ioctl;
@@ -119,15 +119,15 @@ void AesEngineHandler(void)
 					case DECRYPT:
 						if (ioctlvMessage->InputArgc != 2 || ioctlvMessage->IoArgc != 2)
 							goto sendReply;
-						if (ioctlvMessage->Data[1].Length != 0x10 ||
-						    ((u32)ioctlvMessage->Data[1].Data & 3) != 0 ||
-						    ioctlvMessage->Data[3].Length != 0x10 ||
-						    ((u32)ioctlvMessage->Data[3].Data & 3) != 0)
+						if (ioctlvMessage->MessageData[1].Length != 0x10 ||
+						    ((u32)ioctlvMessage->MessageData[1].Data & 3) != 0 ||
+						    ioctlvMessage->MessageData[3].Length != 0x10 ||
+						    ((u32)ioctlvMessage->MessageData[3].Data & 3) != 0)
 							goto sendReply;
 
       //lets copy over the AES key & IV
-						u32 *key = ioctlvMessage->Data[1].Data;
-						u32 *iv = ioctlvMessage->Data[3].Data;
+						u32 *key = ioctlvMessage->MessageData[1].Data;
+						u32 *iv = ioctlvMessage->MessageData[3].Data;
 						for (int i = 0; i < 4; i++)
 						{
 							write32(AES_KEY, *key);
@@ -135,23 +135,24 @@ void AesEngineHandler(void)
 							key++;
 							iv++;
 						}
-						IVVector = &ioctlvMessage->Data[3];
-						sourceVector = &ioctlvMessage->Data[1];
+						IVVector = &ioctlvMessage->MessageData[3];
+						sourceVector = &ioctlvMessage->MessageData[1];
 						goto processAesCommand;
 					case COPY:
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 1)
 							goto sendReply;
 processAesCommand:
-						IoctlvMessageData *inputData = &ioctlvMessage->Data[0];
+						IoctlvMessageData *inputData = &ioctlvMessage->MessageData[0];
 						IoctlvMessageData *outputData =
-						    &ioctlvMessage->Data[ioctlvMessage->InputArgc];
+						    &ioctlvMessage->MessageData[ioctlvMessage->InputArgc];
 						if (inputData->Length != outputData->Length ||
 						    ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
 						    ((u32)inputData->Data & 0x0F) != 0 ||
 						    ((u32)outputData->Data & 0x0F) != 0)
 							goto sendReply;
 						if (ioctl == DECRYPT)
-							memcpy(ivBuffer, inputData->Data + inputData->Length - 0x10, 0x10);
+							memcpy(ivBuffer,
+							       (u8 *)inputData->Data + inputData->Length - 0x10, 0x10);
 
 						write32(AES_SRC, VirtualToPhysical((u32)inputData->Data));
 						write32(AES_DEST, VirtualToPhysical((u32)outputData->Data));
@@ -188,7 +189,8 @@ processAesCommand:
 						{
 							if (ioctl == ENCRYPT)
 								memcpy(ivBuffer,
-								       outputData->Data + outputData->Length - 0x10, 0x10);
+								       (u8 *)outputData->Data + outputData->Length - 0x10,
+								       0x10);
 
 							if (ioctl <= DECRYPT)
 								memcpy(IVVector->Data, ivBuffer, 0x10);
@@ -197,7 +199,7 @@ processAesCommand:
 								FreeOnHeap(KernelHeapId, sourceVector->Data);
 
 							FreeOnHeap(KernelHeapId,
-							           ipcReply->Request.Data.Ioctlv.Data);
+							           ipcReply->Request.Message.Ioctlv.MessageData);
 							ret = 0;
 						}
 						goto sendReply;

@@ -362,7 +362,7 @@ void ShaEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(ipcMessage->Request.Data.Open.Filepath,
+				ret = memcmp(ipcMessage->Request.Message.Open.Filepath,
 				             SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
 				if (ret != IPC_SUCCESS)
 					ret = IPC_ENOENT;
@@ -372,9 +372,9 @@ void ShaEngineHandler(void)
 
 				goto sendReply;
 			case IOS_IOCTLV:
-				ioctlvMessage = &ipcMessage->Request.Data.Ioctlv;
+				ioctlvMessage = &ipcMessage->Request.Message.Ioctlv;
 				u32 ioctl = ioctlvMessage->Ioctl;
-				IoctlvMessageData *messageData = ioctlvMessage->Data;
+				IoctlvMessageData *messageData = ioctlvMessage->MessageData;
 				switch (ioctl)
 				{
 					/*it seems each of these are split based on whether they handle SHA hashing or HMAC verification.
@@ -387,11 +387,11 @@ void ShaEngineHandler(void)
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
 
-						ret = GenerateSha((ShaContext *)ioctlvMessage->Data[1].Data,
-						                  ioctlvMessage->Data[0].Data,
-						                  ioctlvMessage->Data[0].Length,
-						                  (ShaCommandType)ioctl,
-						                  (u32 *)ioctlvMessage->Data[2].Data);
+						ret = GenerateSha(
+						    (ShaContext *)ioctlvMessage->MessageData[1].Data,
+						    ioctlvMessage->MessageData[0].Data,
+						    ioctlvMessage->MessageData[0].Length, (ShaCommandType)ioctl,
+						    (u32 *)ioctlvMessage->MessageData[2].Data);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -400,9 +400,11 @@ void ShaEngineHandler(void)
 
 					case InitHMacState:
 						ret = GenerateHmac_Init(
-						    (ShaContext *)ioctlvMessage->Data[1].Data,
-						    ioctlvMessage->Data[4].Data, ioctlvMessage->Data[4].Length,
-						    ioctlvMessage->Data[3].Data, ioctlvMessage->Data[3].Length);
+						    (ShaContext *)ioctlvMessage->MessageData[1].Data,
+						    ioctlvMessage->MessageData[4].Data,
+						    ioctlvMessage->MessageData[4].Length,
+						    ioctlvMessage->MessageData[3].Data,
+						    ioctlvMessage->MessageData[3].Length);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -411,9 +413,11 @@ void ShaEngineHandler(void)
 
 					case ContributeHMacState:
 						ret = GenerateHmac_Contribute(
-						    (ShaContext *)ioctlvMessage->Data[1].Data,
-						    ioctlvMessage->Data[4].Data, ioctlvMessage->Data[4].Length,
-						    ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length);
+						    (ShaContext *)ioctlvMessage->MessageData[1].Data,
+						    ioctlvMessage->MessageData[4].Data,
+						    ioctlvMessage->MessageData[4].Length,
+						    ioctlvMessage->MessageData[0].Data,
+						    ioctlvMessage->MessageData[0].Length);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -422,11 +426,14 @@ void ShaEngineHandler(void)
 
 					case FinalizeHmacState:
 						ret = GenerateHmac_Finalize(
-						    (ShaContext *)ioctlvMessage->Data[1].Data,
-						    ioctlvMessage->Data[4].Data, ioctlvMessage->Data[4].Length,
-						    ioctlvMessage->Data[0].Data, ioctlvMessage->Data[0].Length,
-						    ioctlvMessage->Data[3].Data, ioctlvMessage->Data[3].Length,
-						    (u32 *)ioctlvMessage->Data[2].Data);
+						    (ShaContext *)ioctlvMessage->MessageData[1].Data,
+						    ioctlvMessage->MessageData[4].Data,
+						    ioctlvMessage->MessageData[4].Length,
+						    ioctlvMessage->MessageData[0].Data,
+						    ioctlvMessage->MessageData[0].Length,
+						    ioctlvMessage->MessageData[3].Data,
+						    ioctlvMessage->MessageData[3].Length,
+						    (u32 *)ioctlvMessage->MessageData[2].Data);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -436,13 +443,13 @@ void ShaEngineHandler(void)
 					case UnknownShaCommand:
 						u8 *hashCompareAgainst = (u8 *)messageData[0].Data;
 						const u8 *dataToCheck = (const u8 *)messageData[1].Data;
-						const u32 hash_h0_offset = *messageData[2].Data;
-						const u32 hash_h1_offset = *messageData[3].Data;
+						const u32 hash_h0_offset = *(u32 *)messageData[2].Data;
+						const u32 hash_h1_offset = *(u32 *)messageData[3].Data;
 						const u8 *hash_h2_pointer = (const u8 *)messageData[4].Data;
 
 						ret = VerifyHashesArray(hashCompareAgainst, 0x400, 31, dataToCheck);
 						if (ret < 0)
-							HMAC_Panic("Data subblock failed to verify against H0 hash\n",
+							HMAC_Panic("MessageData subblock failed to verify against H0 hash\n",
 							           hashCompareAgainst);
 
 						ret = VerifyHashesArray(dataToCheck, 0x26c, 1,
@@ -470,7 +477,7 @@ void ShaEngineHandler(void)
 		}
 
 		//remove message data from heap if it came from there
-		FreeOnHeap(KernelHeapId, ioctlvMessage->Data);
+		FreeOnHeap(KernelHeapId, ioctlvMessage->MessageData);
 
 sendReply:
 		ResourceReply(ipcReply, ret);

@@ -51,20 +51,20 @@ CHECK_OFFSET(OpenMessage, 0x0C, GID);
 
 typedef struct
 {
-	void *Data;
+	void *MessageData;
 	u32 Length;
 } ReadMessage;
 CHECK_SIZE(ReadMessage, 0x08);
-CHECK_OFFSET(ReadMessage, 0x00, Data);
+CHECK_OFFSET(ReadMessage, 0x00, MessageData);
 CHECK_OFFSET(ReadMessage, 0x04, Length);
 
 typedef struct
 {
-	const void *Data;
+	const void *MessageData;
 	u32 Length;
 } WriteMessage;
 CHECK_SIZE(WriteMessage, 0x08);
-CHECK_OFFSET(WriteMessage, 0x00, Data);
+CHECK_OFFSET(WriteMessage, 0x00, MessageData);
 CHECK_OFFSET(WriteMessage, 0x04, Length);
 
 typedef enum
@@ -100,7 +100,7 @@ CHECK_SIZE(IoctlMessage, 0x14);
 
 typedef struct
 {
-	u32 *Data;
+	void *Data;
 	u32 Length;
 } IoctlvMessageData;
 CHECK_OFFSET(IoctlvMessageData, 0x00, Data);
@@ -112,12 +112,12 @@ typedef struct
 	u32 Ioctl;
 	u32 InputArgc;
 	u32 IoArgc;
-	IoctlvMessageData *Data;
+	IoctlvMessageData *MessageData;
 } IoctlvMessage;
 CHECK_OFFSET(IoctlvMessage, 0x00, Ioctl);
 CHECK_OFFSET(IoctlvMessage, 0x04, InputArgc);
 CHECK_OFFSET(IoctlvMessage, 0x08, IoArgc);
-CHECK_OFFSET(IoctlvMessage, 0x0C, Data);
+CHECK_OFFSET(IoctlvMessage, 0x0C, MessageData);
 CHECK_SIZE(IoctlvMessage, 0x10);
 
 typedef struct
@@ -138,7 +138,7 @@ typedef struct
 		IoctlMessage Ioctl;
 		IoctlvMessage Ioctlv;
 		u32 Arguments[5];
-	} Data;
+	} Message;
 } IpcRequest;
 CHECK_SIZE(IpcRequest, 0x20);
 CHECK_OFFSET(IpcRequest, 0x00, Command);
@@ -146,7 +146,7 @@ CHECK_OFFSET(IpcRequest, 0x04, Result);
 CHECK_OFFSET(IpcRequest, 0x08, FileDescriptor);
 CHECK_OFFSET(IpcRequest, 0x08, RequestCommand);
 //all message types and their data
-CHECK_OFFSET(IpcRequest, 0x0C, Data);
+CHECK_OFFSET(IpcRequest, 0x0C, Message);
 
 typedef struct
 {

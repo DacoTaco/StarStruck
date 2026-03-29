@@ -168,7 +168,7 @@ static OhciEndpointDescriptor *GetInterruptEndpointDescriptor(OH1ModuleControl *
 	if (level > 5)
 		level = 5;
 
-	/* 63 = 32 + 16 + 8 + 4 + 2 + 1, that is the number of interrupt endpoint
+ /* 63 = 32 + 16 + 8 + 4 + 2 + 1, that is the number of interrupt endpoint
 	 * descriptors. */
 	for (int index = _endpointIndexes[level]; index < 63; index++)
 	{
@@ -213,7 +213,7 @@ static s8 GetAvailableDeviceIndex(OH1ModuleControl *module, u8 port, u8 zero, bo
 		endpoint->Tail = swappedTransfer;
 		endpoint->Head = swappedTransfer;
 		endpoint->Next = NULL;
-		/* TODO double check this: what's the relationship between being a
+  /* TODO double check this: what's the relationship between being a
 		 * low-speed device and the endpoint number? Maybe we misunderstood
 		 * something in ghidra... */
 		endpoint->dw0 = swap_u32(ED_SET(MPS, size) | ED_SET(EN, isLowSpeedDevice & 1));
@@ -279,7 +279,7 @@ static int SetupEndpoint(OH1ModuleControl *module, DeviceEndpoint *deviceEndpoin
 	}
 	else
 	{
-		/* TODO investigate: this is weird. We'd expect it to set the
+  /* TODO investigate: this is weird. We'd expect it to set the
 		 * endpoint direction to ED_OUT (0x800), instead this is setting the
 		 * EndpointNumber (EN) field to 2 (the EN field starts at bit 7). */
 		dw0 = 0x100;
@@ -341,7 +341,7 @@ static int SendControlMessageAsync(OH1ModuleControl *module, USBControlMessage *
 		if (endpointIndex < 1)
 		{
 			rc = IPC_EINVAL;
-			/* The original code was not freeing the memory here! */
+   /* The original code was not freeing the memory here! */
 			goto error;
 		}
 	}
@@ -821,7 +821,7 @@ int QueryModuleDevices(OH1ModuleControl *module)
 int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
 {
 	const IpcRequest *request = &ipcMessage->Request;
-	const IoctlvMessage *ioctlv = &request->Data.Ioctlv;
+	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
 	u32 inputCount = ioctlv->InputArgc;
 	u32 ioCount = ioctlv->IoArgc;
 	if (inputCount != 6 || ioCount != 1)
@@ -830,13 +830,13 @@ int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
 		return IPC_EINVAL;
 	}
 
-	const IoctlvMessageData *vector = ioctlv->Data;
+	const IoctlvMessageData *vector = ioctlv->MessageData;
 	if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 1 ||
 	    !vector[1].Data || vector[2].Length != 2 || !vector[2].Data ||
 	    vector[3].Length != 2 || !vector[3].Data || vector[4].Length != 2 ||
 	    !vector[4].Data || vector[5].Length != 1 || !vector[5].Data ||
-	    vector[6].Length != swap_u16(*(u16 *)vector[4].Data ||
-	                                 (vector[6].Length != 0 && !vector[6].Data)))
+	    vector[6].Length != swap_u16(*(u16 *)vector[4].Data) ||
+	    (vector[6].Length != 0 && !vector[6].Data))
 	{
 		printk("parameter validity check failed\n");
 		return IPC_EINVAL;
@@ -878,7 +878,7 @@ int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessag
 	u8 bEndpoint;
 
 	const IpcRequest *request = &ipcMessage->Request;
-	const IoctlvMessage *ioctlv = &request->Data.Ioctlv;
+	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
 	num_in = ioctlv->InputArgc;
 	num_io = ioctlv->IoArgc;
 	if (num_in != 2 || num_io == 1)
@@ -887,7 +887,7 @@ int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessag
 		return IPC_EINVAL;
 	}
 
-	vector = ioctlv->Data;
+	vector = ioctlv->MessageData;
 	if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 2 ||
 	    !vector[1].Data)
 	{

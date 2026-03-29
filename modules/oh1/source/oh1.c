@@ -107,24 +107,24 @@ static int HandleOpen(OH1ModuleControl *, const IpcRequest *request)
 	s16 deviceIndex;
 	char *nextToken;
 
-	result = strncmp(request->Data.Open.Filepath, _deviceName, sizeof(_deviceName));
+	result = strncmp(request->Message.Open.Filepath, _deviceName, sizeof(_deviceName));
 	if (result == 0)
 		return _rootHubFileDescriptor;
 
 	char product[16] = { 0 };
 	char vendor[16] = { 0 };
-	device = request->Data.Open.Filepath;
-	// 13 is strlen("/dev/usb/oh1/")
+	device = request->Message.Open.Filepath;
+ // 13 is strlen("/dev/usb/oh1/")
 	nextToken = device + 13;
 
-	/* Parse vendor ID */
+ /* Parse vendor ID */
 	len = 0;
 	subdevice_chr = *nextToken;
 	while (subdevice_chr != '\0' && subdevice_chr != '/')
 		subdevice_chr = nextToken[++len];
 	memcpy(vendor, nextToken, len);
 
-	/* Parse product ID */
+ /* Parse product ID */
 	nextToken += len + 1;
 	len = 0;
 	subdevice_chr = nextToken[len];
@@ -143,7 +143,7 @@ static int HandleOpen(OH1ModuleControl *, const IpcRequest *request)
 static int HandleIoctl(OH1ModuleControl *module, IpcMessage *message, bool *isAsync)
 {
 	const IpcRequest *request = &message->Request;
-	const IoctlMessage *ioctl = &request->Data.Ioctl;
+	const IoctlMessage *ioctl = &request->Message.Ioctl;
 	int result = IPC_EINVAL;
 
 	*isAsync = false;
@@ -192,7 +192,7 @@ static int HandleIoctl(OH1ModuleControl *module, IpcMessage *message, bool *isAs
 static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isAsync)
 {
 	const IpcRequest *request = &message->Request;
-	const IoctlvMessage *ioctlv = &request->Data.Ioctlv;
+	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
 	const IoctlvMessageData *vector;
 	int result = IPC_EINVAL;
 
@@ -213,18 +213,18 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 		return result;
 	}
 
-	/* All other ioctls are synchronous */
+ /* All other ioctls are synchronous */
 	*isAsync = false;
 
 	if (ioctlv->Ioctl == USBV0_IOCTL_GETPORTSTATUS)
 	{
-		vector = ioctlv->Data;
+		vector = ioctlv->MessageData;
 		if (ioctlv->InputArgc != 1 || ioctlv->IoArgc != 1 || !vector[0].Data ||
 		    !vector[1].Data)
 			return IPC_EINVAL;
 
-		u32 queryPort = *vector[0].Data;
-		u32 *outptr = vector[1].Data;
+		u32 queryPort = *(u32 *)vector[0].Data;
+		u32 *outptr = (u32 *)vector[1].Data;
 		if (vector[0].Length == 1 && vector[1].Length == 4 && queryPort < module->NumberOfDownstreamPorts)
 		{
 			*outptr = module->HardwareRegisters->RootHubPortStatus[queryPort];
@@ -237,7 +237,7 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 		if (ioctlv->InputArgc != 2)
 			return IPC_EINVAL;
 
-		vector = ioctlv->Data;
+		vector = ioctlv->MessageData;
 		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 4 ||
 		    !vector[1].Data)
 			return IPC_EINVAL;
@@ -260,7 +260,7 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 			return IPC_EINVAL;
 		}
 
-		vector = ioctlv->Data;
+		vector = ioctlv->MessageData;
 		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 1 ||
 		    !vector[1].Data || vector[2].Length != 1 || !vector[2].Data)
 			return IPC_EINVAL;
