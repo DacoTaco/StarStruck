@@ -14,6 +14,13 @@
 #define AES_DEVICE_NAME      "/dev/aes"
 #define AES_DEVICE_NAME_SIZE sizeof(AES_DEVICE_NAME)
 
+typedef enum
+{
+	AES_COPY = 0,
+	AES_ENCRYPT = 2,
+	AES_DECRYPT = 3
+} AESCommandTypes;
+
 void AesEngineHandler(void);
 
 #endif

@@ -26,13 +26,6 @@
 
 #ifndef MIOS
 
-typedef enum
-{
-	COPY = 0,
-	ENCRYPT = 2,
-	DECRYPT = 3
-} AESCommandTypes;
-
 typedef union
 {
 	struct
@@ -115,8 +108,8 @@ void AesEngineHandler(void)
 				u32 ioctl = ioctlvMessage->Ioctl;
 				switch (ioctl)
 				{
-					case ENCRYPT:
-					case DECRYPT:
+					case AES_ENCRYPT:
+					case AES_DECRYPT:
 						if (ioctlvMessage->InputArgc != 2 || ioctlvMessage->IoArgc != 2)
 							goto sendReply;
 						if (ioctlvMessage->MessageData[1].Length != 0x10 ||
@@ -138,7 +131,7 @@ void AesEngineHandler(void)
 						IVVector = &ioctlvMessage->MessageData[3];
 						sourceVector = &ioctlvMessage->MessageData[1];
 						goto processAesCommand;
-					case COPY:
+					case AES_COPY:
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 1)
 							goto sendReply;
 processAesCommand:
@@ -150,7 +143,7 @@ processAesCommand:
 						    ((u32)inputData->Data & 0x0F) != 0 ||
 						    ((u32)outputData->Data & 0x0F) != 0)
 							goto sendReply;
-						if (ioctl == DECRYPT)
+						if (ioctl == AES_DECRYPT)
 							memcpy(ivBuffer,
 							       (u8 *)inputData->Data + inputData->Length - 0x10, 0x10);
 
@@ -163,8 +156,8 @@ processAesCommand:
 						AESCommand command = {
 							.Fields = { .Command = 1,
 							            .GenerateIrq = 1,
-							            .EnableDataHandling = ioctl != COPY,
-							            .IsDecryption = ioctl == DECRYPT,
+							            .EnableDataHandling = ioctl != AES_COPY,
+							            .IsDecryption = ioctl == AES_DECRYPT,
 							            .ChainIV = 0,
 							            .NumberOfBlocks =
 							                ((inputData->Length - 0x10U) >> 4) & 0xFFF }
@@ -187,12 +180,12 @@ processAesCommand:
 
 						if (IVVector != NULL)
 						{
-							if (ioctl == ENCRYPT)
+							if (ioctl == AES_ENCRYPT)
 								memcpy(ivBuffer,
 								       (u8 *)outputData->Data + outputData->Length - 0x10,
 								       0x10);
 
-							if (ioctl <= DECRYPT)
+							if (ioctl <= AES_DECRYPT)
 								memcpy(IVVector->Data, ivBuffer, 0x10);
 
 							if (sourceVector != NULL)

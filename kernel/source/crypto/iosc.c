@@ -13,6 +13,7 @@
 #include <ios/ipc.h>
 #include <ios/keyring.h>
 
+#include "crypto/aes.h"
 #include "crypto/iosc.h"
 #include "crypto/otp.h"
 #include "crypto/keyring.h"
@@ -174,8 +175,8 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	messageData[3].Length = 0x10;
 
 	ret = MessageQueueId == -1 ?
-	          DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData) :
-	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
+	          DispatchIoctlv(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData) :
+	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData,
 	                              MessageQueueId, (IpcMessage *)message);
 
  // On success, aes owns keyBlob and messageData and will free them.
@@ -233,8 +234,8 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void *ivData, const void *inputDat
 	messageData[3].Length = 0x10;
 
 	ret = MessageQueueId == -1 ?
-	          DispatchIoctlv(AES_STATIC_FILEDESC, 3, 2, 2, messageData) :
-	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, 3, 2, 2, messageData,
+	          DispatchIoctlv(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData) :
+	          DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData,
 	                              MessageQueueId, (IpcMessage *)message);
 
   // On success, aes owns keyBlob and messageData and will free them.
