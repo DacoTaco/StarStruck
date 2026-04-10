@@ -45,9 +45,9 @@ typedef union
 static const u32 Sha1InitialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE,
 	                                                 0x10325476, 0xC3D2E1F0 };
 static u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
-static FinalShaHash HmacBufferFinal = { 0x00 };
-static u8 HmacKeyPrePad[SHA_BLOCK_SIZE] = { 0x00 };
-static u8 HmacKeyPostPad[SHA_BLOCK_SIZE] = { 0x00 };
+static FinalShaHash HmacBufferFinal ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
+static u8 HmacKeyPrePad[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
+static u8 HmacKeyPostPad[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 static s32 ShaEventMessageQueueId = 0;
 
 static s32 GenerateSha(ShaContext *hashContext, const void *input, const u32 inputSize,
