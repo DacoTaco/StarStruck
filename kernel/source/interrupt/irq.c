@@ -269,8 +269,8 @@ void IrqHandler(ThreadContext *context)
 	if (flags & IRQF_OHCI1)
 	{
   //gecko_printf("IRQ: OHCI1\n");
-		clear32(HW_ARMIRQMASK, IRQ_OHCI1);
-		write32(HW_ARMIRQFLAG, IRQ_OHCI1);
+		clear32(HW_ARMIRQMASK, IRQF_OHCI1);
+		write32(HW_ARMIRQFLAG, IRQF_OHCI1);
 		EnqueueEventHandler(IRQ_OHCI1);
 	}
 
@@ -337,6 +337,7 @@ void IrqHandler(ThreadContext *context)
 	if (flags & IRQF_SDHC)
 	{
   //gecko_printf("IRQ: SDHC\n");
+		clear32(HW_ARMIRQMASK, IRQF_SDHC);
 		write32(HW_ARMIRQFLAG, IRQF_SDHC);
 		sdhc_irq();
 	}
