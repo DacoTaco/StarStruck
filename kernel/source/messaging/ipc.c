@@ -29,7 +29,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "filedesc/calls_async.h"
 
 #include "utils.h"
-#include "nand.h"
 #include "sdhc.h"
 #include "sdmmc.h"
 #include "boot2.h"

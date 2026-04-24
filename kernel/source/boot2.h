@@ -14,7 +14,8 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 #include "messaging/ipc.h"
 
-typedef struct {
+typedef struct
+{
 	u32 cid;
 	u16 index;
 	u16 type;
@@ -22,13 +23,15 @@ typedef struct {
 	u8 hash[20];
 } __attribute__((packed)) tmd_content_t;
 
-typedef struct {
+typedef struct
+{
 	u32 type;
 	u8 sig[256];
 	u8 fill[60];
 } __attribute__((packed)) sig_rsa2048_t;
 
-typedef struct {
+typedef struct
+{
 	sig_rsa2048_t signature;
 	char issuer[0x40];
 	u8 version;
@@ -51,7 +54,8 @@ typedef struct {
 	tmd_content_t contents;
 } __attribute__((packed)) tmd_t;
 
-typedef struct _tik {
+typedef struct _tik
+{
 	sig_rsa2048_t signature;
 	char issuer[0x40];
 	u8 fill[63];
@@ -68,7 +72,6 @@ typedef struct _tik {
 } __attribute__((packed)) tik_t;
 
 u32 boot2_run(u32 tid_hi, u32 tid_lo);
-void boot2_init();
+s32 boot2_init();
 
 #endif
-
