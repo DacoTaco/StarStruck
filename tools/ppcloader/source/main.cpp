@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
 				//this is stuff done by libogc when reloading IOS, this is copy paste of that :)
 				raw_irq_handler_t irq_handler;
-				__MaskIrq(IRQ_PI_ACR);
+				__MaskIrq(IM_PI_ACR);
 				irq_handler = IRQ_Free(IRQ_PI_ACR);
 
 				//wait for IPC to come back online. for mini this doesn't matter, but for IOS kernels it most certainly does.
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 				}
 
 				IRQ_Request(IRQ_PI_ACR, irq_handler, NULL);
-    			__UnmaskIrq(IRQ_PI_ACR);
+				__UnmaskIrq(IM_PI_ACR);
 				__IPC_Reinitialize();
 				gprintf("IPC reinit\n");
 			}

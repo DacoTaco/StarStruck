@@ -42,7 +42,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "ff.h"
 #include "panic.h"
 #include "powerpc_elf.h"
-#include "nand.h"
 #include "boot2.h"
 
 FATFS fatfs;
@@ -117,6 +116,15 @@ void kernel_main(void)
 }
 
 #else
+
+void IdleThread()
+{
+	printk("IdleThread started\n");
+	while (true)
+	{
+		asm("nop");
+	}
+}
 
 void kernel_main(void)
 {
@@ -250,12 +258,21 @@ void kernel_main(void)
 	u32 vector;
 	FRESULT fres = 0;
 
- //while(1){}
+   //wait for boot2 init to have worked
+   //the init loads boot2 which can block the main thread.
+	//to make it not crash, we added a idle thread that can be removed later when the boot2 booting is removed
+	threadId = CreateThread((u32)IdleThread, NULL, NULL, 0, 0x00, 1);
+	if (threadId > 0)
+	{
+		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
+		StartThread(threadId);
+	}
+	while (boot2_init() < 0) YieldThread();
 
-	nand_initialize();
-	printk("NAND initialized.\n");
-
-	boot2_init();
+  /*while (1)
+	{
+		asm("nop");
+	}*/
 
  /*printk("Initializing SDHC...\n");
 	sdhc_init();
@@ -289,7 +306,7 @@ shutdown:
 	mem_shutdown();
 
 	printk("Vectoring to 0x%08x...\n", vector);
- //go to whatever address we got
+	//go to whatever address we got
 	asm("bx\t%0" : : "r"(vector));
 }
 
@@ -395,7 +412,7 @@ void InitialiseSystem(void)
 	gecko_printf("Configuring caches and MMU...\n");
 	InitializeMemory();
 #else
- //lol, mios explicitly disables the debug interface
+	//lol, mios explicitly disables the debug interface
 	write32(HW_DBGINTEN, 0);
 #endif
 }
@@ -429,7 +446,7 @@ u32 _main(void)
 	IpcInit();
 	IOSC_Init();
 
- //currently unknown if these values are used in the kernel itself.
+	//currently unknown if these values are used in the kernel itself.
 	//if they are, these need to be replaced with actual stuff from the linker script!
 	write32(MEM1_MEM2PHYSICALSIZE, 0x4000000);
 	write32(MEM1_MEM2SIMULATESIZE, 0x4000000);

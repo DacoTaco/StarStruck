@@ -13,6 +13,7 @@
 
 #define AES_DEVICE_NAME      "/dev/aes"
 #define AES_DEVICE_NAME_SIZE sizeof(AES_DEVICE_NAME)
+#define AES_MAX_CHUNK_SIZE   0x10000
 
 typedef enum
 {
