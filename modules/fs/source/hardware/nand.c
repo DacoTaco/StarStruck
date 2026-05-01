@@ -1074,7 +1074,8 @@ s32 CorrectNandData(void *dataBuffer, void *eccBuffer)
 		ret = IPC_ECC;
 	}
 
-	//this can't be right. it cant be returning an error on ecc error, right? :/
+	//return the error. the caller of this function will know if it was a correctable error or not based on the return value
+	//like if it was corrected, it'll read it again. it it wasn't, it'll skip a page or something.
 	return ret;
 }
 
