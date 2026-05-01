@@ -358,6 +358,26 @@ char *strchr(const char *s, int c)
 	return NULL;
 }
 
+char *strrchr(const char *s, int c)
+{
+	const char *last = NULL;
+
+	while (*s)
+	{
+		if (*s == (char)c)
+		{
+			last = s;
+		}
+		s++;
+	}
+
+	// Check the null terminator as well (important if c == '\0')
+	if ((char)c == '\0')
+		return (char *)s;
+
+	return (char *)last;
+}
+
 size_t strspn(const char *s1, const char *s2)
 {
 	size_t len = 0;
