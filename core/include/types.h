@@ -8,8 +8,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#ifndef __TYPES_H__
-#define __TYPES_H__
+#pragma once
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -71,4 +70,4 @@ typedef u32 size_t;
 	StaticAssert(offsetof(Type, Field) == Offset, \
 	             #Type "::" #Field " must be at offset " #Offset)
 
-#endif
+void hextou32(const char *str, u32 *out);

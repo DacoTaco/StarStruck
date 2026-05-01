@@ -22,10 +22,6 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
                     u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm);
 s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *destination);
 
-// Create an empty file at `path` with the given attributes and permissions.
-// Mirrors IOS FS_CreateFile semantics: creates the FST entry and flushes
-// the superblock on success.
-
 // Batch operations
 s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData *paths,
                     u32 *sizes, u32 numberOfFiles);

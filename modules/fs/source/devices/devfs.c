@@ -9,6 +9,8 @@
 #include <ios/errno.h>
 #include <ios/ipc.h>
 #include <string.h>
+#include <fs/types.h>
+#include <fs/ioctls.h>
 
 #include "../handles.h"
 #include "../errors.h"
@@ -20,28 +22,6 @@
 
 FSHandle _fileHandles[FS_MAX_FILE_HANDLES];
 s32 _fsShutdown = 0;
-
-typedef enum
-{
-	IOCTLV_READDIR = 0x04,
-	IOCTLV_GETUSAGE = 0x0C,
-	IOCTLV_MASSCREATE = 0x0E,
-} FSIoctlvCommands;
-
-typedef enum
-{
-	IOCTL_FORMAT = 0x01,
-	IOCTL_GETSTATS = 0x02,
-	IOCTL_CREATEDIR = 0x03,
-	IOCTL_SETATTR = 0x05,
-	IOCTL_GETATTR = 0x06,
-	IOCTL_DELETE = 0x07,
-	IOCTL_RENAME = 0x08,
-	IOCTL_CREATEFILE = 0x09,
-	IOCTL_SETFILEVERCTRL = 0x0A,
-	IOCTL_GETFILESTATS = 0x0B,
-	IOCTL_SHUTDOWN = 0x0D,
-} FSIoctlCommands;
 
 // Allocate and initialize a file handle
 s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size)
@@ -508,17 +488,12 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			    ioctl->IoLength < (s32)sizeof(FileOperationsParameter))
 				return FS_EINVAL;
 
-			const char *inPath = (const char *)ioctl->InputBuffer;
-			FileOperationsParameter outAttr = { 0 };
-			u32 userId = 0;
-			u16 groupId = 0;
-
-			ret = GetAttributes(handle->UserId, handle->GroupId, inPath, &userId,
-			                    &groupId, &outAttr.Attributes, &outAttr.OwnerPermissions,
-			                    &outAttr.GroupPermissions, &outAttr.OtherPermissions);
-			outAttr.UserId = userId;
-			outAttr.GroupId = groupId;
-			memcpy(ioctl->IoBuffer, &outAttr, sizeof(FileOperationsParameter));
+			GetAttributesParameters *getAttr = (GetAttributesParameters *)ioctl->InputBuffer;
+			ret = GetAttributes(handle->UserId, handle->GroupId, getAttr->Path,
+			                    &getAttr->Parameters.UserId, &getAttr->Parameters.GroupId,
+			                    &getAttr->Parameters.Attributes, &getAttr->Parameters.OwnerPermissions,
+			                    &getAttr->Parameters.GroupPermissions, &getAttr->Parameters.OtherPermissions);
+			memcpy(ioctl->IoBuffer, &getAttr->Parameters, sizeof(FileOperationsParameter));
 			return ret;
 
 		case IOCTL_DELETE:

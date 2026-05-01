@@ -33,8 +33,9 @@
 #define IPC_ENOMEM                -22     // Alloc failed during request
 #define IPC_INVALIDSIZE           -23     // invalid size
 
-#define ES_SHORT_READ             -1009    // Short read
-#define ES_EIO                    -1010    // Write failure
+#define IOS_SHORT_READ            -1009    // Short read
+#define IOS_EIO                   -1010    // Write failure
+
 #define ES_INVALID_SIGNATURE_TYPE -1012
 #define ES_FD_EXHAUSTED           -1016    // Max of 3 ES handles exceeded
 #define ES_EINVAL                 -1017    // Invalid argument

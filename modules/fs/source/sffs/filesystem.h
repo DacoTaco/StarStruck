@@ -8,13 +8,9 @@
 
 #pragma once
 #include <types.h>
+#include <fs/types.h>
 
 #include "../hardware/nand.h"
-
-// Maximum directory nesting depth for path validation
-#define MAX_PATH_DEPTH     8
-#define MAX_FILE_PATH      0x40
-#define MAX_FILE_SIZE      0x0C
 
 #define MAX_SUPERBLOCK_CNT 0x10
 
@@ -88,26 +84,6 @@ CHECK_OFFSET(SuperBlockInfo, 0x0C, FatEntries);
 CHECK_OFFSET(SuperBlockInfo, 0x1000C, FstEntries);
 CHECK_OFFSET(SuperBlockInfo, 0x3FFEC, Padding);
 CHECK_SIZE(SuperBlockInfo, 0x40000);
-
-// SFFS filesystem statistics
-typedef struct
-{
-	u32 ClusterSize;
-	u32 FreeClusters;
-	u32 UsedClusters;
-	u32 BadClusters;
-	u32 ReservedClusters;
-	u32 FreeInodes;
-	u32 UsedInodes;
-} SFFSStatistics;
-CHECK_SIZE(SFFSStatistics, 0x1C);
-CHECK_OFFSET(SFFSStatistics, 0x00, ClusterSize);
-CHECK_OFFSET(SFFSStatistics, 0x04, FreeClusters);
-CHECK_OFFSET(SFFSStatistics, 0x08, UsedClusters);
-CHECK_OFFSET(SFFSStatistics, 0x0C, BadClusters);
-CHECK_OFFSET(SFFSStatistics, 0x10, ReservedClusters);
-CHECK_OFFSET(SFFSStatistics, 0x14, FreeInodes);
-CHECK_OFFSET(SFFSStatistics, 0x18, UsedInodes);
 
 extern SFFSStatistics _sffStats;
 extern u32 _fileSystemMetadataSizeShift;

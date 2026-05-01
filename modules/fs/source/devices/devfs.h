@@ -14,43 +14,6 @@
 #include "../handles.h"
 #include "../sffs/filesystem.h"
 
-typedef struct
-{
-	u32 UserId;
-	u16 GroupId;
-	char Path[0x40];
-	u8 OwnerPermissions;
-	u8 GroupPermissions;
-	u8 OtherPermissions;
-	u8 Attributes;
-} __attribute__((packed)) FileOperationsParameter;
-CHECK_SIZE(FileOperationsParameter, 0x4A);
-CHECK_OFFSET(FileOperationsParameter, 0x00, UserId);
-CHECK_OFFSET(FileOperationsParameter, 0x04, GroupId);
-CHECK_OFFSET(FileOperationsParameter, 0x06, Path);
-CHECK_OFFSET(FileOperationsParameter, 0x46, OwnerPermissions);
-CHECK_OFFSET(FileOperationsParameter, 0x47, GroupPermissions);
-CHECK_OFFSET(FileOperationsParameter, 0x48, OtherPermissions);
-CHECK_OFFSET(FileOperationsParameter, 0x49, Attributes);
-
-typedef struct
-{
-	char Source[MAX_FILE_PATH];
-	char Destination[MAX_FILE_PATH];
-} FileRenameParameter;
-CHECK_SIZE(FileRenameParameter, 2 * MAX_FILE_PATH);
-CHECK_OFFSET(FileRenameParameter, 0x00, Source);
-CHECK_OFFSET(FileRenameParameter, 0x40, Destination);
-
-typedef struct
-{
-	u32 FileLength;
-	u32 FilePosition;
-} FileStatistics;
-CHECK_SIZE(FileStatistics, 0x08);
-CHECK_OFFSET(FileStatistics, 0x00, FileLength);
-CHECK_OFFSET(FileStatistics, 0x04, FilePosition);
-
 // Global shutdown flag
 extern s32 _fsShutdown;
 
