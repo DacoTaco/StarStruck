@@ -79,6 +79,7 @@ _SYSCALL OSClearAndEnableEvent,		0x0034
 
 _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040
+_SYSCALL OSLoadBinary,				0x0041
 
 _SYSCALL OSGetGDDRVendorCode		0x0049
 _SYSCALL OSGetHollywoodId			0x004A

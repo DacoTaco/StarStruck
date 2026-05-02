@@ -88,6 +88,7 @@ u32 OSVirtualToPhysical(u32 virtualAddress);
 
 u32 OSGetCoreClock(void);
 s32 OSLaunchModule(const char *path);
+s32 OSLoadBinary(const char *path);
 
 // IOSC Crypto syscalls
 s32 OSIOSCCreateObject(u32 *keyHandle, u32 type, u32 subtype);

@@ -41,7 +41,6 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "sdhc.h"
 #include "ff.h"
 #include "panic.h"
-#include "powerpc_elf.h"
 #include "boot2.h"
 
 FATFS fatfs;
@@ -269,12 +268,12 @@ void kernel_main(void)
 	}
 	while (boot2_init() < 0) YieldThread();
 
-  /*while (1)
+	/*while (1)
 	{
 		asm("nop");
 	}*/
 
- /*printk("Initializing SDHC...\n");
+	/*printk("Initializing SDHC...\n");
 	sdhc_init();
 
 	printk("Mounting SD...\n");

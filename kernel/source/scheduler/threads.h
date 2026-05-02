@@ -30,6 +30,30 @@ typedef enum
 	Faulted = 6
 } ThreadState;
 
+typedef enum
+{
+	KernelId = 0,
+	ESId = 1,
+	FSId = 2,
+	DIId = 3,
+	OH0Id = 4,
+	OH1Id = 5,
+	EHCIId = 6,
+	SDIId = 7,
+	USBEthId = 8,
+	NetId = 9,
+	WDId = 10,
+	WLId = 11,
+	KDId = 12,
+	NCDId = 13,
+	STMId = 14,
+	PPCBOOTId = 15,
+	SSLId = 16,
+	USBId = 17,
+	P2PId = 18,
+	WFSId = 19,
+} ProcessorIds;
+
 //Note : do -NOT- mess with these types. this is the order of the registers and how the irq asm code pushes them on the stack
 //messing with these without the asm WILL break everything.
 typedef struct
