@@ -27,12 +27,14 @@ s32 OSStopThread(s32 threadid, int returnValue);
 s32 OSGetThreadId(void);
 s32 OSGetProcessId(void);
 s32 OSStartThread(s32 threadid);
+s32 OSSuspendThread(s32 threadid);
 void OSYieldThread(void);
 s32 OSGetThreadPriority(s32 threadid);
 s32 OSSetThreadPriority(s32 threadid, s32 priority);
 s32 OSCreateMessageQueue(void *ptr, u32 size);
 s32 OSDestroyMessageQueue(s32 queueid);
 s32 OSSendMessage(s32 queueid, void *message, MessageQueueFlags flags);
+s32 OSJamMessage(s32 queueid, void *message, MessageQueueFlags flags);
 s32 OSReceiveMessage(s32 queueid, void *message, MessageQueueFlags flags);
 s32 OSRegisterEventHandler(u8 device, s32 queueid, void *message);
 s32 OSUnregisterEventHandler(u8 device);
@@ -82,6 +84,8 @@ void OSDCInvalidateRange(const void *start, u32 size);
 void OSDCFlushRange(const void *start, u32 size);
 
 u32 OSVirtualToPhysical(u32 virtualAddress);
+
+u32 OSGetCoreClock(void);
 
 // IOSC Crypto syscalls
 s32 OSIOSCCreateObject(u32 *keyHandle, u32 type, u32 subtype);

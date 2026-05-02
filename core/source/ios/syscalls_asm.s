@@ -36,6 +36,7 @@ _SYSCALL OSSetThreadPriority,		0x0009
 _SYSCALL OSCreateMessageQueue,		0x000A
 _SYSCALL OSDestroyMessageQueue,		0x000B
 _SYSCALL OSSendMessage,				0x000C
+_SYSCALL OSJamMessage,				0x000D
 _SYSCALL OSReceiveMessage,			0x000E
 _SYSCALL OSRegisterEventHandler,	0x000F
 _SYSCALL OSUnregisterEventHandler,	0x0010
@@ -80,6 +81,8 @@ _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040
 
 _SYSCALL OSVirtualToPhysical,		0x004F
+
+_SYSCALL OSGetCoreClock,			0x0055
 
 _SYSCALL OSIOSCCreateObject,		0x005B
 _SYSCALL OSIOSCDeleteObject,		0x005C
