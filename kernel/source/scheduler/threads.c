@@ -610,14 +610,14 @@ restore_and_return:
 	return ret;
 }
 #ifndef MIOS
-s32 LaunchRM(const char *path)
+s32 LaunchModule(const char *path)
 {
 	if (GetUID() != 0)
 		return IPC_EACCES;
 
 	//*technically* heapid 0 isn't correct here. the kernel heap id just happens to be always 0, but... :)
 	//but hey, this is what IOS did!
-	Elf32_Ehdr *elfHeader = (Elf32_Ehdr *)AllocateOnHeap(0, sizeof(Elf32_Ehdr));
+	Elf32_Ehdr *elfHeader = (Elf32_Ehdr *)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
 	if (elfHeader == NULL)
 		return IPC_EMAX;
 
@@ -660,8 +660,8 @@ s32 LaunchRM(const char *path)
 		goto cleanup_launch;
 	}
 
-	programHeaders =
-	    (Elf32_Phdr *)AllocateOnHeap(0, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
+	programHeaders = (Elf32_Phdr *)AllocateOnHeap(
+	    KernelHeapId, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
 	if (!programHeaders)
 	{
 		ret = IPC_EMAX;
@@ -672,7 +672,7 @@ s32 LaunchRM(const char *path)
 	if (ret != (s32)(sizeof(Elf32_Phdr) * elfHeader->e_phnum))
 		goto cleanup_launch;
 
-	noteHeader = AllocateOnHeap(0, 0x4000);
+	noteHeader = AllocateOnHeap(KernelHeapId, 0x4000);
 	if (!noteHeader)
 	{
 		ret = IPC_EMAX;
@@ -789,13 +789,13 @@ cleanup_launch:
 		CloseFD(fd);
 
 	if (programHeaders)
-		FreeOnHeap(0, programHeaders);
+		FreeOnHeap(KernelHeapId, programHeaders);
 
 	if (elfHeader)
-		FreeOnHeap(0, elfHeader);
+		FreeOnHeap(KernelHeapId, elfHeader);
 
 	if (noteHeader)
-		FreeOnHeap(0, noteHeader);
+		FreeOnHeap(KernelHeapId, noteHeader);
 
 	return ret;
 }

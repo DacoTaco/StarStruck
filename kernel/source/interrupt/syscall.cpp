@@ -153,7 +153,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL_NULL, //0x0057
 	SYSCALL_NULL, //0x0058
 	SYSCALL_NULL, //0x0059
-	SYSCALL(LaunchRM), //0x005A
+	SYSCALL(LaunchModule), //0x005A
 	SYSCALL(IOSC_CreateObject), //0x005B
 	SYSCALL(IOSC_DeleteObject), //0x005C
 	SYSCALL_NULL, //0x005D

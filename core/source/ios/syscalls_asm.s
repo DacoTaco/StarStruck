@@ -83,6 +83,7 @@ _SYSCALL OSDCFlushRange,			0x0040
 _SYSCALL OSVirtualToPhysical,		0x004F
 
 _SYSCALL OSGetCoreClock,			0x0055
+_SYSCALL OSLaunchModule,			0x005A
 
 _SYSCALL OSIOSCCreateObject,		0x005B
 _SYSCALL OSIOSCDeleteObject,		0x005C

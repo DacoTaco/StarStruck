@@ -126,5 +126,5 @@ u16 GetGID(void);
 s32 SetGID(u32 pid, u16 gid);
 
 #ifndef MIOS
-s32 LaunchRM(const char *path);
+s32 LaunchModule(const char *path);
 #endif
