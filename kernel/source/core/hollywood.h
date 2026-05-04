@@ -298,6 +298,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 #include <types.h>
 
 void GetHollywoodVersion(u32 *hardwareVersion, u32 *hardwareRevision);
+u32 GetHollywoodId(void);
 u32 GetCoreClock(void);
 
 #endif

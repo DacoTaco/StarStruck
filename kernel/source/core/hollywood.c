@@ -20,6 +20,22 @@ void GetHollywoodVersion(u32 *hardwareVersion, u32 *hardwareRevision)
 	*hardwareRevision = version & 0x0F;
 }
 
+// Returns the Hollywood chip version, augmented with DI capability bits.
+// HW_VERSION holds the base chip ID.
+u32 GetHollywoodId(void)
+{
+	u32 version = read32(HW_VERSION);
+	if (((version & 0xFF) >> 4) == 0)
+	{
+		u32 diCfg = read32(HW_DI_CFG);
+		if (diCfg & 4)
+			version |= 1;
+		if (!(diCfg & 8))
+			version |= 2;
+	}
+	return version;
+}
+
 u32 GetCoreClock(void)
 {
  //gamecube mode?

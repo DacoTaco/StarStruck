@@ -81,6 +81,7 @@ _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040
 
 _SYSCALL OSGetGDDRVendorCode		0x0049
+_SYSCALL OSGetHollywoodId			0x004A
 
 _SYSCALL OSVirtualToPhysical,		0x004F
 
