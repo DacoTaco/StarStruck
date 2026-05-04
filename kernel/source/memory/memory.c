@@ -78,6 +78,8 @@ extern const u32 __headers_addr[];
 extern const u32 __headers_size[];
 extern const u32 __crypto_addr[];
 extern const u32 __crypto_size[];
+extern void *__configs_start;
+extern void *__mirror_configs_start;
 
 #ifndef MIOS
 u8 *heapCurrent = (u8 *)__kmalloc_heap_start;
@@ -682,4 +684,16 @@ void ConfigureDDRMemory(void)
 	udelay(2);
 	SetDDRSEQData(0x49, 0x0F);
 	udelay(2);
+}
+
+DDRConfiguration *GetGDDRVendorCodeAddress(void)
+{
+	if (read32(HW_MEMMIRR) & 0x20)
+		return (DDRConfiguration *)__mirror_configs_start;
+	return (DDRConfiguration *)__configs_start;
+}
+
+u32 GetGDDRVendorCode(void)
+{
+	return GetGDDRVendorCodeAddress()->GDDRVendorCode;
 }

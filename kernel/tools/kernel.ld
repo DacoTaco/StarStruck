@@ -34,7 +34,8 @@ PHDRS
 MEMORY 
 {
 	sram				: ORIGIN = 0xFFFE0000, LENGTH = 32K
-	kernel				: ORIGIN = 0xFFFF0000, LENGTH = 64K
+	kernel				: ORIGIN = 0xFFFF0000, LENGTH = 63K
+	configs				: ORIGIN = 0xFFFFFF00, LENGTH = 255
 	ipc_heap			: ORIGIN = 0x13600000, LENGTH = 128K
 	kmalloc_heap		: ORIGIN = 0x13850000, LENGTH = 128K
 	thread_stacks		: ORIGIN = 0x13AC0000, LENGTH = 128K
@@ -59,6 +60,10 @@ __thread_stacks_area_size = LENGTH(thread_stacks);
 
 __iobuf_heap_area_start = ORIGIN(iobuf_heap);
 __iobuf_heap_area_size = LENGTH(iobuf_heap);
+
+/* Setup reference to the boot 1 set configs memory range, both the sram mirror and the physical address */
+__mirror_configs_start = ORIGIN(configs);
+__configs_start = ORIGIN(configs) - 0xF2BF0000;
 
 SECTIONS
 {

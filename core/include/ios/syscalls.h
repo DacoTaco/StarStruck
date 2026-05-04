@@ -82,7 +82,7 @@ s32 OSClearAndEnableEvent(u32 event);
 
 void OSDCInvalidateRange(const void *start, u32 size);
 void OSDCFlushRange(const void *start, u32 size);
-
+u32 OSGetGDDRVendorCode(void);
 u32 OSVirtualToPhysical(u32 virtualAddress);
 
 u32 OSGetCoreClock(void);

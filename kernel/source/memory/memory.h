@@ -54,10 +54,29 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define AP_ROUSER                 0x02
 #define AP_RWUSER                 0x03
 
+#define SRAMADDR2PHYS(x)          (0x0d400000 | ((x) & 0x0000FFFF))
+
 #include <types.h>
 
 #include "memory/ahb.h"
 #include "scheduler/threads.h"
+
+typedef struct
+{
+	u32 GDDRVendorCode;
+	u32 DLLPhaseLaneZero;
+	u32 DLLPhaseLaneOne;
+	u32 DLLPhaseLaneTwo;
+	u32 DLLPhaseLaneThree;
+	u32 SectionMagic;
+} DDRConfiguration;
+CHECK_SIZE(DDRConfiguration, 0x18);
+CHECK_OFFSET(DDRConfiguration, 0x00, GDDRVendorCode);
+CHECK_OFFSET(DDRConfiguration, 0x04, DLLPhaseLaneZero);
+CHECK_OFFSET(DDRConfiguration, 0x08, DLLPhaseLaneOne);
+CHECK_OFFSET(DDRConfiguration, 0x0C, DLLPhaseLaneTwo);
+CHECK_OFFSET(DDRConfiguration, 0x10, DLLPhaseLaneThree);
+CHECK_OFFSET(DDRConfiguration, 0x14, SectionMagic);
 
 typedef struct
 {
@@ -124,6 +143,7 @@ void SetFaultAddressRegister(u32 data);
 
 void ConfigureDDRMemory(void);
 void SetMemoryCompatabilityMode();
+u32 GetGDDRVendorCode(void);
 
 void mem_shutdown(void);
 u32 dma_addr(void *);

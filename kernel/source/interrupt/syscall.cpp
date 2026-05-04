@@ -136,7 +136,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL_NULL, //0x0046
 	SYSCALL_NULL, //0x0047
 	SYSCALL_NULL, //0x0048
-	SYSCALL_NULL, //0x0049
+	SYSCALL(GetGDDRVendorCode), //0x0049
 	SYSCALL_NULL, //0x004A
 	SYSCALL_NULL, //0x004B
 	SYSCALL_NULL, //0x004C
