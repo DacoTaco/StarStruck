@@ -489,10 +489,15 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 				return FS_EINVAL;
 
 			GetAttributesParameters *getAttr = (GetAttributesParameters *)ioctl->InputBuffer;
+			u32 userId;
+			u16 groupId;
 			ret = GetAttributes(handle->UserId, handle->GroupId, getAttr->Path,
-			                    &getAttr->Parameters.UserId, &getAttr->Parameters.GroupId,
-			                    &getAttr->Parameters.Attributes, &getAttr->Parameters.OwnerPermissions,
-			                    &getAttr->Parameters.GroupPermissions, &getAttr->Parameters.OtherPermissions);
+			                    &userId, &groupId, &getAttr->Parameters.Attributes,
+			                    &getAttr->Parameters.OwnerPermissions,
+			                    &getAttr->Parameters.GroupPermissions,
+			                    &getAttr->Parameters.OtherPermissions);
+			getAttr->Parameters.UserId = userId;
+			getAttr->Parameters.GroupId = groupId;
 			memcpy(ioctl->IoBuffer, &getAttr->Parameters, sizeof(FileOperationsParameter));
 			return ret;
 

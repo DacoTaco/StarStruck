@@ -80,7 +80,7 @@ typedef struct
 {
 	char Path[MAX_FILE_PATH];
 	FileOperationsParameter Parameters;
-} __attribute__((packed)) GetAttributesParameters;
+} GetAttributesParameters;
 CHECK_SIZE(GetAttributesParameters, sizeof(FileOperationsParameter) + MAX_FILE_PATH);
 CHECK_OFFSET(GetAttributesParameters, 0x00, Path);
 CHECK_OFFSET(GetAttributesParameters, MAX_FILE_PATH, Parameters);
