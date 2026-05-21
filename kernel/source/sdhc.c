@@ -28,7 +28,7 @@
 #include "messaging/ipc.h"
 #include "interrupt/irq.h"
 
-#include "utils.h"
+#include "utils/utils.h"
 #include "bsdtypes.h"
 #include "sdmmc.h"
 #include "sdhc.h"

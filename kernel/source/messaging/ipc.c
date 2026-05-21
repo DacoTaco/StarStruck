@@ -28,7 +28,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "filedesc/filedesc_types.h"
 #include "filedesc/calls_async.h"
 
-#include "utils.h"
+#include "utils/utils.h"
 #include "sdhc.h"
 #include "sdmmc.h"
 #include "boot2.h"

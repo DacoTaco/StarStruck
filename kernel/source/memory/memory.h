@@ -23,7 +23,11 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_0080                 (MEM1_BASE | 0x0080)
 #define MEM1_SIMMEMORYSIZE        (MEM1_BASE | 0x00F0)
 #define MEM1_30F8                 (MEM1_BASE | 0x30F8)
-#define MEM1_EXCEPTIONVECTOR      (MEM1_BASE | 0x3100)
+#define MEM1_PHYSICALMEM1SIZE     (MEM1_BASE | 0x3100)
+#define MEM1_SIMULATEDMEM1SIZE    (MEM1_BASE | 0x3104)
+#define MEM1_3108                 (MEM1_BASE | 0x3108)
+#define MEM1_AREASTART            (MEM1_BASE | 0x310C)
+#define MEM1_AREAEND              (MEM1_BASE | 0x3110)
 #define MEM1_3114                 (MEM1_BASE | 0x3114)
 #define MEM1_MEM2PHYSICALSIZE     (MEM1_BASE | 0x3118)
 #define MEM1_MEM2SIMULATESIZE     (MEM1_BASE | 0x311C)
@@ -34,7 +38,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_IOSIPCLOW            (MEM1_BASE | 0x3130)
 #define MEM1_IOSIPCHIGH           (MEM1_BASE | 0x3134)
 #define MEM1_CPUVERSION           (MEM1_BASE | 0x3138)
-#define MEM1_313C                 (MEM1_BASE | 0x3138)
+#define MEM1_313C                 (MEM1_BASE | 0x313C)
 #define MEM1_IOSVERSION           (MEM1_BASE | 0x3140)
 #define MEM1_IOSBUILDDATE         (MEM1_BASE | 0x3144)
 #define MEM1_IOSHEAPLOW           (MEM1_BASE | 0x3148)
@@ -44,6 +48,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define MEM1_GDDRVENDORCODE       (MEM1_BASE | 0x3158)
 #define MEM1_LOADMETHOD           (MEM1_BASE | 0x315C)
 #define MEM1_INITSEMAPHORE        (MEM1_BASE | 0x3160)
+#define MEM1_MIOSFLAG             (MEM1_BASE | 0x3164)
 
 //Access permissions
 //we can have multiple APs per second level page, hence the formula to calculate the value for us

@@ -14,7 +14,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 #include "core/defines.h"
 #include "memory/memory.h"
 #include "bsdtypes.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "sdhc.h"
 
 //#define SDMMC_DEBUG

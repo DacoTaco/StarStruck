@@ -14,7 +14,7 @@
 #include "core/hollywood.h"
 #include "core/gpio.h"
 
-#include "utils.h"
+#include "utils/utils.h"
 
 void InitializeGPIO()
 {

@@ -17,7 +17,7 @@
 #include "crypto/otp.h"
 #include "core/hollywood.h"
 #include "core/gpio.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "interrupt/irq.h"
 
 #define SEEPROM_Wait() BusyDelay(125)

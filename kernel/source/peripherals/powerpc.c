@@ -10,14 +10,12 @@
 
 #include <types.h>
 #include <ios/processor.h>
-#include <ios/gecko.h>
 #include <ios/printk.h>
 #include <string.h>
 
 #include "core/gpio.h"
-#include "utils.h"
-#include "powerpc_elf.h"
 #include "core/hollywood.h"
+#include "utils/utils.h"
 #include "memory/memory.h"
 
 //code that will let me PPC start execution @ 0x80003400, which is the BS1 vector, where all dol content usually starts
@@ -32,8 +30,9 @@ const u32 PPC_LaunchBS1[0x10] = {
 	0x00000000, 0x00000000, 0x00000000,
 };
 
-//code that will let me PPC start execution @ 0x80000100, which is the exception vector
-const u32 PPC_LaunchExceptionVector[0x0C] = {
+// GameCube compatibility mode boot stub: zeroes HID4, then jumps Broadway to 0x80000100 (exception vector base).
+// HID4 = 0 leaves the Broadway in a minimal Gekko-compatible state (used by MIOS/BC path).
+const u32 PPC_GameCubeResetVector[0x0C] = {
 	0x7c631a78, //xor r3, r3, r3
 	0x7c73fba6, //mtspr 0x3f3, r3
 	0x4c00012c, //isync
@@ -47,9 +46,9 @@ const u32 PPC_LaunchExceptionVector[0x0C] = {
 	0x60000000, 0x60000000,
 };
 
-//code that will let me PPC start execution @ 0x80000100, which is the exception vector
-//no idea what this extra oris instruction is for though...
-const u32 PPC_LaunchExceptionVector2[0x0D] = {
+// Wii mode boot stub: sets HID4 = 0xD7B00000, then jumps Broadway to 0x80000100 (exception vector base).
+// HID4 0xD7B00000 is the standard Broadway initialization enabling its full cache and memory controller features.
+const u32 PPC_WiiResetVector[0x0D] = {
 	0x7c631a78, //xor r3, r3, r3
 	0x6463D7B0, //oris r3, r3, 0xd7b0
 	0x7c73fba6, //mtspr 0x3f3, r3
@@ -63,6 +62,40 @@ const u32 PPC_LaunchExceptionVector2[0x0D] = {
 	0x60000000, //nop
 	0x60000000, 0x60000000,
 };
+
+#ifdef MIOS
+#define MIOS_INLINE inline
+#else
+#define MIOS_INLINE
+#endif
+
+// Build date field: BCD-encoded DDMMYY packed as (DD << 16) | (MM << 8) | YY
+// __DATE__ is "Mmm DD YYYY": [0-2]=month abbrev, [4-5]=day (space-padded), [7-10]=year
+#define IOS_BUILDDATE(dd, mm, yy) (u32)(((dd) << 16) | ((mm) << 8) | (yy))
+#define _BUILD_MONTH_BCD                                       \
+	(__DATE__[2] == 'n' ? (__DATE__[1] == 'a' ? 0x01 : 0x06) : \
+	 __DATE__[2] == 'b' ? 0x02 :                               \
+	 __DATE__[2] == 'r' ? (__DATE__[0] == 'M' ? 0x03 : 0x04) : \
+	 __DATE__[2] == 'y' ? 0x05 :                               \
+	 __DATE__[2] == 'l' ? 0x07 :                               \
+	 __DATE__[2] == 'g' ? 0x08 :                               \
+	 __DATE__[2] == 'p' ? 0x09 :                               \
+	 __DATE__[2] == 't' ? 0x10 :                               \
+	 __DATE__[2] == 'v' ? 0x11 :                               \
+	                      0x12)
+#define _BUILD_DAY_BCD \
+	((__DATE__[4] == ' ' ? 0 : ((__DATE__[4] - '0') * 16)) + (__DATE__[5] - '0'))
+#define _BUILD_YEAR_BCD (((__DATE__[9] - '0') * 16) + (__DATE__[10] - '0'))
+#define STARSTRUCK_BUILDDATE \
+	IOS_BUILDDATE(_BUILD_DAY_BCD, _BUILD_MONTH_BCD, _BUILD_YEAR_BCD)
+
+void PPCHardReset(void)
+{
+	u32 resetValue = read32(HW_RESETS);
+	clear32(HW_RESETS, SRSTB_CPU | RSTB_CPU);
+	udelay(0x0F);
+	set32(HW_RESETS, resetValue & SRSTB_CPU);
+}
 
 void PPCSoftReset(void)
 {
@@ -100,20 +133,20 @@ void PPCLoad(const void *code, u32 codeSize)
 	write32(HW_EXICTRL, oldExiValue);
 }
 
-void PPCLoadCode(s8 mode, const void *code, u32 codeSize)
+void PPCLoadCode(bool wiiMode, const void *code, u32 codeSize)
 {
 	const void *codeToLaunch = NULL;
 	if (code == NULL || codeSize == 0)
 	{
-		if (mode == 0)
+		if (!wiiMode)
 		{
-			codeToLaunch = PPC_LaunchExceptionVector;
-			codeSize = sizeof(PPC_LaunchExceptionVector);
+			codeToLaunch = PPC_GameCubeResetVector;
+			codeSize = sizeof(PPC_GameCubeResetVector);
 		}
 		else
 		{
-			codeToLaunch = PPC_LaunchExceptionVector2;
-			codeSize = sizeof(PPC_LaunchExceptionVector2);
+			codeToLaunch = PPC_WiiResetVector;
+			codeSize = sizeof(PPC_WiiResetVector);
 		}
 	}
 	else
@@ -123,7 +156,87 @@ void PPCLoadCode(s8 mode, const void *code, u32 codeSize)
 	write32(HW_DIFLAGS, (read32(HW_DIFLAGS) & 0xFFEFFFFF) | DIFLAGS_BOOT_CODE);
 }
 
-void SetSemaphore(bool hasSemaphore)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+MIOS_INLINE void PPCSetMEM1(u32 hollywoodVersion, u32 gddrVendorCode)
+{
+#ifndef MIOS
+	// save the ios version so we can set it back after the wipe
+	u32 iosVersion = read32(MEM1_IOSVERSION);
+	memset((void *)MEM1_BASE, 0, 0x3FFF);
+#else
+	u32 iosVersion = 0x707;
+#endif
+
+	// MEM1 size and bounds
+	write32(MEM1_PHYSICALMEM1SIZE, 0x01800000);
+	write32(MEM1_SIMULATEDMEM1SIZE, 0x01800000);
+	write32(MEM1_3108, 0x81800000);
+	write32(MEM1_MEMORYSIZE, 0x01800000);
+	write32(MEM1_SIMMEMORYSIZE, 0x01800000);
+	write32(MEM1_AREASTART, 0);
+	write32(MEM1_AREAEND, 0x81800000);
+	write32(MEM1_HEAPLOW, 0);
+	write32(MEM1_HEAPHIGH, 0x81800000);
+
+	// MEM2 layout
+#ifdef MIOS
+	write32(MEM1_MEM2PHYSICALSIZE, 0x800000);
+	write32(MEM1_MEM2SIMULATESIZE, 0x800000);
+	write32(MEM1_MEM2INITLOW, MEM2_PHY2VIRT(0x10000800));
+	write32(MEM1_MEM2INITHIGH, MEM2_PHY2VIRT(0x173E0000));
+	write32(MEM1_IOSIPCLOW, MEM2_PHY2VIRT(0x173E0000));
+	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT(0x17400000));
+	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT(0x17400000));
+#else
+	write32(MEM1_MEM2PHYSICALSIZE, 0x04000000);
+	write32(MEM1_MEM2SIMULATESIZE, 0x04000000);
+	write32(MEM1_MEM2INITLOW, 0x90000800);
+	write32(MEM1_MEM2INITHIGH, 0x935E0000);
+	write32(MEM1_IOSIPCLOW, 0x935E0000);
+	write32(MEM1_MEM2BAT, 0x93600000);
+	write32(MEM1_IOSIPCHIGH, 0x93600000);
+	write32(MEM1_IOSHEAPLOW, 0x93600000);
+	write32(MEM1_IOSHEAPHIGH, 0x93620000);
+#endif
+
+	// IOS identification
+	write32(MEM1_CPUVERSION, hollywoodVersion);
+	write32(MEM1_IOSVERSION, iosVersion);
+
+	write32(MEM1_IOSBUILDDATE, STARSTRUCK_BUILDDATE);
+	write32(MEM1_GDDRVENDORCODE, gddrVendorCode);
+
+	// MIOS/GC compat flag: 0 = GC compat mode (SRSTB_CPU asserted), 1 = Wii mode
+	write32(MEM1_MIOSFLAG, (read32(HW_RESETS) & SRSTB_CPU) ? 0 : 1);
+
+	// uninitialized sentinel fields
+	write32(MEM1_3114, 0xDEADBEEF);
+	write32(MEM1_312C, 0xDEADBEEF);
+	write32(MEM1_313C, 0xDEADBEEF);
+	write32(MEM1_3150, 0xDEADBEEF);
+	write32(MEM1_3154, 0xDEADBEEF);
+	write32(MEM1_LOADMETHOD, 0xDEADBEEF);
+	write32(MEM1_INITSEMAPHORE, 0xDEADBEEF);
+#ifdef MIOS
+	write32(MEM1_IOSHEAPLOW, 0xDEADBEEF);
+	write32(MEM1_IOSHEAPHIGH, 0xDEADBEEF);
+#endif
+}
+#pragma GCC diagnostic pop
+
+#ifndef MIOS
+
+void PPCPrepareMEM1(void)
+{
+	PPCSetMEM1(GetHollywoodId(), GetGDDRVendorCode());
+	DCFlushRange((void *)MEM1_PHYSICALMEM1SIZE, 0x68);
+}
+
+#endif
+
+void PPCSetSDKSemaphore(bool hasSemaphore)
 {
 	u32 oldValue = read32(HW_EXICTRL);
 	write32(MEM1_INITSEMAPHORE, hasSemaphore ? 0 : 0xDEADBEEF);
@@ -131,41 +244,14 @@ void SetSemaphore(bool hasSemaphore)
 	write32(HW_EXICTRL, (oldValue & 0xFFFFFFFE) | (hasSemaphore != false));
 }
 
-#ifdef MIOS
 void PPCStart(void)
 {
-	u8 ppcInitCode[0x40];
+	u8 ppcInitCode[sizeof(PPC_LaunchBS1)];
 	memcpy(ppcInitCode, PPC_LaunchBS1, sizeof(ppcInitCode));
 
-	write32(MEM1_MEM2PHYSICALSIZE, 0x800000);
-	write32(MEM1_MEM2SIMULATESIZE, 0x800000);
-	write32(MEM1_MEM2INITLOW, MEM2_PHY2VIRT(0x10000800));
-	write32(MEM1_MEM2INITHIGH, MEM2_PHY2VIRT(0x173E0000));
-	write32(MEM1_IOSIPCLOW, MEM2_PHY2VIRT(0x173E0000));
-
-	write32(MEM1_CPUVERSION, 0x101);
-	write32(MEM1_IOSVERSION, 0x707);
-	write32(MEM1_IOSBUILDDATE, 0x110206);
-	write32(MEM1_GDDRVENDORCODE, 0xcafebabe);
-	write32(MEM1_3114, 0xdeadbeef);
-	write32(MEM1_312C, 0xdeadbeef);
-	write32(MEM1_313C, 0xdeadbeef);
-	write32(MEM1_IOSHEAPLOW, 0xdeadbeef);
-	write32(MEM1_IOSHEAPHIGH, 0xdeadbeef);
-	write32(MEM1_3154, 0xdeadbeef);
-	write32(MEM1_3150, 0xdeadbeef);
-	write32(MEM1_LOADMETHOD, 0xdeadbeef);
-	write32(MEM1_INITSEMAPHORE, 0xdeadbeef);
-
-	write32(MEM1_EXCEPTIONVECTOR, 0x1800000);
-	write32(MEM1_EXCEPTIONVECTOR + 4, 0x1800000);
-	write32(MEM1_EXCEPTIONVECTOR + 8, 0x81800000);
-	write32(MEM1_MEM2BAT, MEM2_PHY2VIRT(0x17400000));
-	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT(0x17400000));
-	write32(MEM1_MEMORYSIZE, 0x1800000);
-	write32(MEM1_SIMMEMORYSIZE, 0x1800000);
-	write32(MEM1_HEAPLOW, 0x00);
-	write32(MEM1_HEAPLOW, 0x81800000);
+#ifdef MIOS
+	const bool isWiiMode = false;
+	PPCSetMEM1(0x101, 0xcafebabe);
 
 	write32(MEM_COMPAT, 0x00);
 	udelay(1);
@@ -199,11 +285,17 @@ void PPCStart(void)
 	       read32(HW_GPIO1BOUT));
 	write32(HW_GPIO1OWNER, 0);
 	write32(HW_GPIO1DIR, GP_OUTPUTS);
+#else
+	const bool isWiiMode = true;
+	PPCHardReset();
+#endif
 
 	//setup PPC semaphore stuff
-	SetSemaphore(true);
-	PPCLoadCode(0, ppcInitCode, 0x10);
-	SetSemaphore(false);
+	PPCSetSDKSemaphore(true);
+	PPCLoadCode(isWiiMode, ppcInitCode, sizeof(ppcInitCode) / 4);
+	PPCSetSDKSemaphore(false);
+
+#ifdef MIOS
 	PPCSoftReset();
 	debug_output(0xCE);
 	BusyDelay(8000);
@@ -215,49 +307,11 @@ void PPCStart(void)
 	AhbFlushFrom(AHB_1);
 	SetMemoryCompatabilityMode();
 	write32(HW_DIFLAGS, read32(HW_DIFLAGS) & (DIFLAGS_BOOT_CODE | 0x80000));
-
-	return;
-}
 #else
-void PPCStart(void)
-{
-}
+
+	PPCPrepareMEM1();
+
 #endif
 
-//Old Mini stuff
-
-void powerpc_upload_stub(u32 entry)
-{
-	u32 i;
-
-	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
-
-	// lis r3, entry@h
-	write32(EXI_BOOT_BASE + 4 * 0, 0x3c600000 | entry >> 16);
-	// ori r3, r3, entry@l
-	write32(EXI_BOOT_BASE + 4 * 1, 0x60630000 | (entry & 0xffff));
-	// mtsrr0 r3
-	write32(EXI_BOOT_BASE + 4 * 2, 0x7c7a03a6);
-	// li r3, 0
-	write32(EXI_BOOT_BASE + 4 * 3, 0x38600000);
-	// mtsrr1 r3
-	write32(EXI_BOOT_BASE + 4 * 4, 0x7c7b03a6);
-	// rfi
-	write32(EXI_BOOT_BASE + 4 * 5, 0x4c000064);
-
-	for (i = 6; i < 0x10; ++i) write32(EXI_BOOT_BASE + 4 * i, 0);
-
-	set32(HW_DIFLAGS, DIFLAGS_BOOT_CODE);
-	set32(HW_AHBPROT, 0xFFFFFFFF);
-
-	gecko_printf("disabling EXI now...\n");
-	clear32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
-}
-
-void powerpc_hang(void)
-{
-	clear32(HW_RESETS, 0x30);
-	udelay(100);
-	set32(HW_RESETS, 0x20);
-	udelay(100);
+	return;
 }

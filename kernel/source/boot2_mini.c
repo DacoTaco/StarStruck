@@ -22,7 +22,7 @@ Copyright (C) 2009		Andre Heider "dhewg" <dhewg@wiibrew.org>
 #include "crypto/aes.h"
 #include "string.h"
 #include "peripherals/powerpc.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "panic.h"
 #include "boot2.h"
 #include "filedesc/calls.h"

@@ -17,7 +17,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "core/gpio.h"
 #include "core/hollywood.h"
 #include "scheduler/timer.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 bool IsWiiMode = true;
 
@@ -35,12 +35,15 @@ __attribute__((target("arm"))) void udelay(u32 delay)
 	//or our future overflowed and we have to wait on the timer to overflow back to 0
 	if (read32(HW_TIMER) < then)
 	{
-		while (read32(HW_TIMER) < then);
+		while (read32(HW_TIMER) < then)
+			;
 		return;
 	}
 	else
 	{
-		while (read32(HW_TIMER) > 0);
-		while (read32(HW_TIMER) < then);
+		while (read32(HW_TIMER) > 0)
+			;
+		while (read32(HW_TIMER) < then)
+			;
 	}
 }

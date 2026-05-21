@@ -17,7 +17,7 @@ Copyright (C) 2021			DacoTaco
 #include "core/hollywood.h"
 #include "memory/memory.h"
 #include "interrupt/irq.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 //#define NO_CACHES
 

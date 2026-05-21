@@ -24,6 +24,7 @@ extern "C" {
 #include "crypto/iosc.h"
 #include "filedesc/calls.h"
 #include "filedesc/calls_async.h"
+#include "utils/loader.h"
 }
 
 //#define _DEBUG_SYSCALL
@@ -128,7 +129,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL_NULL, //0x003E
 	SYSCALL(DCInvalidateRange), //0x003F
 	SYSCALL(DCFlushRange), //0x0040
-	SYSCALL_NULL, //0x0041
+	SYSCALL(LoadBinary), //0x0041
 	SYSCALL_NULL, //0x0042
 	SYSCALL_NULL, //0x0043
 	SYSCALL_NULL, //0x0044
