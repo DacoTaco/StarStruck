@@ -13,7 +13,7 @@
 #include <ios/errno.h>
 #include <ios/processor.h>
 #include "core/hollywood.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include <string.h>
 #include "interrupt/irq.h"
 

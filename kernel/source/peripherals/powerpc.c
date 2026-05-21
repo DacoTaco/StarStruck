@@ -15,7 +15,7 @@
 
 #include "core/gpio.h"
 #include "core/hollywood.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "memory/memory.h"
 
 //code that will let me PPC start execution @ 0x80003400, which is the BS1 vector, where all dol content usually starts

@@ -36,7 +36,7 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #include "crypto/aes.h"
 #include "crypto/iosc.h"
 #include "crypto/sha.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #include "sdhc.h"
 #include "ff.h"

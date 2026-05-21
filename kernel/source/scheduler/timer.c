@@ -19,7 +19,7 @@
 #include "scheduler/timer.h"
 #include "scheduler/threads.h"
 #include "panic.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #ifdef MIOS
 const u8 _timerStack[TIMERSTACKSIZE] ALIGNED(32) = { 0 };
@@ -190,8 +190,7 @@ void TimerHandler(void)
 				if (timerInfo->Queue == NULL)
 					break;
 
-				SendMessageToQueue(timerInfo->Queue, timerInfo->Message,
-				                   RegisteredEventHandler);
+				SendMessageToQueue(timerInfo->Queue, timerInfo->Message, RegisteredEventHandler);
 				timerInfo = CurrentTimer->NextTimer;
 				if (timerInfo == CurrentTimer)
 					goto _reset_previous_and_continue;

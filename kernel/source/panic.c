@@ -16,7 +16,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "core/hollywood.h"
 #include "core/gpio.h"
 #include "interrupt/irq.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "panic.h"
 
 #define PANIC_ON    200000
