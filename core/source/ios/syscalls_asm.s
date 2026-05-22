@@ -80,6 +80,8 @@ _SYSCALL OSClearAndEnableEvent,		0x0034
 _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040
 _SYSCALL OSLoadBinary,				0x0041
+_SYSCALL OSLoadKernel,              0x0042
+_SYSCALL OSLaunchKernel,         	0x0043
 
 _SYSCALL OSGetKernelFlavor,			0x0047
 

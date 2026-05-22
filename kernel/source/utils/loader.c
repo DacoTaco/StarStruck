@@ -13,6 +13,7 @@
 #include <ios/ipc.h>
 #include <ios/errno.h>
 #include <ios/processor.h>
+#include <ios/gecko.h>
 #include <ios/executables.h>
 #include <string.h>
 
@@ -20,10 +21,14 @@
 #include "core/hollywood.h"
 #include "core/gpio.h"
 #include "filedesc/calls.h"
+#include "interrupt/irq.h"
 #include "memory/heaps.h"
 #include "memory/memory.h"
 #include "scheduler/threads.h"
 #include "peripherals/powerpc.h"
+
+#include "fs/types.h"
+#include "fs/ioctls.h"
 
 static inline s32 _LoadELF(s32 fd, u32 *outArmEntrypoint, bool *outIsPPCBinary)
 {
@@ -238,5 +243,137 @@ return_loadPPC:
 		CloseFD(fd);
 
 	FreeOnHeap(KernelHeapId, magicBuf);
+	return ret;
+}
+
+u32 _SetIOSVersion(u32 newVersion)
+{
+	u32 oldVersion = read32(MEM1_IOSVERSION);
+	if (newVersion != 0 && newVersion != oldVersion)
+	{
+		write32(MEM1_IOSVERSION, newVersion);
+		DCFlushRange((void *)MEM1_IOSVERSION, sizeof(u32));
+		gecko_printf("Set OS version to %u\n", newVersion);
+	}
+
+	gecko_printf("Returning old OS version %u\n", oldVersion);
+	return oldVersion;
+}
+
+//Setup memory and launch the kernel image at the specified address
+__attribute__((noreturn)) void _LaunchKernel(const void *image, u32 version)
+{
+	//clear out the arguments in the header
+	//no idea what the point of them is if it clears them but here we are lol
+	IosKernelHeader *header = (IosKernelHeader *)image;
+	header->Arguments = 0;
+
+	//Disable and clear all interrupts and then flush all caches
+	DisableInterrupts();
+	write32(HW_ARMIRQMASK, 0);
+	DCFlushAll();
+
+	DisableInstructionCache();
+	DisableMMUAndDCache();
+
+	// Update the IOS version slot in MEM1
+	u32 oldVersion = _SetIOSVersion(version);
+
+	// Write the IOS58 MEM2 memory layout constants into MEM1 to be picked up by the next kernel
+	write32(MEM1_MEM2PHYSICALSIZE, 0x4000000); // 64 MB size
+	write32(MEM1_MEM2SIMULATESIZE, 0x4000000);
+	write32(MEM1_MEM2BAT, 0x93400000);
+	write32(MEM1_MEM2INITLOW, 0x90000800);
+	write32(MEM1_MEM2INITHIGH, 0x933e0000);
+	write32(MEM1_IOSIPCLOW, 0x933e0000);
+	write32(MEM1_IOSIPCHIGH, 0x93400000);
+	write32(MEM1_IOSHEAPLOW, 0x93400000);
+	write32(MEM1_IOSHEAPHIGH, 0x93420000);
+	DCFlushRange((void *)MEM1_PHYSICALMEM1SIZE, 0x68);
+	gecko_printf("Updated DDR settings in lomem: 0x%08X with 12MB settings\n",
+	             MEM1_MEM2PHYSICALSIZE);
+
+	// Preserve the NAND clock-divider register and set it to the boot default.
+	u32 oldNandClkDiv = read32(NAND_CLKDIV);
+	write32(NAND_CLKDIV, 1);
+
+	//jump to image + header->HeaderSize, the address of the actual payload
+	void (*entry)(void) = (void (*)(void))((u32)image + header->HeaderSize);
+	entry();
+
+	//something went wrong, lets set ios version back & restore nand register
+	_SetIOSVersion(oldVersion);
+	write32(NAND_CLKDIV, oldNandClkDiv);
+
+	//it shouldn't return, but who knows why it has code after the jump to entry lol
+	__builtin_unreachable();
+}
+
+s32 LaunchKernel(const void *image, u32 version)
+{
+	if (GetUID() != 0)
+		return IPC_EACCES;
+
+	_LaunchKernel(image, version);
+}
+
+s32 LoadKernel(const char *path, s32 suspendBroadway, u32 version)
+{
+	s32 ret = -1;
+
+	if (GetUID() != 0)
+		return IPC_EACCES;
+
+	if (IpcHandlerThreadId >= 0)
+		SuspendThread(IpcHandlerThreadId);
+
+	// Enable protection for the MEM staging area + ios running memory
+	ProtectMemory(true, (void *)IOS_STAGING_AREA_START, (void *)0x1FFFFFFF);
+
+	s32 fd = OpenFD(path, Read);
+	ret = fd;
+	if (fd < 0)
+		return ret;
+
+	FileStatistics *stats =
+	    (FileStatistics *)AllocateOnHeap(KernelHeapId, sizeof(FileStatistics));
+	if (stats == NULL)
+	{
+		ret = IPC_EMAX;
+		goto cleanup;
+	}
+
+	ret = IoctlFD(fd, IOCTL_GETFILESTATS, NULL, 0, stats, sizeof(FileStatistics));
+	if (ret != IPC_SUCCESS)
+		goto cleanup;
+
+	u32 len = stats->FileLength;
+	if (len >= IOS_STAGING_SIZE)
+	{
+		ret = IPC_EMAX;
+		goto cleanup;
+	}
+
+	if (suspendBroadway != 0)
+		PPCHardReset();
+
+	const u8 *staging = (const u8 *)IOS_STAGING_AREA_START;
+	ret = ReadFD(fd, (void *)staging, len);
+	if (ret != (s32)len)
+		goto cleanup;
+
+	// Set GPIO ownership as IOS does before launching.
+	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & ((0xFF000000 | GP_ALL) ^ GP_DISPIN));
+
+	//launch the kernel image
+	_LaunchKernel(staging, version);
+
+cleanup:
+	if (stats != NULL)
+		FreeOnHeap(KernelHeapId, stats);
+
+	if (fd >= 0)
+		CloseFD(fd);
+
 	return ret;
 }

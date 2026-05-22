@@ -131,8 +131,8 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL(DCInvalidateRange), //0x003F
 	SYSCALL(DCFlushRange), //0x0040
 	SYSCALL(LoadBinary), //0x0041
-	SYSCALL_NULL, //0x0042
-	SYSCALL_NULL, //0x0043
+	SYSCALL(LoadKernel), //0x0042
+	SYSCALL(LaunchKernel), //0x0043
 	SYSCALL_NULL, //0x0044
 	SYSCALL_NULL, //0x0045
 	SYSCALL_NULL, //0x0046

@@ -12,6 +12,11 @@
 
 #ifndef MIOS
 
+#define IOS_STAGING_AREA_START 0x10100000
+#define IOS_STAGING_SIZE       0x00B00001
+
 s32 LoadBinary(const char *path);
+s32 LoadKernel(const char *path, s32 suspendBroadway, u32 version);
+s32 LaunchKernel(const void *image, u32 version);
 
 #endif

@@ -216,6 +216,7 @@ Copyright (C) 2008, 2009	John Kelley <wiidev@kelley.ca>
 
 #define NAND_REG_BASE      0xd010000
 #define NAND_CMD           (NAND_REG_BASE + 0x000)
+#define NAND_CLKDIV        (NAND_REG_BASE + 0x018)
 
 /* AES Registers */
 
