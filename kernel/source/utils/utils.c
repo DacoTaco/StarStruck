@@ -19,6 +19,9 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "scheduler/timer.h"
 #include "utils/utils.h"
 
+#include "memory/memory.h"
+#include "scheduler/threads.h"
+
 bool IsWiiMode = true;
 
 //no idea why this has less issues when forced as arm...
@@ -46,4 +49,23 @@ __attribute__((target("arm"))) void udelay(u32 delay)
 		while (read32(HW_TIMER) < then)
 			;
 	}
+}
+
+// Kernel flavour implementation (moved here from core). Mirrors IOS_WhichKernel:
+// validates user pointers then sets type[0]=0, type[1]=3 and *unk=0.
+s32 GetKernelFlavor(s16 *type, s16 *unk)
+{
+	s32 ret = CheckMemoryPointer(type, 4, 4, CurrentThread->ProcessId, 0);
+	if (ret != 0)
+		return ret;
+
+	ret = CheckMemoryPointer(unk, 2, 4, CurrentThread->ProcessId, 0);
+	if (ret != 0)
+		return ret;
+
+	type[0] = 0;
+	type[1] = 3;
+	*unk = 0;
+
+	return 0;
 }

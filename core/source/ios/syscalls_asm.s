@@ -81,8 +81,10 @@ _SYSCALL OSDCInvalidateRange,		0x003F
 _SYSCALL OSDCFlushRange,			0x0040
 _SYSCALL OSLoadBinary,				0x0041
 
-_SYSCALL OSGetGDDRVendorCode		0x0049
-_SYSCALL OSGetHollywoodId			0x004A
+_SYSCALL OSGetKernelFlavor,			0x0047
+
+_SYSCALL OSGetGDDRVendorCode,		0x0049
+_SYSCALL OSGetHollywoodId,			0x004A
 
 _SYSCALL OSVirtualToPhysical,		0x004F
 

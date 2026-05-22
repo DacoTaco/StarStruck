@@ -25,6 +25,7 @@ extern "C" {
 #include "filedesc/calls.h"
 #include "filedesc/calls_async.h"
 #include "utils/loader.h"
+#include "utils/utils.h"
 }
 
 //#define _DEBUG_SYSCALL
@@ -135,7 +136,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL_NULL, //0x0044
 	SYSCALL_NULL, //0x0045
 	SYSCALL_NULL, //0x0046
-	SYSCALL_NULL, //0x0047
+	SYSCALL(GetKernelFlavor), //0x0047
 	SYSCALL_NULL, //0x0048
 	SYSCALL(GetGDDRVendorCode), //0x0049
 	SYSCALL(GetHollywoodId), //0x004A
