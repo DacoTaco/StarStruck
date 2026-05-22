@@ -13,8 +13,8 @@
 #include <ios/ipc.h>
 #include <ios/errno.h>
 #include <ios/processor.h>
+#include <ios/executables.h>
 #include <string.h>
-#include <powerpc/executables.h>
 
 #include "loader.h"
 #include "core/hollywood.h"

@@ -23,16 +23,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <types.h>
 #include <string.h>
 #include <ios/processor.h>
+#include <ios/executables.h>
 #include "utils.h"
 #include "elf.h"
-
-typedef struct
-{
-	u32 hdrsize;
-	u32 loadersize;
-	u32 elfsize;
-	u32 argument;
-} ioshdr;
 
 #define HW_MEMMIRR 0xd800060
 #define HW_BOOT0   0xd80018C
@@ -79,12 +72,12 @@ static inline void mem_setswap()
 
 void *_main(void *base)
 {
-	ioshdr *hdr = (ioshdr *)base;
+	IosKernelHeader *hdr = (IosKernelHeader *)base;
 	u8 *elf;
 	void *entry;
 
 	elf = (u8 *)base;
-	elf += hdr->hdrsize + hdr->loadersize;
+	elf += hdr->HeaderSize + hdr->LoaderSize;
 
 	debug_output(0xF1);
 	mem_setswap();

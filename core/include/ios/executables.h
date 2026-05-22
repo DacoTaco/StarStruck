@@ -1,6 +1,6 @@
 /*
 	starstruck - a Free Software reimplementation for the Nintendo/BroadOn IOS.
-	binary types used for the powerpc
+	binary types used on the wii
 
 Copyright (C) 2025	DacoTaco
 
@@ -56,3 +56,16 @@ CHECK_OFFSET(DolHeader, 0xD8, BSS.Address);
 CHECK_OFFSET(DolHeader, 0xDC, BSS.Size);
 CHECK_OFFSET(DolHeader, 0xE0, EntryPoint);
 CHECK_OFFSET(DolHeader, 0xE4, Padding);
+
+typedef struct
+{
+	u32 HeaderSize;
+	u32 LoaderSize;
+	u32 ElfSize;
+	u32 Arguments;
+} IosKernelHeader;
+CHECK_SIZE(IosKernelHeader, 0x10);
+CHECK_OFFSET(IosKernelHeader, 0x00, HeaderSize);
+CHECK_OFFSET(IosKernelHeader, 0x04, LoaderSize);
+CHECK_OFFSET(IosKernelHeader, 0x08, ElfSize);
+CHECK_OFFSET(IosKernelHeader, 0x0C, Arguments);
