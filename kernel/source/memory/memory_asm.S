@@ -32,6 +32,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 .globl _dc_flush
 .globl _dc_inval
 .globl _ic_inval
+.globl DisableInstructionCache
+.globl DisableMMUAndDCache
 
 
 .text
@@ -139,6 +141,20 @@ END_ASM_FUNC
 BEGIN_ASM_FUNC TlbInvalidate
 	mov		r0, #0
 	mcr		p15, 0, r0, c8, c7, 0
+	bx		lr
+END_ASM_FUNC
+
+BEGIN_ASM_FUNC DisableInstructionCache
+	mrc		p15, 0, r0, c1, c0, 0
+	bic		r0, r0, #0x1000
+	mcr		p15, 0, r0, c1, c0, 0
+	bx		lr
+END_ASM_FUNC
+
+BEGIN_ASM_FUNC DisableMMUAndDCache
+	mrc		p15, 0, r0, c1, c0, 0
+	bic		r0, r0, #0x5
+	mcr		p15, 0, r0, c1, c0, 0
 	bx		lr
 END_ASM_FUNC
 
