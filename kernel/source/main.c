@@ -349,7 +349,7 @@ void InitialiseSystem(void)
 
 #ifndef MIOS
  //enable protection on our MEM2 addresses & SRAM
-	ProtectMemory(1, (void *)0x13620000, (void *)0x1FFFFFFF);
+	ProtectMemory(true, (void *)0x13620000, (void *)0x1FFFFFFF);
 
  //????
 	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF);

@@ -125,7 +125,7 @@ s32 MapMemory(MemorySection *entry);
 u32 VirtualToPhysical(u32 virtualAddress);
 s32 CheckMemoryPointer(const void *ptr, u32 size, u32 type, u32 pid, u32 domainPid);
 #endif
-void ProtectMemory(int enable, void *start, void *end);
+void ProtectMemory(bool enable, void *start, void *end);
 void DCInvalidateRange(const void *start, u32 size);
 void DCFlushRange(const void *start, u32 size);
 void DCFlushAll(void);

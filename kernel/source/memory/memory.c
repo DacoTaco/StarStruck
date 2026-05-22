@@ -222,7 +222,7 @@ void mem_shutdown(void)
 	RestoreInterrupts(cookie);
 }
 
-void ProtectMemory(int enable, void *start, void *end)
+void ProtectMemory(bool enable, void *start, void *end)
 {
 	write16(MEM_PROT, enable ? 1 : 0);
 	write16(MEM_PROT_START, (((u32)start) & 0xFFFFFFF) >> 12);

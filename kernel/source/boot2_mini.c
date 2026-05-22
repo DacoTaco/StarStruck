@@ -410,7 +410,7 @@ u32 boot2_run(u32 tid_hi, u32 tid_lo)
 	ioshdr *hdr;
 
 	gecko_printf("booting boot2 with title %08x-%08x\n", tid_hi, tid_lo);
-	ProtectMemory(1, (void *)0x11000000, (void *)0x13FFFFFF);
+	ProtectMemory(true, (void *)0x11000000, (void *)0x13FFFFFF);
 
 	do_aes_decrypt(boot2_content, (void *)0x11000000, boot2_content_size, boot2_key, boot2_iv);
 
