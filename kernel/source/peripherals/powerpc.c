@@ -108,7 +108,7 @@ void PPCSoftReset(void)
 	set32(HW_RESETS, SRSTB_CPU | RSTB_CPU);
 }
 
-void PPCLoad(const void *code, u32 codeSize)
+void PPCLoad(const void* code, u32 codeSize)
 {
 	if (codeSize <= 1)
 		return;
@@ -133,9 +133,9 @@ void PPCLoad(const void *code, u32 codeSize)
 	write32(HW_EXICTRL, oldExiValue);
 }
 
-void PPCLoadCode(bool wiiMode, const void *code, u32 codeSize)
+void PPCLoadCode(bool wiiMode, const void* code, u32 codeSize)
 {
-	const void *codeToLaunch = NULL;
+	const void* codeToLaunch = NULL;
 	if (code == NULL || codeSize == 0)
 	{
 		if (!wiiMode)
@@ -164,7 +164,7 @@ MIOS_INLINE void PPCSetMEM1(u32 hollywoodVersion, u32 gddrVendorCode)
 #ifndef MIOS
 	// save the ios version so we can set it back after the wipe
 	u32 iosVersion = read32(MEM1_IOSVERSION);
-	memset((void *)MEM1_BASE, 0, 0x3FFF);
+	memset((void*)MEM1_BASE, 0, 0x3FFF);
 #else
 	u32 iosVersion = 0x707;
 #endif
@@ -231,7 +231,7 @@ MIOS_INLINE void PPCSetMEM1(u32 hollywoodVersion, u32 gddrVendorCode)
 void PPCPrepareMEM1(void)
 {
 	PPCSetMEM1(GetHollywoodId(), GetGDDRVendorCode());
-	DCFlushRange((void *)MEM1_PHYSICALMEM1SIZE, 0x68);
+	DCFlushRange((void*)MEM1_PHYSICALMEM1SIZE, 0x68);
 }
 
 #endif

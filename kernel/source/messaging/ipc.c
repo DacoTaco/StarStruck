@@ -68,17 +68,17 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 #define MAX_IPCMESSAGES   (MAX_THREADS + IPC_EXTRA_MESSAGES)
 
 extern const u32 __ipc_heap_start;
-IpcMessage *IpcMessageArray = NULL;
-FileDescriptorPath *FiledescPathArray = NULL;
+IpcMessage* IpcMessageArray = NULL;
+FileDescriptorPath* FiledescPathArray = NULL;
 MessageQueue IpcMessageQueueArray[MAX_THREADS] SRAM_BSS;
 unsigned ThreadMessageUsageArray[MAX_THREADS] SRAM_BSS;
-static void *IpcMessageQueueDataPtrArray[MAX_THREADS] SRAM_BSS;
-static FileDescriptorPath *FiledescPathPointerArray[MAX_THREADS] SRAM_BSS;
+static void* IpcMessageQueueDataPtrArray[MAX_THREADS] SRAM_BSS;
+static FileDescriptorPath* FiledescPathPointerArray[MAX_THREADS] SRAM_BSS;
 
-ThreadInfo *IpcHandlerThread = NULL;
+ThreadInfo* IpcHandlerThread = NULL;
 s32 IpcHandlerThreadId = -1;
 
-static IpcMessage *IpcHandlerMessageQueueData[50] SRAM_BSS;
+static IpcMessage* IpcHandlerMessageQueueData[50] SRAM_BSS;
 static IpcRequest IpcHandlerRequest SRAM_BSS;
 
 #define IPC_CIRCULAR_BUFFER_SIZE 0x30
@@ -90,7 +90,7 @@ typedef struct
 	u32 ReadyToSendAmount;
 	u32 SendingIndex;
 	u32 PrepareToSendIndex;
-	IpcRequest *BackingArray[IPC_CIRCULAR_BUFFER_SIZE];
+	IpcRequest* BackingArray[IPC_CIRCULAR_BUFFER_SIZE];
 } IpcCircularBuffer;
 
 static IpcCircularBuffer IpcCircBuf SRAM_BSS;
@@ -100,7 +100,7 @@ void SendIpcRequest(void)
 	if (!IpcCircBuf.HadRelaunchFlag || IpcCircBuf.ReadyToSendAmount == 0)
 		return;
 
-	IpcRequest *const ptr = IpcCircBuf.BackingArray[IpcCircBuf.SendingIndex];
+	IpcRequest* const ptr = IpcCircBuf.BackingArray[IpcCircBuf.SendingIndex];
 	DCFlushRange(ptr, sizeof(IpcRequest));
 	write32(HW_IPC_ARMMSG, (u32)ptr);
 	IpcCircBuf.SendingIndex = (IpcCircBuf.SendingIndex + 1) % IPC_CIRCULAR_BUFFER_SIZE;
@@ -112,7 +112,7 @@ void SendIpcRequest(void)
 	           IPC_ARM_OUTGOING);
 }
 
-static void FlushAndSendRequest(IpcRequest *request)
+static void FlushAndSendRequest(IpcRequest* request)
 {
 	const u32 requestCommand = request->RequestCommand;
 	if (requestCommand == IOS_IOCTL)
@@ -144,7 +144,7 @@ static void FlushAndSendRequest(IpcRequest *request)
 	SendIpcRequest();
 }
 
-static int ValidateAddress(const void *const ptr, const u32 size)
+static int ValidateAddress(const void* const ptr, const u32 size)
 {
 	const u32 addr = (u32)ptr;
 	const u32 addrEnd = addr + size;
@@ -162,7 +162,7 @@ void IpcHandler(void)
 	SetThreadPriority(0, 0x40);
 	IpcHandlerRequest.Command = IOS_INTERRUPT;
 
-	s32 ret = CreateMessageQueue((void **)IpcHandlerMessageQueueData,
+	s32 ret = CreateMessageQueue((void**)IpcHandlerMessageQueueData,
 	                             ARRAY_LENGTH(IpcHandlerMessageQueueData));
 	if (ret < 0)
 		return;
@@ -178,14 +178,13 @@ void IpcHandler(void)
 
 	ClearAndEnableIPCInterrupt();
 
-	IpcMessage *messagePointer = NULL;
-	IpcMessage *messageFromPPC = NULL;
+	IpcMessage* messagePointer = NULL;
+	IpcMessage* messageFromPPC = NULL;
 	while (1)
 	{
   //wait for a valid message
-		while (ReceiveMessage(messageQueue, (void **)&messagePointer, None) != IPC_SUCCESS)
-			;
-		messageFromPPC = (void *)read32(HW_IPC_PPCMSG);
+		while (ReceiveMessage(messageQueue, (void**)&messagePointer, None) != IPC_SUCCESS);
+		messageFromPPC = (void*)read32(HW_IPC_PPCMSG);
 		if (messagePointer->Request.Command == IOS_REPLY)
 		{
 			FlushAndSendRequest(&messagePointer->Request);
@@ -402,7 +401,7 @@ static void IpcInitMessageQueues(void)
 
 	for (i = 0; i < MAX_THREADS; ++i)
 	{
-		MessageQueue *currentQueue = &IpcMessageQueueArray[i];
+		MessageQueue* currentQueue = &IpcMessageQueueArray[i];
 		currentQueue->QueueHeap = &IpcMessageQueueDataPtrArray[i];
 		currentQueue->ReceiveThreadQueue.NextThread = &ThreadStartingState;
 		currentQueue->SendThreadQueue.NextThread = &ThreadStartingState;
@@ -422,7 +421,7 @@ void IpcInit(void)
 
 #endif
 
-s32 ResourceReply(IpcMessage *message, s32 requestReturnValue)
+s32 ResourceReply(IpcMessage* message, s32 requestReturnValue)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
@@ -431,8 +430,8 @@ s32 ResourceReply(IpcMessage *message, s32 requestReturnValue)
 	if (!(0 <= msgIndex && msgIndex < MAX_IPCMESSAGES))
 		goto restore_and_return;
 
-	IpcMessage *messageToSend = NULL;
-	MessageQueue *queue = message->Callback;
+	IpcMessage* messageToSend = NULL;
+	MessageQueue* queue = message->Callback;
 	if (!(queue == NULL || (message->IsInQueue != 0 &&
 	                        message->UsedByProcessId == CurrentThread->ProcessId)))
 		goto restore_and_return;
@@ -441,7 +440,7 @@ s32 ResourceReply(IpcMessage *message, s32 requestReturnValue)
 	const int flag = queue != NULL;
 	if (queue != NULL)
 	{
-		messageToSend = (IpcMessage *)message->CallerData;
+		messageToSend = (IpcMessage*)message->CallerData;
 		message->IsInQueue = 0;
 		messageToSend->Request.Command = IOS_REPLY;
 		messageToSend->Request.Result = requestReturnValue;
@@ -459,18 +458,18 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessageCheckReceive(IpcMessage *message, ResourceManager *resource)
+s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource)
 {
-	void *const cb = message->Callback;
+	void* const cb = message->Callback;
 	message->UsedByProcessId = resource->ProcessId;
 	s32 ret = SendMessageToQueue(resource->Queue, message, None);
 
 	if (ret != IPC_SUCCESS || cb != NULL)
 		return ret;
 
-	IpcMessage *receivedMessage = NULL;
+	IpcMessage* receivedMessage = NULL;
 	ret = ReceiveMessageFromQueue(&IpcMessageQueueArray[message - IpcMessageArray],
-	                              (void **)&receivedMessage, None);
+	                              (void**)&receivedMessage, None);
 	if (ret == IPC_SUCCESS && receivedMessage != message)
 		ret = IPC_EINVAL;
 

@@ -30,9 +30,9 @@ extern const u32 __thread_stacks_area_start[];
 extern const u32 __thread_stacks_area_size[];
 
 #ifndef MIOS
-extern u32 *MemoryTranslationTable;
+extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
-extern u32 *HardwareRegistersAccessTable[MAX_PROCESSES];
+extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 #endif
 
 void EndThread();
@@ -43,10 +43,10 @@ u16 ProcessGID[MAX_PROCESSES] = { 0 };
 ThreadInfo Threads[MAX_THREADS] SRAM_DATA ALIGNED(0x10) = { 0 };
 ThreadQueue SchedulerQueue ALIGNED(0x04) = { .NextThread = &ThreadStartingState };
 ThreadInfo ThreadStartingState ALIGNED(0x04) = { .Priority = -1 };
-ThreadInfo *CurrentThread ALIGNED(0x10) = NULL;
-void *ThreadEndFunction = NULL;
+ThreadInfo* CurrentThread ALIGNED(0x10) = NULL;
+void* ThreadEndFunction = NULL;
 
-static inline s32 _GetThreadID(ThreadInfo *thread)
+static inline s32 _GetThreadID(ThreadInfo* thread)
 {
 	u32 offset = (u32)thread - (u32)(&Threads[0]);
 	return offset == 0 ? 0 : (s32)(offset / sizeof(ThreadInfo));
@@ -69,7 +69,7 @@ void InitializeThreadContext()
 
 #ifndef MIOS
 
-	memset((void *)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
+	memset((void*)__thread_stacks_area_start, 0xA5, (u32)__thread_stacks_area_size);
 
 	for (u16 i = 0; i < MAX_THREADS; i++)
 	{
@@ -82,9 +82,9 @@ void InitializeThreadContext()
 }
 
 //Scheduler
-void ThreadQueue_RemoveThread(ThreadQueue *threadQueue, ThreadInfo *threadToRemove)
+void ThreadQueue_RemoveThread(ThreadQueue* threadQueue, ThreadInfo* threadToRemove)
 {
-	ThreadInfo *thread = threadQueue->NextThread;
+	ThreadInfo* thread = threadQueue->NextThread;
 	while (thread)
 	{
 		if (thread == threadToRemove)
@@ -93,24 +93,24 @@ void ThreadQueue_RemoveThread(ThreadQueue *threadQueue, ThreadInfo *threadToRemo
 			break;
 		}
 
-		threadQueue = (ThreadQueue *)&thread->NextThread;
+		threadQueue = (ThreadQueue*)&thread->NextThread;
 		thread = thread->NextThread;
 	}
 
 	return;
 }
 
-void ThreadQueue_PushThread(ThreadQueue *threadQueue, ThreadInfo *thread)
+void ThreadQueue_PushThread(ThreadQueue* threadQueue, ThreadInfo* thread)
 {
 	//not sure if this is correct. it works, and seems to be what the asm in ios kinda looks like
 	//however, looking in ghidra it looks completely different. what is ghidra thinking, and why?
 	if (threadQueue == NULL || thread == NULL)
 		return;
 
-	ThreadInfo *nextThread = threadQueue->NextThread;
+	ThreadInfo* nextThread = threadQueue->NextThread;
 	s32 threadPriority = thread->Priority;
 	s32 nextPriority = nextThread->Priority;
-	ThreadInfo **previousThread = &threadQueue->NextThread;
+	ThreadInfo** previousThread = &threadQueue->NextThread;
 
 	while (threadPriority < nextPriority)
 	{
@@ -125,9 +125,9 @@ void ThreadQueue_PushThread(ThreadQueue *threadQueue, ThreadInfo *thread)
 	return;
 }
 
-ThreadInfo *ThreadQueue_PopThread(ThreadQueue *queue)
+ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue)
 {
-	ThreadInfo *ret = queue->NextThread;
+	ThreadInfo* ret = queue->NextThread;
 	queue->NextThread = ret->NextThread;
 
 	return ret;
@@ -180,9 +180,9 @@ void YieldThread(void)
 	RestoreInterrupts(state);
 }
 
-void UnblockThread(ThreadQueue *threadQueue, s32 returnValue)
+void UnblockThread(ThreadQueue* threadQueue, s32 returnValue)
 {
-	ThreadInfo *nextThread = ThreadQueue_PopThread(threadQueue);
+	ThreadInfo* nextThread = ThreadQueue_PopThread(threadQueue);
 	nextThread->Context.Registers[0] = (u32)returnValue;
 	nextThread->ThreadState = Ready;
 
@@ -197,7 +197,7 @@ void UnblockThread(ThreadQueue *threadQueue, s32 returnValue)
 }
 
 //IOS Handlers
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priority, u32 detached)
+s32 CreateThread(u32 main, void* arg, u32* stack_top, u32 stacksize, s32 priority, u32 detached)
 {
 	int threadId = 0;
 	u32 irqState = DisableInterrupts();
@@ -217,7 +217,7 @@ s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize, s32 priorit
 	}
 #endif
 
-	ThreadInfo *selectedThread;
+	ThreadInfo* selectedThread;
 	while (threadId < MAX_THREADS)
 	{
 		selectedThread = &Threads[threadId];
@@ -266,7 +266,7 @@ s32 StartThread(const s32 threadId)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
-	ThreadQueue *threadQueue = NULL;
+	ThreadQueue* threadQueue = NULL;
 
 	if (threadId < 0 || threadId >= MAX_THREADS)
 	{
@@ -274,7 +274,7 @@ s32 StartThread(const s32 threadId)
 		goto restore_and_return;
 	}
 
-	ThreadInfo *threadToStart =
+	ThreadInfo* threadToStart =
 	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
 	//does the current thread even own the thread?
@@ -327,7 +327,7 @@ s32 CancelThread(const s32 threadId, u32 return_value)
 		goto restore_and_return;
 	}
 
-	ThreadInfo *threadToCancel =
+	ThreadInfo* threadToCancel =
 	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
 	//does the current thread even own the thread?
@@ -347,7 +347,7 @@ s32 CancelThread(const s32 threadId, u32 return_value)
 		threadToCancel->ThreadState = Dead;
 		if (threadToCancel->JoinQueue != NULL)
 		{
-			ThreadInfo *joiner = ThreadQueue_PopThread(threadToCancel->JoinQueue);
+			ThreadInfo* joiner = ThreadQueue_PopThread(threadToCancel->JoinQueue);
 			joiner->ThreadState = Ready;
 			ThreadQueue_PushThread(&SchedulerQueue, joiner);
 		}
@@ -369,7 +369,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 JoinThread(const s32 threadId, u32 *returnedValue)
+s32 JoinThread(const s32 threadId, u32* returnedValue)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -380,7 +380,7 @@ s32 JoinThread(const s32 threadId, u32 *returnedValue)
 		goto restore_and_return;
 	}
 
-	ThreadInfo *threadToJoin =
+	ThreadInfo* threadToJoin =
 	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
 	//does the current thread even own the thread?
@@ -426,7 +426,7 @@ s32 SuspendThread(const s32 threadId)
 		goto restore_and_return;
 	}
 
-	ThreadInfo *threadToSuspend =
+	ThreadInfo* threadToSuspend =
 	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
 	//does the current thread even own the thread?
@@ -474,7 +474,7 @@ s32 GetThreadPriority(const s32 threadId)
 {
 	u32 irqState = DisableInterrupts();
 
-	ThreadInfo *thread;
+	ThreadInfo* thread;
 	s32 ret;
 
 	if (threadId == 0 && CurrentThread != NULL)
@@ -506,7 +506,7 @@ s32 SetThreadPriority(const s32 threadId, s32 priority)
 {
 	u32 irqState = DisableInterrupts();
 
-	ThreadInfo *thread = NULL;
+	ThreadInfo* thread = NULL;
 	s32 ret = 0;
 
 	if (threadId < 0 || threadId > MAX_THREADS || (u32)priority >= 0x80)
@@ -610,20 +610,20 @@ restore_and_return:
 	return ret;
 }
 #ifndef MIOS
-s32 LaunchModule(const char *path)
+s32 LaunchModule(const char* path)
 {
 	if (GetUID() != 0)
 		return IPC_EACCES;
 
 	//*technically* heapid 0 isn't correct here. the kernel heap id just happens to be always 0, but... :)
 	//but hey, this is what IOS did!
-	Elf32_Ehdr *elfHeader = (Elf32_Ehdr *)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
+	Elf32_Ehdr* elfHeader = (Elf32_Ehdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
 	if (elfHeader == NULL)
 		return IPC_EMAX;
 
 	const u32 elfMagic = ELFMAGIC;
-	Elf32_Nhdr *noteHeader = NULL;
-	Elf32_Phdr *programHeaders = NULL;
+	Elf32_Nhdr* noteHeader = NULL;
+	Elf32_Phdr* programHeaders = NULL;
 	s32 fd = OpenFD(path, IOS_OPEN);
 	s32 ret = fd;
 	if (ret < 0)
@@ -646,8 +646,8 @@ s32 LaunchModule(const char *path)
 	if (ret != sizeof(Elf32_Ehdr))
 		goto cleanup_launch;
 
-	if (ELFMAGIC != *((u32 *)&elfHeader->e_ident[EI_MAG0]) ||
-	    IOSELFINFO != *((u32 *)&elfHeader->e_ident[EI_CLASS]))
+	if (ELFMAGIC != *((u32*)&elfHeader->e_ident[EI_MAG0]) ||
+	    IOSELFINFO != *((u32*)&elfHeader->e_ident[EI_CLASS]))
 	{
 		ret = IPC_EINVAL;
 		goto cleanup_launch;
@@ -660,8 +660,8 @@ s32 LaunchModule(const char *path)
 		goto cleanup_launch;
 	}
 
-	programHeaders = (Elf32_Phdr *)AllocateOnHeap(
-	    KernelHeapId, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
+	programHeaders =
+	    (Elf32_Phdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
 	if (!programHeaders)
 	{
 		ret = IPC_EMAX;
@@ -684,7 +684,7 @@ s32 LaunchModule(const char *path)
 	u32 noteOffset = 0;
 	for (u32 headerIndex = 0; headerIndex < headerCount; headerIndex++)
 	{
-		Elf32_Phdr *programHeader = programHeaders + headerIndex;
+		Elf32_Phdr* programHeader = programHeaders + headerIndex;
 		if (programHeader->p_type == PT_LOAD)
 		{
 			noteLength = programHeader->p_filesz;
@@ -710,13 +710,13 @@ s32 LaunchModule(const char *path)
 		if (ret < 0)
 			goto cleanup_launch;
 
-		ret = ReadFD(fd, (void *)programHeader->p_vaddr, programHeader->p_filesz);
+		ret = ReadFD(fd, (void*)programHeader->p_vaddr, programHeader->p_filesz);
 		if (ret != (s32)programHeader->p_filesz)
 			goto cleanup_launch;
 
 		//if the filecontent < the memory size we need to clear it
 		if (ret < (s32)programHeader->p_memsz)
-			memset((void *)programHeader->p_vaddr, 0, programHeader->p_memsz - (u32)ret);
+			memset((void*)programHeader->p_vaddr, 0, programHeader->p_memsz - (u32)ret);
 
 		//unknown flags
 		switch (programHeader->p_flags)
@@ -768,12 +768,12 @@ s32 LaunchModule(const char *path)
 
 	ret = 0;
 	const u32 noteSize = noteHeader->n_descsz / sizeof(ModuleInfo);
-	const ModuleInfo *module = (ModuleInfo *)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
+	const ModuleInfo* module = (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
 	for (u32 index = 0; index < noteSize; index++)
 	{
 		s32 threadId =
-		    CreateThread(module[index].EntryPoint, (void *)module[index].UserId,
-		                 (u32 *)module[index].StackAddress,
+		    CreateThread(module[index].EntryPoint, (void*)module[index].UserId,
+		                 (u32*)module[index].StackAddress,
 		                 module[index].StackSize, module[index].Priority, 1);
 		Threads[threadId].ProcessId = module[index].UserId;
 

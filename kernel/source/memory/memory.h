@@ -120,16 +120,16 @@ typedef enum
 
 #ifndef MIOS
 s32 InitializeMemory(void);
-void *KMalloc(u32 size);
-s32 MapMemory(MemorySection *entry);
+void* KMalloc(u32 size);
+s32 MapMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
-s32 CheckMemoryPointer(const void *ptr, u32 size, u32 type, u32 pid, u32 domainPid);
+s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainPid);
 void DisableInstructionCache(void);
 void DisableMMUAndDCache(void);
 #endif
-void ProtectMemory(bool enable, void *start, void *end);
-void DCInvalidateRange(const void *start, u32 size);
-void DCFlushRange(const void *start, u32 size);
+void ProtectMemory(bool enable, void* start, void* end);
+void DCInvalidateRange(const void* start, u32 size);
+void DCFlushRange(const void* start, u32 size);
 void DCFlushAll(void);
 void ICInvalidateAll(void);
 u32 TlbInvalidate(void);
@@ -153,6 +153,6 @@ void SetMemoryCompatabilityMode();
 u32 GetGDDRVendorCode(void);
 
 void mem_shutdown(void);
-u32 dma_addr(void *);
+u32 dma_addr(void*);
 
 #endif

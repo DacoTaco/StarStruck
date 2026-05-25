@@ -40,7 +40,7 @@ FlashInterfaceHandle _interfaceHandles[MAX_FLASH_HANDLES] = { { 0 } };
 // The fd is literally a pointer to one of the FlashInterfaceHandle slots
 bool IsDevFlashFileHandle(s32 fd)
 {
-	FlashInterfaceHandle *handle = (FlashInterfaceHandle *)fd;
+	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)fd;
 
   // Check if fd points within our _interfaceHandles array
 	if (handle >= &_interfaceHandles[0] &&
@@ -59,7 +59,7 @@ s32 OpenFlashHandle(void)
 	// Loop through the available handle slots
 	for (u32 i = 0; i < MAX_FLASH_HANDLES; i++)
 	{
-		FlashInterfaceHandle *handle = &_interfaceHandles[i];
+		FlashInterfaceHandle* handle = &_interfaceHandles[i];
 
 		// Check if slot is free
 		if (handle->IsActive == 0)
@@ -78,15 +78,15 @@ s32 OpenFlashHandle(void)
 #endif
 
 // Handle IOS_READ for /dev/flash
-static inline s32 HandleReadMessage(FlashInterfaceHandle *handle, const ReadMessage *readMsg,
+static inline s32 HandleReadMessage(FlashInterfaceHandle* handle, const ReadMessage* readMsg,
                                     const u32 pageSize, const u32 pageWithEcc)
 {
 	u32 readLen = readMsg->Length;
-	void *data = readMsg->MessageData;
-	void *eccBuf;
+	void* data = readMsg->MessageData;
+	void* eccBuf;
 
 	if (readLen == pageWithEcc)
-		eccBuf = (u8 *)data + pageSize;
+		eccBuf = (u8*)data + pageSize;
 	else if (readLen == pageSize)
 		eccBuf = NULL;
 	else
@@ -103,16 +103,16 @@ static inline s32 HandleReadMessage(FlashInterfaceHandle *handle, const ReadMess
 }
 
 // Handle IOS_WRITE for /dev/flash
-static inline s32 HandleWriteMessage(FlashInterfaceHandle *handle,
-                                     const WriteMessage *writeMsg,
+static inline s32 HandleWriteMessage(FlashInterfaceHandle* handle,
+                                     const WriteMessage* writeMsg,
                                      const u32 pageSize, const u32 pageWithEcc)
 {
 	u32 writeLen = writeMsg->Length;
-	u8 *data = (u8 *)writeMsg->MessageData;
-	void *eccBuf;
+	u8* data = (u8*)writeMsg->MessageData;
+	void* eccBuf;
 
 	if (writeLen == pageWithEcc)
-		eccBuf = (u8 *)data + pageSize;
+		eccBuf = (u8*)data + pageSize;
 	else if (writeLen == pageSize)
 		eccBuf = NULL;
 	else
@@ -129,17 +129,17 @@ static inline s32 HandleWriteMessage(FlashInterfaceHandle *handle,
 }
 
 // Handle IOS_CLOSE for /dev/flash
-static inline s32 HandleCloseMessage(FlashInterfaceHandle *handle)
+static inline s32 HandleCloseMessage(FlashInterfaceHandle* handle)
 {
 	handle->IsActive = 0;
 	return IPC_SUCCESS;
 }
 
-static inline s32 HandleIoctlMessage(FlashInterfaceHandle *handle,
-                                     const IoctlMessage *ioctlMsg,
-                                     const NandSizeInformation *nandSizeInfo)
+static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle,
+                                     const IoctlMessage* ioctlMsg,
+                                     const NandSizeInformation* nandSizeInfo)
 {
-	void *const outBuffer = ioctlMsg->IoBuffer;
+	void* const outBuffer = ioctlMsg->IoBuffer;
 	const u32 outSize = ioctlMsg->IoLength;
 
 	switch (ioctlMsg->Ioctl)
@@ -172,8 +172,8 @@ static inline s32 HandleIoctlMessage(FlashInterfaceHandle *handle,
 }
 
 // Handle IOS_SEEK for /dev/flash
-static inline s32 HandleSeekMessage(FlashInterfaceHandle *handle, const SeekMessage *seekMsg,
-                                    const NandSizeInformation *nandSizeInfo)
+static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMessage* seekMsg,
+                                    const NandSizeInformation* nandSizeInfo)
 {
 	// Calculate total pages in NAND
 	u32 totalPages = GetNandMaxPages(nandSizeInfo);
@@ -204,10 +204,10 @@ static inline s32 HandleSeekMessage(FlashInterfaceHandle *handle, const SeekMess
 }
 
 // Handle all IPC messages for /dev/flash device
-s32 HandleDevFlashMessage(IpcMessage *message)
+s32 HandleDevFlashMessage(IpcMessage* message)
 {
 	// Get handle from file descriptor
-	FlashInterfaceHandle *handle = (FlashInterfaceHandle *)message->Request.FileDescriptor;
+	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)message->Request.FileDescriptor;
 
 	// Get NAND size info (IOS 58 calls FS_GetNandSizeInfo_ at function start)
 	NandSizeInformation nandSizeInfo;

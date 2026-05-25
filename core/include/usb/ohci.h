@@ -49,13 +49,13 @@ typedef struct OhciEndpointDescriptor_t
 	u32 dw0;
 
  /* Lower 4 bits are ignored and available for the driver */
-	void *Tail;
+	void* Tail;
 
  /* Bits 2 and 3 need to be zero; bits 0 and 1 are ED_C and ED_H */
-	void *Head;
+	void* Head;
 
  /* Lower 4 bits are ignored and available for the driver */
-	struct OhciEndpointDescriptor_t *Next;
+	struct OhciEndpointDescriptor_t* Next;
 } OhciEndpointDescriptor;
 
 #define TD_SET(field, value) \
@@ -85,9 +85,9 @@ typedef struct OhciEndpointDescriptor_t
 typedef struct OhciTransferDescriptor_t
 {
 	u32 dw0;
-	void *CurrentBuffer;
-	struct OhciTransferDescriptor_t *Next;
-	void *LastBuffer;
+	void* CurrentBuffer;
+	struct OhciTransferDescriptor_t* Next;
+	void* LastBuffer;
 } OhciTransferDescriptor;
 
 /*
@@ -111,10 +111,10 @@ typedef struct OhciTransferDescriptor_t
 
 typedef struct
 {
-	void *InterruptTable[32];
+	void* InterruptTable[32];
 	u16 FrameNumber;
 	u16 Padding;
-	OhciTransferDescriptor *HeadDone;
+	OhciTransferDescriptor* HeadDone;
 	u8 Reserved[120];
 } OhciHcca;
 CHECK_SIZE(OhciHcca, 0x100);
@@ -220,11 +220,11 @@ typedef struct
 	u32 InterruptStatus;
 	u32 EnableInterrupts;
 	u32 DisableInterrupts;
-	OhciHcca *Hcca;
+	OhciHcca* Hcca;
 	u32 PeriodicCurrentEndpoint;
-	OhciEndpointDescriptor *ControlHeadEndpoint;
+	OhciEndpointDescriptor* ControlHeadEndpoint;
 	u32 ControlCurrentEndpoint;
-	OhciEndpointDescriptor *BulkHeadEndpoint;
+	OhciEndpointDescriptor* BulkHeadEndpoint;
 	u32 BulkCurrentEndpoint;
 	u32 DoneHead;
 	u32 FrameInterrupt;

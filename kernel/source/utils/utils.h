@@ -15,6 +15,6 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 extern bool IsWiiMode;
 
 void udelay(u32 d);
-s32 GetKernelFlavor(s16 *type, s16 *unk);
+s32 GetKernelFlavor(s16* type, s16* unk);
 
 #endif

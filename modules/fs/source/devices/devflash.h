@@ -21,4 +21,4 @@ s32 OpenFlashHandle(void);
 bool IsDevFlashFileHandle(s32 fd);
 
 // Handle IPC messages for /dev/flash device
-s32 HandleDevFlashMessage(IpcMessage *message);
+s32 HandleDevFlashMessage(IpcMessage* message);

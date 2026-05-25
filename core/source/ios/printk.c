@@ -17,7 +17,7 @@
 #include "ios/printk.h"
 #include "ios/gecko.h"
 
-static inline void _printk_output(const char *str)
+static inline void _printk_output(const char* str)
 {
 	if (SPSR_MODE_MASK(GetCurrentStatusRegister()) == SPSR_USER_MODE)
 		OSPrintk(str);
@@ -25,7 +25,7 @@ static inline void _printk_output(const char *str)
 		gecko_printf(str);
 }
 
-int printk(const char *fmt, ...)
+int printk(const char* fmt, ...)
 {
 	va_list args;
 	char buffer[256];

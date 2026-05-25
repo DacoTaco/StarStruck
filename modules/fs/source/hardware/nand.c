@@ -629,7 +629,7 @@ static void LogCommand(u32 page, CommandType commandType, s32 returnValue)
 }
 
 // Copies exactly 0x198 bytes from NandInterfaceLog to outputBuffer
-int GetNandCommandLog(void *outputBuffer)
+int GetNandCommandLog(void* outputBuffer)
 {
 	if (!outputBuffer)
 		return IPC_EINVAL;
@@ -641,7 +641,7 @@ int GetNandCommandLog(void *outputBuffer)
 	return IPC_SUCCESS;
 }
 
-void SetNandData(void *data, void *ecc)
+void SetNandData(void* data, void* ecc)
 {
 	if ((s32)data != -1)
 	{
@@ -750,7 +750,7 @@ s32 InitializeNand(void)
 	}
 
 	IoscMessageQueueId = ret;
-	ret = OSRegisterEventHandler(IRQ_NAND, IrqMessageQueueId, (void *)1);
+	ret = OSRegisterEventHandler(IRQ_NAND, IrqMessageQueueId, (void*)1);
 	if (ret != 0)
 		goto destroy_iosc_return;
 
@@ -761,7 +761,7 @@ s32 InitializeNand(void)
 
 	OSDCInvalidateRange(_nandInfoBuffer, ARRAY_LENGTH(_nandInfoBuffer));
 	SetNandAddress(0, (u32)-1);
-	SetNandData(_nandInfoBuffer, (void *)-1);
+	SetNandData(_nandInfoBuffer, (void*)-1);
 	ret = SendNandCommand(DEFAULT_READID_CMD, 1, ReadFlag, 0x40);
 	if (ret != 0)
 		goto destroy_and_return;
@@ -772,7 +772,7 @@ s32 InitializeNand(void)
 	int index = 0;
 	for (; index < 10; index++)
 	{
-		if (SupportedNandChips[index].Info.ChipId != *(u16 *)_nandInfoBuffer)
+		if (SupportedNandChips[index].Info.ChipId != *(u16*)_nandInfoBuffer)
 			continue;
 
 		memcpy(&SelectedNandChip, &SupportedNandChips[index], sizeof(NandInformation));
@@ -819,7 +819,7 @@ return_init:
 static s32 ReadNandStatus(void)
 {
 	OSDCInvalidateRange(_nandInfoBuffer, ARRAY_LENGTH(_nandInfoBuffer));
-	SetNandData(_nandInfoBuffer, (void *)-1);
+	SetNandData(_nandInfoBuffer, (void*)-1);
 	s32 ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadStatusPrefix,
 	                          0, ReadFlag, 0x40);
 	if (ret != 0)
@@ -1005,7 +1005,7 @@ copyPageEnd:
 	return ret;
 }
 
-s32 GetNandSizeInfo(NandSizeInformation *dest)
+s32 GetNandSizeInfo(NandSizeInformation* dest)
 {
 	if (dest == NULL)
 		return IPC_EINVAL;
@@ -1026,13 +1026,13 @@ s32 SelectNandSize(bool selectNandSize)
 	return TranslateErrno(errno);
 }
 
-s32 CorrectNandData(void *dataBuffer, void *eccBuffer)
+s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 {
 	s32 ret = IPC_SUCCESS;
 	const u32 spareSize = 4 << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift - 9);
 	const u32 readOffset = GetEccSize() - spareSize;
-	const u8 *ecc = (u8 *)eccBuffer;
-	u8 *data = (u8 *)dataBuffer;
+	const u8* ecc = (u8*)eccBuffer;
+	u8* data = (u8*)dataBuffer;
 
 	/* If calculated ECC equals the stored ECC region, nothing to do */
 	if (memcmp(ecc + 0x40, ecc + readOffset, spareSize) == 0)
@@ -1042,8 +1042,8 @@ s32 CorrectNandData(void *dataBuffer, void *eccBuffer)
 	u32 eccEntries = spareSize / 4;
 	for (u32 index = 0; index < eccEntries; index++)
 	{
-		u32 eccCalc = *(u32 *)(ecc + 0x40 + (index * 4));
-		u32 eccRead = *(u32 *)(ecc + readOffset + (index * 4));
+		u32 eccCalc = *(u32*)(ecc + 0x40 + (index * 4));
+		u32 eccRead = *(u32*)(ecc + readOffset + (index * 4));
 
 		if (eccCalc == eccRead)
 			continue;
@@ -1067,7 +1067,7 @@ s32 CorrectNandData(void *dataBuffer, void *eccBuffer)
 
 		// Select bit 3-12
 		u32 location = (unknown >> 3) & 0x1FF;
-		u8 *dataPointer = (u8 *)(data + location + index * 0x200);
+		u8* dataPointer = (u8*)(data + location + index * 0x200);
 		u8 correctedByte = (1 << (unknown & 0x07)) ^ *dataPointer;
 		// lol memcpy for 1 byte? silly ios, must be for the mem1 bug i suppose
 		memcpy(dataPointer, &correctedByte, 1);
@@ -1079,7 +1079,7 @@ s32 CorrectNandData(void *dataBuffer, void *eccBuffer)
 	return ret;
 }
 
-s32 ReadNandPage(u32 pageNumber, void *data, void *ecc, bool readEcc)
+s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, bool readEcc)
 {
 	s32 ret = 0;
 	u8 read_address = 0;
@@ -1115,7 +1115,7 @@ s32 ReadNandPage(u32 pageNumber, void *data, void *ecc, bool readEcc)
 		read_address = SelectedNandChip.Info.Commands.InputAddress;
 
 	if (!readEcc)
-		SetNandData(_readPageBuffer, (void *)-1);
+		SetNandData(_readPageBuffer, (void*)-1);
 	else
 		SetNandData(data, EccBuffer);
 
@@ -1157,7 +1157,7 @@ return_read:
 	return ret;
 }
 
-s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, bool writeEcc)
+s32 WriteNandPage(u32 pageNumber, void* data, void* ecc, u8 unknownWriteflag, bool writeEcc)
 {
 	s32 ret;
 	u8 cmd;
@@ -1246,7 +1246,7 @@ s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, bo
 			OSDCFlushRange(EccBuffer, GetEccSize());
 			OSAhbFlushTo(AHB_NAND);
 			SetNandAddress(address, pageNumber);
-			SetNandData(EccBuffer, (void *)-1);
+			SetNandData(EccBuffer, (void*)-1);
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.WritePrefix,
 			                      SelectedNandChip.Info.Commands.InputAddress,
 			                      IrqFlag | WriteFlag, GetEccSize());
@@ -1256,7 +1256,7 @@ s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, bo
 			OSDCFlushRange(EccBuffer, GetEccSize());
 			OSAhbFlushTo(AHB_NAND);
 			SetNandAddress(GetPageSize(), 0xFFFFFFFF);
-			SetNandData(EccBuffer, (void *)-1);
+			SetNandData(EccBuffer, (void*)-1);
 
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.RandomDataInput,
 			                      SelectedNandChip.Info.Commands.InputAddress & 3,
@@ -1302,7 +1302,7 @@ s32 CheckClusterBlocks(u32 cluster)
 		{
 			OSDCInvalidateRange(EccBuffer, GetEccSize());
 			SetNandAddress(0, unkn + i);
-			SetNandData(EccBuffer, (void *)-1);
+			SetNandData(EccBuffer, (void*)-1);
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadPost,
 			                      SelectedNandChip.Info.Commands.InputAddress,
 			                      IrqFlag | ReadFlag | WaitFlag, GetEccSize());
@@ -1324,7 +1324,7 @@ s32 CheckClusterBlocks(u32 cluster)
 				return ret;
 
 			OSDCInvalidateRange(EccBuffer, GetEccSize());
-			SetNandData(EccBuffer, (void *)-1);
+			SetNandData(EccBuffer, (void*)-1);
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, 0,
 			                      IrqFlag | ReadFlag | WaitFlag, GetEccSize());
 			if (ret != 0)

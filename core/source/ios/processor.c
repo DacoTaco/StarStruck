@@ -13,7 +13,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #include "ios/processor.h"
 #include "vsprintf.h"
 
-int sprintf(char *buffer, const char *fmt, ...)
+int sprintf(char* buffer, const char* fmt, ...)
 {
 	va_list args;
 	int i;
@@ -24,7 +24,7 @@ int sprintf(char *buffer, const char *fmt, ...)
 	return i;
 }
 
-int snprintf(char *buffer, size_t size, const char *fmt, ...)
+int snprintf(char* buffer, size_t size, const char* fmt, ...)
 {
 	va_list args;
 	int i;

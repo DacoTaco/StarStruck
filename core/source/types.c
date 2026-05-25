@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-void hextou32(const char *str, u32 *out)
+void hextou32(const char* str, u32* out)
 {
 	u32 shift = 28;
 	*out = 0;

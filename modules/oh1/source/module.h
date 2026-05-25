@@ -16,18 +16,18 @@ IOS. oh1 - usb ohci implementation in ios
 
 #include "communications.h"
 
-#define MASK_PTR(ptr, mask)         ((void *)((u32)ptr & (mask)))
-#define PTR_WITH_BITS(ptr, bits)    ((void *)((u32)ptr | (bits)))
+#define MASK_PTR(ptr, mask)         ((void*)((u32)ptr & (mask)))
+#define PTR_WITH_BITS(ptr, bits)    ((void*)((u32)ptr | (bits)))
 #define PADDED4_SIZEOF(type)        (((sizeof(type) + 3) / 4) * 4)
 
 #define OH1_STATE_DEVICE_QUERIED    (1 << 0)
 #define OH1_STATE_PROCESSING_EVENTS (1 << 1)
 typedef struct
 {
-	volatile OhciRegs *HardwareRegisters;
-	OhciHcca *Hcca;
+	volatile OhciRegs* HardwareRegisters;
+	OhciHcca* Hcca;
 	u32 FrameInterval;
-	OhciEndpointDescriptor *EndpointDescriptors;
+	OhciEndpointDescriptor* EndpointDescriptors;
 	s32 Timer;
 	s32 TimerQueue;
 	s32 QueueId;
@@ -53,15 +53,15 @@ CHECK_OFFSET(OH1ModuleControl, 0x24, State);
 CHECK_OFFSET(OH1ModuleControl, 0x28, AHBDevice);
 CHECK_OFFSET(OH1ModuleControl, 0x29, AHBDeviceToFlush);
 
-int InitialiseModule(OH1ModuleControl *module);
-int QueryModuleDevices(OH1ModuleControl *module);
-int SleepModule(OH1ModuleControl *module, u32 timeout);
-int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage);
-int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessage);
-void CloseEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint);
-void DisableEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint);
-void ResumeEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint);
-int SuspendDevice(OH1ModuleControl *module, u8 port);
-int ResumeDevice(OH1ModuleControl *module, u8 port);
-void HandleStatusChange(OH1ModuleControl *module, int /*unused*/);
-void CloseDevice(OH1ModuleControl *module, s8 deviceIndex);
+int InitialiseModule(OH1ModuleControl* module);
+int QueryModuleDevices(OH1ModuleControl* module);
+int SleepModule(OH1ModuleControl* module, u32 timeout);
+int ProcessControlMessage(OH1ModuleControl* module, IpcMessage* ipcMessage);
+int ProcessInterruptBlockMessage(OH1ModuleControl* module, IpcMessage* ipcMessage);
+void CloseEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint);
+void DisableEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint);
+void ResumeEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint);
+int SuspendDevice(OH1ModuleControl* module, u8 port);
+int ResumeDevice(OH1ModuleControl* module, u8 port);
+void HandleStatusChange(OH1ModuleControl* module, int /*unused*/);
+void CloseDevice(OH1ModuleControl* module, s8 deviceIndex);

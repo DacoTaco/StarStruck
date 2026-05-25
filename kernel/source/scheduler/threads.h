@@ -75,7 +75,7 @@ CHECK_SIZE(ThreadContext, 0x44);
 typedef struct ThreadInfo
 {
 	ThreadContext Context;
-	struct ThreadInfo *NextThread;
+	struct ThreadInfo* NextThread;
 #ifdef MIOS
 	s32 Priority;
 	u32 ThreadState;
@@ -88,8 +88,8 @@ typedef struct ThreadInfo
 	u32 ProcessId;
 	u32 IsDetached;
 	u32 ReturnValue;
-	struct ThreadQueue *JoinQueue;
-	struct ThreadQueue *ThreadQueue;
+	struct ThreadQueue* JoinQueue;
+	struct ThreadQueue* ThreadQueue;
 	ThreadContext UserContext;
 #ifndef MIOS
 	u32 DefaultThreadStack;
@@ -119,25 +119,25 @@ CHECK_SIZE(ThreadInfo, 0xB0);
 
 typedef struct ThreadQueue
 {
-	ThreadInfo *NextThread;
+	ThreadInfo* NextThread;
 } ThreadQueue;
 
 extern ThreadInfo Threads[MAX_THREADS];
-extern ThreadInfo *CurrentThread;
+extern ThreadInfo* CurrentThread;
 extern ThreadInfo ThreadStartingState;
 extern ThreadQueue SchedulerQueue;
 
 void InitializeThreadContext(void);
 void ScheduleYield(void);
 void YieldThread(void);
-s32 YieldCurrentThread(ThreadQueue *threadQueue);
-void UnblockThread(ThreadQueue *threadQueue, s32 returnValue);
-ThreadInfo *ThreadQueue_PopThread(ThreadQueue *queue);
-void ThreadQueue_PushThread(ThreadQueue *threadQueue, ThreadInfo *thread);
-s32 CreateThread(u32 main, void *arg, u32 *stack_top, u32 stacksize,
+s32 YieldCurrentThread(ThreadQueue* threadQueue);
+void UnblockThread(ThreadQueue* threadQueue, s32 returnValue);
+ThreadInfo* ThreadQueue_PopThread(ThreadQueue* queue);
+void ThreadQueue_PushThread(ThreadQueue* threadQueue, ThreadInfo* thread);
+s32 CreateThread(u32 main, void* arg, u32* stack_top, u32 stacksize,
                  s32 priority, u32 detached);
 s32 CancelThread(const s32 threadId, u32 return_value);
-s32 JoinThread(const s32 threadId, u32 *returnedValue);
+s32 JoinThread(const s32 threadId, u32* returnedValue);
 s32 SuspendThread(const s32 threadId);
 s32 StartThread(const s32 threadId);
 s32 GetThreadID(void);
@@ -150,5 +150,5 @@ u16 GetGID(void);
 s32 SetGID(u32 pid, u16 gid);
 
 #ifndef MIOS
-s32 LaunchModule(const char *path);
+s32 LaunchModule(const char* path);
 #endif

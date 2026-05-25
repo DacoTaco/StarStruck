@@ -86,7 +86,7 @@ static u32 _gecko_sendbyte(u8 sendbyte)
 	return 0;
 }
 
-u32 _gecko_recvbyte(u8 *recvbyte)
+u32 _gecko_recvbyte(u8* recvbyte)
 {
 	u32 i = 0;
 	*recvbyte = 0;
@@ -142,10 +142,10 @@ void gecko_flush(void)
 }
 
 #if !defined(GECKO_SAFE)
-static u32 gecko_sendbuffer(const void *buffer, u32 size)
+static u32 gecko_sendbuffer(const void* buffer, u32 size)
 {
 	u32 left = size;
-	char *ptr = (char *)buffer;
+	char* ptr = (char*)buffer;
 
 	while (left > 0)
 	{
@@ -161,10 +161,10 @@ static u32 gecko_sendbuffer(const void *buffer, u32 size)
 #endif
 
 #if defined(GECKO_SAFE)
-static u32 gecko_sendbuffer_safe(const void *buffer, u32 size)
+static u32 gecko_sendbuffer_safe(const void* buffer, u32 size)
 {
 	u32 left = size;
-	char *ptr = (char *)buffer;
+	char* ptr = (char*)buffer;
 
 	if ((read32(HW_EXICTRL) & EXICTRL_ENABLE_EXI) == 0)
 		return left;
@@ -214,7 +214,7 @@ u8 gecko_enable_console(const u8 enable)
 }
 
 #ifndef NDEBUG
-u32 gecko_printf(const char *fmt, ...)
+u32 gecko_printf(const char* fmt, ...)
 {
 	if (!gecko_console_enabled)
 		return 0;

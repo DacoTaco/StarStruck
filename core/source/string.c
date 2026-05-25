@@ -12,34 +12,32 @@ https://negix.net/trac/pdclib
 
 #include "string.h"
 
-size_t strlen(const char *s)
+size_t strlen(const char* s)
 {
 	size_t len;
 
-	for (len = 0; s[len]; len++)
-		;
+	for (len = 0; s[len]; len++);
 
 	return len;
 }
 
-size_t strnlen(const char *s, size_t count)
+size_t strnlen(const char* s, size_t count)
 {
 	size_t len;
 
-	for (len = 0; s[len] && len < count; len++)
-		;
+	for (len = 0; s[len] && len < count; len++);
 
 	return len;
 }
 
-void set_memory(void *dest, const unsigned char data, size_t len)
+void set_memory(void* dest, const unsigned char data, size_t len)
 {
-	u8 *input = (u8 *)dest;
-	if (input < (u8 *)0x1800000)
+	u8* input = (u8*)dest;
+	if (input < (u8*)0x1800000)
 	{
 		for (; len != 0; len--)
 		{
-			u32 *address = (u32 *)((u32)input & (u32)~0x03);
+			u32* address = (u32*)((u32)input & (u32)~0x03);
 			u32 offset = 24 - ((u32)input & 0x03) * 8;
 			*address = (*address & (u32) ~(0xFF << offset)) | (data << offset);
 			;
@@ -50,20 +48,20 @@ void set_memory(void *dest, const unsigned char data, size_t len)
 	{
 		for (; len != 0; len--)
 		{
-			*(u8 *)input = data;
+			*(u8*)input = data;
 			input++;
 		}
 	}
 }
 
 //this is more like a regular memset, but only used at the end of memset..
-__attribute__((target("arm"))) void set_memory_short(void *dest, const unsigned char c, size_t len)
+__attribute__((target("arm"))) void set_memory_short(void* dest, const unsigned char c, size_t len)
 {
 	u32 data = c | (c << 8) | (u32)(c << 16) | (u32)(c << 24);
 	register u32 data1 asm("r3") = data;
 	register u32 data2 asm("r4") = data;
 	register u32 data3 asm("r5") = data;
-	u32 *address = dest;
+	u32* address = dest;
 	for (u32 index = len & 0xFFFFFFF0; index != 0; index -= 0x10)
 	{
 		__asm__ volatile(
@@ -82,12 +80,12 @@ __attribute__((target("arm"))) void set_memory_short(void *dest, const unsigned 
 // IOS has a completely custom memset to deal with a MEM1 HW bug
 // MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
 // hence the weird access/seperation of code
-void *memset(void *dest, int character, size_t length)
+void* memset(void* dest, int character, size_t length)
 {
 	if (length == 0)
 		return dest;
 
-	u8 *destination = dest;
+	u8* destination = dest;
 	const u8 data = (u8)character & 0xff;
 	u32 cnt = 0;
 
@@ -103,7 +101,7 @@ void *memset(void *dest, int character, size_t length)
 
 		set_memory(dest, data, cnt);
 		length -= cnt;
-		destination = (u8 *)((u32)dest & 0xFFFFFFFC) + 4;
+		destination = (u8*)((u32)dest & 0xFFFFFFFC) + 4;
 	}
 
 	//align destination to 16 bytes
@@ -123,7 +121,7 @@ void *memset(void *dest, int character, size_t length)
 		if (alignedCnt != 0)
 		{
 			u16 alignedData = (u16)(data | (data << 8));
-			u32 *address = (u32 *)destination;
+			u32* address = (u32*)destination;
 			for (; 3 < alignedCnt; alignedCnt -= 4)
 			{
 				*address = (u32)(alignedData | alignedData << 0x10);
@@ -139,7 +137,7 @@ void *memset(void *dest, int character, size_t length)
 			return dest;
 
 		length = dataToCopy - 0x10 + ((u32)destination & 0x0F);
-		destination = (void *)(((u32)destination & (u32)0xFFFFFFF0) + 0x10);
+		destination = (void*)(((u32)destination & (u32)0xFFFFFFF0) + 0x10);
 		cnt = length & 0xFFFFFFF0;
 	}
 
@@ -160,14 +158,14 @@ void *memset(void *dest, int character, size_t length)
 // IOS has a completely custom memcpy to deal with a MEM1 HW bug
 // MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
 // hence the weird access/seperation of code
-__attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t len)
+__attribute__((target("arm"))) void* memcpy(void* dest, const void* src, size_t len)
 {
 	if (len == 0)
 		return dest;
 
-	void *ret = dest;
-	u8 *input = (u8 *)dest;
-	u8 *source = (u8 *)src;
+	void* ret = dest;
+	u8* input = (u8*)dest;
+	u8* source = (u8*)src;
 	//nintendo's memcpy is very optimised and custom written and its lovely lol
 
 	if ((((u32)input | (u32)source) & 0x03) == 0)
@@ -203,7 +201,7 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 		//ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
 		while (len >= 4)
 		{
-			*(u32 *)input = *(u32 *)source;
+			*(u32*)input = *(u32*)source;
 			input += 4;
 			source += 4;
 			len -= 4;
@@ -211,13 +209,13 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 	}
 
 	//and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
-	if (input < (u8 *)0x1800000)
+	if (input < (u8*)0x1800000)
 	{
 		for (; len != 0; len--)
 		{
-			u32 *address = (u32 *)((u32)input & (u32)~0x03);
+			u32* address = (u32*)((u32)input & (u32)~0x03);
 			u32 offset = 24 - ((u32)input & 0x03) * 8;
-			u8 data = *(u8 *)source;
+			u8 data = *(u8*)source;
 			*address = (*address & (u32) ~(0xFF << (offset & 0xFF))) |
 			           (data << (offset & 0xFF));
 			input++;
@@ -228,7 +226,7 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 	{
 		while (len != 0)
 		{
-			*(u8 *)input = *(u8 *)source;
+			*(u8*)input = *(u8*)source;
 			input++;
 			source++;
 			len--;
@@ -238,11 +236,11 @@ __attribute__((target("arm"))) void *memcpy(void *dest, const void *src, size_t 
 	return ret;
 }
 
-int memcmp(const void *s1, const void *s2, size_t len)
+int memcmp(const void* s1, const void* s2, size_t len)
 {
 	size_t i;
-	const unsigned char *p1 = (const unsigned char *)s1;
-	const unsigned char *p2 = (const unsigned char *)s2;
+	const unsigned char* p1 = (const unsigned char*)s1;
+	const unsigned char* p2 = (const unsigned char*)s2;
 
 	for (i = 0; i < len; i++)
 		if (p1[i] != p2[i])
@@ -251,22 +249,20 @@ int memcmp(const void *s1, const void *s2, size_t len)
 	return 0;
 }
 
-int strcmp(const char *s1, const char *s2)
+int strcmp(const char* s1, const char* s2)
 {
 	size_t i;
 
-	for (i = 0; s1[i] && s1[i] == s2[i]; i++)
-		;
+	for (i = 0; s1[i] && s1[i] == s2[i]; i++);
 
 	return s1[i] - s2[i];
 }
 
-int strncmp(const char *s1, const char *s2, size_t n)
+int strncmp(const char* s1, const char* s2, size_t n)
 {
 	size_t i;
 
-	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++)
-		;
+	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++);
 	if (i == n)
 		return 0;
 	return s1[i] - s2[i];
@@ -276,7 +272,7 @@ int strncmp(const char *s1, const char *s2, size_t n)
 // IOS has a completely custom strncpy to deal with a MEM1 HW bug
 // MEM1 accesses of 4 bytes (strb & strh) to MEM1 will thrash 4 bytes
 // hence the weird access/seperation of code
-char *strncpy(char *dest, const char *src, size_t maxlen)
+char* strncpy(char* dest, const char* src, size_t maxlen)
 {
 	// if in mem1, work in u32 sized chunks
 	if ((u32)dest < 0x01800000)
@@ -285,7 +281,7 @@ char *strncpy(char *dest, const char *src, size_t maxlen)
 		u32 destination = (u32)dest;
 		while (index < maxlen)
 		{
-			u32 *address = (u32 *)(destination & (u32)~0x03);
+			u32* address = (u32*)(destination & (u32)~0x03);
 			u32 offset = 24 - (destination & 0x03) * 8;
 			u32 value = (*address & (u32) ~(0xFF << offset)) | ((src[index]) << offset);
 			*address = value;
@@ -298,7 +294,7 @@ char *strncpy(char *dest, const char *src, size_t maxlen)
 		//add padding
 		while (index < maxlen)
 		{
-			u32 *address = (u32 *)(destination & (u32)~0x03);
+			u32* address = (u32*)(destination & (u32)~0x03);
 			u32 offset = 24 - ((u32)destination & 0x03) * 8;
 			*address = (*address & (u32) ~(0xFF << offset));
 
@@ -325,7 +321,7 @@ char *strncpy(char *dest, const char *src, size_t maxlen)
 	return dest;
 }
 
-size_t strlcpy(char *dest, const char *src, size_t maxlen)
+size_t strlcpy(char* dest, const char* src, size_t maxlen)
 {
 	size_t len, needed;
 
@@ -339,7 +335,7 @@ size_t strlcpy(char *dest, const char *src, size_t maxlen)
 	return needed - 1;
 }
 
-size_t strlcat(char *dest, const char *src, size_t maxlen)
+size_t strlcat(char* dest, const char* src, size_t maxlen)
 {
 	size_t used;
 
@@ -347,20 +343,20 @@ size_t strlcat(char *dest, const char *src, size_t maxlen)
 	return used + strlcpy(dest + used, src, maxlen - used);
 }
 
-char *strchr(const char *s, int c)
+char* strchr(const char* s, int c)
 {
 	size_t i;
 
 	for (i = 0; s[i]; i++)
 		if (s[i] == (char)c)
-			return (char *)s + i;
+			return (char*)s + i;
 
 	return NULL;
 }
 
-char *strrchr(const char *s, int c)
+char* strrchr(const char* s, int c)
 {
-	const char *last = NULL;
+	const char* last = NULL;
 
 	while (*s)
 	{
@@ -373,15 +369,15 @@ char *strrchr(const char *s, int c)
 
 	// Check the null terminator as well (important if c == '\0')
 	if ((char)c == '\0')
-		return (char *)s;
+		return (char*)s;
 
-	return (char *)last;
+	return (char*)last;
 }
 
-size_t strspn(const char *s1, const char *s2)
+size_t strspn(const char* s1, const char* s2)
 {
 	size_t len = 0;
-	const char *p;
+	const char* p;
 
 	while (s1[len])
 	{
@@ -402,10 +398,10 @@ size_t strspn(const char *s1, const char *s2)
 	return len;
 }
 
-size_t strcspn(const char *s1, const char *s2)
+size_t strcspn(const char* s1, const char* s2)
 {
 	size_t len = 0;
-	const char *p;
+	const char* p;
 
 	while (s1[len])
 	{

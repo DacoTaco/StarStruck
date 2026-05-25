@@ -55,7 +55,7 @@ s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size)
 }
 
 // Open a file and return its handle
-s32 GetFileHandle(u32 userId, u16 groupId, const char *path, AccessMode mode)
+s32 GetFileHandle(u32 userId, u16 groupId, const char* path, AccessMode mode)
 {
  // Validate path length
 	u32 pathLen = GetPathLength(path);
@@ -63,7 +63,7 @@ s32 GetFileHandle(u32 userId, u16 groupId, const char *path, AccessMode mode)
 		return FS_EINVAL;
 
  // Get superblock
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -73,7 +73,7 @@ s32 GetFileHandle(u32 userId, u16 groupId, const char *path, AccessMode mode)
 		return FS_ENOENT;
 
  // Get FST entry and check if it's a file (not directory)
-	FileSystemTableEntry *fstEntry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* fstEntry = GetFstEntry(superblock, inode);
 	if ((fstEntry->Mode.Fields.Type & S_IFMT) != S_IFREG)
 		return FS_EINVAL;
 
@@ -91,7 +91,7 @@ s32 GetFileHandle(u32 userId, u16 groupId, const char *path, AccessMode mode)
 }
 
 // Close a file handle and flush superblock if needed
-s32 CloseHandle(FSHandle *handle)
+s32 CloseHandle(FSHandle* handle)
 {
 	s32 ret = IPC_SUCCESS;
 
@@ -100,7 +100,7 @@ s32 CloseHandle(FSHandle *handle)
 		return FS_EINVAL;
 
  // Get superblock
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -119,9 +119,9 @@ s32 CloseHandle(FSHandle *handle)
 }
 
 // Handle IOS_CLOSE for /dev/fs files
-s32 HandleDevFsClose(IpcMessage *message)
+s32 HandleDevFsClose(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
 	s32 ret = IPC_SUCCESS;
 
  // Check if handle has an error stored
@@ -129,7 +129,7 @@ s32 HandleDevFsClose(IpcMessage *message)
 		ret = (s32)handle->Error;
 
  // Find and flush any cached cluster data for this handle
-	ClusterCacheEntry *cache = FindCachedCluster(handle);
+	ClusterCacheEntry* cache = FindCachedCluster(handle);
 	if (cache != NULL)
 	{
 		s32 flushRet = FlushCachedCluster(cache);
@@ -155,9 +155,9 @@ s32 HandleDevFsClose(IpcMessage *message)
 }
 
 // Handle IOS_READ for /dev/fs files
-s32 HandleDevFsRead(IpcMessage *message)
+s32 HandleDevFsRead(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
 
  // Propagate any deferred error stored on the handle
 	s32 ret = (s32)handle->Error;
@@ -172,7 +172,7 @@ s32 HandleDevFsRead(IpcMessage *message)
 	if ((handle->Mode & Read) == 0)
 		return FS_EACCESS;
 
-	u8 *output = (u8 *)message->Request.Message.Read.MessageData;
+	u8* output = (u8*)message->Request.Message.Read.MessageData;
 	u32 readLen = message->Request.Message.Read.Length;
 	s32 progress = 0;
 
@@ -180,7 +180,7 @@ s32 HandleDevFsRead(IpcMessage *message)
 	if (handle->Size < readLen + handle->FilePointer)
 		readLen = handle->Size - handle->FilePointer;
 
-	ClusterCacheEntry *cache;
+	ClusterCacheEntry* cache;
 	while (readLen != 0)
 	{
 		cache = FindCachedCluster(handle);
@@ -201,7 +201,7 @@ s32 HandleDevFsRead(IpcMessage *message)
 
 		// Cache miss – determine how to load the next cluster
 		u32 clusterAlignedPos = handle->FilePointer & CLUSTER_MASK;
-		u8 *outputBuffer;
+		u8* outputBuffer;
 		if ((handle->FilePointer & (CLUSTER_SIZE - 1)) == 0 &&
 		    readLen >= CLUSTER_SIZE && ((u32)(output + progress) & 0x3F) == 0)
 		{
@@ -221,7 +221,7 @@ s32 HandleDevFsRead(IpcMessage *message)
 		{
 			// Normal path: load the cluster into a cache entry; the data will be
 			// served byte-by-byte on the next loop iteration(s).
-			ClusterCacheEntry *entry;
+			ClusterCacheEntry* entry;
 			if (cache == NULL)
 			{
 				entry = GetClusterCacheEntry(handle);
@@ -255,10 +255,10 @@ s32 HandleDevFsRead(IpcMessage *message)
 }
 
 // Handle IOS_WRITE for /dev/fs files
-s32 HandleDevFsWrite(IpcMessage *message)
+s32 HandleDevFsWrite(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
-	const u8 *writeData = (const u8 *)message->Request.Message.Write.MessageData;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
+	const u8* writeData = (const u8*)message->Request.Message.Write.MessageData;
 	u32 writeLen = message->Request.Message.Write.Length;
 	s32 progress = 0;
 
@@ -275,7 +275,7 @@ s32 HandleDevFsWrite(IpcMessage *message)
 	if ((handle->Mode & Write) == 0)
 		return FS_EACCESS;
 
-	ClusterCacheEntry *cache;
+	ClusterCacheEntry* cache;
 	while (writeLen != 0)
 	{
 		cache = FindCachedCluster(handle);
@@ -398,9 +398,9 @@ s32 HandleDevFsWrite(IpcMessage *message)
 }
 
 // Handle IOS_SEEK for /dev/fs files
-s32 HandleDevFsSeek(IpcMessage *message)
+s32 HandleDevFsSeek(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
 	if (handle->Error != 0)
 		return (s32)handle->Error;
 
@@ -432,10 +432,10 @@ s32 HandleDevFsSeek(IpcMessage *message)
 }
 
 // Handle IOS_IOCTL for /dev/fs
-s32 HandleDevFsIoctl(IpcMessage *message)
+s32 HandleDevFsIoctl(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
-	IoctlMessage *ioctl = &message->Request.Message.Ioctl;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
+	IoctlMessage* ioctl = &message->Request.Message.Ioctl;
 	s32 ret;
 
 	switch (ioctl->Ioctl)
@@ -447,7 +447,7 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			if (ioctl->IoLength < sizeof(SFFSStatistics))
 				return FS_EINVAL;
 
-			SFFSStatistics *out = (SFFSStatistics *)ioctl->IoBuffer;
+			SFFSStatistics* out = (SFFSStatistics*)ioctl->IoBuffer;
 			ret = GetStats(out);
 			// Adjust free/used cluster counts to account for dirty cache entries
 			// that are not yet flushed to NAND
@@ -467,8 +467,8 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			if (ioctl->InputLength < (s32)sizeof(FileOperationsParameter))
 				return FS_EINVAL;
 
-			FileOperationsParameter *attributes =
-			    (FileOperationsParameter *)ioctl->InputBuffer;
+			FileOperationsParameter* attributes =
+			    (FileOperationsParameter*)ioctl->InputBuffer;
 			return CreateDirectory(handle->UserId, handle->GroupId, attributes->Path,
 			                       attributes->Attributes, attributes->OwnerPermissions,
 			                       attributes->GroupPermissions,
@@ -478,7 +478,7 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			if (ioctl->InputLength < (s32)sizeof(FileOperationsParameter))
 				return FS_EINVAL;
 
-			FileOperationsParameter *inAttr = (FileOperationsParameter *)ioctl->InputBuffer;
+			FileOperationsParameter* inAttr = (FileOperationsParameter*)ioctl->InputBuffer;
 			return SetAttributes(handle->UserId, inAttr->Path, inAttr->UserId,
 			                     inAttr->GroupId, inAttr->Attributes, inAttr->OwnerPermissions,
 			                     inAttr->GroupPermissions, inAttr->OtherPermissions);
@@ -488,7 +488,7 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			    ioctl->IoLength < (s32)sizeof(FileOperationsParameter))
 				return FS_EINVAL;
 
-			GetAttributesParameters *getAttr = (GetAttributesParameters *)ioctl->InputBuffer;
+			GetAttributesParameters* getAttr = (GetAttributesParameters*)ioctl->InputBuffer;
 			u32 userId;
 			u16 groupId;
 			ret = GetAttributes(handle->UserId, handle->GroupId, getAttr->Path,
@@ -506,27 +506,26 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 				return FS_EINVAL;
 
 			return DeletePath(handle->UserId, handle->GroupId,
-			                  (const char *)ioctl->InputBuffer);
+			                  (const char*)ioctl->InputBuffer);
 
 		case IOCTL_RENAME:
 			// Expect two MAX_FILE_PATH buffers concatenated: source path then destination path
-			const FileRenameParameter *paths =
-			    (const FileRenameParameter *)ioctl->InputBuffer;
+			const FileRenameParameter* paths = (const FileRenameParameter*)ioctl->InputBuffer;
 			return Rename(handle->UserId, handle->GroupId, paths->Source, paths->Destination);
 
 		case IOCTL_CREATEFILE:
 			if (ioctl->InputLength < (s32)sizeof(FileOperationsParameter))
 				return FS_EINVAL;
 
-			FileOperationsParameter *createAttr =
-			    (FileOperationsParameter *)ioctl->InputBuffer;
+			FileOperationsParameter* createAttr =
+			    (FileOperationsParameter*)ioctl->InputBuffer;
 			return CreateFile(handle->UserId, handle->GroupId, createAttr->Path,
 			                  createAttr->Attributes, createAttr->OwnerPermissions,
 			                  createAttr->GroupPermissions, createAttr->OtherPermissions);
 
 		case IOCTL_SETFILEVERCTRL:
-			const FileOperationsParameter *versionControlParameters =
-			    (const FileOperationsParameter *)ioctl->InputBuffer;
+			const FileOperationsParameter* versionControlParameters =
+			    (const FileOperationsParameter*)ioctl->InputBuffer;
 			return SetFileVersionControl(handle->UserId,
 			                             versionControlParameters->Path,
 			                             (u32)versionControlParameters->Attributes);
@@ -544,7 +543,7 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 			if (handle->Inode == SFFSErasedNode)
 				return FS_EINVAL;
 
-			FileStatistics *stats = (FileStatistics *)ioctl->IoBuffer;
+			FileStatistics* stats = (FileStatistics*)ioctl->IoBuffer;
 			stats->FileLength = handle->Size;
 			stats->FilePosition = handle->FilePointer;
 			return IPC_SUCCESS;
@@ -559,10 +558,10 @@ s32 HandleDevFsIoctl(IpcMessage *message)
 }
 
 // Handle IOS_IOCTLV for /dev/fs
-s32 HandleDevFsIoctlv(IpcMessage *message)
+s32 HandleDevFsIoctlv(IpcMessage* message)
 {
-	FSHandle *handle = (FSHandle *)message->Request.FileDescriptor;
-	IoctlvMessage *ioctlvMessage = &message->Request.Message.Ioctlv;
+	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
+	IoctlvMessage* ioctlvMessage = &message->Request.Message.Ioctlv;
 	switch (ioctlvMessage->Ioctl)
 	{
 		case IOCTLV_READDIR: {
@@ -577,24 +576,24 @@ s32 HandleDevFsIoctlv(IpcMessage *message)
 			    ioctlvMessage->MessageData[1].Length != sizeof(u32))
 				return FS_EINVAL;
 
-			const char *filePath = (char *)ioctlvMessage->MessageData[0].Data;
-			char *files = NULL;
-			u32 *numberOfEntries;
+			const char* filePath = (char*)ioctlvMessage->MessageData[0].Data;
+			char* files = NULL;
+			u32* numberOfEntries;
 			if (ioctlvMessage->InputArgc == 2)
 			{
-				const u32 bufferSize = (*(u32 *)ioctlvMessage->MessageData[1].Data) *
+				const u32 bufferSize = (*(u32*)ioctlvMessage->MessageData[1].Data) *
 				                       (MAX_FILE_SIZE + 1);
 				if (ioctlvMessage->MessageData[3].Length != 4 ||
 				    ioctlvMessage->MessageData[2].Length != bufferSize)
 					return FS_EINVAL;
 
-				files = (char *)ioctlvMessage->MessageData[2].Data;
-				numberOfEntries = (u32 *)ioctlvMessage->MessageData[3].Data;
+				files = (char*)ioctlvMessage->MessageData[2].Data;
+				numberOfEntries = (u32*)ioctlvMessage->MessageData[3].Data;
 			}
 			else
-				numberOfEntries = (u32 *)ioctlvMessage->MessageData[1].Data;
+				numberOfEntries = (u32*)ioctlvMessage->MessageData[1].Data;
 
-			*numberOfEntries = *((u32 *)ioctlvMessage->MessageData[1].Data);
+			*numberOfEntries = *((u32*)ioctlvMessage->MessageData[1].Data);
 			return ReadDirectory(handle->UserId, handle->GroupId, filePath,
 			                     files, numberOfEntries);
 		}
@@ -610,9 +609,9 @@ s32 HandleDevFsIoctlv(IpcMessage *message)
 			    ioctlvMessage->MessageData[2].Length != sizeof(u32))
 				return FS_EINVAL;
 
-			return GetPathUsage((const char *)ioctlvMessage->MessageData[0].Data,
-			                    (u32 *)ioctlvMessage->MessageData[1].Data,
-			                    (u32 *)ioctlvMessage->MessageData[2].Data);
+			return GetPathUsage((const char*)ioctlvMessage->MessageData[0].Data,
+			                    (u32*)ioctlvMessage->MessageData[1].Data,
+			                    (u32*)ioctlvMessage->MessageData[2].Data);
 		}
 		case IOCTLV_MASSCREATE: {
 			// parameters are:
@@ -622,8 +621,8 @@ s32 HandleDevFsIoctlv(IpcMessage *message)
 				return FS_EINVAL;
 
 			const u32 numberOfFiles = ioctlvMessage->InputArgc - 1;
-			IoctlvMessageData *sizesVector = &ioctlvMessage->MessageData[numberOfFiles];
-			u32 *sizes = (u32 *)sizesVector->Data;
+			IoctlvMessageData* sizesVector = &ioctlvMessage->MessageData[numberOfFiles];
+			u32* sizes = (u32*)sizesVector->Data;
 
 			// The last input vector holds the sizes array: one u32 per file
 			if (sizesVector->Length != numberOfFiles * sizeof(u32))
@@ -632,8 +631,8 @@ s32 HandleDevFsIoctlv(IpcMessage *message)
 			// Validate each file path
 			for (u32 i = 0; i < numberOfFiles; i++)
 			{
-				u32 pathLen =
-				    strnlen((const char *)ioctlvMessage->MessageData[i].Data, MAX_FILE_PATH);
+				u32 pathLen = strnlen((const char*)ioctlvMessage->MessageData[i].Data,
+				                      MAX_FILE_PATH);
 				if (pathLen == MAX_FILE_PATH ||
 				    pathLen + 1 != ioctlvMessage->MessageData[i].Length)
 					return FS_EINVAL;

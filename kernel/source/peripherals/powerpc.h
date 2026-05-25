@@ -24,13 +24,13 @@ static inline u32 PPCVirtToPhys(u32 addr)
 
 void PPCHardReset(void);
 void PPCSoftReset(void);
-void PPCLoadCode(bool wiiMode, const void *code, u32 codeSize);
+void PPCLoadCode(bool wiiMode, const void* code, u32 codeSize);
 void PPCSetMEM1(u32 hollywoodVersion, u32 gddrVendorCode);
 void PPCStart(void);
 void PPCSetSDKSemaphore(bool hasSemaphore);
 
 #ifndef MIOS
-int LoadPPC(const char *path);
+int LoadPPC(const char* path);
 #endif
 
 //old mini stuff

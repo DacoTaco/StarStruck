@@ -52,4 +52,4 @@ CHECK_OFFSET(Boot2Handle, 0x880, PageCursor);
 bool IsBoot2FileHandle(s32 fd);
 s32 OpenBoot2FileHandle(void);
 s32 CloseBoot2FileHandle(void);
-s32 HandleDevBoot2Message(IpcMessage *message);
+s32 HandleDevBoot2Message(IpcMessage* message);

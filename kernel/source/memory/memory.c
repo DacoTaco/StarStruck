@@ -54,12 +54,12 @@ Copyright (C) 2021			DacoTaco
 
 #define MEMBLOCK_COUNT(start, end)  ((end - start) / LINESIZE)
 #define ALIGN_FORWARD(addr) \
-	((typeof(addr))((((u32)(addr)) + (LINESIZE)-1) & (~(u32)(LINESIZE - 1))))
+	((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE - 1))))
 #define ALIGN_BACKWARD(addr) \
 	((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE - 1))))
 
-void _dc_inval_entries(const void *start, u32 count);
-void _dc_flush_entries(const void *start, u32 count);
+void _dc_inval_entries(const void* start, u32 count);
+void _dc_flush_entries(const void* start, u32 count);
 void _dc_flush(void);
 void _ic_invalidate(void);
 void _dc_invalidate(void);
@@ -78,18 +78,18 @@ extern const u32 __headers_addr[];
 extern const u32 __headers_size[];
 extern const u32 __crypto_addr[];
 extern const u32 __crypto_size[];
-extern void *__configs_start;
-extern void *__mirror_configs_start;
+extern void* __configs_start;
+extern void* __mirror_configs_start;
 
 #ifndef MIOS
-u8 *heapCurrent = (u8 *)__kmalloc_heap_start;
-u8 *heapEnd = (u8 *)__kmalloc_heap_end;
+u8* heapCurrent = (u8*)__kmalloc_heap_start;
+u8* heapEnd = (u8*)__kmalloc_heap_end;
 
 //the pagetable for the mmu's translation table base register MUST be 0x4000 (16KB aligned) !
 //this is (kinda) ensured by having the kMalloc heap 16KB aligned and this being the first malloc
-u32 *MemoryTranslationTable = NULL;
+u32* MemoryTranslationTable = NULL;
 u32 DomainAccessControlTable[MAX_PROCESSES];
-u32 *HardwareRegistersAccessTable[MAX_PROCESSES];
+u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 
 /* clang-format off */
 static MemorySection KernelMemoryMaps[] =
@@ -122,7 +122,7 @@ static ProcessMemorySection HWRegistersMemoryMaps[] =
 /* clang-format on */
 #endif
 
-void DCFlushRange(const void *start, u32 size)
+void DCFlushRange(const void* start, u32 size)
 {
 	if (size == 0)
 		return;
@@ -131,7 +131,7 @@ void DCFlushRange(const void *start, u32 size)
 	if (size <= 0x4000)
 	{
 		start = ALIGN_BACKWARD(start);
-		void *end = ALIGN_FORWARD(((u8 *)start) + size);
+		void* end = ALIGN_FORWARD(((u8*)start) + size);
 		_dc_flush_entries(start, MEMBLOCK_COUNT((u32)start, (u32)end));
 	}
 	else
@@ -151,7 +151,7 @@ void DCFlushAll(void)
 	RestoreInterrupts(cookie);
 }
 
-void DCInvalidateRange(const void *start, u32 size)
+void DCInvalidateRange(const void* start, u32 size)
 {
 #ifndef MIOS
 	u32 pid = CurrentThread->ProcessId;
@@ -169,7 +169,7 @@ void DCInvalidateRange(const void *start, u32 size)
 	if (size <= 0x4000)
 	{
 		start = ALIGN_BACKWARD(start);
-		void *end = ALIGN_FORWARD(((u8 *)start) + size);
+		void* end = ALIGN_FORWARD(((u8*)start) + size);
 		_dc_inval_entries(start, MEMBLOCK_COUNT((u32)start, (u32)end));
 	}
 	else
@@ -187,7 +187,7 @@ void ICInvalidateAll(void)
 	RestoreInterrupts(cookie);
 }
 
-u32 dma_addr(void *p)
+u32 dma_addr(void* p)
 {
 	u32 addr = (u32)p;
 
@@ -222,7 +222,7 @@ void mem_shutdown(void)
 	RestoreInterrupts(cookie);
 }
 
-void ProtectMemory(bool enable, void *start, void *end)
+void ProtectMemory(bool enable, void* start, void* end)
 {
 	write16(MEM_PROT, enable ? 1 : 0);
 	write16(MEM_PROT_START, (((u32)start) & 0xFFFFFFF) >> 12);
@@ -232,17 +232,17 @@ void ProtectMemory(bool enable, void *start, void *end)
 
 #ifndef MIOS
 
-void *KMalloc(u32 size)
+void* KMalloc(u32 size)
 {
 	heapEnd -= size;
-	void *ptr = heapEnd;
+	void* ptr = heapEnd;
 
 	return ptr;
 }
 
-void *_kmallocMemorySection(KernelMemoryType type)
+void* _kmallocMemorySection(KernelMemoryType type)
 {
-	u8 *ptr = heapCurrent;
+	u8* ptr = heapCurrent;
 	u32 size = 0;
 
 	switch (type)
@@ -260,7 +260,7 @@ void *_kmallocMemorySection(KernelMemoryType type)
 			return NULL;
 	}
 
-	u8 *ptrEnd = ptr + size;
+	u8* ptrEnd = ptr + size;
 
 	if (ptrEnd > heapEnd)
 	{
@@ -274,7 +274,7 @@ void *_kmallocMemorySection(KernelMemoryType type)
 	return ptr;
 }
 
-s32 MapMemoryAsSection(MemorySection *memorySection)
+s32 MapMemoryAsSection(MemorySection* memorySection)
 {
 	/*Example of a mapping : 
 	 virtual address : 0xFFF00000
@@ -296,7 +296,7 @@ s32 MapMemoryAsSection(MemorySection *memorySection)
 	if (memorySection->IsCached != 0)
 		translationBase |= WRITEBACK_CACHE;
 
-	u32 *page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
+	u32* page = &MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
 	*page = translationBase | (memorySection->PhysicalAddress & 0xFFF00000) |
 	        AP_VALUE(memorySection->AccessRights) | PAGE_DOMAIN(memorySection->Domain);
 	DCFlushRange(page, 4);
@@ -308,7 +308,7 @@ s32 MapMemoryAsSection(MemorySection *memorySection)
 }
 
 //In all honesty, i don't full understand what it is doing in here...
-s32 MapMemoryAsCoursePage(MemorySection *memorySection, u8 mode)
+s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 {
 	/*
 		Example of a mapping : 
@@ -332,16 +332,16 @@ s32 MapMemoryAsCoursePage(MemorySection *memorySection, u8 mode)
 	if (memorySection == NULL)
 		return IPC_EINVAL;
 
-	u32 **entry = (u32 **)&MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
-	u32 *pageValue = *entry;
+	u32** entry = (u32**)&MemoryTranslationTable[PAGE_ENTRY(memorySection->VirtualAddress)];
+	u32* pageValue = *entry;
 	if (pageValue == NULL)
 	{
-		pageValue = (u32 *)_kmallocMemorySection(CoursePage);
+		pageValue = (u32*)_kmallocMemorySection(CoursePage);
 		if (pageValue == NULL)
 			return IPC_ENOMEM;
 
-		*entry = (u32 *)((0xFFFFFC00 & (u32)pageValue) |
-		                 PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
+		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) |
+		                PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 	}
 	else
 	{
@@ -349,12 +349,12 @@ s32 MapMemoryAsCoursePage(MemorySection *memorySection, u8 mode)
 			return IPC_EINVAL;
 		else if (mode != 0)
 		{
-			pageValue = (u32 *)((0xFFFFFC00 & (u32)pageValue) |
-			                    PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
+			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) |
+			                   PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 			*entry = pageValue;
 		}
 
-		pageValue = (u32 *)(0xFFFFFC00 & (u32)pageValue);
+		pageValue = (u32*)(0xFFFFFC00 & (u32)pageValue);
 	}
 
 	if (mode == 0 && pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->VirtualAddress)] != 0)
@@ -377,7 +377,7 @@ s32 MapMemoryAsCoursePage(MemorySection *memorySection, u8 mode)
 }
 
 //basically mmap
-s32 MapMemory(MemorySection *entry)
+s32 MapMemory(MemorySection* entry)
 {
 	if (entry == NULL)
 		return IPC_EINVAL;
@@ -415,7 +415,7 @@ s32 MapMemory(MemorySection *entry)
 
 s32 MapHardwareRegisters()
 {
-	u32 **page = (u32 **)&MemoryTranslationTable[0xD0];
+	u32** page = (u32**)&MemoryTranslationTable[0xD0];
 	u32 index = 0;
 	s32 ret = 0;
 
@@ -429,7 +429,7 @@ s32 MapHardwareRegisters()
 			break;
 
 		HardwareRegistersAccessTable[HWRegistersMemoryMaps[index].ProcessId] = *page;
-		u32 *pageValue = (u32 *)(((u32)*page) & 0xFFFFFC00);
+		u32* pageValue = (u32*)(((u32)*page) & 0xFFFFFC00);
 		for (u32 i = 0; i < 0x100; i++)
 		{
 			if (*pageValue == 0)
@@ -468,8 +468,8 @@ u32 VirtualToPhysical(u32 virtualAddress)
 		physicalAddress = (virtualAddress & 0xFFFFF) | (pageEntry & 0xFFF00000);
 	else if ((pageEntry & PAGE_MASK) == COURSE_PAGE)
 	{
-		u32 page = *(u32 *)((COURSEPAGE_ENTRY_VALUE(virtualAddress) << 2) +
-		                    (pageEntry & 0xFFFFFC00));
+		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE(virtualAddress) << 2) +
+		                   (pageEntry & 0xFFFFFC00));
 		if ((page & PAGE_TYPE_MASK) == COURSE_SECTION)
 			physicalAddress = (virtualAddress & 0xFFF) | (page & 0xFFFFF000);
 	}
@@ -481,7 +481,7 @@ u32 VirtualToPhysical(u32 virtualAddress)
 	return physicalAddress + offset;
 }
 
-s32 CheckMemoryBlock(u8 *ptr, u32 type, u32 pid, u32 domainPid, u32 *blockSize)
+s32 CheckMemoryBlock(u8* ptr, u32 type, u32 pid, u32 domainPid, u32* blockSize)
 {
 	u32 pageEntry = MemoryTranslationTable[PAGE_ENTRY((u32)ptr)];
 	u32 pageType = PAGE_TYPE(pageEntry);
@@ -490,7 +490,7 @@ s32 CheckMemoryBlock(u8 *ptr, u32 type, u32 pid, u32 domainPid, u32 *blockSize)
 	if (pageType == COURSE_PAGE)
 	{
 		*blockSize = 0x1000;
-		u32 page = *(u32 *)((COURSEPAGE_ENTRY_VALUE((u32)ptr) << 2) + (pageEntry & 0xFFFFFC00));
+		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE((u32)ptr) << 2) + (pageEntry & 0xFFFFFC00));
 		if ((page & PAGE_TYPE_MASK) != COURSE_SECTION)
 			goto return_error;
 
@@ -522,15 +522,15 @@ return_error:
 	return IPC_EACCES;
 }
 
-s32 CheckMemoryPointer(const void *ptr, u32 size, u32 type, u32 pid, u32 domainPid)
+s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainPid)
 {
 	if (pid == 0)
 		return 0;
 
 	s32 ret = 0;
 	u32 blockSize;
-	u8 *startAddress = (u8 *)ptr;
-	u8 *endAddress = startAddress + size;
+	u8* startAddress = (u8*)ptr;
+	u8* endAddress = startAddress + size;
 	while (startAddress < endAddress)
 	{
 		ret = CheckMemoryBlock(startAddress, type, pid, domainPid, &blockSize);
@@ -538,7 +538,7 @@ s32 CheckMemoryPointer(const void *ptr, u32 size, u32 type, u32 pid, u32 domainP
 			return ret;
 
 		//align to the next block
-		startAddress = (u8 *)(((u32)startAddress + blockSize) & -blockSize);
+		startAddress = (u8*)(((u32)startAddress + blockSize) & -blockSize);
 	}
 
 	return ret;
@@ -560,7 +560,7 @@ s32 InitializeMemory(void)
 
 	memset(heapCurrent, 0, (u32)(heapEnd - heapCurrent));
 	gecko_printf("MEM: mapping sections\n");
-	MemoryTranslationTable = (u32 *)_kmallocMemorySection(PageTable);
+	MemoryTranslationTable = (u32*)_kmallocMemorySection(PageTable);
 	if (MemoryTranslationTable == NULL)
 	{
 		ret = IPC_ENOMEM;
@@ -569,7 +569,7 @@ s32 InitializeMemory(void)
 
 	for (u32 i = 0; i < (sizeof(KernelMemoryMaps) / sizeof(KernelMemoryMaps[0])); i++)
 	{
-		MemorySection *section = &KernelMemoryMaps[i];
+		MemorySection* section = &KernelMemoryMaps[i];
 		ret = MapMemory(section);
 		if (ret < 0)
 			goto ret_init;
@@ -686,11 +686,11 @@ void ConfigureDDRMemory(void)
 	udelay(2);
 }
 
-DDRConfiguration *GetGDDRVendorCodeAddress(void)
+DDRConfiguration* GetGDDRVendorCodeAddress(void)
 {
 	if (read32(HW_MEMMIRR) & 0x20)
-		return (DDRConfiguration *)__mirror_configs_start;
-	return (DDRConfiguration *)__configs_start;
+		return (DDRConfiguration*)__mirror_configs_start;
+	return (DDRConfiguration*)__configs_start;
 }
 
 u32 GetGDDRVendorCode(void)

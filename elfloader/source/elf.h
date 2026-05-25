@@ -32,7 +32,7 @@ typedef struct
 	u16 e_type;
 	u16 e_machine;
 	u32 e_version;
-	void *e_entry;
+	void* e_entry;
 	u32 e_phoff;
 	u32 e_shoff;
 	u32 e_flags;
@@ -48,8 +48,8 @@ typedef struct
 {
 	u32 p_type;
 	u32 p_offset;
-	void *p_vaddr;
-	void *p_paddr;
+	void* p_vaddr;
+	void* p_paddr;
 	u32 p_filesz;
 	u32 p_memsz;
 	u32 p_flags;

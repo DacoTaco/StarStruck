@@ -130,7 +130,7 @@ static s32 SEEPROM_SendZeros(u32 numBits)
 	return IPC_SUCCESS;
 }
 
-static s32 SEEPROM_ReceiveBits(u32 numBits, u32 *data)
+static s32 SEEPROM_ReceiveBits(u32 numBits, u32* data)
 {
 	if (numBits > 32)
 		return IPC_EINVAL;
@@ -203,7 +203,7 @@ static s32 SEEPROM_SendWord(const u32 word_offset, const u16 value)
 	return ret;
 }
 
-static s32 SEEPROM_ReadWord(const u32 word_offset, u32 *data)
+static s32 SEEPROM_ReadWord(const u32 word_offset, u32* data)
 {
 	s32 ret = SEEPROM_SendBits(11, 0x600 | (word_offset & 0xff));
 	if (ret != IPC_SUCCESS)
@@ -215,11 +215,11 @@ static s32 SEEPROM_ReadWord(const u32 word_offset, u32 *data)
 
 	return ret;
 }
-static s32 SEEPROM_ReadBuffer(u32 word_offset, void *data, u32 word_count)
+static s32 SEEPROM_ReadBuffer(u32 word_offset, void* data, u32 word_count)
 {
 	u32 receivedData;
 
-	char *destination = (char *)data;
+	char* destination = (char*)data;
 	for (u32 i = 0; i < word_count; ++i)
 	{
 		s32 ret = SEEPROM_ReadWord(word_offset + i, &receivedData);
@@ -250,7 +250,7 @@ void SEEPROM_GetKoreanCommonKey(u8 data[OTP_COMMONKEY_SIZE])
 	RestoreInterrupts(cookie);
 }
 void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40],
-                         u32 *ng_key_id, char ng_id_str[0x40], u8 ng_signature[60])
+                         u32* ng_key_id, char ng_id_str[0x40], u8 ng_signature[60])
 {
 	const u32 cookie = DisableInterrupts();
 	u32 ng_id;
@@ -338,14 +338,14 @@ s32 SEEPROM_UpdatePRNGSeed(void)
 	return ret;
 }
 
-s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter *data, s32 *counter_write_index)
+s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter* data, s32* counter_write_index)
 {
 	s32 ret = IPC_SUCCESS;
 	BOOT2_Counter read_data[2] = { 0 };
 
 	for (u32 current_counter = 0; current_counter < 2; ++current_counter)
 	{
-		char *const data_ptr = (char *)&read_data[current_counter];
+		char* const data_ptr = (char*)&read_data[current_counter];
 		u32 value = 0;
 		for (u32 i = 0; i < sizeof(BOOT2_Counter); i += sizeof(u16))
 		{
@@ -359,7 +359,7 @@ s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter *data, s32 *counter_write_index)
 	}
 
 	s32 index = -1;
-	void *ptr_out = NULL;
+	void* ptr_out = NULL;
 	u32 highest_value = 0;
 	u32 lowest_value = (u32)-1;
 	for (u32 current_counter = 0; current_counter < 2; ++current_counter)
@@ -367,7 +367,7 @@ s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter *data, s32 *counter_write_index)
 		if (BOOT2_ComputeCounterChecksum(&read_data[current_counter]) ==
 		    read_data[current_counter].Checksum)
 		{
-			char *const data_ptr = (char *)(&read_data[current_counter].UpdateTag);
+			char* const data_ptr = (char*)(&read_data[current_counter].UpdateTag);
 			const u32 current_value = (u32)(data_ptr[3]) | ((u32)(data_ptr[2]) << 8) |
 			                          ((u32)(data_ptr[1]) << 16) |
 			                          ((u32)(data_ptr[0]) << 24);
@@ -401,7 +401,7 @@ s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter *data, s32 *counter_write_index)
 
 	return ret;
 }
-s32 SEEPROM_BOOT2_UpdateCounter(const BOOT2_Counter *data, s32 counter_write_index)
+s32 SEEPROM_BOOT2_UpdateCounter(const BOOT2_Counter* data, s32 counter_write_index)
 {
 	if (0 > counter_write_index || counter_write_index >= 2)
 		return IPC_EINVAL;
@@ -410,7 +410,7 @@ s32 SEEPROM_BOOT2_UpdateCounter(const BOOT2_Counter *data, s32 counter_write_ind
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	const char *const data_ptr = (const char *)data;
+	const char* const data_ptr = (const char*)data;
 	u16 value = 0;
 	for (u32 i = 0; i < sizeof(*data); i += sizeof(u16))
 	{
@@ -425,14 +425,14 @@ s32 SEEPROM_BOOT2_UpdateCounter(const BOOT2_Counter *data, s32 counter_write_ind
 	return ret;
 }
 
-s32 SEEPROM_NAND_GetCounter(NAND_Counter *data, s32 *counter_write_index)
+s32 SEEPROM_NAND_GetCounter(NAND_Counter* data, s32* counter_write_index)
 {
 	s32 ret = IPC_SUCCESS;
 	NAND_Counter read_data[3] = { 0 };
 
 	for (u32 current_counter = 0; current_counter < 3; ++current_counter)
 	{
-		char *const data_ptr = (char *)&read_data[current_counter];
+		char* const data_ptr = (char*)&read_data[current_counter];
 		u32 value = 0;
 		for (u32 i = 0; i < sizeof(NAND_Counter); i += sizeof(u16))
 		{
@@ -446,7 +446,7 @@ s32 SEEPROM_NAND_GetCounter(NAND_Counter *data, s32 *counter_write_index)
 	}
 
 	s32 index = -1;
-	void *ptr_out = NULL;
+	void* ptr_out = NULL;
 	u32 highest_value = 0;
 	u32 lowest_value = (u32)-1;
 	for (u32 current_counter = 0; current_counter < 3; ++current_counter)
@@ -454,7 +454,7 @@ s32 SEEPROM_NAND_GetCounter(NAND_Counter *data, s32 *counter_write_index)
 		if (NAND_ComputeCounterChecksum(&read_data[current_counter]) ==
 		    read_data[current_counter].Checksum)
 		{
-			char *const data_ptr = (char *)(&read_data[current_counter].NandGen);
+			char* const data_ptr = (char*)(&read_data[current_counter].NandGen);
 			const u32 current_value = (u32)(data_ptr[3]) | ((u32)(data_ptr[2]) << 8) |
 			                          ((u32)(data_ptr[1]) << 16) |
 			                          ((u32)(data_ptr[0]) << 24);
@@ -488,7 +488,7 @@ s32 SEEPROM_NAND_GetCounter(NAND_Counter *data, s32 *counter_write_index)
 
 	return ret;
 }
-s32 SEEPROM_NAND_UpdateCounter(const NAND_Counter *data, s32 counter_write_index)
+s32 SEEPROM_NAND_UpdateCounter(const NAND_Counter* data, s32 counter_write_index)
 {
 	if (0 > counter_write_index || counter_write_index >= 3)
 		return IPC_EINVAL;
@@ -497,7 +497,7 @@ s32 SEEPROM_NAND_UpdateCounter(const NAND_Counter *data, s32 counter_write_index
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	const char *const data_ptr = (const char *)data;
+	const char* const data_ptr = (const char*)data;
 	u16 value = 0;
 	for (u32 i = 0; i < sizeof(*data); i += sizeof(u16))
 	{

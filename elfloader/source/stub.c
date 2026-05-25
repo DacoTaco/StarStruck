@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 extern void debug_output(u8 byte);
 
-void *loadelf(const u8 *elf)
+void* loadelf(const u8* elf)
 {
 	if (memcmp("\x7F"
 	           "ELF\x01\x02\x01",
@@ -41,18 +41,18 @@ void *loadelf(const u8 *elf)
 		panic(0xE3);
 	}
 
-	Elf32_Ehdr *ehdr = (Elf32_Ehdr *)elf;
+	Elf32_Ehdr* ehdr = (Elf32_Ehdr*)elf;
 	if (ehdr->e_phoff == 0)
 	{
 		panic(0xE4);
 	}
 	int count = ehdr->e_phnum;
-	Elf32_Phdr *phdr = (Elf32_Phdr *)(elf + ehdr->e_phoff);
+	Elf32_Phdr* phdr = (Elf32_Phdr*)(elf + ehdr->e_phoff);
 	while (count--)
 	{
 		if (phdr->p_type == PT_LOAD)
 		{
-			const void *src = elf + phdr->p_offset;
+			const void* src = elf + phdr->p_offset;
 			memcpy(phdr->p_paddr, src, phdr->p_filesz);
 		}
 		phdr++;
@@ -70,13 +70,13 @@ static inline void mem_setswap()
 	set32(HW_MEMMIRR, 0x20);
 }
 
-void *_main(void *base)
+void* _main(void* base)
 {
-	IosKernelHeader *hdr = (IosKernelHeader *)base;
-	u8 *elf;
-	void *entry;
+	IosKernelHeader* hdr = (IosKernelHeader*)base;
+	u8* elf;
+	void* entry;
 
-	elf = (u8 *)base;
+	elf = (u8*)base;
 	elf += hdr->HeaderSize + hdr->LoaderSize;
 
 	debug_output(0xF1);

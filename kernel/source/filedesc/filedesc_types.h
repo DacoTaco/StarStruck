@@ -23,7 +23,7 @@ CHECK_SIZE(FileDescriptorPath, MAX_PATHLEN);
 typedef struct
 {
 	s32 Id;
-	ResourceManager *BelongsToResource;
+	ResourceManager* BelongsToResource;
 } FileDescriptor;
 
 #ifdef MIOS
@@ -40,4 +40,4 @@ extern FileDescriptor AesFileDescriptor;
 extern FileDescriptor ShaFileDescriptor;
 #endif
 
-extern FileDescriptorPath *FiledescPathArray;
+extern FileDescriptorPath* FiledescPathArray;

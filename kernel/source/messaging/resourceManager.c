@@ -24,7 +24,7 @@ static u32 hashTableSalt = 0;
 static u32 hashTableCount = 0;
 ResourceManager ResourceManagers[MAX_RESOURCES] SRAM_BSS;
 
-u32 GetPpcAccessRights(const char *resourcePath)
+u32 GetPpcAccessRights(const char* resourcePath)
 {
 	u32 salt = hashTableSalt;
 	for (; *resourcePath != '\0'; resourcePath++)
@@ -34,7 +34,7 @@ u32 GetPpcAccessRights(const char *resourcePath)
 	return ((hashTableCount == 0) || (1 << hashTable[hashIndex] & salt) != 0) ? 1 : 0;
 }
 
-s32 RegisterResourceManager(const char *devicePath, const s32 queueid)
+s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
 {
 	u32 interrupts = DisableInterrupts();
 	s32 ret = 0;

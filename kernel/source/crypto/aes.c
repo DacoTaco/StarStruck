@@ -50,11 +50,11 @@ void AesEngineHandler(void)
 	u32 resourceManagerMessageQueue[8];
 	u32 ivBuffer[0x10] = { 0 };
 	s32 ret;
-	IpcMessage *ipcMessage;
-	IoctlvMessage *ioctlvMessage;
-	IpcMessage *ipcReply;
+	IpcMessage* ipcMessage;
+	IoctlvMessage* ioctlvMessage;
+	IpcMessage* ipcReply;
 
-	ret = CreateMessageQueue((void **)&eventMessageQueue, 1);
+	ret = CreateMessageQueue((void**)&eventMessageQueue, 1);
 	AesEventMessageQueueId = ret;
 	if (ret < 0)
 		panic("Unable to create AES event queue: %d\n", ret);
@@ -63,7 +63,7 @@ void AesEngineHandler(void)
 	if (ret < 0)
 		panic("Unable to register AES event handler: %d\n", ret);
 
-	ret = CreateMessageQueue((void **)&resourceManagerMessageQueue, 8);
+	ret = CreateMessageQueue((void**)&resourceManagerMessageQueue, 8);
 	if (ret < 0)
 		panic("Unable to create AES rm queue: %d\n", ret);
 
@@ -75,14 +75,14 @@ void AesEngineHandler(void)
 	while (1)
 	{
   //main loop should start here
-		ret = ReceiveMessage(resourceMessageQueue, (void **)&ipcMessage, None);
+		ret = ReceiveMessage(resourceMessageQueue, (void**)&ipcMessage, None);
 		if (ret != 0)
 			goto receiveMessageError;
 
 		ipcReply = ipcMessage;
 		ret = IPC_EINVAL;
-		IoctlvMessageData *IVVector = NULL;
-		IoctlvMessageData *sourceVector = NULL;
+		IoctlvMessageData* IVVector = NULL;
+		IoctlvMessageData* sourceVector = NULL;
 		switch (ipcMessage->Request.Command)
 		{
 			default:
@@ -119,8 +119,8 @@ void AesEngineHandler(void)
 							goto sendReply;
 
       //lets copy over the AES key & IV
-						u32 *key = ioctlvMessage->MessageData[1].Data;
-						u32 *iv = ioctlvMessage->MessageData[3].Data;
+						u32* key = ioctlvMessage->MessageData[1].Data;
+						u32* iv = ioctlvMessage->MessageData[3].Data;
 						for (int i = 0; i < 4; i++)
 						{
 							write32(AES_KEY, *key);
@@ -135,8 +135,8 @@ void AesEngineHandler(void)
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 1)
 							goto sendReply;
 processAesCommand:
-						IoctlvMessageData *inputData = &ioctlvMessage->MessageData[0];
-						IoctlvMessageData *outputData =
+						IoctlvMessageData* inputData = &ioctlvMessage->MessageData[0];
+						IoctlvMessageData* outputData =
 						    &ioctlvMessage->MessageData[ioctlvMessage->InputArgc];
 						if (inputData->Length != outputData->Length ||
 						    ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
@@ -145,7 +145,7 @@ processAesCommand:
 							goto sendReply;
 						if (ioctl == AES_DECRYPT)
 							memcpy(ivBuffer,
-							       (u8 *)inputData->Data + inputData->Length - 0x10, 0x10);
+							       (u8*)inputData->Data + inputData->Length - 0x10, 0x10);
 
 						write32(AES_SRC, VirtualToPhysical((u32)inputData->Data));
 						write32(AES_DEST, VirtualToPhysical((u32)outputData->Data));
@@ -163,9 +163,8 @@ processAesCommand:
 							                ((inputData->Length - 0x10U) >> 4) & 0xFFF }
 						};
 						write32(AES_CMD, command.Value);
-						u32 *irqMessage;
-						ret = ReceiveMessage(AesEventMessageQueueId,
-						                     (void **)&irqMessage, 0);
+						u32* irqMessage;
+						ret = ReceiveMessage(AesEventMessageQueueId, (void**)&irqMessage, 0);
 						if (ret != IPC_SUCCESS)
 							goto receiveMessageError;
 
@@ -182,7 +181,7 @@ processAesCommand:
 						{
 							if (ioctl == AES_ENCRYPT)
 								memcpy(ivBuffer,
-								       (u8 *)outputData->Data + outputData->Length - 0x10,
+								       (u8*)outputData->Data + outputData->Length - 0x10,
 								       0x10);
 
 							if (ioctl <= AES_DECRYPT)

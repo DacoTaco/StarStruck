@@ -89,29 +89,29 @@ void Keyring_Init(void);
 
 void Keyring_ClearEntryData(u32 keyEntryHandle);
 s16 Keyring_GetKeyIndexFitSize(const u32 keySize);
-s32 Keyring_GetHandleFitSize(u32 *keyHandle, const u32 keySize);
+s32 Keyring_GetHandleFitSize(u32* keyHandle, const u32 keySize);
 
-s32 Keyring_FindKeySize(u32 *keySize, u32 keyHandle);
-s32 Keyring_GetSignatureSize(u32 *publicKeySize, u32 keyHandle);
-s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32 *keySize);
+s32 Keyring_FindKeySize(u32* keySize, u32 keyHandle);
+s32 Keyring_GetSignatureSize(u32* publicKeySize, u32 keyHandle);
+s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keySize);
 
 s32 Keyring_SetKeyKind(u32 keyHandle, KeyKind keyKind);
-s32 Keyring_GetKeyKind(u32 keyHandle, KeyKind *keyKind);
-void Keyring_GetKeyTypes(u32 keyHandle, KeyType *keytype, KeySubtype *keySubtype);
+s32 Keyring_GetKeyKind(u32 keyHandle, KeyKind* keyKind);
+void Keyring_GetKeyTypes(u32 keyHandle, KeyType* keytype, KeySubtype* keySubtype);
 
-s32 Keyring_SetKeyMetadata(u32 keyHandle, const void *data);
-s32 Keyring_GetKeyMetadata(u32 keyHandle, void *data);
-s32 Keyring_GetKeyMetadataIfOthers(u32 keyHandle, void *data);
+s32 Keyring_SetKeyMetadata(u32 keyHandle, const void* data);
+s32 Keyring_GetKeyMetadata(u32 keyHandle, void* data);
+s32 Keyring_GetKeyMetadataIfOthers(u32 keyHandle, void* data);
 
-s32 Keyring_SetKey(u32 keyHandle, const void *data, u32 keySize);
-s32 Keyring_GetKey(u32 keyHandle, void *keyPtr, u32 keySize);
+s32 Keyring_SetKey(u32 keyHandle, const void* data, u32 keySize);
+s32 Keyring_GetKey(u32 keyHandle, void* keyPtr, u32 keySize);
 
 s32 Keyring_SetKeyOwnerProcess(u32 keyHandle, u32 owner);
-s32 Keyring_GetKeyOwnerProcess(u32 keyHandle, u32 *owner);
+s32 Keyring_GetKeyOwnerProcess(u32 keyHandle, u32* owner);
 
 s32 Keyring_SetKeyZeroes(u32 keyHandle, u32 zeroes);
 s32 Keyring_SetKeyZeroesIfAnyPrivate(u32 keyHandle, u32 zeroes);
-s32 Keyring_GetKeyZeroes(u32 keyHandle, u32 *zeroes);
-s32 Keyring_GetKeyZeroesIfAnyPrivate(u32 keyHandle, u32 *zeroes);
+s32 Keyring_GetKeyZeroes(u32 keyHandle, u32* zeroes);
+s32 Keyring_GetKeyZeroesIfAnyPrivate(u32 keyHandle, u32* zeroes);
 
 #endif

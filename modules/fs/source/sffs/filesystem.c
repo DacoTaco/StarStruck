@@ -25,7 +25,7 @@ extern u32 _fileSystemDataSize;
 u32 _fileSystemMetadataSizeShift = 0;
 bool _superblockInitialized = false;
 SuperBlockInfo _superblockStorage __attribute__((aligned(64))) = { 0 };
-SuperBlockInfo *_selectedSuperBlock = NULL;
+SuperBlockInfo* _selectedSuperBlock = NULL;
 u32 _selectedSuperblockIndex;
 SaltData _superblockSalt __attribute__((aligned(64))) = { 0 };
 SaltData _fileSalt __attribute__((aligned(64))) = { 0 };
@@ -101,7 +101,7 @@ s32 TryWriteSuperblock()
 
 		// Write the superblock with HMAC signature
 		ret = WriteClusters((u16)superblockClusterIndex, superblockClusterCount, ClusterFlagsVerify,
-		                    &_superblockSalt, (u8 *)_selectedSuperBlock, NULL);
+		                    &_superblockSalt, (u8*)_selectedSuperBlock, NULL);
 
 		if (ret == IPC_SUCCESS)
 		{
@@ -179,7 +179,7 @@ s32 InitSuperblockInfo(bool clearInfo)
 }
 
 // Create a fresh in-memory superblock and initialize FAT and FST areas.
-SuperBlockInfo *CreateSuperBlock(void)
+SuperBlockInfo* CreateSuperBlock(void)
 {
 	if (_selectedSuperBlock == NULL)
 		return NULL;
@@ -192,7 +192,7 @@ SuperBlockInfo *CreateSuperBlock(void)
 	{
 		_selectedSuperBlock->Version = 1;
 		if (OSGetIOSCData(KEYRING_CONST_NAND_GEN,
-		                  (u32 *)&_selectedSuperBlock->Generation) != IPC_SUCCESS)
+		                  (u32*)&_selectedSuperBlock->Generation) != IPC_SUCCESS)
 			return _selectedSuperBlock;
 	}
 
@@ -236,12 +236,12 @@ SuperBlockInfo *CreateSuperBlock(void)
 	const u32 fatSizeBytes = GetFatArraySize();
 	const u32 metaRegion = GetSuperBlockSize();
 	const u32 count = (metaRegion - fatSizeBytes - 0x0C);
-	memset((u8 *)_selectedSuperBlock->FatEntries + fatSizeBytes, 0, count & (u32)~0x1F);
+	memset((u8*)_selectedSuperBlock->FatEntries + fatSizeBytes, 0, count & (u32)~0x1F);
 
 	u32 entries = GetFstEntryCount();
 	for (u32 i = 0; i < entries; i++)
 	{
-		FileSystemTableEntry *entry = GetFstEntry(_selectedSuperBlock, i);
+		FileSystemTableEntry* entry = GetFstEntry(_selectedSuperBlock, i);
 		entry->Mode.Value = S_IFZERO;
 	}
 
@@ -253,9 +253,9 @@ SuperBlockInfo *CreateSuperBlock(void)
 }
 
 //doing the superblock selection
-SuperBlockInfo *SelectSuperBlock()
+SuperBlockInfo* SelectSuperBlock()
 {
-	SuperBlockInfo *returnedSuperblock = NULL;
+	SuperBlockInfo* returnedSuperblock = NULL;
 	s32 superBlockIndex;
 	u32 superBlockGeneration;
 	u32 lowestFailedGeneration = 0xFFFFFFFF;
@@ -272,7 +272,7 @@ SuperBlockInfo *SelectSuperBlock()
 		goto _selectSuperBlockEnd;
 	}
 
-	ret = OSGetIOSCData(KEYRING_CONST_NAND_GEN, (u32 *)&sffsGeneration);
+	ret = OSGetIOSCData(KEYRING_CONST_NAND_GEN, (u32*)&sffsGeneration);
 	if (ret != IPC_SUCCESS)
 		goto _selectSuperBlockEnd;
 
@@ -306,7 +306,7 @@ SuperBlockInfo *SelectSuperBlock()
 
 			// Read the first cluster of the superblock (unencrypted, no HMAC)
 			ret = ReadClusters((u16)clusterIndex, 1, ClusterFlagsNone, NULL,
-			                   (u8 *)_selectedSuperBlock, NULL);
+			                   (u8*)_selectedSuperBlock, NULL);
 
 			// Check if read was successful (or had correctable ECC error)
 			// and validate superblock identifier and generation
@@ -354,7 +354,7 @@ SuperBlockInfo *SelectSuperBlock()
 
 		// Read full superblock with HMAC verification
 		ret = ReadClusters((u16)clusterIndex, 1 << (superblockSizeShift & 0xFF), ClusterFlagsVerify,
-		                   &_superblockSalt, (u8 *)_selectedSuperBlock, NULL);
+		                   &_superblockSalt, (u8*)_selectedSuperBlock, NULL);
 
 		if (ret == IPC_SUCCESS)
 			goto _selectSuperBlockWithoutRewrite;
@@ -385,7 +385,7 @@ s32 InitializeSFFS(s32 mode)
 {
 	s32 ret = 0;
 	bool flushSuperBlock = false;
-	SuperBlockInfo *fetchedSuperBlock;
+	SuperBlockInfo* fetchedSuperBlock;
 
 	if (mode == 0)
 	{
@@ -446,7 +446,7 @@ _initSSFSEnd:
 
 // Initialize FST entries by marking reachable files and clearing unreachable ones
 // This cleans up any files that were marked as pending delete but not fully removed
-s32 InitializeFstEntries(SuperBlockInfo *superblock, bool *flushNeeded)
+s32 InitializeFstEntries(SuperBlockInfo* superblock, bool* flushNeeded)
 {
 	*flushNeeded = false;
 
@@ -461,7 +461,7 @@ s32 InitializeFstEntries(SuperBlockInfo *superblock, bool *flushNeeded)
 	// Iterate through all FST entries (skip inode 0 which is root)
 	for (u32 inode = 1; inode < fstEntryCount; inode++)
 	{
-		FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+		FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 
 		// Skip unused entries
 		if (entry->Mode.Fields.Type == S_IFZERO)
@@ -480,7 +480,7 @@ s32 InitializeFstEntries(SuperBlockInfo *superblock, bool *flushNeeded)
 }
 
 // Calculate filesystem statistics by scanning FAT and FST entries
-s32 StatSuperblock(SuperBlockInfo *superblock)
+s32 StatSuperblock(SuperBlockInfo* superblock)
 {
 	// Initialize statistics
 	_sffStats.ClusterSize = CLUSTER_SIZE;
@@ -525,7 +525,7 @@ s32 StatSuperblock(SuperBlockInfo *superblock)
 	// Scan FST entries to count used/free inodes
 	for (u32 inode = 0; inode < fstEntryCount; inode++)
 	{
-		FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+		FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 
 		if (entry->Mode.Fields.Type == S_IFZERO)
 		{
@@ -542,7 +542,7 @@ s32 StatSuperblock(SuperBlockInfo *superblock)
 
 // Mark block-aligned regions as reserved in the in-memory FAT when all
 // clusters in the block are free. Does not write NAND; caller persists.
-s32 MarkBlocksReserved(SuperBlockInfo *superblock)
+s32 MarkBlocksReserved(SuperBlockInfo* superblock)
 {
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
@@ -581,7 +581,7 @@ s32 MarkBlocksReserved(SuperBlockInfo *superblock)
 	return IPC_SUCCESS;
 }
 
-s32 GetStats(SFFSStatistics *stats)
+s32 GetStats(SFFSStatistics* stats)
 {
 	if (stats == NULL)
 		return FS_EINVAL;
@@ -593,7 +593,7 @@ s32 GetStats(SFFSStatistics *stats)
 	return IPC_SUCCESS;
 }
 
-u32 GetPathLength(const char *path)
+u32 GetPathLength(const char* path)
 {
 	if (path == NULL || *path != '/')
 		return 0;
@@ -605,7 +605,7 @@ u32 GetPathLength(const char *path)
 	return length;
 }
 
-s32 SplitPath(const char *path, char *directory, char *fileName)
+s32 SplitPath(const char* path, char* directory, char* fileName)
 {
 	u32 pathLength = GetPathLength(path);
 	if (pathLength == 0 || directory == NULL || fileName == NULL)
@@ -642,7 +642,7 @@ s32 SplitPath(const char *path, char *directory, char *fileName)
 	return IPC_SUCCESS;
 }
 
-s32 GetPathUsage(const char *path, u32 *clusters, u32 *inodes)
+s32 GetPathUsage(const char* path, u32* clusters, u32* inodes)
 {
 	// Validate arguments
 	if (path == NULL || clusters == NULL || inodes == NULL)
@@ -653,7 +653,7 @@ s32 GetPathUsage(const char *path, u32 *clusters, u32 *inodes)
 		return FS_EINVAL;
 
 	// Get the superblock
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -663,7 +663,7 @@ s32 GetPathUsage(const char *path, u32 *clusters, u32 *inodes)
 		return FS_ENOENT;
 
 	// Verify it's a directory
-	FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 	if (entry->Mode.Fields.Type != S_IFDIR)
 		return FS_EINVAL;
 
@@ -684,9 +684,9 @@ s32 GetPathUsage(const char *path, u32 *clusters, u32 *inodes)
 
 // Performs validation, optionally resolves directory + filename, checks
 // read permission on the parent directory and returns the FST attributes.
-s32 GetAttributes(u32 userId, u16 groupId, const char *path, u32 *userIdOut,
-                  u16 *groupIdOut, u8 *attributesOut, u8 *ownerPermOut,
-                  u8 *groupPermOut, u8 *otherPermOut)
+s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut,
+                  u16* groupIdOut, u8* attributesOut, u8* ownerPermOut,
+                  u8* groupPermOut, u8* otherPermOut)
 {
 	// Validate input pointers and path format/length
 	if (path == NULL || path[0] != '/' || userIdOut == NULL ||
@@ -699,7 +699,7 @@ s32 GetAttributes(u32 userId, u16 groupId, const char *path, u32 *userIdOut,
 		return FS_EINVAL;
 
 	// Pick up the in-memory superblock
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (!superblock)
 		return FS_NOFILESYSTEM;
 
@@ -731,7 +731,7 @@ s32 GetAttributes(u32 userId, u16 groupId, const char *path, u32 *userIdOut,
 	}
 
 	// We now have a valid inode; extract attributes from the FST entry
-	FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 	*userIdOut = entry->UserId;
 	*groupIdOut = entry->GroupId;
 	*attributesOut = entry->Attributes;
@@ -743,7 +743,7 @@ s32 GetAttributes(u32 userId, u16 groupId, const char *path, u32 *userIdOut,
 }
 
 // Set attributes for path
-s32 SetAttributes(u32 callerUserId, const char *path, u32 userId, u16 groupId, u8 attributes,
+s32 SetAttributes(u32 callerUserId, const char* path, u32 userId, u16 groupId, u8 attributes,
                   u8 ownerPermissions, u8 groupPermissions, u8 otherPermissions)
 {
 	// Basic validation: non-null, absolute path, length limit
@@ -751,7 +751,7 @@ s32 SetAttributes(u32 callerUserId, const char *path, u32 userId, u16 groupId, u
 		return FS_EINVAL;
 
 	// Acquire the in-memory superblock
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -761,7 +761,7 @@ s32 SetAttributes(u32 callerUserId, const char *path, u32 userId, u16 groupId, u
 		return FS_ENOENT;
 
 	// Only owner or root may modify attributes; otherwise access denied
-	FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 	if (!(callerUserId == 0 || entry->UserId == callerUserId))
 		return FS_EACCESS;
 

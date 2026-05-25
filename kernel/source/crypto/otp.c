@@ -91,9 +91,9 @@ CHECK_OFFSET(Otp, 0x68, RngSeed);
 CHECK_OFFSET(Otp, 0x78, unk1);
 CHECK_OFFSET(Otp, 0x7C, unk2);
 
-void OTP_FetchData(u32 addr, void *out, u32 size)
+void OTP_FetchData(u32 addr, void* out, u32 size)
 {
-	u8 *outPtr = out;
+	u8* outPtr = out;
 	memset(outPtr, 0, size);
 	while (size != 0)
 	{
@@ -132,7 +132,7 @@ u32 OTP_IsSet(void)
 
 	return OTP_CommonKeyIsSet;
 }
-void OTP_GetNgId(u32 *ngId)
+void OTP_GetNgId(u32* ngId)
 {
 	const u32 cookie = DisableInterrupts();
 	if (OTP_IsSet())

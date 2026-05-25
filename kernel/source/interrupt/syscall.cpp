@@ -35,7 +35,7 @@ extern "C" {
 //1 for the syscall handler, and 1 for the stack arg count.
 struct SyscallEntry
 {
-	const void *Handler;
+	const void* Handler;
 	u8 StackArgumentCount;
 };
 
@@ -52,7 +52,7 @@ constexpr ArgCounter<ReturnType, Args...> GetArgumentCount(ReturnType (*)(Args..
 // Helper macro to create a SyscallEntry with automatic stack argument count deduction
 #define SYSCALL(func)                                                     \
 	{                                                                     \
-		.Handler = reinterpret_cast<const void *>(func),                  \
+		.Handler = reinterpret_cast<const void*>(func),                   \
 		.StackArgumentCount = decltype(GetArgumentCount(func))::stackArgs \
 	}
 #define SYSCALL_NULL                                 \
@@ -201,7 +201,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 //Both our SWI and (if applicable) undefined instruction handlers call this function (see exception_asm.S & exception.c)
 extern "C" s32 HandleSyscall(u16 syscall)
 {
-	ThreadContext *threadContext = &CurrentThread->UserContext;
+	ThreadContext* threadContext = &CurrentThread->UserContext;
 
 #ifdef _DEBUG_SYSCALL
 	gecko_printf("syscall : 0x%04X\n", syscall);
@@ -228,7 +228,7 @@ extern "C" s32 HandleSyscall(u16 syscall)
 	//is this the special IOS syscall?
 	if (syscall == 0xAB && threadContext->Registers[0] == 0x04)
 	{
-		gecko_printf((char *)threadContext->Registers[1]);
+		gecko_printf((char*)threadContext->Registers[1]);
 		return 0;
 	}
 
@@ -240,8 +240,8 @@ extern "C" s32 HandleSyscall(u16 syscall)
 		return -666;
 	}
 
-	u32 *reg = threadContext->Registers;
-	const SyscallEntry &entry = syscall_handlers[syscall];
+	u32* reg = threadContext->Registers;
+	const SyscallEntry& entry = syscall_handlers[syscall];
 	SyscallHandler handler = reinterpret_cast<SyscallHandler>(entry.Handler);
 	if (handler == NULL)
 	{
@@ -255,7 +255,7 @@ extern "C" s32 HandleSyscall(u16 syscall)
 	if (entry.StackArgumentCount > 0)
 	{
 		//Get user stack pointer and read additional arguments from it
-		u32 *userStack = reinterpret_cast<u32 *>(threadContext->StackPointer);
+		u32* userStack = reinterpret_cast<u32*>(threadContext->StackPointer);
 		for (u8 i = 0; i < entry.StackArgumentCount && i < 6; i++)
 		{
 			args[4 + i] = userStack[i];

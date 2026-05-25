@@ -38,22 +38,19 @@ __attribute__((target("arm"))) void udelay(u32 delay)
 	//or our future overflowed and we have to wait on the timer to overflow back to 0
 	if (read32(HW_TIMER) < then)
 	{
-		while (read32(HW_TIMER) < then)
-			;
+		while (read32(HW_TIMER) < then);
 		return;
 	}
 	else
 	{
-		while (read32(HW_TIMER) > 0)
-			;
-		while (read32(HW_TIMER) < then)
-			;
+		while (read32(HW_TIMER) > 0);
+		while (read32(HW_TIMER) < then);
 	}
 }
 
 // Kernel flavour implementation (moved here from core). Mirrors IOS_WhichKernel:
 // validates user pointers then sets type[0]=0, type[1]=3 and *unk=0.
-s32 GetKernelFlavor(s16 *type, s16 *unk)
+s32 GetKernelFlavor(s16* type, s16* unk)
 {
 	s32 ret = CheckMemoryPointer(type, 4, 4, CurrentThread->ProcessId, 0);
 	if (ret != 0)

@@ -163,7 +163,7 @@ s32 ClearAndEnableIPCInterrupt(void)
 }
 #endif
 
-s32 RegisterEventHandler(const u8 device, const s32 queueid, void *message)
+s32 RegisterEventHandler(const u8 device, const s32 queueid, void* message)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -214,7 +214,7 @@ restore_and_return:
 
 void EnqueueEventHandler(s32 device)
 {
-	MessageQueue *queue = eventHandlers[device].Queue;
+	MessageQueue* queue = eventHandlers[device].Queue;
 	if (queue == NULL)
 		return;
 
@@ -229,7 +229,7 @@ void EnqueueEventHandler(s32 device)
 	queue->QueueHeap[messageIndex] = eventHandlers[device].Message;
 	if (queue->ReceiveThreadQueue.NextThread->NextThread != NULL)
 	{
-		ThreadInfo *handlerThread = ThreadQueue_PopThread(&queue->ReceiveThreadQueue);
+		ThreadInfo* handlerThread = ThreadQueue_PopThread(&queue->ReceiveThreadQueue);
 		handlerThread->ThreadState = Ready;
 		handlerThread->Context.Registers[0] = IPC_SUCCESS;
 		ThreadQueue_PushThread(&SchedulerQueue, handlerThread);
@@ -243,7 +243,7 @@ void irq_shutdown(void)
 	DisableInterrupts();
 }
 
-void IrqHandler(ThreadContext *context)
+void IrqHandler(ThreadContext* context)
 {
  //Enqueue current thread
 	CurrentThread->ThreadState = Ready;

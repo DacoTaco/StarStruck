@@ -51,9 +51,9 @@ typedef struct
 	u8 Attributes;
 	u16 MaxPacketSize;
 	u8 Interval;
-	OhciEndpointDescriptor *Descriptor;
-	WiiTransferDescriptor *TransferDescriptor;
-	OhciTransferDescriptorIsoc *IsocTransferDescriptor;
+	OhciEndpointDescriptor* Descriptor;
+	WiiTransferDescriptor* TransferDescriptor;
+	OhciTransferDescriptorIsoc* IsocTransferDescriptor;
 } DeviceEndpoint;
 CHECK_SIZE(DeviceEndpoint, 0x14);
 CHECK_OFFSET(DeviceEndpoint, 0x00, EndpointAddress);
@@ -85,7 +85,7 @@ typedef struct
 	u8 DeviceSubClass;
 	u8 DeviceProtocol;
 	u8 NumberOfInterfaces;
-	IpcMessage *IpcMessage;
+	IpcMessage* IpcMessage;
 	DeviceInterface Interfaces[MAX_USB_INTERFACES];
 	DeviceEndpoint Endpoints[MAX_USB_ENDPOINTS];
 } OH1Device;
@@ -114,16 +114,16 @@ extern OH1Device Devices[MAX_USB_DEVICES];
 void SetDeviceFunctionAddress(s8 deviceIndex);
 s8 FindEndpointIndex(s8 deviceIndex, u8 endpointAddress);
 s8 GetDeviceIndex(u16 vid, u16 pid);
-int GetDeviceVendorAndProduct(s8 deviceIndex, u16 *vendor, u16 *product);
+int GetDeviceVendorAndProduct(s8 deviceIndex, u16* vendor, u16* product);
 u8 GetPortIndex(s8 deviceIndex);
 void SetMaxPacketSize(s8 deviceIndex, u8 maxPacketSize);
 void SetMaxPower(s8 deviceIndex, u8 maxPower);
 void SetDeviceVendor(s8 deviceIndex, u16 vendorId);
 void SetDeviceProductId(s8 deviceIndex, u16 productId);
 void SetDeviceClass(s8 deviceIndex, u8 class, u8 subclass, u8 protocol);
-int SetDeviceIPCMessage(s8 deviceIndex, IpcMessage *message);
-void AddDeviceToDevList(DeviceListEntry *deviceList, u8 entryIndex, s8 deviceIndex);
-int PopulateDeviceList(DeviceListEntry *deviceList, u8 maxCount,
-                       u8 interfaceClass, u8 *countOutput);
+int SetDeviceIPCMessage(s8 deviceIndex, IpcMessage* message);
+void AddDeviceToDevList(DeviceListEntry* deviceList, u8 entryIndex, s8 deviceIndex);
+int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
+                       u8 interfaceClass, u8* countOutput);
 void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting,
                   u8 class, u8 subClass, u8 protocol);

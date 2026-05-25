@@ -19,8 +19,8 @@
 #include "gecko.h"
 #include "IOS.hpp"
 
-static void *xfb = NULL;
-static GXRModeObj *vmode = NULL;
+static void* xfb = NULL;
+static GXRModeObj* vmode = NULL;
 
 typedef struct
 {
@@ -48,7 +48,7 @@ static const int IOCTL_GET_STATS = 1;
 static s32 flashHandle = -1;
 
 //---------------------------------------------------------------------------------
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 //---------------------------------------------------------------------------------
 {
 	// Initialise the video system
@@ -167,8 +167,8 @@ int main(int argc, char **argv)
 			//save nand dump
 			gprintf("starting dump...\n");
 
-			void *buf = NULL;
-			FILE *outputFile = NULL;
+			void* buf = NULL;
+			FILE* outputFile = NULL;
 			try
 			{
 				//reset the handler's file positition
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 				if (!outputFile)
 					throw std::string("Failed to open output file for writing");
 
-				void *buf = memalign(32, stats.ChunkSize);
+				void* buf = memalign(32, stats.ChunkSize);
 				if (!buf)
 					throw std::string("Failed to allocate aligned buffer for NAND read");
 
@@ -235,10 +235,10 @@ int main(int argc, char **argv)
 
 				gprintf("Dump complete, total bytes=%llu\n", totalWritten);
 
-			} catch (const std::string &ex)
+			} catch (const std::string& ex)
 			{
 				gprintf("IOS Flash Exception -> %s\n", ex.c_str());
-			} catch (char const *ex)
+			} catch (char const* ex)
 			{
 				gprintf("IOS Flash Exception -> %s\n", ex);
 			} catch (...)

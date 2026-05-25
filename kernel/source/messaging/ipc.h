@@ -50,10 +50,10 @@ Copyright (C) 2009		John Kelley <wiidev@kelley.ca>
 // IpcMessageArray contains 1 message per thread (= MAX_THREADS), plus these extra messages
 #define IPC_EXTRA_MESSAGES 128
 
-extern IpcMessage *IpcMessageArray;
+extern IpcMessage* IpcMessageArray;
 extern MessageQueue IpcMessageQueueArray[MAX_THREADS];
 extern unsigned ThreadMessageUsageArray[MAX_THREADS];
-extern ThreadInfo *IpcHandlerThread;
+extern ThreadInfo* IpcHandlerThread;
 extern s32 IpcHandlerThreadId;
 
 #ifndef MIOS
@@ -61,7 +61,7 @@ void IpcInit(void);
 void IpcHandler(void);
 #endif
 
-s32 ResourceReply(IpcMessage *message, s32 requestReturnValue);
-s32 SendMessageCheckReceive(IpcMessage *message, ResourceManager *resource);
+s32 ResourceReply(IpcMessage* message, s32 requestReturnValue);
+s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource);
 
 void ipc_shutdown(void);

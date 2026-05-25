@@ -16,10 +16,10 @@ IOS. oh1 - usb ohci implementation in ios
 extern s32 _moduleHeap;
 
 s32 CreateHeap(void);
-void FreeMemory(void *ptr);
-bool IsTransferDescriptorOnHead(void *ptr);
-void *ValidateMemoryAddress(void *ptr);
-OhciEndpointDescriptor *AllocateEndpointDescriptor(void);
-WiiTransferDescriptor *AllocateTransferDescriptor(void);
-OhciTransferDescriptorIsoc *AllocateIsocTransferDescriptor(void);
-void CleanupIORequest(IORequestPacket *ioRequest);
+void FreeMemory(void* ptr);
+bool IsTransferDescriptorOnHead(void* ptr);
+void* ValidateMemoryAddress(void* ptr);
+OhciEndpointDescriptor* AllocateEndpointDescriptor(void);
+WiiTransferDescriptor* AllocateTransferDescriptor(void);
+OhciTransferDescriptorIsoc* AllocateIsocTransferDescriptor(void);
+void CleanupIORequest(IORequestPacket* ioRequest);

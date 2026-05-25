@@ -36,7 +36,7 @@ void CheckForGecko(void)
 		usb_flush(EXI_CHANNEL_1);
 	return;
 }
-void gprintf(const char *str, ...)
+void gprintf(const char* str, ...)
 {
 	char astr[2048];
 	s32 size = 0;

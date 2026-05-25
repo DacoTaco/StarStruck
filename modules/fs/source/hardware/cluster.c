@@ -26,7 +26,7 @@
 static u8 _ivDataBuffer[0x10] __attribute__((aligned(0x40))) = { 0 };
 static u8 _writePageBuffer[0x1000] __attribute__((aligned(0x40))) = { 0 };
 
-static void GenerateFSAesIv(const u8 *salt, u8 *ivOut)
+static void GenerateFSAesIv(const u8* salt, u8* ivOut)
 {
 	// The original IOS code iterates through salt positions [0,16,32,48], [1,17,33,49], etc.
 	// overwriting each output byte 4 times, keeping only the last value.
@@ -40,8 +40,8 @@ static void GenerateFSAesIv(const u8 *salt, u8 *ivOut)
 	}
 }
 
-static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterSalt,
-                             u32 clusterSaltLength, u8 *data, u32 *hmacData)
+static s32 ReadClustersInner(u16 cluster, u32 count, u8* clusterIv, u8* clusterSalt,
+                             u32 clusterSaltLength, u8* data, u32* hmacData)
 {
 	// Validate cluster is within NAND bounds
 	if (cluster >= GetMaxClusters() || count == 0 || data == NULL ||
@@ -61,10 +61,10 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 	ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacDigest[0x14] __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacBuffer[0x40] = { 0 };
-	u8 *hmacBufferPtr = NULL;
+	u8* hmacBufferPtr = NULL;
 	if (clusterSalt == NULL)
 	{
-		hmacBufferPtr = (u8 *)hmacData;
+		hmacBufferPtr = (u8*)hmacData;
 	}
 	else
 	{
@@ -98,7 +98,7 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 			nandCommandExecuted = false;
 
 			s32 msgRet = OSReceiveMessage((s32)IrqMessageQueueId,
-			                              (IpcMessage *)&message, None);
+			                              (IpcMessage*)&message, None);
 			if (msgRet != 0 || message != 1 || ((read32(0xd010000) >> 0x1d) & 1) != 0)
 			{
 				ret = IPC_UNKNOWN;
@@ -108,10 +108,10 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 			OSAhbFlushFrom(AHB_NAND);
 			OSAhbFlushTo(AHB_STARLET);
 
-			u8 *databuffer =
+			u8* databuffer =
 			    data + ((pageIndex - 1)
 			            << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF));
-			ret = CorrectNandData(databuffer, (u8 *)(((pageIndex - 1) & 1) * 0x80 + eccBufferBase));
+			ret = CorrectNandData(databuffer, (u8*)(((pageIndex - 1) & 1) * 0x80 + eccBufferBase));
 
 			// Handle ECC results: SUCCESS, ECC (corrected), ECC_CRIT are acceptable
 			// Any other error exits immediately
@@ -149,7 +149,7 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 				const u32 hmacChunkSize =
 				    1 << (SelectedNandChip.Info.SizeInfo.HMACSizeShift & 0xFF);
 
-				memcpy(hmacBufferPtr, (void *)(eccSlot + eccBufferBase + hmacOffset),
+				memcpy(hmacBufferPtr, (void*)(eccSlot + eccBufferBase + hmacOffset),
 				       hmacChunkSize);
 				hmacBufferPtr += hmacChunkSize;
 			}
@@ -177,13 +177,13 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 				}
 			}
 
-			void *eccBuffer = (void *)((pageIndex & 1) * 0x80 + eccBufferBase);
+			void* eccBuffer = (void*)((pageIndex & 1) * 0x80 + eccBufferBase);
 			const u32 eccSize = GetEccSize();
 
 			// Invalidate data and ECC buffers, then send the read command
 			OSDCInvalidateRange(data + pageIndex * pageSize, pageSize);
 			OSDCInvalidateRange(eccBuffer, eccSize);
-			OSDCInvalidateRange((void *)((u32)eccBuffer + 0x40),
+			OSDCInvalidateRange((void*)((u32)eccBuffer + 0x40),
 			                    4 << ((pageSizeShift - 9) & 0xFF));
 
 			OSAhbFlushFrom(AHB_1);
@@ -218,7 +218,7 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 		{
 			ioscCommandExecuted = false;
 			s32 msgRet = OSReceiveMessage((s32)IoscMessageQueueId,
-			                              (IpcMessage *)&asyncMessage, None);
+			                              (IpcMessage*)&asyncMessage, None);
 			if (msgRet != IPC_SUCCESS || asyncMessage.Result != IPC_SUCCESS)
 			{
 				ret = IPC_UNKNOWN;
@@ -232,11 +232,11 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 			const u32 prevPageOffset =
 			    (pageIndex - 1)
 			    << (SelectedNandChip.Info.SizeInfo.PageSizeBitShift & 0xFF);
-			u8 *pageBuffer = data + prevPageOffset;
+			u8* pageBuffer = data + prevPageOffset;
 
 			ret = OSIOSCDecryptAsync(KEYRING_CONST_NAND_KEY, clusterIv, pageBuffer,
 			                         pageSize, pageBuffer, (s32)IoscMessageQueueId,
-			                         (IpcMessage *)&asyncMessage);
+			                         (IpcMessage*)&asyncMessage);
 			if (ret != IPC_SUCCESS)
 				goto waitAndReturn;
 
@@ -294,12 +294,12 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterS
 waitAndReturn:
 	if (nandCommandExecuted)
 	{
-		OSReceiveMessage((s32)IrqMessageQueueId, (IpcMessage *)&message, None);
+		OSReceiveMessage((s32)IrqMessageQueueId, (IpcMessage*)&message, None);
 		OSAhbFlushFrom(AHB_NAND);
 	}
 	if (ioscCommandExecuted)
 	{
-		OSReceiveMessage((s32)IoscMessageQueueId, (IpcMessage *)&message, None);
+		OSReceiveMessage((s32)IoscMessageQueueId, (IpcMessage*)&message, None);
 	}
 
 returnRead:
@@ -309,12 +309,12 @@ returnRead:
 	return ret;
 }
 
-s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
-                 u8 *data, u32 *hmacOut)
+s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt,
+                 u8* data, u32* hmacOut)
 {
 	s32 errno;
-	u8 *clusterIv = NULL;
-	u8 *clusterSalt = NULL;
+	u8* clusterIv = NULL;
+	u8* clusterSalt = NULL;
 	u32 clusterSaltLength = 0;
 
 	// Calculate max clusters based on NAND size & Validate arguments
@@ -328,7 +328,7 @@ s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
 		// If decrypt flag is set, generate IV from salt
 		if (flags & ClusterFlagsEncryptDecrypt)
 		{
-			GenerateFSAesIv((const u8 *)salt, _ivDataBuffer);
+			GenerateFSAesIv((const u8*)salt, _ivDataBuffer);
 			clusterIv = _ivDataBuffer;
 		}
 
@@ -336,7 +336,7 @@ s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
 		if (flags & ClusterFlagsVerify)
 		{
 			clusterSaltLength = 0x40;
-			clusterSalt = (u8 *)salt;
+			clusterSalt = (u8*)salt;
 		}
 
 		errno = ReadClustersInner(cluster, count, clusterIv, clusterSalt,
@@ -350,8 +350,8 @@ s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
 	return TranslateErrno(errno);
 }
 
-static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *clusterSalt,
-                              u32 clusterSaltLength, u8 *data, u32 *hmacData)
+static s32 WriteClustersInner(u16 cluster, u32 count, u8* clusterIv, u8* clusterSalt,
+                              u32 clusterSaltLength, u8* data, u32* hmacData)
 {
 	// Validate cluster is within NAND bounds
 	if (cluster >= GetMaxClusters() || count == 0 || data == NULL ||
@@ -369,12 +369,12 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *cluster
 	ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacDigest[0x14] __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacBuffer[0x40] = { 0 };
-	u8 *hmacBufferPtr = NULL;
+	u8* hmacBufferPtr = NULL;
 
 	if (clusterSalt == NULL)
 	{
 		// Use pre-computed HMAC data directly if provided
-		hmacBufferPtr = (u8 *)hmacData;
+		hmacBufferPtr = (u8*)hmacData;
 	}
 	else
 	{
@@ -441,7 +441,7 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *cluster
 			{
 				ioscCommandExecuted = false;
 				s32 msgRet = OSReceiveMessage((s32)IoscMessageQueueId,
-				                              (IpcMessage *)&asyncMessage, None);
+				                              (IpcMessage*)&asyncMessage, None);
 				if (msgRet != IPC_SUCCESS || asyncMessage.Result != IPC_SUCCESS)
 				{
 					ret = IPC_UNKNOWN;
@@ -453,11 +453,11 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *cluster
 			if (pageIndex < totalPages)
 			{
 				// Use double-buffering: alternate between two page-sized regions
-				u8 *encryptBuffer = _writePageBuffer + (pageIndex & 1) * pageSize;
+				u8* encryptBuffer = _writePageBuffer + (pageIndex & 1) * pageSize;
 				ret = OSIOSCEncryptAsync(KEYRING_CONST_NAND_KEY, clusterIv,
 				                         data + pageIndex * pageSize, pageSize,
 				                         encryptBuffer, (s32)IoscMessageQueueId,
-				                         (IpcMessage *)&asyncMessage);
+				                         (IpcMessage*)&asyncMessage);
 				if (ret != IPC_SUCCESS)
 					goto waitAndReturn;
 
@@ -495,7 +495,7 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *cluster
 			}
 
 			// Select data source: encrypted buffer or original data
-			u8 *pageData;
+			u8* pageData;
 			if (clusterIv == NULL)
 				pageData = data + prevPageIndex * pageSize;
 			else
@@ -522,14 +522,14 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8 *clusterIv, u8 *cluster
 waitAndReturn:
 	if (ioscCommandExecuted)
 	{
-		OSReceiveMessage((s32)IoscMessageQueueId, (IpcMessage *)&message, None);
+		OSReceiveMessage((s32)IoscMessageQueueId, (IpcMessage*)&message, None);
 	}
 
 	return ret;
 }
 
-s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
-                  u8 *data, u32 *hmacData)
+s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt,
+                  u8* data, u32* hmacData)
 {
 	s32 errno;
 	// Calculate max clusters based on NAND size & Validate arguments
@@ -553,13 +553,13 @@ s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
 			goto translateAndReturn;
 	}
 
-	u8 *clusterIv = NULL;
-	u8 *clusterSalt = NULL;
+	u8* clusterIv = NULL;
+	u8* clusterSalt = NULL;
 	u32 clusterSaltLength = 0;
 	// If decrypt flag is set (encrypt for write), generate IV from salt
 	if (flags & ClusterFlagsEncryptDecrypt)
 	{
-		GenerateFSAesIv((const u8 *)salt, _ivDataBuffer);
+		GenerateFSAesIv((const u8*)salt, _ivDataBuffer);
 		clusterIv = _ivDataBuffer;
 	}
 
@@ -567,7 +567,7 @@ s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData *salt,
 	if (flags & ClusterFlagsVerify)
 	{
 		clusterSaltLength = 0x40;
-		clusterSalt = (u8 *)salt;
+		clusterSalt = (u8*)salt;
 	}
 
 	errno = WriteClustersInner(cluster, count, clusterIv, clusterSalt,

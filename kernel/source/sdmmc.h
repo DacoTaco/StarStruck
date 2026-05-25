@@ -15,7 +15,7 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 struct sdmmc_command;
 
-typedef struct sdhc_host *sdmmc_chipset_handle_t;
+typedef struct sdhc_host* sdmmc_chipset_handle_t;
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF    0
@@ -48,10 +48,10 @@ struct sdmmc_softc;
 
 struct sdmmc_task
 {
-	void (*func)(void *arg);
-	void *arg;
+	void (*func)(void* arg);
+	void* arg;
 	int onqueue;
-	struct sdmmc_softc *sc;
+	struct sdmmc_softc* sc;
 };
 
 #define sdmmc_init_task(xtask, xfunc, xarg) \
@@ -72,7 +72,7 @@ struct sdmmc_command
 	u_int16_t c_opcode; /* SD or MMC command index */
 	u_int32_t c_arg;  /* SD/MMC command argument */
 	sdmmc_response c_resp; /* response buffer */
-	void *c_data; /* buffer to send or read into */
+	void* c_data; /* buffer to send or read into */
 	int c_datalen; /* length of data buffer */
 	int c_blklen; /* block length */
 	int c_flags; /* see below */
@@ -105,7 +105,7 @@ struct sdmmc_command
 
  /* Host controller owned fields for data xfer in progress */
 	int c_resid;   /* remaining I/O */
-	u_char *c_buf;   /* remaining data */
+	u_char* c_buf;   /* remaining data */
 };
 
 /*
@@ -123,7 +123,7 @@ struct sdmmc_cis
 	u_char cis1_major;
 	u_char cis1_minor;
 	char cis1_info_buf[256];
-	char *cis1_info[4];
+	char* cis1_info[4];
 };
 
 /*
@@ -168,7 +168,7 @@ void sdmmc_needs_discover(void);
 int sdmmc_select(void);
 int sdmmc_check_card(void);
 int sdmmc_ack_card(void);
-int sdmmc_read(u32 blk_start, u32 blk_count, void *data);
+int sdmmc_read(u32 blk_start, u32 blk_count, void* data);
 
 /* MMC commands */    /* response type */
 #define MMC_GO_IDLE_STATE         0 /* R0 */
@@ -355,9 +355,9 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void *data);
 
 /* Might be slow, but it should work on big and little endian systems. */
 #define MMC_RSP_BITS(resp, start, len) __bitfield((resp), (start) - 8, (len))
-static __inline int __bitfield(u_int32_t *src, int start, int len)
+static __inline int __bitfield(u_int32_t* src, int start, int len)
 {
-	u_int8_t *sp;
+	u_int8_t* sp;
 	u_int32_t dst, mask;
 	int shift, bs, bc;
 
@@ -370,7 +370,7 @@ static __inline int __bitfield(u_int32_t *src, int start, int len)
 
 	while (len > 0)
 	{
-		sp = (u_int8_t *)src + start / 8;
+		sp = (u_int8_t*)src + start / 8;
 		bs = start % 8;
 		bc = 8 - bs;
 		if (bc > len)

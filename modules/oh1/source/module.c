@@ -19,26 +19,26 @@ IOS. oh1 - usb ohci implementation in ios
 #include "communications.h"
 #include "deviceManagement.h"
 
-#define OH1_TRANSFER_BASE ((void *)0x13880400)
+#define OH1_TRANSFER_BASE ((void*)0x13880400)
 #define OH1_TRANSFER_SIZE (0x1000)
-static OhciEndpointDescriptor *_ohciInterruptEndpoints = OH1_TRANSFER_BASE;
-static USBControlMessage *_controlRequest = NULL;
+static OhciEndpointDescriptor* _ohciInterruptEndpoints = OH1_TRANSFER_BASE;
+static USBControlMessage* _controlRequest = NULL;
 static u8 _endpointIndexes[] = { 62, 60, 56, 48, 32 };
 
-static void EnableModuleInterrupts(OH1ModuleControl *module)
+static void EnableModuleInterrupts(OH1ModuleControl* module)
 {
 	module->HardwareRegisters->EnableInterrupts = OHCI_INTR_MIE;
 }
 
-static void DisableModuleInterrupts(OH1ModuleControl *module)
+static void DisableModuleInterrupts(OH1ModuleControl* module)
 {
 	module->HardwareRegisters->DisableInterrupts = OHCI_INTR_MIE;
 }
 
-static void AppendControlEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+static void AppendControlEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
-	OhciEndpointDescriptor *controlHead;
-	OhciEndpointDescriptor *next;
+	OhciEndpointDescriptor* controlHead;
+	OhciEndpointDescriptor* next;
 
 	controlHead = module->HardwareRegisters->ControlHeadEndpoint;
 	if (controlHead == NULL)
@@ -60,10 +60,10 @@ static void AppendControlEndpoint(OH1ModuleControl *module, OhciEndpointDescript
 	}
 }
 
-static void AppendBulkEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+static void AppendBulkEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
-	OhciEndpointDescriptor *last;
-	OhciEndpointDescriptor *lastSwapped;
+	OhciEndpointDescriptor* last;
+	OhciEndpointDescriptor* lastSwapped;
 
 	last = module->HardwareRegisters->BulkHeadEndpoint;
 	if (!last)
@@ -87,10 +87,10 @@ static void AppendBulkEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor 
 	}
 }
 
-static void AppendEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+static void AppendEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
-	OhciEndpointDescriptor *head;
-	OhciEndpointDescriptor *nextEndpoint;
+	OhciEndpointDescriptor* head;
+	OhciEndpointDescriptor* nextEndpoint;
 
 	head = module->EndpointDescriptors + _endpointIndexes[0];
 	nextEndpoint = head->Next;
@@ -102,7 +102,7 @@ static void AppendEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *end
 	head->Next = swap_ptr(endpoint);
 }
 
-static void FlushEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+static void FlushEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
 	u32 dw0 = swap_u32(endpoint->dw0);
 	endpoint->dw0 = swap_u32(dw0 & ~ED_SKIP);
@@ -110,7 +110,7 @@ static void FlushEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endp
 	OSAhbFlushTo(module->AHBDevice);
 }
 
-static int ResetDevice(OH1ModuleControl *module, u8 port)
+static int ResetDevice(OH1ModuleControl* module, u8 port)
 {
 	int attempts = 4;
 
@@ -133,7 +133,7 @@ static int ResetDevice(OH1ModuleControl *module, u8 port)
 	return IPC_NOTREADY;
 }
 
-static int HandleDisconnection(OH1ModuleControl *, u8 port)
+static int HandleDisconnection(OH1ModuleControl*, u8 port)
 {
 	for (int deviceIndex = 1; deviceIndex < MAX_USB_DEVICES; deviceIndex++)
 	{
@@ -149,9 +149,9 @@ static int HandleDisconnection(OH1ModuleControl *, u8 port)
 	return IPC_EINVAL;
 }
 
-static void SetControlStatusRegister(OH1ModuleControl *module, u32 controlFlag, u32 commandStatus)
+static void SetControlStatusRegister(OH1ModuleControl* module, u32 controlFlag, u32 commandStatus)
 {
-	volatile OhciRegs *moduleRegisters = module->HardwareRegisters;
+	volatile OhciRegs* moduleRegisters = module->HardwareRegisters;
 
 	if ((moduleRegisters->Control & controlFlag) == 0)
 		moduleRegisters->Control |= controlFlag;
@@ -159,7 +159,7 @@ static void SetControlStatusRegister(OH1ModuleControl *module, u32 controlFlag, 
 	moduleRegisters->CommandStatus = commandStatus;
 }
 
-static OhciEndpointDescriptor *GetInterruptEndpointDescriptor(OH1ModuleControl *module, u8 interval)
+static OhciEndpointDescriptor* GetInterruptEndpointDescriptor(OH1ModuleControl* module, u8 interval)
 {
 	int level = 0;
 
@@ -172,7 +172,7 @@ static OhciEndpointDescriptor *GetInterruptEndpointDescriptor(OH1ModuleControl *
 	 * descriptors. */
 	for (int index = _endpointIndexes[level]; index < 63; index++)
 	{
-		OhciEndpointDescriptor *endpointDescriptor = &module->EndpointDescriptors[index];
+		OhciEndpointDescriptor* endpointDescriptor = &module->EndpointDescriptors[index];
 		u32 dw0 = swap_u32(endpointDescriptor->dw0);
 		if (!(dw0 & ED_WII31))
 		{
@@ -183,11 +183,11 @@ static OhciEndpointDescriptor *GetInterruptEndpointDescriptor(OH1ModuleControl *
 	return NULL;
 }
 
-static s8 GetAvailableDeviceIndex(OH1ModuleControl *module, u8 port, u8 zero, bool isLowSpeedDevice)
+static s8 GetAvailableDeviceIndex(OH1ModuleControl* module, u8 port, u8 zero, bool isLowSpeedDevice)
 {
-	OhciEndpointDescriptor *endpoint;
-	WiiTransferDescriptor *transfer;
-	void *swappedTransfer;
+	OhciEndpointDescriptor* endpoint;
+	WiiTransferDescriptor* transfer;
+	void* swappedTransfer;
 
 	for (s8 deviceIndex = 1; deviceIndex < MAX_USB_DEVICES; deviceIndex++)
 	{
@@ -223,10 +223,10 @@ static s8 GetAvailableDeviceIndex(OH1ModuleControl *module, u8 port, u8 zero, bo
 	return 0;
 }
 
-static void PopulateTransfer(WiiTransferDescriptor *transfer, IORequestPacket *ioRequest,
-                             char *data, u16 length, u32 dw0, u32 interruptDelay)
+static void PopulateTransfer(WiiTransferDescriptor* transfer, IORequestPacket* ioRequest,
+                             char* data, u16 length, u32 dw0, u32 interruptDelay)
 {
-	char *ptr;
+	char* ptr;
 
 	ptr = ValidateMemoryAddress(data);
 	transfer->std.CurrentBuffer = swap_ptr(ptr);
@@ -237,10 +237,10 @@ static void PopulateTransfer(WiiTransferDescriptor *transfer, IORequestPacket *i
 	ioRequest->Counter++;
 }
 
-static int SetupEndpoint(OH1ModuleControl *module, DeviceEndpoint *deviceEndpoint, s8 deviceIndex)
+static int SetupEndpoint(OH1ModuleControl* module, DeviceEndpoint* deviceEndpoint, s8 deviceIndex)
 {
-	OhciTransferDescriptor *transfer;
-	OhciEndpointDescriptor *endpoint;
+	OhciTransferDescriptor* transfer;
+	OhciEndpointDescriptor* endpoint;
 	u32 dw0;
 	u8 transferType = deviceEndpoint->Attributes & USB_ENDPOINT_XFERTYPE_MASK;
 	if (transferType == USB_ENDPOINT_XFER_ISOC)
@@ -270,7 +270,7 @@ static int SetupEndpoint(OH1ModuleControl *module, DeviceEndpoint *deviceEndpoin
 	if (!endpoint)
 		return IPC_SUCCESS;
 
-	void *td_swapped = swap_ptr(transfer);
+	void* td_swapped = swap_ptr(transfer);
 	endpoint->Head = td_swapped;
 	endpoint->Tail = td_swapped;
 	if (deviceEndpoint->EndpointAddress & USB_DIR_IN)
@@ -294,24 +294,24 @@ static int SetupEndpoint(OH1ModuleControl *module, DeviceEndpoint *deviceEndpoin
 	return IPC_SUCCESS;
 }
 
-static int SendControlMessageAsync(OH1ModuleControl *module, USBControlMessage *controlMessage,
-                                   IpcMessage *ipcMessage, s32 queueId, s8 deviceIndex)
+static int SendControlMessageAsync(OH1ModuleControl* module, USBControlMessage* controlMessage,
+                                   IpcMessage* ipcMessage, s32 queueId, s8 deviceIndex)
 {
-	WiiTransferDescriptor *nextTransfer;
-	WiiTransferDescriptor *transferDescriptor;
+	WiiTransferDescriptor* nextTransfer;
+	WiiTransferDescriptor* transferDescriptor;
 	s8 endpointIndex;
-	WiiTransferDescriptor *dataTransferDescriptor;
-	OhciEndpointDescriptor *endpoint;
+	WiiTransferDescriptor* dataTransferDescriptor;
+	OhciEndpointDescriptor* endpoint;
 	u32 dw0;
-	OhciTransferDescriptor *tail;
-	WiiTransferDescriptor *transferTail;
+	OhciTransferDescriptor* tail;
+	WiiTransferDescriptor* transferTail;
 	int rc = IPC_SUCCESS;
 
 	DisableModuleInterrupts(module);
 	OSAhbFlushFrom(module->AHBDeviceToFlush);
 	OSAhbFlushTo(AHB_STARLET);
 	OSDCFlushRange(controlMessage, sizeof(*controlMessage));
-	IORequestPacket *ioRequest = OSAllocateMemory(_moduleHeap, sizeof(IORequestPacket));
+	IORequestPacket* ioRequest = OSAllocateMemory(_moduleHeap, sizeof(IORequestPacket));
 	nextTransfer = AllocateTransferDescriptor();
 
 	u16 length = swap_u16(controlMessage->Length);
@@ -378,11 +378,11 @@ static int SendControlMessageAsync(OH1ModuleControl *module, USBControlMessage *
 	}
 	PopulateTransfer(transferDescriptor, ioRequest, NULL, 0,
 	                 dw0 | TD_SET(CC, 0xf) | TD_SET(DT, 0x3), 0);
-	void *td_swapped = endpoint->Tail;
+	void* td_swapped = endpoint->Tail;
 	ioRequest->TransferDescriptor = nextTransfer;
 	transferTail = swap_ptr(td_swapped);
 	nextTransfer = ioRequest->TransferDescriptor;
-	PopulateTransfer(transferTail, ioRequest, (char *)controlMessage, 8,
+	PopulateTransfer(transferTail, ioRequest, (char*)controlMessage, 8,
 	                 TD_SET(CC, 0xf) | TD_SET(DT, 0x2), 2);
 	ioRequest->TransferDescriptor = transferTail;
 	if (dataTransferDescriptor)
@@ -418,11 +418,10 @@ error:
 	return rc;
 }
 
-static int SendControlMessage(OH1ModuleControl *module, s8 deviceIndex,
-                              USBControlMessage *message)
+static int SendControlMessage(OH1ModuleControl* module, s8 deviceIndex, USBControlMessage* message)
 {
 	int rc;
-	void *receivedMessage;
+	void* receivedMessage;
 
 	rc = SendControlMessageAsync(module, message, NULL, module->TimerQueue, deviceIndex);
 	if (rc >= 0)
@@ -431,24 +430,24 @@ static int SendControlMessage(OH1ModuleControl *module, s8 deviceIndex,
 	return rc;
 }
 
-static void ParseDescriptors(OH1ModuleControl *module, s8 deviceIndex,
-                             const UsbConfigurationDescriptor *configuration, size_t totalLength)
+static void ParseDescriptors(OH1ModuleControl* module, s8 deviceIndex,
+                             const UsbConfigurationDescriptor* configuration, size_t totalLength)
 {
 	u8 endpointIndex = 1;
 	u32 usedSlotsMask = 0;
-	UsbDescriptor *lastDescriptor = (UsbDescriptor *)(&configuration->Length + totalLength);
+	UsbDescriptor* lastDescriptor = (UsbDescriptor*)(&configuration->Length + totalLength);
 	u8 interfaceNumber;
-	DeviceEndpoint *deviceEndpoint;
-	UsbDescriptor *descriptor;
+	DeviceEndpoint* deviceEndpoint;
+	UsbDescriptor* descriptor;
 	u8 numberOfEndpoints = 0;
 	u8 alternateSetting;
 	u8 class;
 	u8 protocol;
 	u8 subClass;
 
-	for (descriptor = (UsbDescriptor *)((u32)configuration + configuration->Length);
+	for (descriptor = (UsbDescriptor*)((u32)configuration + configuration->Length);
 	     descriptor < lastDescriptor;
-	     descriptor = (UsbDescriptor *)((u32)descriptor + descriptor->Header.Length))
+	     descriptor = (UsbDescriptor*)((u32)descriptor + descriptor->Header.Length))
 	{
 		if (numberOfEndpoints == 0)
 		{
@@ -517,10 +516,10 @@ static void ParseDescriptors(OH1ModuleControl *module, s8 deviceIndex,
 	}
 }
 
-static int GetDeviceDescriptor(OH1ModuleControl *module, s8 deviceIndex,
-                               s8 outputDeviceIndex, UsbDeviceDescriptor *output)
+static int GetDeviceDescriptor(OH1ModuleControl* module, s8 deviceIndex,
+                               s8 outputDeviceIndex, UsbDeviceDescriptor* output)
 {
-	USBControlMessage *msg = _controlRequest;
+	USBControlMessage* msg = _controlRequest;
 
 	memset(msg, 0, sizeof(*msg));
 	msg->RequestType = USB_DIR_IN;
@@ -534,11 +533,11 @@ static int GetDeviceDescriptor(OH1ModuleControl *module, s8 deviceIndex,
 	return SendControlMessage(module, deviceIndex, msg);
 }
 
-static int ConfigureDevice(OH1ModuleControl *module, s8 deviceIndex,
-                           UsbDeviceDescriptor *device, UsbConfigurationDescriptor *configuration)
+static int ConfigureDevice(OH1ModuleControl* module, s8 deviceIndex,
+                           UsbDeviceDescriptor* device, UsbConfigurationDescriptor* configuration)
 {
-	USBControlMessage *message;
-	UsbConfigurationDescriptor *configurationReply;
+	USBControlMessage* message;
+	UsbConfigurationDescriptor* configurationReply;
 	int rc;
 
 	memset(_controlRequest, 0, sizeof(*_controlRequest));
@@ -624,7 +623,7 @@ static int ConfigureDevice(OH1ModuleControl *module, s8 deviceIndex,
 	u8 num_interfaces = Devices[deviceIndex].NumberOfInterfaces;
 	for (int i_interface = 0; i_interface < num_interfaces; i_interface++)
 	{
-		DeviceInterface *iface = &Devices[deviceIndex].Interfaces[i_interface];
+		DeviceInterface* iface = &Devices[deviceIndex].Interfaces[i_interface];
 		u8 alternate_setting = iface->AlternateSetting;
 		if (alternate_setting == 0)
 			continue;
@@ -647,14 +646,14 @@ static int ConfigureDevice(OH1ModuleControl *module, s8 deviceIndex,
 	return 0;
 }
 
-static void CloseDeviceEndpoint(OH1ModuleControl *module, s8 deviceIndex, u8 endpointIndex)
+static void CloseDeviceEndpoint(OH1ModuleControl* module, s8 deviceIndex, u8 endpointIndex)
 {
-	DeviceEndpoint *endp;
+	DeviceEndpoint* endp;
 
 	endp = &Devices[deviceIndex].Endpoints[endpointIndex];
 	if (endpointIndex == 0 || endp->EndpointAddress != 0)
 	{
-		OhciEndpointDescriptor *endpoint;
+		OhciEndpointDescriptor* endpoint;
 		endpoint = Devices[deviceIndex].Endpoints[endpointIndex].Descriptor;
 		OSAhbFlushFrom(module->AHBDeviceToFlush);
 		OSAhbFlushTo(AHB_STARLET);
@@ -663,11 +662,11 @@ static void CloseDeviceEndpoint(OH1ModuleControl *module, s8 deviceIndex, u8 end
 	}
 }
 
-int InitialiseModule(OH1ModuleControl *module)
+int InitialiseModule(OH1ModuleControl* module)
 {
 	int relIndexOfNext;
 	int indexOfNext;
-	OhciEndpointDescriptor *endpoint;
+	OhciEndpointDescriptor* endpoint;
 	int index;
 	int numberOfEntriesInLevel;
 	int baseIndex;
@@ -711,18 +710,18 @@ int InitialiseModule(OH1ModuleControl *module)
 	return 0;
 }
 
-int QueryModuleDevices(OH1ModuleControl *module)
+int QueryModuleDevices(OH1ModuleControl* module)
 {
-	UsbDeviceDescriptor *device;
-	UsbConfigurationDescriptor *configuration;
+	UsbDeviceDescriptor* device;
+	UsbConfigurationDescriptor* configuration;
 	s8 deviceIndex;
 	int hasSucceeded;
 	u32 rootHubDescriptionB;
-	char *deviceName;
+	char* deviceName;
 	u32 numberOfPorts;
-	volatile OhciRegs *registers;
+	volatile OhciRegs* registers;
 	u8 portIndex;
-	u8 *downstream_ports_ptr;
+	u8* downstream_ports_ptr;
 	u32 rootHubDescription;
 	u32 oldRootHubDescription;
 	int ret;
@@ -818,10 +817,10 @@ int QueryModuleDevices(OH1ModuleControl *module)
 	return ret;
 }
 
-int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
+int ProcessControlMessage(OH1ModuleControl* module, IpcMessage* ipcMessage)
 {
-	const IpcRequest *request = &ipcMessage->Request;
-	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
+	const IpcRequest* request = &ipcMessage->Request;
+	const IoctlvMessage* ioctlv = &request->Message.Ioctlv;
 	u32 inputCount = ioctlv->InputArgc;
 	u32 ioCount = ioctlv->IoArgc;
 	if (inputCount != 6 || ioCount != 1)
@@ -830,19 +829,19 @@ int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
 		return IPC_EINVAL;
 	}
 
-	const IoctlvMessageData *vector = ioctlv->MessageData;
+	const IoctlvMessageData* vector = ioctlv->MessageData;
 	if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 1 ||
 	    !vector[1].Data || vector[2].Length != 2 || !vector[2].Data ||
 	    vector[3].Length != 2 || !vector[3].Data || vector[4].Length != 2 ||
 	    !vector[4].Data || vector[5].Length != 1 || !vector[5].Data ||
-	    vector[6].Length != swap_u16(*(u16 *)vector[4].Data) ||
+	    vector[6].Length != swap_u16(*(u16*)vector[4].Data) ||
 	    (vector[6].Length != 0 && !vector[6].Data))
 	{
 		printk("parameter validity check failed\n");
 		return IPC_EINVAL;
 	}
 
-	USBControlMessage *controlMessage =
+	USBControlMessage* controlMessage =
 	    OSAlignedAllocateMemory(_moduleHeap, sizeof(*controlMessage), 32);
 	if (!controlMessage)
 	{
@@ -850,35 +849,35 @@ int ProcessControlMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
 		return IPC_EMAX;
 	}
 
-	controlMessage->RequestType = *(u8 *)vector[0].Data;
-	controlMessage->Request = *(u8 *)vector[1].Data;
-	controlMessage->Value = *(u16 *)vector[2].Data;
-	controlMessage->Index = *(u16 *)vector[3].Data;
-	controlMessage->Length = *(u16 *)vector[4].Data;
+	controlMessage->RequestType = *(u8*)vector[0].Data;
+	controlMessage->Request = *(u8*)vector[1].Data;
+	controlMessage->Value = *(u16*)vector[2].Data;
+	controlMessage->Index = *(u16*)vector[3].Data;
+	controlMessage->Length = *(u16*)vector[4].Data;
 	controlMessage->Oh1.Data = vector[6].Data;
-	controlMessage->Oh1.Endpoint = *(u8 *)vector[5].Data;
+	controlMessage->Oh1.Endpoint = *(u8*)vector[5].Data;
 	controlMessage->Oh1.DeviceIndex = (s8)request->FileDescriptor;
 	return SendControlMessageAsync(module, controlMessage, ipcMessage, -1,
-	                               *(s8 *)((int)&request->FileDescriptor + 3));
+	                               *(s8*)((int)&request->FileDescriptor + 3));
 }
 
-int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessage)
+int ProcessInterruptBlockMessage(OH1ModuleControl* module, IpcMessage* ipcMessage)
 {
 	s8 deviceIndex;
-	const IoctlvMessageData *vector;
-	char *data;
+	const IoctlvMessageData* vector;
+	char* data;
 	s8 endpointIndex;
 	u32 num_in;
 	u32 num_io;
 	u32 command;
-	OhciEndpointDescriptor *endpoint;
-	OhciTransferDescriptor *new_tail_swapped;
-	WiiTransferDescriptor *xfer_desc;
+	OhciEndpointDescriptor* endpoint;
+	OhciTransferDescriptor* new_tail_swapped;
+	WiiTransferDescriptor* xfer_desc;
 	int ret = 0;
 	u8 bEndpoint;
 
-	const IpcRequest *request = &ipcMessage->Request;
-	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
+	const IpcRequest* request = &ipcMessage->Request;
+	const IoctlvMessage* ioctlv = &request->Message.Ioctlv;
 	num_in = ioctlv->InputArgc;
 	num_io = ioctlv->IoArgc;
 	if (num_in != 2 || num_io == 1)
@@ -894,19 +893,19 @@ int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessag
 		return IPC_EINVAL;
 	}
 
-	u16 length = *(u16 *)vector[1].Data;
+	u16 length = *(u16*)vector[1].Data;
 	if (length != vector[2].Length || (length != 0 && !vector[2].Data))
 	{
 		return IPC_EINVAL;
 	}
-	bEndpoint = *(u8 *)vector[0].Data;
-	data = (void *)vector[2].Data;
-	deviceIndex = *(s8 *)((int)&request->FileDescriptor + 3);
+	bEndpoint = *(u8*)vector[0].Data;
+	data = (void*)vector[2].Data;
+	deviceIndex = *(s8*)((int)&request->FileDescriptor + 3);
 	DisableModuleInterrupts(module);
 	OSAhbFlushFrom(module->AHBDeviceToFlush);
 	OSAhbFlushTo(AHB_STARLET);
 	command = ioctlv->Ioctl;
-	IORequestPacket *irp = OSAllocateMemory(_moduleHeap, sizeof(*irp));
+	IORequestPacket* irp = OSAllocateMemory(_moduleHeap, sizeof(*irp));
 	if (!irp)
 	{
 		ret = IPC_EMAX;
@@ -938,7 +937,7 @@ int ProcessInterruptBlockMessage(OH1ModuleControl *module, IpcMessage *ipcMessag
 	irp->MessageData = data;
 	irp->Size = length;
 	irp->ControlMessage = NULL;
-	WiiTransferDescriptor *new_tail = AllocateTransferDescriptor();
+	WiiTransferDescriptor* new_tail = AllocateTransferDescriptor();
 	if (!new_tail)
 	{
 		ret = IPC_EMAX;
@@ -990,10 +989,10 @@ error_reenable_interrupts:
 	return ret;
 }
 
-int SleepModule(OH1ModuleControl *module, u32 timeout)
+int SleepModule(OH1ModuleControl* module, u32 timeout)
 {
 	int rc;
-	void *message;
+	void* message;
 
 	rc = OSRestartTimer(module->Timer, timeout, 0);
 	if (rc < 0)
@@ -1009,9 +1008,9 @@ int SleepModule(OH1ModuleControl *module, u32 timeout)
 	return rc;
 }
 
-void HandleStatusChange(OH1ModuleControl *module, int /*unused*/)
+void HandleStatusChange(OH1ModuleControl* module, int /*unused*/)
 {
-	volatile OhciRegs *regs;
+	volatile OhciRegs* regs;
 	regs = module->HardwareRegisters;
 	regs->DisableInterrupts = OHCI_INTR_RHSC;
 
@@ -1036,9 +1035,9 @@ void HandleStatusChange(OH1ModuleControl *module, int /*unused*/)
 	regs->EnableInterrupts = OHCI_INTR_RHSC;
 }
 
-int SuspendDevice(OH1ModuleControl *module, u8 port)
+int SuspendDevice(OH1ModuleControl* module, u8 port)
 {
-	volatile OhciRegs *regs;
+	volatile OhciRegs* regs;
 
 	if (port > module->NumberOfDownstreamPorts)
 		return IPC_EINVAL;
@@ -1055,9 +1054,9 @@ int SuspendDevice(OH1ModuleControl *module, u8 port)
 	return IPC_SUCCESS;
 }
 
-int ResumeDevice(OH1ModuleControl *module, u8 port)
+int ResumeDevice(OH1ModuleControl* module, u8 port)
 {
-	volatile OhciRegs *regs;
+	volatile OhciRegs* regs;
 
 	if (port > module->NumberOfDownstreamPorts)
 		return IPC_EINVAL;
@@ -1074,22 +1073,22 @@ int ResumeDevice(OH1ModuleControl *module, u8 port)
 	return IPC_SUCCESS;
 }
 
-void CloseEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+void CloseEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
-	WiiTransferDescriptor *head;
-	WiiTransferDescriptor *tail;
+	WiiTransferDescriptor* head;
+	WiiTransferDescriptor* tail;
 
 	OSAhbFlushFrom(module->AHBDeviceToFlush);
 	OSAhbFlushTo(module->AHBDevice);
 	u32 headField = (u32)swap_ptr(endpoint->Head);
-	head = (void *)(headField & 0xfffffff0);
+	head = (void*)(headField & 0xfffffff0);
 	u32 headFlags = headField & (ED_C | ED_H);
 	tail = swap_ptr(endpoint->Tail);
 	if (head != tail)
 	{
 		while (IsTransferDescriptorOnHead(head) && (head != tail))
 		{
-			IORequestPacket *ioRequest = head->IORequestPacket;
+			IORequestPacket* ioRequest = head->IORequestPacket;
 			ioRequest->Counter--;
 			endpoint->Head = head->std.Next;
 			OSDCFlushRange(endpoint, sizeof(*endpoint));
@@ -1105,7 +1104,7 @@ void CloseEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
 	}
 }
 
-void DisableEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+void DisableEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
 	u32 dw0 = swap_u32(endpoint->dw0);
 	endpoint->dw0 = swap_u32(dw0 | ED_SKIP);
@@ -1114,16 +1113,16 @@ void DisableEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
 	SleepModule(module, 1000);
 }
 
-void ResumeEndpoint(OH1ModuleControl *module, OhciEndpointDescriptor *endpoint)
+void ResumeEndpoint(OH1ModuleControl* module, OhciEndpointDescriptor* endpoint)
 {
-	void *td = MASK_PTR(swap_ptr(endpoint->Head), ~(ED_H | ED_C));
+	void* td = MASK_PTR(swap_ptr(endpoint->Head), ~(ED_H | ED_C));
 	endpoint->Head = swap_ptr(td);
 	OSDCFlushRange(endpoint, sizeof(*endpoint));
 	OSAhbFlushTo(module->AHBDevice);
 	printk("Cleared halt for ed: %p (headP = %p)\n", endpoint, td);
 }
 
-void CloseDevice(OH1ModuleControl *module, s8 deviceIndex)
+void CloseDevice(OH1ModuleControl* module, s8 deviceIndex)
 {
 	for (u8 descriptorIndex = 0; descriptorIndex < MAX_USB_ENDPOINTS; descriptorIndex++)
 	{

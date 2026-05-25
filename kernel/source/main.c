@@ -58,7 +58,7 @@ const u8 _mainStack[MAINSTACKSIZE] ALIGNED(32) = { 0 };
 #else
 
 #define MAINSTACKSIZE 0x00
-const u8 *_mainStack = NULL;
+const u8* _mainStack = NULL;
 
 #endif
 
@@ -67,12 +67,12 @@ void DiThread()
 	u32 messages[1];
 	u32 msg;
 
-	s32 ret = CreateMessageQueue((void **)&messages, 1);
+	s32 ret = CreateMessageQueue((void**)&messages, 1);
 	if (ret < 0)
 		panic("Unable to create DI thread message queue: %d\n", ret);
 
 	const s32 queueId = ret;
-	CreateTimer(0, 2500, queueId, (void *)0xbabecafe);
+	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
 	while (1)
 	{
   //don't ask. i have no idea why this is here haha
@@ -82,7 +82,7 @@ void DiThread()
 			{
 			}
 		}
-		ReceiveMessage(queueId, (void **)&msg, None);
+		ReceiveMessage(queueId, (void**)&msg, None);
 	}
 }
 
@@ -92,7 +92,7 @@ void kernel_main(void)
 {
 	gecko_printf("Compat mode kernel thread init\n");
  //create IRQ Timer handler thread
-	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32 *)TimerMainStack,
+	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack,
 	                       TIMERSTACKSIZE, 0x7E, 1);
 	s32 threadId = ret;
  //set thread to run as a system thread
@@ -186,7 +186,7 @@ void kernel_main(void)
 		panic("failed to start IPC thread!\n");
 
  //loop the program headers and map/launch all modules
-	Elf32_Phdr *headers = (Elf32_Phdr *)__headers_addr;
+	Elf32_Phdr* headers = (Elf32_Phdr*)__headers_addr;
 	for (u32 index = 1; index < 0x0F; index++)
 	{
 		MemorySection section;
@@ -229,7 +229,7 @@ void kernel_main(void)
 
   //clear memory that didn't have stuff loaded in from the elf
 		if (header.p_filesz < header.p_memsz)
-			memset((void *)(header.p_vaddr + header.p_filesz), 0,
+			memset((void*)(header.p_vaddr + header.p_filesz), 0,
 			       header.p_memsz - header.p_filesz);
 	}
 
@@ -245,12 +245,12 @@ void kernel_main(void)
 		printk("priority = %d, stackSize = %d, stackPtr = %x\n", priority, stackSize, stackTop);
 		printk("starting thread entry: 0x%x\n", main);
 
-		threadId = CreateThread(main, (void *)arg, (u32 *)stackTop, stackSize, priority, 1);
+		threadId = CreateThread(main, (void*)arg, (u32*)stackTop, stackSize, priority, 1);
 		Threads[threadId].ProcessId = arg;
 		StartThread(threadId);
 	}
 
-	KernelHeapId = CreateHeap((void *)__headers_addr, 0xC0000);
+	KernelHeapId = CreateHeap((void*)__headers_addr, 0xC0000);
 	printk("$IOSVersion: IOSP: %s %s 64M $", __DATE__, __TIME__);
 	SetThreadPriority(0, 0);
 	SetThreadPriority(IpcHandlerThreadId, 0x5C);
@@ -349,7 +349,7 @@ void InitialiseSystem(void)
 
 #ifndef MIOS
  //enable protection on our MEM2 addresses & SRAM
-	ProtectMemory(true, (void *)0x13620000, (void *)0x1FFFFFFF);
+	ProtectMemory(true, (void*)0x13620000, (void*)0x1FFFFFFF);
 
  //????
 	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF);
@@ -456,7 +456,7 @@ u32 _main(void)
 	write32(MEM1_IOSIPCHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSHEAPLOW, MEM2_PHY2VIRT((u32)__ipc_heap_start));
 	write32(MEM1_IOSHEAPHIGH, MEM2_PHY2VIRT((u32)__ipc_heap_start + (u32)__ipc_heap_size));
-	DCFlushRange((void *)0x00003100, 0x68);
+	DCFlushRange((void*)0x00003100, 0x68);
 	gecko_printf("Updated DDR settings in lomem for current map\n");
 #endif
 
@@ -466,7 +466,7 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32 *)_mainStack,
+	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32*)_mainStack,
 	                            MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;

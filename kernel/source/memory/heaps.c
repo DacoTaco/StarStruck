@@ -26,7 +26,7 @@
 s32 KernelHeapId = -1;
 static HeapInfo heaps[MAX_HEAP];
 
-s32 CreateHeap(void *ptr, u32 size)
+s32 CreateHeap(void* ptr, u32 size)
 {
 	u32 irqState = DisableInterrupts();
 	s8 heap_index = 0;
@@ -55,7 +55,7 @@ s32 CreateHeap(void *ptr, u32 size)
 		goto restore_and_return;
 	}
 
-	HeapBlock *firstBlock = (HeapBlock *)ptr;
+	HeapBlock* firstBlock = (HeapBlock*)ptr;
 	firstBlock->BlockState = HeapBlockInit;
 	firstBlock->Size = size - ALIGNED_BLOCK_HEADER_SIZE;
 	firstBlock->PreviousBlock = NULL;
@@ -98,12 +98,12 @@ restore_and_return:
 	return ret;
 }
 
-void *AllocateOnHeap(s32 heapid, u32 size)
+void* AllocateOnHeap(s32 heapid, u32 size)
 {
 	return MallocateOnHeap(heapid, size, 0x20);
 }
 
-void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
+void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 {
 	u32 irqState = DisableInterrupts();
 	u32 ret = 0;
@@ -119,8 +119,8 @@ void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 
  //align size by 0x20
 	u32 alignedSize = (size + 0x1F) & 0xFFFFFFE0;
-	HeapBlock *currentBlock = heaps[heapid].FirstBlock;
-	HeapBlock *blockToAllocate = NULL;
+	HeapBlock* currentBlock = heaps[heapid].FirstBlock;
+	HeapBlock* blockToAllocate = NULL;
 	u32 blockSize = 0;
 	u32 alignedOffset = 0;
 
@@ -144,12 +144,12 @@ void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	if (blockToAllocate == NULL)
 		goto restore_and_return;
 
-	HeapBlock *freeBlock = NULL;
+	HeapBlock* freeBlock = NULL;
  //split up the block if its big enough to do so
 	if (alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE < blockSize)
 	{
 		blockToAllocate->Size = alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE;
-		freeBlock = (HeapBlock *)(((u32)blockToAllocate) + blockToAllocate->Size);
+		freeBlock = (HeapBlock*)(((u32)blockToAllocate) + blockToAllocate->Size);
 		freeBlock->BlockState = HeapBlockInit;
 		freeBlock->Size = blockSize - (blockToAllocate->Size);
 		freeBlock->PreviousBlock = blockToAllocate->PreviousBlock;
@@ -177,7 +177,7 @@ void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	blockToAllocate->PreviousBlock = NULL;
 
 	//add the block header infront of the allocated space if needed (because of alignment)
-	currentBlock = (HeapBlock *)(((u32)blockToAllocate) + alignedOffset);
+	currentBlock = (HeapBlock*)(((u32)blockToAllocate) + alignedOffset);
 	if (alignedOffset != 0)
 	{
 		currentBlock->BlockState = HeapBlockAligned;
@@ -187,26 +187,26 @@ void *MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	//get pointer and clear it!
 	ret = (u32)(currentBlock + 1);
 	if (ret)
-		memset((u8 *)ret, 0, size);
+		memset((u8*)ret, 0, size);
 
 restore_and_return:
 	RestoreInterrupts(irqState);
-	return (void *)ret;
+	return (void*)ret;
 }
 
-int MergeNextBlockIfUnused(HeapBlock *parentBlock)
+int MergeNextBlockIfUnused(HeapBlock* parentBlock)
 {
 	if (parentBlock == NULL || parentBlock->NextBlock == NULL)
 		return 0;
 
 	u32 blockSize = parentBlock->Size;
-	HeapBlock *blockToMerge = parentBlock->NextBlock;
+	HeapBlock* blockToMerge = parentBlock->NextBlock;
 
-	if (blockToMerge != (HeapBlock *)(((u32)parentBlock) + blockSize))
+	if (blockToMerge != (HeapBlock*)(((u32)parentBlock) + blockSize))
 		return 0;
 
 	//link parent block with the tomerge's next block and vice versa
-	HeapBlock *nextBlock = blockToMerge->NextBlock;
+	HeapBlock* nextBlock = blockToMerge->NextBlock;
 	parentBlock->NextBlock = nextBlock;
 	if (nextBlock != NULL)
 		nextBlock->PreviousBlock = parentBlock;
@@ -216,7 +216,7 @@ int MergeNextBlockIfUnused(HeapBlock *parentBlock)
 	return 1;
 }
 
-s32 FreeOnHeap(s32 heapid, void *ptr)
+s32 FreeOnHeap(s32 heapid, void* ptr)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -229,15 +229,15 @@ s32 FreeOnHeap(s32 heapid, void *ptr)
 	}
 
 	//verify the pointer address
-	if ((u8 *)ptr < ((u8 *)heaps[heapid].Heap + sizeof(HeapBlock)) ||
-	    (u8 *)ptr >= ((u8 *)heaps[heapid].Heap + heaps[heapid].Size))
+	if ((u8*)ptr < ((u8*)heaps[heapid].Heap + sizeof(HeapBlock)) ||
+	    (u8*)ptr >= ((u8*)heaps[heapid].Heap + heaps[heapid].Size))
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
 	//verify the block that the pointer belongs to
-	HeapBlock *blockToFree = (HeapBlock *)((u8 *)ptr - sizeof(HeapBlock));
+	HeapBlock* blockToFree = (HeapBlock*)((u8*)ptr - sizeof(HeapBlock));
 
 	if (blockToFree->BlockState == HeapBlockAligned)
 		blockToFree = blockToFree->NextBlock;
@@ -248,9 +248,9 @@ s32 FreeOnHeap(s32 heapid, void *ptr)
 		goto restore_and_return;
 	}
 
-	HeapBlock *firstBlock = heaps[heapid].FirstBlock;
-	HeapBlock *currBlock = firstBlock;
-	HeapBlock *nextBlock = NULL;
+	HeapBlock* firstBlock = heaps[heapid].FirstBlock;
+	HeapBlock* currBlock = firstBlock;
+	HeapBlock* nextBlock = NULL;
 	blockToFree->BlockState = HeapBlockInit;
 
 	while (currBlock != NULL)

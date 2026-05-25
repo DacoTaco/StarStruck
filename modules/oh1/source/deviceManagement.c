@@ -25,7 +25,7 @@ s8 FindEndpointIndex(s8 deviceIndex, u8 endpointAddress)
 
 void SetDeviceFunctionAddress(s8 deviceIndex)
 {
-	OhciEndpointDescriptor *endpoint;
+	OhciEndpointDescriptor* endpoint;
 
 	endpoint = Devices[deviceIndex].Endpoints[0].Descriptor;
 	u32 dw0 = swap_u32(endpoint->dw0);
@@ -34,7 +34,7 @@ void SetDeviceFunctionAddress(s8 deviceIndex)
 
 void SetMaxPacketSize(s8 deviceIndex, u8 maxPacketSize)
 {
-	OhciEndpointDescriptor *endpoint;
+	OhciEndpointDescriptor* endpoint;
 
 	endpoint = Devices[deviceIndex].Endpoints[0].Descriptor;
 	u32 dw0 = swap_u32(endpoint->dw0);
@@ -64,7 +64,7 @@ void SetMaxPower(s8 deviceIndex, u8 maxPower)
 	Devices[deviceIndex].MaxPower = maxPower;
 }
 
-int SetDeviceIPCMessage(s8 deviceIndex, IpcMessage *message)
+int SetDeviceIPCMessage(s8 deviceIndex, IpcMessage* message)
 {
 	if (Devices[deviceIndex].IpcMessage)
 		return IPC_EEXIST;
@@ -83,7 +83,7 @@ s8 GetDeviceIndex(u16 vid, u16 pid)
 	return -1;
 }
 
-int GetDeviceVendorAndProduct(s8 deviceIndex, u16 *vendor, u16 *product)
+int GetDeviceVendorAndProduct(s8 deviceIndex, u16* vendor, u16* product)
 {
 	if (deviceIndex > MAX_USB_DEVICES || Devices[deviceIndex].DeviceType == DEV_TYPE_NONE)
 		return IPC_EINVAL;
@@ -101,9 +101,9 @@ u8 GetPortIndex(s8 deviceIndex)
 	return Devices[deviceIndex].PortIndex;
 }
 
-void AddDeviceToDevList(DeviceListEntry *deviceList, u8 entryIndex, s8 deviceIndex)
+void AddDeviceToDevList(DeviceListEntry* deviceList, u8 entryIndex, s8 deviceIndex)
 {
-	/* It would be more logical if the first 4 bytes of the destination buffer
+ /* It would be more logical if the first 4 bytes of the destination buffer
 	 * were filled with the device ID, but they are left uninitialized. This is
 	 * consistent with how libogc operates in USB_GetDeviceList(): only the
 	 * vendor and product ID are being read. */
@@ -111,8 +111,8 @@ void AddDeviceToDevList(DeviceListEntry *deviceList, u8 entryIndex, s8 deviceInd
 	deviceList[entryIndex].ProductId = Devices[deviceIndex].ProductId;
 }
 
-int PopulateDeviceList(DeviceListEntry *deviceList, u8 maxCount,
-                       u8 interfaceClass, u8 *countOutput)
+int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
+                       u8 interfaceClass, u8* countOutput)
 {
 	u8 interfaceIndex;
 	s8 deviceIndex;
@@ -151,7 +151,7 @@ void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting,
                   u8 class, u8 subClass, u8 protocol)
 {
 	int i = Devices[deviceIndex].NumberOfInterfaces;
-	DeviceInterface *iface = &Devices[deviceIndex].Interfaces[i];
+	DeviceInterface* iface = &Devices[deviceIndex].Interfaces[i];
 	if (iface->InterfaceClass != 0)
 		return;
 

@@ -24,13 +24,13 @@
 // they all share this exact shape, except Open
 #define WRAP_INNER_CALL(rettype, name, arguments)                              \
 	rettype name##FDAsync(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments),            \
-	                      s32 messageQueueId, IpcMessage *message)             \
+	                      s32 messageQueueId, IpcMessage* message)             \
 	{                                                                          \
 		const u32 state = DisableInterrupts();                                 \
 		rettype ret = IPC_EACCES;                                              \
 		if (messageQueueId >= 0 && messageQueueId < MAX_MESSAGEQUEUES)         \
 		{                                                                      \
-			MessageQueue *queue = &MessageQueues[messageQueueId];              \
+			MessageQueue* queue = &MessageQueues[messageQueueId];              \
 			if (IOSFDAsync_CheckPerformInner())                                \
 			{                                                                  \
 				ret = name##FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_EVEN arguments), \
@@ -47,14 +47,14 @@
 
 #include "calls_inner.h"
 
-s32 OpenFDAsync(const char *path, int mode, s32 messageQueueId, IpcMessage *message)
+s32 OpenFDAsync(const char* path, int mode, s32 messageQueueId, IpcMessage* message)
 {
 	s32 ret = IPC_EACCES;
 
 	const u32 state = DisableInterrupts();
 	if (messageQueueId < MAX_MESSAGEQUEUES)
 	{
-		MessageQueue *queue = &MessageQueues[messageQueueId];
+		MessageQueue* queue = &MessageQueues[messageQueueId];
 		if (IOSFDAsync_CheckPerformInner())
 		{
 			if ((ret = OpenFD_Inner(path, mode)) >= 0)

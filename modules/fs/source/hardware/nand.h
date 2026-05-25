@@ -231,17 +231,17 @@ extern u8 EccBuffer[];
 
 /* NAND Interface Functions */
 bool IsNandInitialized(void);
-s32 GetNandSizeInfo(NandSizeInformation *dest);
+s32 GetNandSizeInfo(NandSizeInformation* dest);
 s32 InitializeNand(void);
 s32 DisableNand(void);
-void SetNandData(void *data, void *ecc);
+void SetNandData(void* data, void* ecc);
 void SetNandAddress(u32 pageOffset, u32 pageNumber);
-s32 CorrectNandData(void *dataBuffer, void *eccBuffer);
+s32 CorrectNandData(void* dataBuffer, void* eccBuffer);
 s32 SelectNandSize(bool selectNandSize);
-s32 ReadNandPage(u32 pageNumber, void *data, void *ecc, bool readEcc);
-s32 WriteNandPage(u32 pageNumber, void *data, void *ecc, u8 unknownWriteflag, bool writeEcc);
+s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, bool readEcc);
+s32 WriteNandPage(u32 pageNumber, void* data, void* ecc, u8 unknownWriteflag, bool writeEcc);
 s32 DeleteCluster(u32 cluster);
 s32 CopyCluster(u16 srcCluster, u16 dstCluster);
 s32 CopyPage(u32 srcPage, u32 dstPage);
 s32 CheckClusterBlocks(u32 block);
-int GetNandCommandLog(void *outputBuffer);
+int GetNandCommandLog(void* outputBuffer);

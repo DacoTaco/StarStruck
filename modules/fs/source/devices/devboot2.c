@@ -40,7 +40,7 @@ s32 OpenBoot2FileHandle(void)
 	u32 generation = 0;
 
  //abuse the pagebuffer to contain the copies of maps.
-	Boot2BlockMap *maps = (Boot2BlockMap *)_boot2Handle.PageBuffer;
+	Boot2BlockMap* maps = (Boot2BlockMap*)_boot2Handle.PageBuffer;
 
 	if (_boot2Handle.IsOpen)
 		return NAND_RESULT_BUSY;
@@ -57,7 +57,7 @@ s32 OpenBoot2FileHandle(void)
 		if (ret != IPC_SUCCESS)
 			return ret;
 
-		Boot2BlockMap *validMap = NULL;
+		Boot2BlockMap* validMap = NULL;
 
   // Check maps[0] - if it has valid signature and matches maps[1]
 		if (memcmp(&maps[0], blockSignature, 8) == 0)
@@ -348,7 +348,7 @@ static s32 WriteBoot2Copy(u32 size)
 	return ret;
 }
 
-static s32 HandleBoot2Write(const void *data, u32 length)
+static s32 HandleBoot2Write(const void* data, u32 length)
 {
 	u32 pageSize;
 	u32 spaceLeft;
@@ -369,7 +369,7 @@ static s32 HandleBoot2Write(const void *data, u32 length)
 
 		memcpy(_boot2Handle.PageBuffer + _boot2Handle.PageCursor, data, copySize);
 		_boot2Handle.PageCursor += copySize;
-		data = (const u8 *)data + copySize;
+		data = (const u8*)data + copySize;
 		length -= copySize;
 
 		if (_boot2Handle.PageCursor == pageSize)
@@ -383,7 +383,7 @@ static s32 HandleBoot2Write(const void *data, u32 length)
 	return (s32)originalLength;
 }
 
-static inline s32 HandleBoot2Ioctl(IpcMessage *message)
+static inline s32 HandleBoot2Ioctl(IpcMessage* message)
 {
 	switch (message->Request.Message.Ioctl.Ioctl)
 	{
@@ -395,14 +395,14 @@ static inline s32 HandleBoot2Ioctl(IpcMessage *message)
 			if (message->Request.Message.Ioctl.InputLength != 4)
 				return IPC_EINVAL;
 
-			return WriteBoot2Copy(*(u32 *)message->Request.Message.Ioctl.InputBuffer);
+			return WriteBoot2Copy(*(u32*)message->Request.Message.Ioctl.InputBuffer);
 
 		default:
 			return IPC_EINVAL;
 	}
 }
 
-s32 HandleDevBoot2Message(IpcMessage *message)
+s32 HandleDevBoot2Message(IpcMessage* message)
 {
 	switch (message->Request.Command)
 	{

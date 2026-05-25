@@ -12,7 +12,7 @@
 #define INLINE_HELPER static inline __attribute__((always_inline))
 
 /*helpers for determining NAND size properties*/
-INLINE_HELPER u32 GetNandEccSize(const NandSizeInformation *nandInformation)
+INLINE_HELPER u32 GetNandEccSize(const NandSizeInformation* nandInformation)
 {
 	return 1 << (nandInformation->EccSizeBitShift & 0xFF);
 }
@@ -20,7 +20,7 @@ INLINE_HELPER u32 GetEccSize(void)
 {
 	return GetNandEccSize(&SelectedNandSizeInfo);
 }
-INLINE_HELPER u32 GetNandPageSize(const NandSizeInformation *nandInformation)
+INLINE_HELPER u32 GetNandPageSize(const NandSizeInformation* nandInformation)
 {
 	return 1 << (nandInformation->PageSizeBitShift & 0xFF);
 }
@@ -40,7 +40,7 @@ INLINE_HELPER u32 GetPagesPerCluster(void)
 {
 	return 1 << ((CLUSTER_SIZE_SHIFT - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF);
 }
-INLINE_HELPER u32 GetNandMaxPages(const NandSizeInformation *nandInformation)
+INLINE_HELPER u32 GetNandMaxPages(const NandSizeInformation* nandInformation)
 {
 	return 1 << ((nandInformation->NandSizeBitShift - nandInformation->PageSizeBitShift) & 0xFF);
 }

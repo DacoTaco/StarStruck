@@ -30,13 +30,13 @@
 #include "fs/types.h"
 #include "fs/ioctls.h"
 
-static inline s32 _LoadELF(s32 fd, u32 *outArmEntrypoint, bool *outIsPPCBinary)
+static inline s32 _LoadELF(s32 fd, u32* outArmEntrypoint, bool* outIsPPCBinary)
 {
 	s32 ret = SeekFD(fd, 0, SeekSet);
 	if (ret != 0)
 		return ret;
 
-	Elf32_Ehdr *elfHeader = (Elf32_Ehdr *)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
+	Elf32_Ehdr* elfHeader = (Elf32_Ehdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
 	if (elfHeader == NULL)
 		return IPC_EMAX;
 
@@ -64,7 +64,7 @@ static inline s32 _LoadELF(s32 fd, u32 *outArmEntrypoint, bool *outIsPPCBinary)
 	}
 
 	u32 phdrTotalSize = (u32)elfHeader->e_phnum * sizeof(Elf32_Phdr);
-	Elf32_Phdr *phdrs = (Elf32_Phdr *)AllocateOnHeap(KernelHeapId, phdrTotalSize);
+	Elf32_Phdr* phdrs = (Elf32_Phdr*)AllocateOnHeap(KernelHeapId, phdrTotalSize);
 	if (phdrs == NULL)
 	{
 		ret = IPC_EMAX;
@@ -81,7 +81,7 @@ static inline s32 _LoadELF(s32 fd, u32 *outArmEntrypoint, bool *outIsPPCBinary)
 	ret = IPC_SUCCESS;
 	for (u16 i = 0; i < elfHeader->e_phnum; i++)
 	{
-		Elf32_Phdr *phdr = &phdrs[i];
+		Elf32_Phdr* phdr = &phdrs[i];
 		if (phdr->p_type != PT_LOAD)
 			continue;
 
@@ -104,13 +104,13 @@ static inline s32 _LoadELF(s32 fd, u32 *outArmEntrypoint, bool *outIsPPCBinary)
 		if (ret < 0)
 			break;
 
-		ret = ReadFD(fd, (void *)phdr->p_vaddr, phdr->p_filesz);
+		ret = ReadFD(fd, (void*)phdr->p_vaddr, phdr->p_filesz);
 		if ((u32)ret != phdr->p_filesz)
 			break;
 
 		// Zero-fill BSS tail of segment if memsz > filesz
 		if ((u32)ret < phdr->p_memsz)
-			memset((void *)(phdr->p_vaddr + (u32)ret), 0, phdr->p_memsz - (u32)ret);
+			memset((void*)(phdr->p_vaddr + (u32)ret), 0, phdr->p_memsz - (u32)ret);
 
 		ret = 0;
 	}
@@ -130,7 +130,7 @@ static inline s32 _LoadDOL(s32 fd)
 	if (ret != 0)
 		return ret;
 
-	DolHeader *dolHeader = (DolHeader *)AllocateOnHeap(KernelHeapId, sizeof(DolHeader));
+	DolHeader* dolHeader = (DolHeader*)AllocateOnHeap(KernelHeapId, sizeof(DolHeader));
 	if (dolHeader == NULL)
 		return IPC_EMAX;
 
@@ -139,7 +139,7 @@ static inline s32 _LoadDOL(s32 fd)
 		goto cleanup_dol;
 
 	// Clear BSS section
-	memset((void *)PPCVirtToPhys(dolHeader->BSS.Address), 0, dolHeader->BSS.Size);
+	memset((void*)PPCVirtToPhys(dolHeader->BSS.Address), 0, dolHeader->BSS.Size);
 
 	// Load all text segments
 	for (int i = 0; i < DOL_TEXT_SEGMENTS; i++)
@@ -153,7 +153,7 @@ static inline s32 _LoadDOL(s32 fd)
 		if (ret < 0)
 			goto cleanup_dol;
 
-		ret = ReadFD(fd, (void *)PPCVirtToPhys(dolHeader->Addresses.Text[i]), size);
+		ret = ReadFD(fd, (void*)PPCVirtToPhys(dolHeader->Addresses.Text[i]), size);
 		if ((u32)ret != size)
 			goto cleanup_dol;
 	}
@@ -169,7 +169,7 @@ static inline s32 _LoadDOL(s32 fd)
 		if (ret < 0)
 			break;
 
-		ret = ReadFD(fd, (void *)PPCVirtToPhys(dolHeader->Addresses.Data[i]), size);
+		ret = ReadFD(fd, (void*)PPCVirtToPhys(dolHeader->Addresses.Data[i]), size);
 		if ((u32)ret != size)
 			break;
 
@@ -181,7 +181,7 @@ cleanup_dol:
 	return ret;
 }
 
-s32 LoadBinary(const char *path)
+s32 LoadBinary(const char* path)
 {
 	u32 armEntrypoint = 0;
 	bool isPPCBinary = false;
@@ -191,7 +191,7 @@ s32 LoadBinary(const char *path)
 		return IPC_EACCES;
 
 	// Small staging buffer for the file-type magic pre-read
-	u8 *magicBuf = (u8 *)AllocateOnHeap(KernelHeapId, SELFMAG);
+	u8* magicBuf = (u8*)AllocateOnHeap(KernelHeapId, SELFMAG);
 	if (magicBuf == NULL)
 		return IPC_EMAX;
 
@@ -252,7 +252,7 @@ u32 _SetIOSVersion(u32 newVersion)
 	if (newVersion != 0 && newVersion != oldVersion)
 	{
 		write32(MEM1_IOSVERSION, newVersion);
-		DCFlushRange((void *)MEM1_IOSVERSION, sizeof(u32));
+		DCFlushRange((void*)MEM1_IOSVERSION, sizeof(u32));
 		gecko_printf("Set OS version to %u\n", newVersion);
 	}
 
@@ -261,11 +261,11 @@ u32 _SetIOSVersion(u32 newVersion)
 }
 
 //Setup memory and launch the kernel image at the specified address
-__attribute__((noreturn)) void _LaunchKernel(const void *image, u32 version)
+__attribute__((noreturn)) void _LaunchKernel(const void* image, u32 version)
 {
 	//clear out the arguments in the header
 	//no idea what the point of them is if it clears them but here we are lol
-	IosKernelHeader *header = (IosKernelHeader *)image;
+	IosKernelHeader* header = (IosKernelHeader*)image;
 	header->Arguments = 0;
 
 	//Disable and clear all interrupts and then flush all caches
@@ -289,7 +289,7 @@ __attribute__((noreturn)) void _LaunchKernel(const void *image, u32 version)
 	write32(MEM1_IOSIPCHIGH, 0x93400000);
 	write32(MEM1_IOSHEAPLOW, 0x93400000);
 	write32(MEM1_IOSHEAPHIGH, 0x93420000);
-	DCFlushRange((void *)MEM1_PHYSICALMEM1SIZE, 0x68);
+	DCFlushRange((void*)MEM1_PHYSICALMEM1SIZE, 0x68);
 	gecko_printf("Updated DDR settings in lomem: 0x%08X with 12MB settings\n",
 	             MEM1_MEM2PHYSICALSIZE);
 
@@ -309,7 +309,7 @@ __attribute__((noreturn)) void _LaunchKernel(const void *image, u32 version)
 	__builtin_unreachable();
 }
 
-s32 LaunchKernel(const void *image, u32 version)
+s32 LaunchKernel(const void* image, u32 version)
 {
 	if (GetUID() != 0)
 		return IPC_EACCES;
@@ -317,7 +317,7 @@ s32 LaunchKernel(const void *image, u32 version)
 	_LaunchKernel(image, version);
 }
 
-s32 LoadKernel(const char *path, s32 suspendBroadway, u32 version)
+s32 LoadKernel(const char* path, s32 suspendBroadway, u32 version)
 {
 	s32 ret = -1;
 
@@ -328,15 +328,15 @@ s32 LoadKernel(const char *path, s32 suspendBroadway, u32 version)
 		SuspendThread(IpcHandlerThreadId);
 
 	// Enable protection for the MEM staging area + ios running memory
-	ProtectMemory(true, (void *)IOS_STAGING_AREA_START, (void *)0x1FFFFFFF);
+	ProtectMemory(true, (void*)IOS_STAGING_AREA_START, (void*)0x1FFFFFFF);
 
 	s32 fd = OpenFD(path, Read);
 	ret = fd;
 	if (fd < 0)
 		return ret;
 
-	FileStatistics *stats =
-	    (FileStatistics *)AllocateOnHeap(KernelHeapId, sizeof(FileStatistics));
+	FileStatistics* stats =
+	    (FileStatistics*)AllocateOnHeap(KernelHeapId, sizeof(FileStatistics));
 	if (stats == NULL)
 	{
 		ret = IPC_EMAX;
@@ -357,8 +357,8 @@ s32 LoadKernel(const char *path, s32 suspendBroadway, u32 version)
 	if (suspendBroadway != 0)
 		PPCHardReset();
 
-	const u8 *staging = (const u8 *)IOS_STAGING_AREA_START;
-	ret = ReadFD(fd, (void *)staging, len);
+	const u8* staging = (const u8*)IOS_STAGING_AREA_START;
+	ret = ReadFD(fd, (void*)staging, len);
 	if (ret != (s32)len)
 		goto cleanup;
 

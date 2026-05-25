@@ -18,7 +18,7 @@
 #include "inode.h"
 
 extern u32 _selectedSuperblockIndex;
-extern SuperBlockInfo *_selectedSuperBlock;
+extern SuperBlockInfo* _selectedSuperBlock;
 extern SaltData _fileSalt;
 
 u32 _superblockOffset;
@@ -34,7 +34,7 @@ static u16 _lastAllocatedCluster = 0;
 static bool _lastAllocatedClusterInitialized = false;
 
 // Traverse the FAT chain from startCluster by clusterIndex steps.
-static inline u16 TraverseClusterChain(SuperBlockInfo *superblock,
+static inline u16 TraverseClusterChain(SuperBlockInfo* superblock,
                                        u16 startCluster, u32 clusterIndex)
 {
 	u16 cluster = startCluster;
@@ -44,7 +44,7 @@ static inline u16 TraverseClusterChain(SuperBlockInfo *superblock,
 }
 
 // Populate _fileSalt from an FST entry (ChainIndex must be set by the caller).
-static inline void InitFileSalt(u32 inode, const FileSystemTableEntry *fstEntry)
+static inline void InitFileSalt(u32 inode, const FileSystemTableEntry* fstEntry)
 {
 	_fileSalt.Uid = fstEntry->UserId;
 	memcpy(_fileSalt.Filename, fstEntry->Name, sizeof(_fileSalt.Filename));
@@ -54,7 +54,7 @@ static inline void InitFileSalt(u32 inode, const FileSystemTableEntry *fstEntry)
 }
 
 // Scan FAT to find blocks marked as reserved for block relocation
-static u16 FindReservedCluster(SuperBlockInfo *superblock)
+static u16 FindReservedCluster(SuperBlockInfo* superblock)
 {
 	if (superblock == NULL)
 		return SFFSBadNode;
@@ -77,8 +77,8 @@ static u16 FindReservedCluster(SuperBlockInfo *superblock)
 }
 
 // Update all FAT chains and FST entries to reflect relocated clusters
-static void ClusterRelocationUpdate(SuperBlockInfo *superblock,
-                                    SFFSClusterPair *relocationMap, u32 count)
+static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
+                                    SFFSClusterPair* relocationMap, u32 count)
 {
 	u32 start = _superblockOffset >> CLUSTER_SIZE_SHIFT;
 	u32 end = start + (_fileSystemDataSize >> CLUSTER_SIZE_SHIFT);
@@ -104,7 +104,7 @@ static void ClusterRelocationUpdate(SuperBlockInfo *superblock,
 	u32 fstEntryCount = GetFstEntryCount();
 	for (u32 inode = 0; inode < fstEntryCount; inode++)
 	{
-		FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+		FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 
 		// Only process files
 		if (entry->Mode.Fields.Type != S_IFREG)
@@ -145,7 +145,7 @@ static void ClusterRelocationUpdate(SuperBlockInfo *superblock,
 }
 
 // Helper: Mark all clusters in a block with a specific status
-static inline void MarkBlockStatus(SuperBlockInfo *superblock, u32 blockCluster,
+static inline void MarkBlockStatus(SuperBlockInfo* superblock, u32 blockCluster,
                                    u32 clustersPerBlock, u16 status)
 {
 	u32 blockStart = blockCluster & (u32)(~(clustersPerBlock - 1));
@@ -154,7 +154,7 @@ static inline void MarkBlockStatus(SuperBlockInfo *superblock, u32 blockCluster,
 }
 
 // Helper: Check if a block has mixed usage (both free and used clusters)
-static bool IsBlockMixed(SuperBlockInfo *superblock, u32 blockCluster, u32 clustersPerBlock)
+static bool IsBlockMixed(SuperBlockInfo* superblock, u32 blockCluster, u32 clustersPerBlock)
 {
 	bool foundFreeCluster = false;
 	bool hasUsedClusters = false;
@@ -185,8 +185,8 @@ static bool IsBlockMixed(SuperBlockInfo *superblock, u32 blockCluster, u32 clust
 }
 
 // Helper: Rollback failed relocations and mark destination block as bad
-static void RollbackRelocations(SuperBlockInfo *superblock,
-                                SFFSClusterPair *relocationMap, u32 relocationCount,
+static void RollbackRelocations(SuperBlockInfo* superblock,
+                                SFFSClusterPair* relocationMap, u32 relocationCount,
                                 u32 failedDestBlock, u32 clustersPerBlock)
 {
 	// Restore original FAT pointers for all relocated clusters
@@ -218,7 +218,7 @@ static void RollbackRelocations(SuperBlockInfo *superblock,
 // Rescue valid data from a failing block by relocating it to a reserved block
 // Called when a write operation encounters a bad block
 // Returns IPC_SUCCESS if rescue succeeded, error code otherwise
-s32 RescueFailingBlock(SuperBlockInfo *superblock, u16 failingCluster)
+s32 RescueFailingBlock(SuperBlockInfo* superblock, u16 failingCluster)
 {
 	const u32 clustersPerBlock = GetClustersPerBlock();
 
@@ -295,7 +295,7 @@ s32 RescueFailingBlock(SuperBlockInfo *superblock, u16 failingCluster)
 }
 
 // Format the filesystem: initialize superblock, FAT and FST, persist to NAND
-s32 Format(u32 userId, FSHandle *fileHandles, u32 fileHandleCount)
+s32 Format(u32 userId, FSHandle* fileHandles, u32 fileHandleCount)
 {
 	//Root-only operation
 	if (userId != 0 || fileHandles == NULL || fileHandleCount == 0)
@@ -313,7 +313,7 @@ s32 Format(u32 userId, FSHandle *fileHandles, u32 fileHandleCount)
 	}
 
 	//Create an in-memory superblock and initialize FAT/FST
-	SuperBlockInfo *superblock = CreateSuperBlock();
+	SuperBlockInfo* superblock = CreateSuperBlock();
 	if (superblock == NULL)
 	{
 		ret = FS_NOFILESYSTEM;
@@ -321,7 +321,7 @@ s32 Format(u32 userId, FSHandle *fileHandles, u32 fileHandleCount)
 	}
 
 	//Initialize root inode (inode 0) as an empty directory
-	FileSystemTableEntry *root = GetFstEntry(superblock, 0);
+	FileSystemTableEntry* root = GetFstEntry(superblock, 0);
 	strncpy(root->Name, "/", sizeof(root->Name));
 	root->Mode.Value = 0;
 	root->Mode.Fields.Type = S_IFDIR;
@@ -338,7 +338,7 @@ s32 Format(u32 userId, FSHandle *fileHandles, u32 fileHandleCount)
 
 	//Clear file handle table passed in by caller (usually the module-global array)
 	for (u32 i = 0; i < fileHandleCount; i++)
-		((FSHandle *)fileHandles)[i].InUse = 0;
+		((FSHandle*)fileHandles)[i].InUse = 0;
 
 	//Recompute filesystem statistics
 	ret = StatSuperblock(superblock);
@@ -368,7 +368,7 @@ format_return:
 // Wear leveling and bad block handling
 // Finds blocks with mixed usage (both free and used clusters),
 // relocates used clusters to reserved blocks, and marks source blocks as reserved
-s32 ReclaimBlocks(SuperBlockInfo *superblock)
+s32 ReclaimBlocks(SuperBlockInfo* superblock)
 {
 	u32 clustersPerBlock = GetClustersPerBlock();
 
@@ -517,13 +517,13 @@ s32 ReclaimBlocks(SuperBlockInfo *superblock)
 	}
 }
 
-s32 DeletePath(const u32 uid, const u16 gid, const char *path)
+s32 DeletePath(const u32 uid, const u16 gid, const char* path)
 {
 	u32 length = GetPathLength(path);
 	if (length == 0)
 		return FS_EINVAL;
 
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -550,7 +550,7 @@ s32 DeletePath(const u32 uid, const u16 gid, const char *path)
 	bool superblockFlushed = false;
 
 	// Get FST entry for the target
-	FileSystemTableEntry *entry = GetFstEntry(superblock, fileNode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, fileNode);
 	FileSystemEntryType entryType = entry->Mode.Fields.Type;
 
 	// Check if it's a directory
@@ -617,7 +617,7 @@ s32 DeletePath(const u32 uid, const u16 gid, const char *path)
 	return ret;
 }
 
-static inline bool IsValidPath(const char *path, const u32 pathLen)
+static inline bool IsValidPath(const char* path, const u32 pathLen)
 {
 	for (u32 i = 0; i < (pathLen); i++)
 	{
@@ -628,12 +628,12 @@ static inline bool IsValidPath(const char *path, const u32 pathLen)
 	return true;
 }
 
-s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *destination)
+s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* destination)
 {
 	if (GetPathLength(source) == 0 || GetPathLength(destination) == 0)
 		return FS_EINVAL;
 
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -667,7 +667,7 @@ s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *
 	if (sourceInode == SFFSErasedNode)
 		return FS_ENOENT;
 
-	FileSystemTableEntry *srcEntry = GetFstEntry(superblock, sourceInode);
+	FileSystemTableEntry* srcEntry = GetFstEntry(superblock, sourceInode);
 	st_mode sourceMode = srcEntry->Mode;
 	switch (sourceMode.Fields.Type)
 	{
@@ -694,7 +694,7 @@ s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *
 	bool unlinkedInodes = false;
 	if (destinationInode != SFFSErasedNode)
 	{
-		FileSystemTableEntry *destinationEntry = GetFstEntry(superblock, destinationInode);
+		FileSystemTableEntry* destinationEntry = GetFstEntry(superblock, destinationInode);
 		FileSystemEntryType destinationType = destinationEntry->Mode.Fields.Type;
 
 		//if the types differ or its the same entry return error
@@ -749,7 +749,7 @@ s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *
 		return ret;
 
 	// Update data of the source entry to the new data
-	FileSystemTableEntry *parentEntry = GetFstEntry(superblock, destinationDirectoryInode);
+	FileSystemTableEntry* parentEntry = GetFstEntry(superblock, destinationDirectoryInode);
 	strncpy(srcEntry->Name, destinationName, MAX_FILE_SIZE);
 	srcEntry->Mode = sourceMode;
 	srcEntry->Sibling = parentEntry->StartCluster;
@@ -766,12 +766,12 @@ s32 Rename(const u32 userId, const u16 groupId, const char *source, const char *
 	return flushSuperBlock ? TryWriteSuperblock() : ret;
 }
 
-s32 ReadDirectory(const u32 uid, const u16 gid, const char *path, char *files, u32 *numberOfEntries)
+s32 ReadDirectory(const u32 uid, const u16 gid, const char* path, char* files, u32* numberOfEntries)
 {
 	if (!path || *path != '/' || !numberOfEntries || strnlen(path, MAX_FILE_PATH) == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (!superblock)
 		return FS_NOFILESYSTEM;
 
@@ -779,7 +779,7 @@ s32 ReadDirectory(const u32 uid, const u16 gid, const char *path, char *files, u
 	if (inode == SFFSErasedNode)
 		return FS_ENOENT;
 
-	FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 	if ((entry->Mode.Fields.Type & S_IFMT) != S_IFDIR)
 		return FS_EINVAL;
 
@@ -816,7 +816,7 @@ s32 ReadDirectory(const u32 uid, const u16 gid, const char *path, char *files, u
 	return IPC_SUCCESS;
 }
 
-s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
+s32 CreateDirectory(const u32 uid, const u16 gid, const char* path,
                     u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm)
 {
 	// Validate path length and characters (0x20-0x7E)
@@ -828,7 +828,7 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
 		return FS_EINVAL;
 
 	// Get superblock and split path
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -858,7 +858,7 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
 		return FS_NO_INODES;
 
 	// Initialize FST entry for new directory
-	FileSystemTableEntry *newEntry = GetFstEntry(superblock, newInode);
+	FileSystemTableEntry* newEntry = GetFstEntry(superblock, newInode);
 	strncpy(newEntry->Name, fileName, MAX_FILE_SIZE);
 	newEntry->Mode =
 	    (st_mode){ .Fields = { .Type = S_IFDIR,
@@ -873,7 +873,7 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
 	newEntry->SFFSGeneration = 0;
 
 	// Insert into parent's child list at head
-	FileSystemTableEntry *parentEntry = GetFstEntry(superblock, parentInode);
+	FileSystemTableEntry* parentEntry = GetFstEntry(superblock, parentInode);
 	newEntry->Sibling = parentEntry->StartCluster;
 	parentEntry->StartCluster = (u16)newInode;
 
@@ -882,9 +882,9 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char *path,
 	return TryWriteSuperblock();
 }
 
-s32 CreateFileInner(SuperBlockInfo *superblock, u32 userId, u16 groupId,
-                    const char *path, u8 attributes, u32 ownerPermissions,
-                    u32 groupPermissions, u32 otherPermissions, u16 *inodeOutput)
+s32 CreateFileInner(SuperBlockInfo* superblock, u32 userId, u16 groupId,
+                    const char* path, u8 attributes, u32 ownerPermissions,
+                    u32 groupPermissions, u32 otherPermissions, u16* inodeOutput)
 {
 	u32 pathLen = GetPathLength(path);
 	if (pathLen == 0)
@@ -914,7 +914,7 @@ s32 CreateFileInner(SuperBlockInfo *superblock, u32 userId, u16 groupId,
 	if (newInode == SFFSErasedNode)
 		return FS_NO_INODES;
 
-	FileSystemTableEntry *newEntry = GetFstEntry(superblock, newInode);
+	FileSystemTableEntry* newEntry = GetFstEntry(superblock, newInode);
 	strncpy(newEntry->Name, fileName, MAX_FILE_SIZE);
 	newEntry->Mode =
 	    (st_mode){ .Fields = { .Type = S_IFREG,
@@ -929,7 +929,7 @@ s32 CreateFileInner(SuperBlockInfo *superblock, u32 userId, u16 groupId,
 	newEntry->SFFSGeneration = 0;
 
 	// Insert into parent's child list at head
-	FileSystemTableEntry *parentEntry = GetFstEntry(superblock, parentInode);
+	FileSystemTableEntry* parentEntry = GetFstEntry(superblock, parentInode);
 	newEntry->Sibling = parentEntry->StartCluster;
 	parentEntry->StartCluster = (u16)newInode;
 
@@ -939,30 +939,30 @@ s32 CreateFileInner(SuperBlockInfo *superblock, u32 userId, u16 groupId,
 	return IPC_SUCCESS;
 }
 
-s32 CreateFile(const u32 userId, const u16 groupId, const char *path, u8 attributes,
+s32 CreateFile(const u32 userId, const u16 groupId, const char* path, u8 attributes,
                u8 ownerPermissions, u8 groupPermissions, u8 otherPermissions)
 {
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
 	s32 ret = CreateFileInner(superblock, userId, groupId, path, attributes,
 	                          (u32)ownerPermissions, (u32)groupPermissions,
-	                          (u32)otherPermissions, (u16 *)NULL);
+	                          (u32)otherPermissions, (u16*)NULL);
 	if (ret == IPC_SUCCESS)
 		ret = TryWriteSuperblock();
 	return ret;
 }
 
 // Seek to a position in a file
-s32 SeekFile(FSHandle *handle, s32 offset, SeekMode whence)
+s32 SeekFile(FSHandle* handle, s32 offset, SeekMode whence)
 {
 	// Validate handle pointer
 	if ((s32)handle < 0)
 		return FS_EINVAL;
 
 	// Get superblock to access file metadata
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -978,7 +978,7 @@ s32 SeekFile(FSHandle *handle, s32 offset, SeekMode whence)
 			break;
 		case SeekEnd: //from end of file
 		{
-			FileSystemTableEntry *fstEntry = GetFstEntry(superblock, handle->Inode);
+			FileSystemTableEntry* fstEntry = GetFstEntry(superblock, handle->Inode);
 			// Round file size up to cluster boundary
 			basePosition = (fstEntry->FileSize + (CLUSTER_SIZE - 1)) & CLUSTER_MASK;
 			break;
@@ -995,7 +995,7 @@ s32 SeekFile(FSHandle *handle, s32 offset, SeekMode whence)
 		return FS_EINVAL;
 
 	// Check if position exceeds file size (rounded to cluster boundary)
-	FileSystemTableEntry *fstEntry = GetFstEntry(superblock, handle->Inode);
+	FileSystemTableEntry* fstEntry = GetFstEntry(superblock, handle->Inode);
 	u32 maxPosition = (fstEntry->FileSize + (CLUSTER_SIZE - 1)) & CLUSTER_MASK;
 	if (newPosition > maxPosition)
 		return FS_EINVAL;
@@ -1013,7 +1013,7 @@ s32 SeekFile(FSHandle *handle, s32 offset, SeekMode whence)
 // Allocate a free cluster from the FAT with wear leveling
 // Implements generation-based allocation distribution, block-aligned scanning,
 // preference for erased blocks, and automatic reclamation when exhausted
-static u16 AllocateCluster(SuperBlockInfo *superblock)
+static u16 AllocateCluster(SuperBlockInfo* superblock)
 {
 	// Initialize last allocated position on first call using generation-based distribution
 	if (!_lastAllocatedClusterInitialized)
@@ -1122,9 +1122,9 @@ reclaimBlocks:
 }
 
 // Create multiple files in a single call (IOS-style batch creation)
-s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData *paths, u32 *sizes, u32 numberOfFiles)
+s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData* paths, u32* sizes, u32 numberOfFiles)
 {
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (!superblock)
 		return FS_NOFILESYSTEM;
 	if (_sffStats.FreeInodes < numberOfFiles)
@@ -1145,14 +1145,14 @@ s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData *paths, u32 *size
 	{
 		u16 inode = 0;
 		ret = CreateFileInner(superblock, userId, groupId,
-		                      (const char *)paths[i].Data, 0, 3, 0, 0, &inode);
+		                      (const char*)paths[i].Data, 0, 3, 0, 0, &inode);
 		if (ret != IPC_SUCCESS)
 			break;
 
 		u32 fileClusters = (sizes[i] + CLUSTER_SIZE - 1) / CLUSTER_SIZE;
-		FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+		FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-		u16 *clusterPointer = &entry->StartCluster;
+		u16* clusterPointer = &entry->StartCluster;
 #pragma GCC diagnostic pop
 		for (u32 cluster = 0; cluster < fileClusters;)
 		{
@@ -1193,14 +1193,14 @@ cleanup_mass_create:
 }
 
 // Write data to a file
-s32 ReadFile(FSHandle *handle, u8 *data, u32 length)
+s32 ReadFile(FSHandle* handle, u8* data, u32 length)
 {
 	// Validate arguments: handle must be non-NULL, data non-NULL,
 	// length non-zero and cluster-aligned (FS_ReadFileInner_ enforces this too)
 	if ((s32)handle < 0 || data == NULL || (length & (CLUSTER_SIZE - 1)) != 0 || length == 0)
 		return FS_EINVAL;
 
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -1210,7 +1210,7 @@ s32 ReadFile(FSHandle *handle, u8 *data, u32 length)
 
 	u32 inode = handle->Inode;
 	u32 filePosition = handle->FilePosition;
-	FileSystemTableEntry *fstEntry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* fstEntry = GetFstEntry(superblock, inode);
 
 	// Validate the requested range fits within the cluster-rounded file size
 	u32 clusterRoundedSize = (fstEntry->FileSize + (CLUSTER_SIZE - 1)) & CLUSTER_MASK;
@@ -1308,7 +1308,7 @@ s32 ReadFile(FSHandle *handle, u8 *data, u32 length)
 	return ret;
 }
 
-s32 WriteFile(FSHandle *handle, const void *data, u32 length)
+s32 WriteFile(FSHandle* handle, const void* data, u32 length)
 {
 	s32 ret = IPC_SUCCESS;
 	u32 bytesWritten = 0;
@@ -1324,7 +1324,7 @@ s32 WriteFile(FSHandle *handle, const void *data, u32 length)
 
 	// Round length up to cluster boundary for allocation
 	u32 lengthAligned = (length + (CLUSTER_SIZE - 1)) & CLUSTER_MASK;
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 	{
 		ret = FS_NOFILESYSTEM;
@@ -1340,7 +1340,7 @@ s32 WriteFile(FSHandle *handle, const void *data, u32 length)
 
 	u32 inode = handle->Inode;
 	u32 filePosition = handle->FilePosition;
-	FileSystemTableEntry *fstEntry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* fstEntry = GetFstEntry(superblock, inode);
 
 	// Exit early if not entering write path (not cluster-aligned AND not extending file)
 	if (length != lengthAligned && filePosition + length < fstEntry->FileSize)
@@ -1372,7 +1372,7 @@ s32 WriteFile(FSHandle *handle, const void *data, u32 length)
 
 		// Write cluster with encryption and HMAC
 		ret = WriteClusters(newCluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify,
-		                    &_fileSalt, (u8 *)data + bytesWritten, NULL);
+		                    &_fileSalt, (u8*)data + bytesWritten, NULL);
 
 		if (ret == FS_BADBLOCK)
 		{
@@ -1472,12 +1472,12 @@ cleanup:
 }
 
 // Enable or disable SFFS version control (generation tracking) for a regular file.
-s32 SetFileVersionControl(u32 userId, const char *path, u32 enable)
+s32 SetFileVersionControl(u32 userId, const char* path, u32 enable)
 {
 	if (GetPathLength(path) == 0)
 		return FS_EINVAL;
 
-	SuperBlockInfo *superblock = SelectSuperBlock();
+	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
@@ -1485,7 +1485,7 @@ s32 SetFileVersionControl(u32 userId, const char *path, u32 enable)
 	if (inode == SFFSErasedNode)
 		return FS_ENOENT;
 
-	FileSystemTableEntry *entry = GetFstEntry(superblock, inode);
+	FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 
 	// Only the file owner or root may change version control settings
 	if (userId != 0 && entry->UserId != userId)

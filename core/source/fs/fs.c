@@ -29,7 +29,7 @@ static s32 GetFileDescriptor(void)
 	return _fd;
 }
 
-s32 OpenFile(const char *path, AccessMode mode)
+s32 OpenFile(const char* path, AccessMode mode)
 {
 	if (path == NULL)
 		return FS_EINVAL;
@@ -40,10 +40,10 @@ s32 OpenFile(const char *path, AccessMode mode)
 
 	/* Copy through the module-local buffer to guarantee DMA-accessible memory. */
 	memcpy(_cmd_buf, path, len + 1);
-	return OSOpenFD((const char *)_cmd_buf, (s32)mode);
+	return OSOpenFD((const char*)_cmd_buf, (s32)mode);
 }
 
-s32 GetFileStats(s32 fd, FileStatistics *out)
+s32 GetFileStats(s32 fd, FileStatistics* out)
 {
 	return OSIoctlFD(fd, IOCTL_GETFILESTATS, NULL, 0, out, sizeof(FileStatistics));
 }
@@ -64,7 +64,7 @@ s32 FormatFileSystem(void)
 	return OSIoctlFD(fd, IOCTL_FORMAT, NULL, 0, NULL, 0);
 }
 
-s32 GetNandStatistics(SFFSStatistics *stats)
+s32 GetNandStatistics(SFFSStatistics* stats)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -72,7 +72,7 @@ s32 GetNandStatistics(SFFSStatistics *stats)
 	return OSIoctlFD(fd, IOCTL_GETSTATS, NULL, 0, stats, sizeof(SFFSStatistics));
 }
 
-s32 CreateDirectory(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
+s32 CreateDirectory(const char* path, u8 attrib, u8 owner, u8 group, u8 other)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -84,7 +84,7 @@ s32 CreateDirectory(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	FileOperationsParameter *param = (FileOperationsParameter *)_cmd_buf;
+	FileOperationsParameter* param = (FileOperationsParameter*)_cmd_buf;
 	memset(param, 0, sizeof(FileOperationsParameter));
 	strncpy(param->Path, path, sizeof(param->Path) - 1);
 	param->OwnerPermissions = owner;
@@ -95,7 +95,7 @@ s32 CreateDirectory(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
 	return OSIoctlFD(fd, IOCTL_CREATEDIR, param, sizeof(FileOperationsParameter), NULL, 0);
 }
 
-s32 CreateDirectoryRecursive(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
+s32 CreateDirectoryRecursive(const char* path, u8 attrib, u8 owner, u8 group, u8 other)
 {
 	u32 entries;
 	char buffer[MAX_FILE_PATH];
@@ -105,8 +105,8 @@ s32 CreateDirectoryRecursive(const char *path, u8 attrib, u8 owner, u8 group, u8
 
 	memset(buffer, 0, sizeof(buffer));
 
-	const char *path_end = path + strnlen(path, MAX_FILE_PATH);
-	const char *seperator = strchr(path + 1, '/');
+	const char* path_end = path + strnlen(path, MAX_FILE_PATH);
+	const char* seperator = strchr(path + 1, '/');
 
 	while (1)
 	{
@@ -135,7 +135,7 @@ s32 CreateDirectoryRecursive(const char *path, u8 attrib, u8 owner, u8 group, u8
 	return 0;
 }
 
-s32 ReadDirectory(const char *path, char *out_entries, u32 *count)
+s32 ReadDirectory(const char* path, char* out_entries, u32* count)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -180,7 +180,7 @@ s32 ReadDirectory(const char *path, char *out_entries, u32 *count)
 	return ret;
 }
 
-s32 SetAttributes(const char *path, u32 uid, u16 gid, u8 attrib, u8 owner, u8 group, u8 other)
+s32 SetAttributes(const char* path, u32 uid, u16 gid, u8 attrib, u8 owner, u8 group, u8 other)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -192,7 +192,7 @@ s32 SetAttributes(const char *path, u32 uid, u16 gid, u8 attrib, u8 owner, u8 gr
 	if (length == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	FileOperationsParameter *param = (FileOperationsParameter *)_cmd_buf;
+	FileOperationsParameter* param = (FileOperationsParameter*)_cmd_buf;
 	memset(param, 0, sizeof(FileOperationsParameter));
 	param->UserId = uid;
 	param->GroupId = gid;
@@ -205,8 +205,8 @@ s32 SetAttributes(const char *path, u32 uid, u16 gid, u8 attrib, u8 owner, u8 gr
 	return OSIoctlFD(fd, IOCTL_SETATTR, param, sizeof(FileOperationsParameter), NULL, 0);
 }
 
-s32 GetAttributes(const char *path, u32 *uid, u16 *gid, u32 *attrib, u32 *owner,
-                  u32 *group, u32 *other)
+s32 GetAttributes(const char* path, u32* uid, u16* gid, u32* attrib, u32* owner,
+                  u32* group, u32* other)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -220,7 +220,7 @@ s32 GetAttributes(const char *path, u32 *uid, u16 *gid, u32 *attrib, u32 *owner,
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	GetAttributesParameters *buf = (GetAttributesParameters *)_cmd_buf;
+	GetAttributesParameters* buf = (GetAttributesParameters*)_cmd_buf;
 	memset(buf, 0, sizeof(GetAttributesParameters));
 	strncpy(buf->Path, path, sizeof(buf->Path) - 1);
 
@@ -238,7 +238,7 @@ s32 GetAttributes(const char *path, u32 *uid, u16 *gid, u32 *attrib, u32 *owner,
 	return ret;
 }
 
-s32 DeletePath(const char *path)
+s32 DeletePath(const char* path)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -256,7 +256,7 @@ s32 DeletePath(const char *path)
 	return OSIoctlFD(fd, IOCTL_DELETE, _cmd_buf, MAX_FILE_PATH, NULL, 0);
 }
 
-s32 RenamePath(const char *source, const char *destination)
+s32 RenamePath(const char* source, const char* destination)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -270,7 +270,7 @@ s32 RenamePath(const char *source, const char *destination)
 	if (destinationLength == MAX_FILE_PATH || sourceLength == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	FileRenameParameter *param = (FileRenameParameter *)_cmd_buf;
+	FileRenameParameter* param = (FileRenameParameter*)_cmd_buf;
 	memset(param, 0, sizeof(FileRenameParameter));
 	strncpy(param->Source, source, sizeof(param->Source) - 1);
 	strncpy(param->Destination, destination, sizeof(param->Destination) - 1);
@@ -278,7 +278,7 @@ s32 RenamePath(const char *source, const char *destination)
 	return OSIoctlFD(fd, IOCTL_RENAME, param, sizeof(FileRenameParameter), NULL, 0);
 }
 
-s32 CreateFile(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
+s32 CreateFile(const char* path, u8 attrib, u8 owner, u8 group, u8 other)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -290,7 +290,7 @@ s32 CreateFile(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	FileOperationsParameter *param = (FileOperationsParameter *)_cmd_buf;
+	FileOperationsParameter* param = (FileOperationsParameter*)_cmd_buf;
 	memset(param, 0, sizeof(FileOperationsParameter));
 	strncpy(param->Path, path, sizeof(param->Path) - 1);
 	param->OwnerPermissions = owner;
@@ -301,7 +301,7 @@ s32 CreateFile(const char *path, u8 attrib, u8 owner, u8 group, u8 other)
 	return OSIoctlFD(fd, IOCTL_CREATEFILE, param, sizeof(FileOperationsParameter), NULL, 0);
 }
 
-s32 SetFileVersionControl(const char *path, u8 version)
+s32 SetFileVersionControl(const char* path, u8 version)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
@@ -313,7 +313,7 @@ s32 SetFileVersionControl(const char *path, u8 version)
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	FileOperationsParameter *param = (FileOperationsParameter *)_cmd_buf;
+	FileOperationsParameter* param = (FileOperationsParameter*)_cmd_buf;
 	memset(param, 0, sizeof(FileOperationsParameter));
 	strncpy(param->Path, path, sizeof(param->Path) - 1);
 	param->Attributes = version;
@@ -325,12 +325,12 @@ s32 SetFileVersionControl(const char *path, u8 version)
 //Create a file and write the data
 //This function uses an intermediate temp file in /tmp to ensure the final write is correct
 //after which it is renamed to the final path, and all necessary parent directories are created if they don't exist
-s32 CreateAndWriteFile(const char *filepath, u8 attrib, u8 owner, u8 group,
-                       u8 other, const u8 *data, u32 len)
+s32 CreateAndWriteFile(const char* filepath, u8 attrib, u8 owner, u8 group,
+                       u8 other, const u8* data, u32 len)
 {
 	//compile the temp path and delete it just in case
-	char *tempPath = "/tmp/000000000000";
-	const char *filename = strrchr(filepath, '/');
+	char* tempPath = "/tmp/000000000000";
+	const char* filename = strrchr(filepath, '/');
 	strncpy(tempPath + 5, filename + 1, 12);
 	DeletePath(tempPath);
 

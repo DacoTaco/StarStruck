@@ -38,7 +38,7 @@ CHECK_SIZE(AccessMode, 4);
 
 typedef struct
 {
-	char *Filepath;
+	char* Filepath;
 	AccessMode Mode;
 	u32 UID;
 	u16 GID;
@@ -51,7 +51,7 @@ CHECK_OFFSET(OpenMessage, 0x0C, GID);
 
 typedef struct
 {
-	void *MessageData;
+	void* MessageData;
 	u32 Length;
 } ReadMessage;
 CHECK_SIZE(ReadMessage, 0x08);
@@ -60,7 +60,7 @@ CHECK_OFFSET(ReadMessage, 0x04, Length);
 
 typedef struct
 {
-	const void *MessageData;
+	const void* MessageData;
 	u32 Length;
 } WriteMessage;
 CHECK_SIZE(WriteMessage, 0x08);
@@ -86,9 +86,9 @@ CHECK_OFFSET(SeekMessage, 0x04, Whence);
 typedef struct
 {
 	u32 Ioctl;
-	void *InputBuffer;
+	void* InputBuffer;
 	u32 InputLength;
-	void *IoBuffer;
+	void* IoBuffer;
 	u32 IoLength;
 } IoctlMessage;
 CHECK_OFFSET(IoctlMessage, 0x00, Ioctl);
@@ -100,7 +100,7 @@ CHECK_SIZE(IoctlMessage, 0x14);
 
 typedef struct
 {
-	void *Data;
+	void* Data;
 	u32 Length;
 } IoctlvMessageData;
 CHECK_OFFSET(IoctlvMessageData, 0x00, Data);
@@ -112,7 +112,7 @@ typedef struct
 	u32 Ioctl;
 	u32 InputArgc;
 	u32 IoArgc;
-	IoctlvMessageData *MessageData;
+	IoctlvMessageData* MessageData;
 } IoctlvMessage;
 CHECK_OFFSET(IoctlvMessage, 0x00, Ioctl);
 CHECK_OFFSET(IoctlvMessage, 0x04, InputArgc);
@@ -151,7 +151,7 @@ CHECK_OFFSET(IpcRequest, 0x0C, Message);
 typedef struct
 {
 	IpcRequest Request;
-	void *Callback;
+	void* Callback;
 	u32 CallerData;
 	s32 UsedByThreadId;
 	u32 IsInQueue;

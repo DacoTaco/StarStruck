@@ -34,19 +34,19 @@ typedef enum
 } InodeAction;
 
 // Inode tree operations
-s32 ProcessInodeAction(SuperBlockInfo *superblock, u32 inode, InodeAction action);
+s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action);
 
 // Path/inode resolution
-u32 FindInode(SuperBlockInfo *superblock, u32 parentInode, const char *name);
-u32 FindInodeByPath(SuperBlockInfo *superblock, const char *path);
+u32 FindInode(SuperBlockInfo* superblock, u32 parentInode, const char* name);
+u32 FindInodeByPath(SuperBlockInfo* superblock, const char* path);
 
 // Inode allocation
-u32 GetFreeInode(SuperBlockInfo *superblock);
+u32 GetFreeInode(SuperBlockInfo* superblock);
 
 // Inode manipulation
-s32 UnlinkTargetInode(SuperBlockInfo *superblock, u32 parentInode, u32 targetInode);
+s32 UnlinkTargetInode(SuperBlockInfo* superblock, u32 parentInode, u32 targetInode);
 
 // Access control and validation
-s32 CheckUserPermissions(SuperBlockInfo *superblock, u32 inode, u32 uid,
+s32 CheckUserPermissions(SuperBlockInfo* superblock, u32 inode, u32 uid,
                          u16 gid, AccessMode mode);
 s32 CheckIfFileOpen(u32 inode);

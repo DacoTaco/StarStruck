@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 void CheckForGecko(void);
-void gprintf(const char *str, ...);
+void gprintf(const char* str, ...);
 void SetDumpDebug(u8 value);
 void InitGDBDebug(void);
 

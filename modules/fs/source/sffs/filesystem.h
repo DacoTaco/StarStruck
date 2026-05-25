@@ -128,15 +128,15 @@ static inline u32 GetFatArraySize()
 	return 2 << ((SelectedNandSizeInfo.NandSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF);
 }
 
-static inline FileSystemTableEntry *GetFstEntry(SuperBlockInfo *superblock, u32 inode)
+static inline FileSystemTableEntry* GetFstEntry(SuperBlockInfo* superblock, u32 inode)
 {
 	// FAT size = 2 << (NandSizeBitShift - CLUSTER_SIZE_SHIFT) bytes (when using 512MB nand)
 	// FST base = FAT base + FAT size
 	// Each FST entry is 0x20 (32) bytes
 
 	//its basically comes down to `return &superblock->FstEntries[inode];` but dynamically calculating the fst base
-	FileSystemTableEntry *fstBase =
-	    (FileSystemTableEntry *)((u8 *)superblock->FatEntries + GetFatArraySize());
+	FileSystemTableEntry* fstBase =
+	    (FileSystemTableEntry*)((u8*)superblock->FatEntries + GetFatArraySize());
 	return &fstBase[inode];
 }
 
@@ -148,28 +148,28 @@ static inline u32 GetFstEntryCount(void)
 }
 
 // Path utilities
-u32 GetPathLength(const char *path);
-s32 SplitPath(const char *path, char *directory, char *fileName);
+u32 GetPathLength(const char* path);
+s32 SplitPath(const char* path, char* directory, char* fileName);
 
 s32 TryWriteSuperblock(void);
 s32 InitSuperblockInfo(bool clearInfo);
-SuperBlockInfo *SelectSuperBlock(void);
+SuperBlockInfo* SelectSuperBlock(void);
 s32 InitializeSFFS(s32 mode);
 
-s32 InitializeFstEntries(SuperBlockInfo *superblock, bool *flushNeeded);
-s32 StatSuperblock(SuperBlockInfo *superblock);
-s32 GetStats(SFFSStatistics *stats);
-s32 GetPathUsage(const char *path, u32 *clusters, u32 *inodes);
+s32 InitializeFstEntries(SuperBlockInfo* superblock, bool* flushNeeded);
+s32 StatSuperblock(SuperBlockInfo* superblock);
+s32 GetStats(SFFSStatistics* stats);
+s32 GetPathUsage(const char* path, u32* clusters, u32* inodes);
 
 // Retrieve file attributes for the specified path.
-s32 GetAttributes(u32 userId, u16 groupId, const char *path, u32 *userIdOut,
-                  u16 *groupIdOut, u8 *attributesOut, u8 *ownerPermOut,
-                  u8 *groupPermOut, u8 *otherPermOut);
+s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut,
+                  u16* groupIdOut, u8* attributesOut, u8* ownerPermOut,
+                  u8* groupPermOut, u8* otherPermOut);
 
 //Set Attributes of a file or directory
-s32 SetAttributes(u32 callerUserId, const char *path, u32 userId, u16 groupId, u8 attributes,
+s32 SetAttributes(u32 callerUserId, const char* path, u32 userId, u16 groupId, u8 attributes,
                   u8 ownerPermissions, u8 groupPermissions, u8 otherPermissions);
 
 // Create a fresh superblock in memory and initialize FAT/FST structures
-SuperBlockInfo *CreateSuperBlock(void);
-s32 MarkBlocksReserved(SuperBlockInfo *superblock);
+SuperBlockInfo* CreateSuperBlock(void);
+s32 MarkBlocksReserved(SuperBlockInfo* superblock);

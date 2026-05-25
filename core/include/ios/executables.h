@@ -41,7 +41,7 @@ typedef struct
 		u32 Address;
 		u32 Size;
 	} BSS;
-	u32 *EntryPoint;
+	u32* EntryPoint;
 	u8 Padding[0x1C];
 } DolHeader;
 

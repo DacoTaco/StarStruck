@@ -22,7 +22,7 @@ int main(void)
 	OSSetThreadPriority(0, 0x79);
 	printk("$IOSVersion:  ES: %s %s 64M $", __DATE__, __TIME__);
 
-	s32 ret = OSCreateMessageQueue((void **)&messageQueueMessages, 1);
+	s32 ret = OSCreateMessageQueue((void**)&messageQueueMessages, 1);
 	const u32 EsMessageQueueId = (u32)ret;
 	if (ret < 0)
 	{

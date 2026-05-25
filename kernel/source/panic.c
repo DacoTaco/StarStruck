@@ -23,7 +23,7 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 #define PANIC_OFF   300000
 #define PANIC_INTER 1000000
 
-void panic(const char *fmt, ...)
+void panic(const char* fmt, ...)
 {
 	va_list args;
 	char buffer[256];
@@ -62,7 +62,7 @@ void panic2(int mode, ...)
 			udelay(PANIC_OFF);
 
 			gecko_printf("PANIIIIIIIIC!!!");
-			*(u32 *)HW_RESETS &= (u32)~RSTBINB;
+			*(u32*)HW_RESETS &= (u32)~RSTBINB;
 		}
 
 		va_end(ap);

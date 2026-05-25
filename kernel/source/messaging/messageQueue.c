@@ -17,14 +17,14 @@
 #include "messaging/messageQueue.h"
 
 #ifndef MIOS
-extern u32 *MemoryTranslationTable;
+extern u32* MemoryTranslationTable;
 extern u32 DomainAccessControlTable[MAX_PROCESSES];
-extern u32 *HardwareRegistersAccessTable[MAX_PROCESSES];
+extern u32* HardwareRegistersAccessTable[MAX_PROCESSES];
 #endif
 
 MessageQueue MessageQueues[MAX_MESSAGEQUEUES] SRAM_DATA;
 
-s32 CreateMessageQueue(void **ptr, u32 numberOfMessages)
+s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 {
 	u32 irqState = DisableInterrupts();
 	s16 queueId = 0;
@@ -71,11 +71,11 @@ restore_and_return:
 	return queueId;
 }
 
-s32 JamMessage(const s32 queueId, void *message, u32 flags)
+s32 JamMessage(const s32 queueId, void* message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
-	MessageQueue *messageQueue;
+	MessageQueue* messageQueue;
 
 	if (queueId < 0 || queueId >= MAX_MESSAGEQUEUES || flags > Invalid)
 	{
@@ -130,7 +130,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessage(const s32 queueId, void *message, u32 flags)
+s32 SendMessage(const s32 queueId, void* message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -154,7 +154,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessageToQueue(MessageQueue *messageQueue, void *message, u32 flags)
+s32 SendMessageToQueue(MessageQueue* messageQueue, void* message, u32 flags)
 {
 	if (messageQueue == NULL)
 		return IPC_EINVAL;
@@ -198,7 +198,7 @@ s32 SendMessageToQueue(MessageQueue *messageQueue, void *message, u32 flags)
 	return 0;
 }
 
-s32 ReceiveMessage(const s32 queueId, void **message, u32 flags)
+s32 ReceiveMessage(const s32 queueId, void** message, u32 flags)
 {
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
@@ -228,7 +228,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 ReceiveMessageFromQueue(MessageQueue *messageQueue, void **message, u32 flags)
+s32 ReceiveMessageFromQueue(MessageQueue* messageQueue, void** message, u32 flags)
 {
 	if (messageQueue == NULL)
 		return IPC_EINVAL;
@@ -296,7 +296,7 @@ restore_and_return:
 	return ret;
 }
 
-s32 SendMessageUnsafe(const s32 queueId, void *message, u32 flags)
+s32 SendMessageUnsafe(const s32 queueId, void* message, u32 flags)
 {
 	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;
@@ -307,7 +307,7 @@ s32 SendMessageUnsafe(const s32 queueId, void *message, u32 flags)
 	RestoreInterrupts(irqState);
 	return ret;
 }
-s32 ReceiveMessageUnsafe(const s32 queueId, void **message, u32 flags)
+s32 ReceiveMessageUnsafe(const s32 queueId, void** message, u32 flags)
 {
 	const u32 irqState = DisableInterrupts();
 	s32 ret = IPC_EINVAL;

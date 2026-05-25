@@ -23,15 +23,15 @@
 
 #ifdef MIOS
 const u8 _timerStack[TIMERSTACKSIZE] ALIGNED(32) = { 0 };
-const u8 *TimerMainStack = _timerStack;
+const u8* TimerMainStack = _timerStack;
 #else
-const u8 *TimerMainStack = NULL;
+const u8* TimerMainStack = NULL;
 #endif
 
 u32 timerFrequency = 0;
 TimerInfo timers[MAX_TIMERS] SRAM_DATA ALIGNED(0x10);
 TimerInfo initialTimer = { 0, 0, NULL, NULL, 0, &initialTimer, &initialTimer };
-TimerInfo *CurrentTimer ALIGNED(0x10) = &initialTimer;
+TimerInfo* CurrentTimer ALIGNED(0x10) = &initialTimer;
 u32 PreviousTimerValue = 0;
 
 u32 ConvertDelayToTicks(u32 delay)
@@ -61,12 +61,12 @@ u32 ConvertDelayToTicks(u32 delay)
 #endif
 }
 
-void QueueTimer(TimerInfo *timerInfo)
+void QueueTimer(TimerInfo* timerInfo)
 {
 	if (timerInfo == NULL)
 		return;
 
-	TimerInfo *nextTimer = CurrentTimer->NextTimer;
+	TimerInfo* nextTimer = CurrentTimer->NextTimer;
 	u32 intervalInTicks = timerInfo->IntervalInTicks;
 	u32 timePassed = read32(HW_TIMER) - PreviousTimerValue;
 	PreviousTimerValue = read32(HW_TIMER);
@@ -95,7 +95,7 @@ void QueueTimer(TimerInfo *timerInfo)
 		nextTimer->IntervalInTicks = nextTimer->IntervalInTicks - intervalInTicks;
 
 	//shove timer between our previous and next timer
-	TimerInfo *previousTimer = nextTimer->PreviousTimer;
+	TimerInfo* previousTimer = nextTimer->PreviousTimer;
 	timerInfo->PreviousTimer = previousTimer;
 	timerInfo->NextTimer = nextTimer;
 	nextTimer->PreviousTimer = timerInfo;
@@ -112,8 +112,8 @@ void TimerHandler(void)
 	s32 ret;
 	u32 interupts = 0;
 	u32 timerTicks = 0;
-	TimerInfo *previousTimer = NULL;
-	TimerInfo *nextTimer = NULL;
+	TimerInfo* previousTimer = NULL;
+	TimerInfo* nextTimer = NULL;
 
 	//IOS sets up the timer here, but we've set it up in the intial timer setup
 	/*CurrentTimer->IntervalInTicks = 0;
@@ -123,7 +123,7 @@ void TimerHandler(void)
 	CurrentTimer->NextTimer = CurrentTimer;
 	CurrentTimer->Queue = NULL;*/
 
-	ret = CreateMessageQueue((void **)&timer_messages, 1);
+	ret = CreateMessageQueue((void**)&timer_messages, 1);
 	if (ret < 0)
 		panic("Unable to create timer message queue: %d\n", ret);
 
@@ -137,14 +137,14 @@ void TimerHandler(void)
 		//wait for an irq message, which signals us to do our work
 		do
 		{
-			ret = ReceiveMessage(timerQueueId, (void **)0x0, None);
+			ret = ReceiveMessage(timerQueueId, (void**)0x0, None);
 		}
 		while (ret != 0);
 
 		//lets not get interrupted while processing the timer message
 		interupts = DisableInterrupts();
 
-		TimerInfo *timerInfo = CurrentTimer->NextTimer;
+		TimerInfo* timerInfo = CurrentTimer->NextTimer;
 		while (timerInfo != CurrentTimer)
 		{
 			while (1)
@@ -220,7 +220,7 @@ void SetTimerAlarm(u32 ticks)
 	return;
 }
 
-s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void *message)
+s32 CreateTimer(u32 delayUs, u32 periodUs, const s32 queueid, void* message)
 {
 	s32 ret = 0;
 	u32 interupts = DisableInterrupts();
@@ -307,9 +307,9 @@ s32 StopOrDestroyTimer(s32 timerId, s32 destroyTimer)
 {
 	s32 ret = 0;
 	u32 interupts = DisableInterrupts();
-	TimerInfo *timerInfo = NULL;
-	TimerInfo *nextTimer = NULL;
-	TimerInfo *previousTimer = NULL;
+	TimerInfo* timerInfo = NULL;
+	TimerInfo* nextTimer = NULL;
+	TimerInfo* previousTimer = NULL;
 	u32 prevTimerValue = PreviousTimerValue;
 
 	if (timerId > MAX_TIMERS)

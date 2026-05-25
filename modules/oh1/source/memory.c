@@ -14,7 +14,7 @@ IOS. oh1 - usb ohci implementation in ios
 
 #include "memory.h"
 
-#define OH1_HEAP_BASE ((void *)0x13881400)
+#define OH1_HEAP_BASE ((void*)0x13881400)
 #define OH1_HEAP_SIZE 0x4000
 
 s32 _moduleHeap;
@@ -41,14 +41,14 @@ s32 CreateHeap(void)
 	return IPC_EINVAL;
 }
 
-void FreeMemory(void *ptr)
+void FreeMemory(void* ptr)
 {
 	OSFreeMemory(_moduleHeap, ptr);
 }
 
-WiiTransferDescriptor *AllocateTransferDescriptor(void)
+WiiTransferDescriptor* AllocateTransferDescriptor(void)
 {
-	WiiTransferDescriptor *transferDescriptor =
+	WiiTransferDescriptor* transferDescriptor =
 	    OSAlignedAllocateMemory(_moduleHeap, sizeof(WiiTransferDescriptor), 0x10);
 
 	if (transferDescriptor)
@@ -57,15 +57,15 @@ WiiTransferDescriptor *AllocateTransferDescriptor(void)
 	return transferDescriptor;
 }
 
-bool IsTransferDescriptorOnHead(void *ptr)
+bool IsTransferDescriptorOnHead(void* ptr)
 {
 	return ptr && ((u32)ptr & 0xf) == 0 && ptr >= OH1_HEAP_BASE &&
 	       (u32)ptr < ((u32)OH1_HEAP_BASE + OH1_HEAP_SIZE);
 }
 
-OhciTransferDescriptorIsoc *AllocateIsocTransferDescriptor(void)
+OhciTransferDescriptorIsoc* AllocateIsocTransferDescriptor(void)
 {
-	OhciTransferDescriptorIsoc *ptr;
+	OhciTransferDescriptorIsoc* ptr;
 
 	ptr = OSAlignedAllocateMemory(_moduleHeap, sizeof(OhciTransferDescriptorIsoc), 16);
 	if (ptr)
@@ -74,9 +74,9 @@ OhciTransferDescriptorIsoc *AllocateIsocTransferDescriptor(void)
 	return ptr;
 }
 
-OhciEndpointDescriptor *AllocateEndpointDescriptor(void)
+OhciEndpointDescriptor* AllocateEndpointDescriptor(void)
 {
-	void *ptr;
+	void* ptr;
 
 	ptr = OSAlignedAllocateMemory(_moduleHeap, sizeof(OhciEndpointDescriptor), 16);
 	if (ptr)
@@ -85,16 +85,16 @@ OhciEndpointDescriptor *AllocateEndpointDescriptor(void)
 	return ptr;
 }
 
-void *ValidateMemoryAddress(void *ptr)
+void* ValidateMemoryAddress(void* ptr)
 {
  //redirect SRAM to the dma address space
-	if ((ptr >= (void *)0xffff0000) && (ptr != (void *)0xffffffff))
-		ptr = (void *)((int)ptr + 0x0d410000);
+	if ((ptr >= (void*)0xffff0000) && (ptr != (void*)0xffffffff))
+		ptr = (void*)((int)ptr + 0x0d410000);
 
 	return ptr;
 }
 
-void CleanupIORequest(IORequestPacket *ioRequest)
+void CleanupIORequest(IORequestPacket* ioRequest)
 {
 	if (!ioRequest)
 		return;
@@ -107,7 +107,7 @@ void CleanupIORequest(IORequestPacket *ioRequest)
 	}
 	else
 	{
-		OSSendMessage(ioRequest->Queue, (void *)(u32)ioRequest->Transferred, 0);
+		OSSendMessage(ioRequest->Queue, (void*)(u32)ioRequest->Transferred, 0);
 	}
 
 	if (ioRequest->ControlMessage)

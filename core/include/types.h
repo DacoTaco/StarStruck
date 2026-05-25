@@ -39,7 +39,7 @@ typedef u32 size_t;
 #define StaticAssert static_assert
 #else
 #define StaticAssert _Static_assert
-#define NULL         ((void *)0)
+#define NULL         ((void*)0)
 #endif
 
 #define ALIGNED(x) __attribute__((aligned(x)))
@@ -49,8 +49,8 @@ typedef u32 size_t;
 	                (((sizeof(type) * (cnt)) % (alignment)) > 0 ?                 \
 	                     ((alignment) - ((sizeof(type) * (cnt)) % (alignment))) : \
 	                     0))];                                                    \
-	type *name = (type *)(((u32)(_al__##name)) +                                  \
-	                      ((alignment) - (((u32)(_al__##name)) & ((alignment)-1))))
+	type* name = (type*)(((u32)(_al__##name)) +                                   \
+	                     ((alignment) - (((u32)(_al__##name)) & ((alignment) - 1))))
 
 #define INT_MAX             ((int)0x7fffffff)
 #define UINT_MAX            ((unsigned int)0xffffffff)
@@ -70,4 +70,4 @@ typedef u32 size_t;
 	StaticAssert(offsetof(Type, Field) == Offset, \
 	             #Type "::" #Field " must be at offset " #Offset)
 
-void hextou32(const char *str, u32 *out);
+void hextou32(const char* str, u32* out);

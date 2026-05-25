@@ -25,28 +25,28 @@ IOS. oh1 - usb ohci implementation in ios
 #define USBV0_IOCTL_GETPORTSTATUS  0x14
 #define USBV0_IOCTL_SETPORTSTATUS  0x19
 
-#define swap_ptr(ptr)              ((void *)__builtin_bswap32((u32)ptr))
+#define swap_ptr(ptr)              ((void*)__builtin_bswap32((u32)ptr))
 #define swap_u32(value)            __builtin_bswap32(value)
 #define swap_u16(value)            __builtin_bswap16(value)
 
 typedef struct
 {
 	OhciTransferDescriptor std;
-	struct IORequestPacket_t *IORequestPacket;
+	struct IORequestPacket_t* IORequestPacket;
 	u16 Length;
 } WiiTransferDescriptor;
 
 typedef struct IORequestPacket_t
 {
-	IpcMessage *RequestMessage;
+	IpcMessage* RequestMessage;
 	s8 Counter;
 	u8 ErrorCount;
 	u16 Transferred;
-	char *MessageData;
+	char* MessageData;
 	u32 Size;
-	WiiTransferDescriptor *TransferDescriptor;
-	OhciEndpointDescriptor *EndpointDescriptor;
+	WiiTransferDescriptor* TransferDescriptor;
+	OhciEndpointDescriptor* EndpointDescriptor;
 	u32 Unused;
 	s32 Queue;
-	void *ControlMessage; /* Only set if queue == -1 */
+	void* ControlMessage; /* Only set if queue == -1 */
 } IORequestPacket;

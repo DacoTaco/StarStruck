@@ -19,12 +19,12 @@ extern s32 _fsShutdown;
 
 // Handle IPC messages for /dev/fs device
 s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size);
-s32 GetFileHandle(u32 userId, u16 groupId, const char *path, AccessMode mode);
-s32 CloseHandle(FSHandle *handle);
+s32 GetFileHandle(u32 userId, u16 groupId, const char* path, AccessMode mode);
+s32 CloseHandle(FSHandle* handle);
 
-s32 HandleDevFsRead(IpcMessage *message);
-s32 HandleDevFsWrite(IpcMessage *message);
-s32 HandleDevFsSeek(IpcMessage *message);
-s32 HandleDevFsIoctl(IpcMessage *message);
-s32 HandleDevFsIoctlv(IpcMessage *message);
-s32 HandleDevFsClose(IpcMessage *message);
+s32 HandleDevFsRead(IpcMessage* message);
+s32 HandleDevFsWrite(IpcMessage* message);
+s32 HandleDevFsSeek(IpcMessage* message);
+s32 HandleDevFsIoctl(IpcMessage* message);
+s32 HandleDevFsIoctlv(IpcMessage* message);
+s32 HandleDevFsClose(IpcMessage* message);

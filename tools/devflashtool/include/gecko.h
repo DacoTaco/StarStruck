@@ -43,7 +43,7 @@ extern "C" {
 
 bool IsUsbGeckoDetected();
 void CheckForGecko(void);
-void gprintf(const char *str, ...);
+void gprintf(const char* str, ...);
 
 #ifdef __cplusplus
 }

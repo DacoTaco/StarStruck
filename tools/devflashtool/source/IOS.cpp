@@ -41,19 +41,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //this can cause some issues sometimes when patching ios in mem2
 static inline u8 ReadRegister8(u32 address)
 {
-	DCFlushRange(reinterpret_cast<void *>(0xC0000000 | address), 2);
+	DCFlushRange(reinterpret_cast<void*>(0xC0000000 | address), 2);
 	return read8(address);
 }
 
 static inline u16 ReadRegister16(u32 address)
 {
-	DCFlushRange(reinterpret_cast<void *>(0xC0000000 | address), 4);
+	DCFlushRange(reinterpret_cast<void*>(0xC0000000 | address), 4);
 	return read16(address);
 }
 
 static inline u32 ReadRegister32(u32 address)
 {
-	DCFlushRange(reinterpret_cast<void *>(0xC0000000 | address), 8);
+	DCFlushRange(reinterpret_cast<void*>(0xC0000000 | address), 8);
 	return read32(address);
 }
 
@@ -94,7 +94,7 @@ const IosPatch OpenFSAsFlash = {
 	},
 
 	//Apply Patch
-	[](u8 *address) {
+	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x01);
 	}
@@ -112,7 +112,7 @@ const IosPatch OpenFSAsFS = {
 	},
 
 	//Apply Patch
-	[](u8 *address) {
+	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x00);
 	}
@@ -131,7 +131,7 @@ const IosPatch AhbProtPatcher = {
 	},
 
 	//Apply Patch
-	[](u8 *address) {
+	[](u8* address) {
 	    gprintf("Found ES_AHBPROT check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 8, 0x23); // li r3, 0xFF.aka, make it look like the TMD had max settings
 	    WriteRegister8((u32)address + 9, 0xFF);
@@ -144,7 +144,7 @@ const IosPatch NandAccessPatcher = {
 	{ 0x42, 0x8B, 0xD0, 0x01, 0x25, 0x66 },
 
 	//Apply Patch
-	[](u8 *address) {
+	[](u8* address) {
 	    gprintf("Found NAND Permission check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 2, 0xE0);
 	    WriteRegister8((u32)address + 3, 0x01);
@@ -156,7 +156,7 @@ const IosPatch DebugRedirectionPatch = {
 	{ 0x46, 0x72, 0x1C, 0x01, 0x20, 0x05 },
 
 	//Apply Patch
-	[](u8 *address) {
+	[](u8* address) {
 	    gprintf("patching DebugRedirectionPatch 0x%08X\n", (0xFFFF0000) | (u32)address);
 	    if ((((u32)address) & 0x90000000) != 0)
 		    return;
@@ -177,12 +177,12 @@ const IosPatch DebugRedirectionPatch = {
 	    };
 
 	    for (u32 i = 0; i < sizeof(patch); i += 4)
-		    WriteRegister32(((u32)address) + i, *(u32 *)&patch[i]);
+		    WriteRegister32(((u32)address) + i, *(u32*)&patch[i]);
 
 	    //redirect svc handler
 	    WriteRegister32(SRAMADDR(0xFFFF0028), (0xFFFF0000) | (u32)address);
-	    DCFlushRange((void *)SRAMADDR(0xFFFF0028), 16);
-	    ICInvalidateRange((void *)SRAMADDR(0xFFFF0028), 16);
+	    DCFlushRange((void*)SRAMADDR(0xFFFF0028), 16);
+	    ICInvalidateRange((void*)SRAMADDR(0xFFFF0028), 16);
 	}
 };
 
@@ -190,7 +190,7 @@ bool DisableAHBProt()
 {
 	bool ret = true;
 	s32 fd = -1;
-	ioctlv *params = NULL;
+	ioctlv* params = NULL;
 	try
 	{
 		//time to drop the exploit bomb on /dev/sha
@@ -199,20 +199,20 @@ bool DisableAHBProt()
 		if (fd < 0)
 			throw "Failed to open /dev/sha : " + std::to_string(fd);
 
-		params = static_cast<ioctlv *>(memalign(sizeof(ioctlv) * 4, 32));
+		params = static_cast<ioctlv*>(memalign(sizeof(ioctlv) * 4, 32));
 		if (params == NULL)
 			throw "failed to alloc IOS call data";
 
 		//overwrite the thread 0 state with address 0 (0x80000000)
 		memset(params, 0, sizeof(ioctlv) * 4);
-		params[1].data = reinterpret_cast<void *>(0xFFFE0028);
+		params[1].data = reinterpret_cast<void*>(0xFFFE0028);
 		params[1].len = 0;
 		DCFlushRange(params, sizeof(ioctlv) * 4);
 
 		//set code to disable ahbprot and stay in loop
-		memcpy(reinterpret_cast<void *>(0x80000000), disableAHBProt_bin, disableAHBProt_bin_size);
-		DCFlushRange(reinterpret_cast<void *>(0x80000000), disableAHBProt_bin_size);
-		ICInvalidateRange(reinterpret_cast<void *>(0x80000000), disableAHBProt_bin_size);
+		memcpy(reinterpret_cast<void*>(0x80000000), disableAHBProt_bin, disableAHBProt_bin_size);
+		DCFlushRange(reinterpret_cast<void*>(0x80000000), disableAHBProt_bin_size);
+		ICInvalidateRange(reinterpret_cast<void*>(0x80000000), disableAHBProt_bin_size);
 
 		//send sha init command
 		gprintf("Dropping IOS bomb...\n");
@@ -222,11 +222,11 @@ bool DisableAHBProt()
 
 		//wait for it to have processed the sha init and given a timeslice to the mainthread :)
 		usleep(50000);
-	} catch (const std::string &ex)
+	} catch (const std::string& ex)
 	{
 		gprintf("Disable AHBPROT: %s\n", ex.c_str());
 		ret = false;
-	} catch (char const *ex)
+	} catch (char const* ex)
 	{
 		gprintf("Disable AHBPROT: %s\n", ex);
 		ret = false;
@@ -276,7 +276,7 @@ s8 PatchIOS(std::vector<IosPatch> patches)
 	//look in MEM2
 	gprintf("Patching IOS in MEM2...\n");
 	u32 patchesFound = 0;
-	u8 *mem_block = reinterpret_cast<u8 *>(ReadRegister32(0x80003130));
+	u8* mem_block = reinterpret_cast<u8*>(ReadRegister32(0x80003130));
 	u32 mem_length = 0x93FFFFFF - (u32)mem_block;
 	if (mem_length > 0x03FFFFFF)
 		mem_length = 0x100;
@@ -287,7 +287,7 @@ s8 PatchIOS(std::vector<IosPatch> patches)
 	{
 		auto iterator =
 		    std::find_if(patches.begin(), patches.end(),
-		                 [&patchesFound, mem_block](const IosPatch &iosPatch) {
+		                 [&patchesFound, mem_block](const IosPatch& iosPatch) {
 			                 s32 patchSize = iosPatch.Pattern.size();
 			                 if (memcmp(mem_block, &iosPatch.Pattern[0], patchSize) != 0)
 				                 return false;
@@ -296,7 +296,7 @@ s8 PatchIOS(std::vector<IosPatch> patches)
 			                 iosPatch.Patch(mem_block);
 
 			                 //flush cache
-			                 u8 *address = (u8 *)(((u32)mem_block) >> 5 << 5);
+			                 u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
 			                 DCFlushRange(address, (patchSize >> 5 << 5) + 64);
 			                 ICInvalidateRange(address, (patchSize >> 5 << 5) + 64);
 			                 patchesFound++;
@@ -328,12 +328,12 @@ s8 PatchIOSKernel(std::vector<IosPatch> patches)
 
 	gprintf("Patching IOS kernel...\n");
 	u32 patchesFound = 0;
-	u8 *mem_block = reinterpret_cast<u8 *>(SRAMADDR(0xFFFF0000));
+	u8* mem_block = reinterpret_cast<u8*>(SRAMADDR(0xFFFF0000));
 	while ((u32)mem_block < SRAMADDR(0xFFFFFFFF))
 	{
 		auto iterator =
 		    std::find_if(patches.begin(), patches.end(),
-		                 [&patchesFound, mem_block](const IosPatch &iosPatch) {
+		                 [&patchesFound, mem_block](const IosPatch& iosPatch) {
 			                 u32 patchSize = iosPatch.Pattern.size();
 			                 u32 matches = 0;
 			                 for (matches = 0; matches < patchSize; matches++)
@@ -350,7 +350,7 @@ s8 PatchIOSKernel(std::vector<IosPatch> patches)
 			                 iosPatch.Patch(mem_block);
 
 			                 //flush cache
-			                 u8 *address = (u8 *)(((u32)mem_block) >> 5 << 5);
+			                 u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
 			                 DCFlushRange(address, (matches >> 5 << 5) + 64);
 			                 ICInvalidateRange(address, (matches >> 5 << 5) + 64);
 			                 return true;

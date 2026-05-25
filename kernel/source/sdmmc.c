@@ -179,7 +179,7 @@ void sdmmc_needs_discover(void)
 		card.sdhc_blockmode = 0;
 	DPRINTF(2, ("sdmmc: SDHC: %d\n", card.sdhc_blockmode));
 
-	u8 *resp;
+	u8* resp;
 	DPRINTF(2, ("sdmmc: MMC_ALL_SEND_CID\n"));
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_opcode = MMC_ALL_SEND_CID;
@@ -193,7 +193,7 @@ void sdmmc_needs_discover(void)
 	}
 
 	card.cid = MMC_R1(cmd.c_resp);
-	resp = (u8 *)cmd.c_resp;
+	resp = (u8*)cmd.c_resp;
 	gecko_printf("CID: mid=%02x name='%c%c%c%c%c%c%c' prv=%d.%d psn=%02x%02x%02x%02x mdt=%d/%d\n",
 	             resp[14], resp[13], resp[12], resp[11], resp[10], resp[9],
 	             resp[8], resp[7], resp[6], resp[5] >> 4, resp[5] & 0xf, resp[4],
@@ -228,7 +228,7 @@ void sdmmc_needs_discover(void)
 		goto out_power;
 	}
 
-	resp = (u8 *)cmd.c_resp;
+	resp = (u8*)cmd.c_resp;
 
 	int i;
 	gecko_printf("csd: ");
@@ -339,7 +339,7 @@ int sdmmc_ack_card(void)
 	return -1;
 }
 
-int sdmmc_read(u32 blk_start, u32 blk_count, void *data)
+int sdmmc_read(u32 blk_start, u32 blk_count, void* data)
 {
 	struct sdmmc_command cmd;
 
@@ -388,7 +388,7 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void *data)
 	return 0;
 }
 
-int sdmmc_write(u32 blk_start, u32 blk_count, void *data)
+int sdmmc_write(u32 blk_start, u32 blk_count, void* data)
 {
 	struct sdmmc_command cmd;
 

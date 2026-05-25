@@ -44,8 +44,8 @@ Copyright (C) 2008, 2009	Sven Peter <svenpeter@gmail.com>
 
 typedef struct
 {
-	MessageQueue *Queue;
-	void *Message;
+	MessageQueue* Queue;
+	void* Message;
 	u32 ProcessId;
 	u32 Unknown;
 } EventHandler;
@@ -58,7 +58,7 @@ CHECK_OFFSET(EventHandler, 0x0C, Unknown);
 void IrqInit(void);
 u32 DisableInterrupts(void);
 void RestoreInterrupts(u32 cookie);
-s32 RegisterEventHandler(const u8 device, const s32 queueid, void *message);
+s32 RegisterEventHandler(const u8 device, const s32 queueid, void* message);
 s32 UnregisterEventHandler(const u8 device);
 
 s32 ClearAndEnableEvent(u32 inter);

@@ -309,7 +309,7 @@ typedef struct
 		/* This is the struct describing the Data format for the OH1 module */
 		struct
 		{
-			void *Data;
+			void* Data;
 			u8 Endpoint;
 			s8 DeviceIndex; /* TODO: It seems to be never read, though */
 		} Oh1;

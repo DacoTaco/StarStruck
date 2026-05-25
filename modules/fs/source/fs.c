@@ -29,9 +29,9 @@
 #include "handles.h"
 
 // Handle IOS_OPEN command - route to appropriate handler based on path
-static s32 ProcessOpenMessage(IpcMessage *message)
+static s32 ProcessOpenMessage(IpcMessage* message)
 {
-	const char *path = message->Request.Message.Open.Filepath;
+	const char* path = message->Request.Message.Open.Filepath;
 	u32 uid = message->Request.Message.Open.UID;
 	u16 gid = message->Request.Message.Open.GID;
 	AccessMode accessMode = message->Request.Message.Open.Mode;
@@ -74,7 +74,7 @@ int main(void)
 {
 	u32 messageQueueMessages[8] ALIGNED(0x10);
 	printk("$IOSVersion:  FFSP: %s %s 64M $", __DATE__, __TIME__);
-	s32 ret = OSCreateMessageQueue((void **)&messageQueueMessages, 8);
+	s32 ret = OSCreateMessageQueue((void**)&messageQueueMessages, 8);
 	s32 messageQueueId = ret;
 	if (ret >= 0)
 		ret = OSRegisterResourceManager("/dev/boot2", messageQueueId);
@@ -132,8 +132,8 @@ _ClearClusterCache:
 _Main_Loop:
 	while (1)
 	{
-		IpcMessage *ipcMessage;
-		s32 receiveRet = OSReceiveMessage(messageQueueId, (u32 **)&ipcMessage, 0);
+		IpcMessage* ipcMessage;
+		s32 receiveRet = OSReceiveMessage(messageQueueId, (u32**)&ipcMessage, 0);
 		if (receiveRet != IPC_SUCCESS)
 			continue;
 

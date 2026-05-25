@@ -24,34 +24,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 u8 GeckoFound = 0;
 
-void CheckForGecko( void )
+void CheckForGecko(void)
 {
-	GeckoFound = usb_isgeckoalive( EXI_CHANNEL_1 );
-	if(GeckoFound)
+	GeckoFound = usb_isgeckoalive(EXI_CHANNEL_1);
+	if (GeckoFound)
 		usb_flush(EXI_CHANNEL_1);
 	return;
 }
-void gprintf( const char *str, ... )
+void gprintf(const char* str, ...)
 {
 	char astr[2048];
 	s32 size = 0;
-	memset(astr,0,sizeof(astr));
+	memset(astr, 0, sizeof(astr));
 
 	char nstr[2048];
-	memset(nstr,0,2048);
-	snprintf(nstr,2048, "%s", str);
-	
+	memset(nstr, 0, 2048);
+	snprintf(nstr, 2048, "%s", str);
+
 	va_list ap;
-	va_start(ap,str);
-	size = vsnprintf( astr, 2047, nstr, ap );
+	va_start(ap, str);
+	size = vsnprintf(astr, 2047, nstr, ap);
 	va_end(ap);
 
-	if(GeckoFound)
+	if (GeckoFound)
 	{
-		usb_sendbuffer( 1, astr, size );
+		usb_sendbuffer(1, astr, size);
 		usb_flush(EXI_CHANNEL_1);
 	}
-	
+
 	printf(astr);
 	return;
 }

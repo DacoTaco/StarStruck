@@ -20,20 +20,20 @@ IOS. oh1 - usb ohci implementation in ios
 #include "communications.h"
 #include "module.h"
 
-#define OHCI_REG_BASE ((void *)0x0d060000)
+#define OHCI_REG_BASE ((void*)0x0d060000)
 
 static char _deviceName[16];
-static OhciHcca *_hcca = (void *)0x13880000;
-static EhciRegisters *_ehciRegisters = (EhciRegisters *)EHCI_REG_BASE;
+static OhciHcca* _hcca = (void*)0x13880000;
+static EhciRegisters* _ehciRegisters = (EhciRegisters*)EHCI_REG_BASE;
 static s16 _rootHubFileDescriptor = 0x7fff;
 static s32 _deviceQueueId;
 static u32 _deviceQueueBuffers[MAX_USB_DEVICES];
-static void *_statusChangeMessage = (void *)0xcafef00d;
+static void* _statusChangeMessage = (void*)0xcafef00d;
 
 static u32 _workerThreadStack[0x100]; /* That is, 0x400 bytes */
 
 //i dont know why they didn't just use strtol but ok, here we are
-static int HexToInteger(const char *hexstring)
+static int HexToInteger(const char* hexstring)
 {
 	int result, val;
 	char ch;
@@ -60,12 +60,12 @@ static int HexToInteger(const char *hexstring)
 	return result;
 }
 
-static int SetModuleDeviceMessage(OH1ModuleControl *, IpcMessage *message)
+static int SetModuleDeviceMessage(OH1ModuleControl*, IpcMessage* message)
 {
-	return SetDeviceIPCMessage(*(s8 *)((int)&message->Request.FileDescriptor + 3), message);
+	return SetDeviceIPCMessage(*(s8*)((int)&message->Request.FileDescriptor + 3), message);
 }
 
-static int CreateUSBDeviceQueue(OH1ModuleControl *module, int deviceEvent)
+static int CreateUSBDeviceQueue(OH1ModuleControl* module, int deviceEvent)
 {
 	int ret = OSCreateMessageQueue(_deviceQueueBuffers,
 	                               sizeof(_deviceQueueBuffers) / sizeof(u32));
@@ -75,18 +75,18 @@ static int CreateUSBDeviceQueue(OH1ModuleControl *module, int deviceEvent)
 	_deviceQueueId = ret;
 	memset(_deviceName, 0, sizeof(_deviceName));
 
-	const char *path = deviceEvent == IRQ_OHCI0 ? "/dev/usb/oh0" : "/dev/usb/oh1";
+	const char* path = deviceEvent == IRQ_OHCI0 ? "/dev/usb/oh0" : "/dev/usb/oh1";
 	strncpy(_deviceName, path, sizeof(_deviceName) - 1);
 	module->QueueId = _deviceQueueId;
 	return OSRegisterResourceManager(_deviceName, _deviceQueueId);
 }
 
-static int HandleClose(OH1ModuleControl *module, const IpcRequest *request)
+static int HandleClose(OH1ModuleControl* module, const IpcRequest* request)
 {
 	int result = IPC_SUCCESS;
 
 	u16 fd;
-	fd = *(u16 *)((int)&request->FileDescriptor + 2);
+	fd = *(u16*)((int)&request->FileDescriptor + 2);
 	if (fd != _rootHubFileDescriptor)
 	{
 		s8 deviceIndex = (s8)fd;
@@ -98,14 +98,14 @@ static int HandleClose(OH1ModuleControl *module, const IpcRequest *request)
 	return result;
 }
 
-static int HandleOpen(OH1ModuleControl *, const IpcRequest *request)
+static int HandleOpen(OH1ModuleControl*, const IpcRequest* request)
 {
 	int result;
-	char *device;
+	char* device;
 	size_t len;
 	char subdevice_chr;
 	s16 deviceIndex;
-	char *nextToken;
+	char* nextToken;
 
 	result = strncmp(request->Message.Open.Filepath, _deviceName, sizeof(_deviceName));
 	if (result == 0)
@@ -140,20 +140,20 @@ static int HandleOpen(OH1ModuleControl *, const IpcRequest *request)
 	return deviceIndex >= 0 ? deviceIndex : IPC_EINVAL;
 }
 
-static int HandleIoctl(OH1ModuleControl *module, IpcMessage *message, bool *isAsync)
+static int HandleIoctl(OH1ModuleControl* module, IpcMessage* message, bool* isAsync)
 {
-	const IpcRequest *request = &message->Request;
-	const IoctlMessage *ioctl = &request->Message.Ioctl;
+	const IpcRequest* request = &message->Request;
+	const IoctlMessage* ioctl = &request->Message.Ioctl;
 	int result = IPC_EINVAL;
 
 	*isAsync = false;
 
-	u16 fd = *(u16 *)((int)&request->FileDescriptor + 2);
+	u16 fd = *(u16*)((int)&request->FileDescriptor + 2);
 	if (fd == _rootHubFileDescriptor)
 	{
 		if (ioctl->Ioctl == USBV0_IOCTL_GETHUBSTATUS)
 		{
-			u32 *status;
+			u32* status;
 			status = ioctl->IoBuffer;
 			if (status == NULL || ioctl->IoLength != 4)
 				return IPC_EINVAL;
@@ -164,7 +164,7 @@ static int HandleIoctl(OH1ModuleControl *module, IpcMessage *message, bool *isAs
 		return IPC_EINVAL;
 	}
 
-	s8 deviceIndex = *(s8 *)((int)&request->FileDescriptor + 3);
+	s8 deviceIndex = *(s8*)((int)&request->FileDescriptor + 3);
 	result = GetDeviceVendorAndProduct(deviceIndex, NULL, NULL);
 	if (result != 0)
 		return result;
@@ -189,14 +189,14 @@ static int HandleIoctl(OH1ModuleControl *module, IpcMessage *message, bool *isAs
 	return result;
 }
 
-static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isAsync)
+static int HandleIoctlv(OH1ModuleControl* module, IpcMessage* message, bool* isAsync)
 {
-	const IpcRequest *request = &message->Request;
-	const IoctlvMessage *ioctlv = &request->Message.Ioctlv;
-	const IoctlvMessageData *vector;
+	const IpcRequest* request = &message->Request;
+	const IoctlvMessage* ioctlv = &request->Message.Ioctlv;
+	const IoctlvMessageData* vector;
 	int result = IPC_EINVAL;
 
-	u16 fd = *(u16 *)((int)&request->FileDescriptor + 2);
+	u16 fd = *(u16*)((int)&request->FileDescriptor + 2);
 	if (fd != _rootHubFileDescriptor)
 	{
 		if (ioctlv->Ioctl == USBV0_IOCTL_CTRLMSG)
@@ -223,8 +223,8 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 		    !vector[1].Data)
 			return IPC_EINVAL;
 
-		u32 queryPort = *(u32 *)vector[0].Data;
-		u32 *outptr = (u32 *)vector[1].Data;
+		u32 queryPort = *(u32*)vector[0].Data;
+		u32* outptr = (u32*)vector[1].Data;
 		if (vector[0].Length == 1 && vector[1].Length == 4 && queryPort < module->NumberOfDownstreamPorts)
 		{
 			*outptr = module->HardwareRegisters->RootHubPortStatus[queryPort];
@@ -242,11 +242,11 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 		    !vector[1].Data)
 			return IPC_EINVAL;
 
-		u8 port = *(u8 *)vector[0].Data;
+		u8 port = *(u8*)vector[0].Data;
 		if (port < module->NumberOfDownstreamPorts)
 		{
 			module->HardwareRegisters->RootHubPortStatus[port] =
-			    *(u32 *)vector[1].Data;
+			    *(u32*)vector[1].Data;
 			result = IPC_SUCCESS;
 		}
 	}
@@ -265,14 +265,14 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 		    !vector[1].Data || vector[2].Length != 1 || !vector[2].Data)
 			return IPC_EINVAL;
 
-		u8 num_elements = *(u8 *)vector[0].Data;
+		u8 num_elements = *(u8*)vector[0].Data;
 		if (vector[3].Length != num_elements * sizeof(DeviceListEntry) ||
 		    (num_elements != 0 && !vector[3].Data))
 			return IPC_EINVAL;
 
-		u8 *count = (u8 *)vector[2].Data;
-		u8 iface_class = *(u8 *)vector[1].Data;
-		DeviceListEntry *dest_ptr = (DeviceListEntry *)vector[3].Data;
+		u8* count = (u8*)vector[2].Data;
+		u8 iface_class = *(u8*)vector[1].Data;
+		DeviceListEntry* dest_ptr = (DeviceListEntry*)vector[3].Data;
 		result = PopulateDeviceList(dest_ptr, num_elements, iface_class, count);
 		/* TODO: shouldn't this pass "num_elements * sizeof(DeviceListEntry)"? */
 		OSDCFlushRange(vector[3].Data, num_elements);
@@ -284,11 +284,11 @@ static int HandleIoctlv(OH1ModuleControl *module, IpcMessage *message, bool *isA
 	return result;
 }
 
-static int ProcessEvents(OH1ModuleControl *module)
+static int ProcessEvents(OH1ModuleControl* module)
 {
-	IpcMessage *message;
+	IpcMessage* message;
 	int result;
-	const IpcRequest *request;
+	const IpcRequest* request;
 
 	module->State |= OH1_STATE_PROCESSING_EVENTS;
 	do
@@ -332,13 +332,13 @@ static int ProcessEvents(OH1ModuleControl *module)
 	while (true);
 }
 
-static int WorkerThread(OH1ModuleControl *module)
+static int WorkerThread(OH1ModuleControl* module)
 {
-	void *queueBuffer[4] ALIGNED(16);
+	void* queueBuffer[4] ALIGNED(16);
 	u32 interruptStatus;
-	volatile OhciRegs *registers;
-	OhciEndpointDescriptor *endpoint;
-	WiiTransferDescriptor *lastTransfer;
+	volatile OhciRegs* registers;
+	OhciEndpointDescriptor* endpoint;
+	WiiTransferDescriptor* lastTransfer;
 	u16 length;
 	u8 device = module->DeviceEvent;
 
@@ -366,14 +366,14 @@ static int WorkerThread(OH1ModuleControl *module)
 		{
 			OSAhbFlushFrom(module->AHBDeviceToFlush);
 			OSAhbFlushTo(AHB_STARLET);
-			OhciTransferDescriptor *swappedTransfer =
+			OhciTransferDescriptor* swappedTransfer =
 			    MASK_PTR(module->Hcca->HeadDone, swap_u32(0xfffffff0));
 			/* Reverse the list */
-			OhciTransferDescriptor *previousSwapped = NULL;
+			OhciTransferDescriptor* previousSwapped = NULL;
 			while (swappedTransfer != 0)
 			{
-				OhciTransferDescriptor *td = swap_ptr(swappedTransfer);
-				OhciTransferDescriptor *nextSwapped = td->Next;
+				OhciTransferDescriptor* td = swap_ptr(swappedTransfer);
+				OhciTransferDescriptor* nextSwapped = td->Next;
 				td->Next = previousSwapped;
 				previousSwapped = swappedTransfer;
 				swappedTransfer = nextSwapped;
@@ -382,10 +382,10 @@ static int WorkerThread(OH1ModuleControl *module)
 			lastTransfer = swap_ptr(previousSwapped);
 			while (lastTransfer)
 			{
-				WiiTransferDescriptor *td_next;
+				WiiTransferDescriptor* td_next;
 
 				td_next = swap_ptr(lastTransfer->std.Next);
-				IORequestPacket *ioRequest = lastTransfer->IORequestPacket;
+				IORequestPacket* ioRequest = lastTransfer->IORequestPacket;
 				ioRequest->Counter--;
 				u32 conditionCode = TD_GET(CC, lastTransfer->std.dw0);
 				if (conditionCode == 0)
@@ -393,13 +393,13 @@ static int WorkerThread(OH1ModuleControl *module)
 					length = lastTransfer->Length;
 					if (length != 0)
 					{
-						char *currentBuffer = swap_ptr(lastTransfer->std.CurrentBuffer);
+						char* currentBuffer = swap_ptr(lastTransfer->std.CurrentBuffer);
 						if (currentBuffer)
 						{
 							/* The transfer is not complete: CurrentBuffer
 							 * points to the byte after the last successfully
 							 * transferred one */
-							char *lastBuffer = swap_ptr(lastTransfer->std.LastBuffer);
+							char* lastBuffer = swap_ptr(lastTransfer->std.LastBuffer);
 							length += (u16)((currentBuffer - lastBuffer) - 1);
 						}
 						ioRequest->Transferred += length;
@@ -420,7 +420,7 @@ static int WorkerThread(OH1ModuleControl *module)
 					       lastTransfer, ioRequest);
 					endpoint = ioRequest->EndpointDescriptor;
 					u32 dw0 = swap_u32(endpoint->dw0);
-					OhciTransferDescriptor *head = swap_ptr(endpoint->Head);
+					OhciTransferDescriptor* head = swap_ptr(endpoint->Head);
 					printk("TD error for ed  %p; ed flag = 0x%x headP = %p\n",
 					       endpoint, dw0, head);
 					printk("TD error for ed  %p\n", endpoint);
@@ -458,9 +458,9 @@ static int WorkerThread(OH1ModuleControl *module)
 int main(void)
 {
 	int rc;
-	volatile OhciRegs *regs;
+	volatile OhciRegs* regs;
 	u32 frame_interval;
-	OH1ModuleControl *module = NULL;
+	OH1ModuleControl* module = NULL;
 
 	OSSetThreadPriority(0, 0x60);
 	printk("%s\n", "$IOSVersion: OH1: " __DATE__ " " __TIME__ " 64M $");
@@ -495,11 +495,11 @@ int main(void)
 	if (rc < 0)
 		goto error_destroy_timer_queue;
 
-	OhciEndpointDescriptor *endpoints = module->EndpointDescriptors;
-	OhciHcca *Hcca = module->Hcca;
+	OhciEndpointDescriptor* endpoints = module->EndpointDescriptors;
+	OhciHcca* Hcca = module->Hcca;
 	for (int i_endp = 0; i_endp < 32; i_endp++)
 	{
-		OhciEndpointDescriptor *endp = &endpoints[i_endp];
+		OhciEndpointDescriptor* endp = &endpoints[i_endp];
 		Hcca->InterruptTable[i_endp] = swap_ptr(endp);
 	}
 	OSAhbFlushFrom(AHB_STARLET);

@@ -43,12 +43,12 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 
 static inline u32 read32(u32 addr)
 {
-	return *(vu32 *)addr;
+	return *(vu32*)addr;
 }
 
 static inline void write32(u32 addr, u32 data)
 {
-	*(vu32 *)addr = data;
+	*(vu32*)addr = data;
 }
 
 static inline u32 set32(u32 addr, u32 set)
@@ -74,12 +74,12 @@ static inline u32 mask32(u32 addr, u32 clear, u32 set)
 
 static inline u16 read16(u32 addr)
 {
-	return *(vu16 *)addr;
+	return *(vu16*)addr;
 }
 
 static inline void write16(u32 addr, u16 data)
 {
-	*(vu16 *)addr = data;
+	*(vu16*)addr = data;
 }
 
 static inline u16 set16(u32 addr, u16 set)
@@ -105,12 +105,12 @@ static inline u16 mask16(u32 addr, u16 clear, u16 set)
 
 static inline u8 read8(u32 addr)
 {
-	return *(vu8 *)addr;
+	return *(vu8*)addr;
 }
 
 static inline void write8(u32 addr, u8 data)
 {
-	*(vu8 *)addr = data;
+	*(vu8*)addr = data;
 }
 
 static inline u8 set8(u32 addr, u8 set)
@@ -138,8 +138,8 @@ u32 GetCurrentStatusRegister(void);
 u32 GetSavedStatusRegister();
 void BusyDelay(u32 delay);
 void debug_output(u8 byte);
-int sprintf(char *str, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-int snprintf(char *str, size_t size, const char *fmt, ...)
+int sprintf(char* str, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+int snprintf(char* str, size_t size, const char* fmt, ...)
     __attribute__((format(printf, 3, 4)));
 
 #endif

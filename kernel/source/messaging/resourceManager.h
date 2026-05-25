@@ -20,7 +20,7 @@ typedef struct
 {
 	char DevicePath[MAX_PATHLEN];
 	u32 PathLength;
-	MessageQueue *Queue;
+	MessageQueue* Queue;
 	u32 ProcessId;
 	u32 PpcHasAccessRights;
 } ResourceManager;
@@ -34,6 +34,6 @@ CHECK_OFFSET(ResourceManager, 0x44, Queue);
 CHECK_OFFSET(ResourceManager, 0x48, ProcessId);
 CHECK_OFFSET(ResourceManager, 0x4C, PpcHasAccessRights);
 
-s32 RegisterResourceManager(const char *devicePath, const s32 queueid);
+s32 RegisterResourceManager(const char* devicePath, const s32 queueid);
 
 #endif

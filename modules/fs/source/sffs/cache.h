@@ -15,7 +15,7 @@
 typedef struct
 {
 	u8 Data[0x4000];      // 0x0000: Cluster data buffer
-	FSHandle *FileHandle; // 0x4000: Associated file handle (NULL = free)
+	FSHandle* FileHandle; // 0x4000: Associated file handle (NULL = free)
 	bool Unallocated;          // 0x4004: Needs write back
 	u8 Padding[3];
 	u32 DataOffset;     // 0x4008: File position for cached data
@@ -33,7 +33,7 @@ CHECK_OFFSET(ClusterCacheEntry, 0x400C, DataSize);
 extern ClusterCacheEntry ClusterCacheEntries[FS_CLUSTER_CACHE_ENTRIES];
 
 // Cache operations
-ClusterCacheEntry *FindCachedCluster(FSHandle *handle);
-ClusterCacheEntry *GetClusterCacheEntry(FSHandle *handle);
-s32 FlushCachedCluster(ClusterCacheEntry *cache);
+ClusterCacheEntry* FindCachedCluster(FSHandle* handle);
+ClusterCacheEntry* GetClusterCacheEntry(FSHandle* handle);
+s32 FlushCachedCluster(ClusterCacheEntry* cache);
 s32 CheckFreeClustersCached(void);

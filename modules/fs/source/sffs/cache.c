@@ -17,7 +17,7 @@
 ClusterCacheEntry ClusterCacheEntries[FS_CLUSTER_CACHE_ENTRIES] ALIGNED(64);
 
 // Find cached cluster entry for a given file handle
-ClusterCacheEntry *FindCachedCluster(FSHandle *handle)
+ClusterCacheEntry* FindCachedCluster(FSHandle* handle)
 {
 	for (s32 i = 0; i < FS_CLUSTER_CACHE_ENTRIES; i++)
 	{
@@ -28,7 +28,7 @@ ClusterCacheEntry *FindCachedCluster(FSHandle *handle)
 }
 
 // Get a cache entry for the given handle, evicting the oldest entry if all slots are occupied.
-ClusterCacheEntry *GetClusterCacheEntry(FSHandle *handle)
+ClusterCacheEntry* GetClusterCacheEntry(FSHandle* handle)
 {
 	// Find a free (unassociated) cache slot
 	u32 cacheSlot = 1;
@@ -45,14 +45,14 @@ ClusterCacheEntry *GetClusterCacheEntry(FSHandle *handle)
 	if (index == FS_CLUSTER_CACHE_ENTRIES && cacheSlot == FS_CLUSTER_CACHE_ENTRIES)
 	{
 		FlushCachedCluster(&ClusterCacheEntries[0]);
-		FSHandle *evictedHandle = ClusterCacheEntries[0].FileHandle;
+		FSHandle* evictedHandle = ClusterCacheEntries[0].FileHandle;
 		if (evictedHandle != NULL)
 			evictedHandle->Error = cacheSlot;
 		index = 0;
 	}
 
 	//allocate cache entry
-	ClusterCacheEntry *entry = &ClusterCacheEntries[index];
+	ClusterCacheEntry* entry = &ClusterCacheEntries[index];
 
 	entry->FileHandle = handle;
 	entry->Unallocated = false;
@@ -62,9 +62,9 @@ ClusterCacheEntry *GetClusterCacheEntry(FSHandle *handle)
 }
 
 // Flush cached cluster data to storage
-s32 FlushCachedCluster(ClusterCacheEntry *cache)
+s32 FlushCachedCluster(ClusterCacheEntry* cache)
 {
-	FSHandle *handle = cache->FileHandle;
+	FSHandle* handle = cache->FileHandle;
 
 	// Early return if no handle or no data needs writing
 	if (handle == NULL || !cache->Unallocated)

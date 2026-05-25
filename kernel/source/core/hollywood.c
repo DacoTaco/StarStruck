@@ -12,7 +12,7 @@
 #include <ios/processor.h>
 #include "core/hollywood.h"
 
-void GetHollywoodVersion(u32 *hardwareVersion, u32 *hardwareRevision)
+void GetHollywoodVersion(u32* hardwareVersion, u32* hardwareRevision)
 {
 	u32 version = read32(HW_VERSION);
  //eh? isnt this the same as '(version & 0x000000F0) >> 4' ?

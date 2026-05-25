@@ -17,7 +17,7 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #include "interrupt/undefined.h"
 #include "panic.h"
 
-const char *exceptions[] = { "RESET",
+const char* exceptions[] = { "RESET",
 	                         "UNDEFINED INSTR",
 	                         "SWI",
 	                         "INSTR ABORT",
@@ -27,7 +27,7 @@ const char *exceptions[] = { "RESET",
 	                         "FIQ",
 	                         "(unknown exception type)" };
 
-const char *aborts[] = { "UNDEFINED",
+const char* aborts[] = { "UNDEFINED",
 	                     "Alignment",
 	                     "UNDEFINED",
 	                     "Alignment",
@@ -56,7 +56,7 @@ void initializeExceptions(void)
 	SetControlRegister(cr);
 }
 
-void ExceptionHandler(u32 type, u32 spsr, u32 *regs)
+void ExceptionHandler(u32 type, u32 spsr, u32* regs)
 {
 	(void)spsr;
 

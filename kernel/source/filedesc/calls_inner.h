@@ -58,21 +58,21 @@
 // this creates a function with the _Inner suffix, and extracts every pair inside arguments to its argument list
 #define DEFINE_FD_FUNCS(rettype, name, arguments)                            \
 	rettype name##FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments),         \
-	                       MessageQueue *messageQueue, IpcMessage *message); \
+	                       MessageQueue* messageQueue, IpcMessage* message); \
 	WRAP_INNER_CALL(rettype, name, arguments)
 
 DEFINE_FD_FUNCS(s32, Close, (s32, fd))
-DEFINE_FD_FUNCS(s32, Read, (s32, fd)(void *, buf)(u32, len))
-DEFINE_FD_FUNCS(s32, Write, (s32, fd)(const void *, buf)(u32, len))
+DEFINE_FD_FUNCS(s32, Read, (s32, fd)(void*, buf)(u32, len))
+DEFINE_FD_FUNCS(s32, Write, (s32, fd)(const void*, buf)(u32, len))
 DEFINE_FD_FUNCS(s32, Seek, (s32, fd)(s32, offset)(SeekMode, origin))
 DEFINE_FD_FUNCS(s32, Ioctl,
-                (s32, fd)(u32, requestId)(void *, inputBuffer)(u32, inputBufferLength)(
-                    void *, outputBuffer)(u32, outputBufferLength))
+                (s32, fd)(u32, requestId)(void*, inputBuffer)(u32, inputBufferLength)(
+                    void*, outputBuffer)(u32, outputBufferLength))
 DEFINE_FD_FUNCS(s32, Ioctlv,
                 (s32, fd)(u32, requestId)(u32, vectorInputCount)(
-                    u32, vectorIOCount)(IoctlvMessageData *, vectors))
+                    u32, vectorIOCount)(IoctlvMessageData*, vectors))
 
-s32 OpenFD_Inner(const char *path, AccessMode mode);
+s32 OpenFD_Inner(const char* path, AccessMode mode);
 int IoctlvFD_InnerWithFlag(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
-                           IoctlvMessageData *vectors, MessageQueue *messageQueue,
-                           IpcMessage *message, const int checkBeforeSend);
+                           IoctlvMessageData* vectors, MessageQueue* messageQueue,
+                           IpcMessage* message, const int checkBeforeSend);

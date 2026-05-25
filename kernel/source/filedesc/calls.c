@@ -25,7 +25,7 @@
 #include "calls_inner.h"
 
 // OpenFD_Inner doesn't have or take a MessageQueue/IpcMessage pointer
-s32 OpenFD(const char *path, int mode)
+s32 OpenFD(const char* path, int mode)
 {
 	const u32 state = DisableInterrupts();
 	const s32 ret = OpenFD_Inner(path, mode);

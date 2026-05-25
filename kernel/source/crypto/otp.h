@@ -20,9 +20,9 @@
 #define OTP_NANDHMAC_SIZE  20
 #define OTP_RNGSEED_SIZE   16
 
-void OTP_FetchData(u32 addr, void *out, u32 size);
+void OTP_FetchData(u32 addr, void* out, u32 size);
 u32 OTP_IsSet(void);
-void OTP_GetNgId(u32 *ngId);
+void OTP_GetNgId(u32* ngId);
 void OTP_GetRngSeed(u8 seed[OTP_RNGSEED_SIZE]);
 void OTP_GetKeys(u8 ng_privkey_out[OTP_NGPRIVKEY_SIZE], u8 common_key_out[OTP_COMMONKEY_SIZE],
                  u8 nand_hmac_out[OTP_NANDHMAC_SIZE], u8 nand_key_out[OTP_NANDKEY_SIZE]);
