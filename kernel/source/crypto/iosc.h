@@ -12,6 +12,7 @@
 
 #include <types.h>
 #include <ios/ipc.h>
+#include <ios/sha.h>
 
 #include "crypto/keyring.h"
 
@@ -50,4 +51,9 @@ s32 IOSC_GenerateBlockMAC(const ShaContext *context, const void *inputData,
                           const u32 inputSize, const void *customData,
                           const u32 customDataSize, const u32 keyHandle,
                           const HMacCommandType hmacCommand, const void *signData);
+s32 IOSC_GenerateHash(const ShaContext *context, const void *inputData,
+                      const u32 inputSize, const u32 chain_flag, void *digest);
+s32 IOSC_GenerateHashAsync(const ShaContext *context, const void *inputData,
+                           const u32 inputSize, const u32 chain_flag, void *digest,
+                           const s32 messageQueueId, IpcMessage *message);
 #endif

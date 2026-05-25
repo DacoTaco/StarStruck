@@ -300,6 +300,41 @@ _hmac_generate_cleanup_return:
 	return ret;
 }
 
+static s32 _IOSC_GenerateHash(const ShaContext *context, const void *inputData,
+                              const u32 inputSize, const u32 shaCommand, void *digest,
+                              const s32 messageQueueId, IpcMessage *message)
+{
+	if (((u32)inputData & 0x3F) != 0)
+		return IOSC_INVALID_ALIGN;
+
+ /* validate sha command: only Init/Contribute/Finalize are allowed */
+	if (shaCommand > FinalizeShaState)
+		return IPC_EINVAL;
+
+	IoctlvMessageData *messageData =
+	    (IoctlvMessageData *)AllocateOnHeap(KernelHeapId, 0x18);
+	if (messageData == NULL)
+		return IPC_ENOMEM;
+
+	messageData[0].Data = (void *)inputData;
+	messageData[0].Length = inputSize;
+	messageData[1].Data = (void *)context;
+	messageData[1].Length = sizeof(ShaContext);
+	messageData[2].Data = (void *)digest;
+	messageData[2].Length = digest == NULL ? 0 : 0x14;
+
+	s32 ret = messageQueueId == -1 ?
+	              DispatchIoctlv(SHA_STATIC_FILEDESC, shaCommand, 1, 2, messageData) :
+	              DispatchIoctlvAsync(SHA_STATIC_FILEDESC, shaCommand, 1, 2,
+	                                  messageData, messageQueueId, message);
+
+	/* On success the SHA engine takes ownership of messageData and will free it */
+	if (ret != IPC_SUCCESS)
+		FreeOnHeap(KernelHeapId, messageData);
+
+	return ret;
+}
+
 static s32 IOSC_SetNewKeyKind(u32 *keyHandle, KeyType type, KeySubtype subtype)
 {
 	u32 size = 0;
@@ -382,7 +417,7 @@ void IOSC_InitInformation(void)
 }
 s32 IOSC_Init(void)
 {
- // bitset of ProcessIDs allowed to access this key
+	// bitset of ProcessIDs allowed to access this key
 	const u32 HandlesAndOwners[][2] = {
 		{ KEYRING_CONST_NG_PRIVATE_KEY, 3 },
 		{ KEYRING_CONST_NG_ID, RSA4096_ROOTKEY },
@@ -604,6 +639,56 @@ s32 IOSC_SEEPROM_UpdatePRNGSeed(void)
 	{                                                                                    \
 		mainRetVarName = IOSC_EACCES;                                                    \
 	}
+
+s32 IOSC_GenerateHashAsync(const ShaContext *context, const void *inputData,
+                           const u32 inputSize, const u32 chain_flag, void *digest,
+                           const s32 messageQueueId, IpcMessage *message)
+{
+	s32 ret = CheckMemoryPointer(context, 0x60, 4, CurrentThread->ProcessId, 0);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	if (inputSize != 0)
+	{
+		ret = CheckMemoryPointer(inputData, inputSize, 3, CurrentThread->ProcessId, 0);
+		if (ret != IPC_SUCCESS)
+			return ret;
+	}
+
+	if (digest != NULL)
+	{
+		ret = CheckMemoryPointer(digest, 0x14, 4, CurrentThread->ProcessId, 0);
+		if (ret != IPC_SUCCESS)
+			return ret;
+	}
+
+	return _IOSC_GenerateHash(context, inputData, inputSize, chain_flag, digest,
+	                          messageQueueId, message);
+}
+
+s32 IOSC_GenerateHash(const ShaContext *context, const void *inputData,
+                      const u32 inputSize, const u32 chain_flag, void *digest)
+{
+	s32 ret = CheckMemoryPointer(context, 0x60, 4, CurrentThread->ProcessId, 0);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	if (inputSize != 0)
+	{
+		ret = CheckMemoryPointer(inputData, inputSize, 3, CurrentThread->ProcessId, 0);
+		if (ret != IPC_SUCCESS)
+			return ret;
+	}
+
+	if (digest != NULL)
+	{
+		ret = CheckMemoryPointer(digest, 0x14, 4, CurrentThread->ProcessId, 0);
+		if (ret != IPC_SUCCESS)
+			return ret;
+	}
+
+	return _IOSC_GenerateHash(context, inputData, inputSize, chain_flag, digest, -1, NULL);
+}
 
 s32 IOSC_CreateObject(u32 *keyHandle, KeyType type, KeySubtype subtype)
 {

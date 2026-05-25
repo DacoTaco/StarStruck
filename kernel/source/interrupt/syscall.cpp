@@ -167,8 +167,8 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL(IOSC_GetData), //0x0063
 	SYSCALL(IOSC_GetKeySize), //0x0064
 	SYSCALL(IOSC_GetSignatureSize), //0x0065
-	SYSCALL_NULL, //0x0066
-	SYSCALL_NULL, //0x0067
+	SYSCALL(IOSC_GenerateHashAsync), //0x0066
+	SYSCALL(IOSC_GenerateHash), //0x0067
 	SYSCALL(IOSC_EncryptAsync), //0x0068
 	SYSCALL(IOSC_Encrypt), //0x0069
 	SYSCALL(IOSC_DecryptAsync), //0x006A
