@@ -184,13 +184,16 @@ int main(int argc, char** argv)
 				__UnmaskIrq(IM_PI_ACR);
 				__IPC_Reinitialize();
 				gprintf("IPC reinit\n");
-			} catch (const std::string& ex)
+			}
+			catch (const std::string& ex)
 			{
 				gprintf("IOSBoot Exception -> %s", ex.c_str());
-			} catch (char const* ex)
+			}
+			catch (char const* ex)
 			{
 				gprintf("IOSBoot Exception -> %s", ex);
-			} catch (...)
+			}
+			catch (...)
 			{
 				gprintf("IOSBoot Exception was thrown");
 			}

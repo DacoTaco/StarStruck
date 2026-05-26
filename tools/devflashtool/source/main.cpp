@@ -230,14 +230,16 @@ int main(int argc, char** argv)
 				}
 
 				gprintf("Dump complete, total bytes=%llu\n", totalWritten);
-
-			} catch (const std::string& ex)
+			}
+			catch (const std::string& ex)
 			{
 				gprintf("IOS Flash Exception -> %s\n", ex.c_str());
-			} catch (char const* ex)
+			}
+			catch (char const* ex)
 			{
 				gprintf("IOS Flash Exception -> %s\n", ex);
-			} catch (...)
+			}
+			catch (...)
 			{
 				gprintf("IOS Flash Exception was thrown\n");
 			}

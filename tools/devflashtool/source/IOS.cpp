@@ -217,15 +217,18 @@ bool DisableAHBProt()
 
 		//wait for it to have processed the sha init and given a timeslice to the mainthread :)
 		usleep(50000);
-	} catch (const std::string& ex)
+	}
+	catch (const std::string& ex)
 	{
 		gprintf("Disable AHBPROT: %s\n", ex.c_str());
 		ret = false;
-	} catch (char const* ex)
+	}
+	catch (char const* ex)
 	{
 		gprintf("Disable AHBPROT: %s\n", ex);
 		ret = false;
-	} catch (...)
+	}
+	catch (...)
 	{
 		ret = false;
 		gprintf("Disable AHBPROT: Unknown Error Occurred\n");
