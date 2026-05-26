@@ -108,8 +108,7 @@ void SendIpcRequest(void)
 	IpcCircBuf.WaitingInBufferAmount--;
 	IpcCircBuf.HadRelaunchFlag = 0;
 	mask32(HW_IPC_ARMCTRL, (u32) ~(IPC_ARM_IX1 | IPC_ARM_IX2),
-	       (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) |
-	           IPC_ARM_OUTGOING);
+	       (IpcCircBuf.WaitingInBufferAmount == (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0) | IPC_ARM_OUTGOING);
 }
 
 static void FlushAndSendRequest(IpcRequest* request)
@@ -126,15 +125,12 @@ static void FlushAndSendRequest(IpcRequest* request)
 	}
 	else if (requestCommand == IOS_IOCTLV)
 	{
-		const u32 totalArgc =
-		    request->Message.Ioctlv.InputArgc + request->Message.Ioctlv.IoArgc;
+		const u32 totalArgc = request->Message.Ioctlv.InputArgc + request->Message.Ioctlv.IoArgc;
 		for (u32 i = 0; i < totalArgc; ++i)
 		{
-			DCFlushRange(request->Message.Ioctlv.MessageData[i].Data,
-			             request->Message.Ioctlv.MessageData[i].Length);
+			DCFlushRange(request->Message.Ioctlv.MessageData[i].Data, request->Message.Ioctlv.MessageData[i].Length);
 		}
-		DCFlushRange(request->Message.Ioctlv.MessageData,
-		             totalArgc * sizeof(IoctlvMessageData));
+		DCFlushRange(request->Message.Ioctlv.MessageData, totalArgc * sizeof(IoctlvMessageData));
 	}
 
 	IpcCircBuf.BackingArray[IpcCircBuf.PrepareToSendIndex] = request;
@@ -148,8 +144,7 @@ static int ValidateAddress(const void* const ptr, const u32 size)
 {
 	const u32 addr = (u32)ptr;
 	const u32 addrEnd = addr + size;
-	const int ret = (addr < addrEnd) && ((MEM2_BASE <= addr && addrEnd <= __ipc_heap_start) ||
-	                                     (addrEnd <= MEM1_END));
+	const int ret = (addr < addrEnd) && ((MEM2_BASE <= addr && addrEnd <= __ipc_heap_start) || (addrEnd <= MEM1_END));
 	if (!ret)
 		printk("IPC: failed buf check: ptr=%08x len=%d\n", addr, size);
 	return ret;
@@ -162,8 +157,7 @@ void IpcHandler(void)
 	SetThreadPriority(0, 0x40);
 	IpcHandlerRequest.Command = IOS_INTERRUPT;
 
-	s32 ret = CreateMessageQueue((void**)IpcHandlerMessageQueueData,
-	                             ARRAY_LENGTH(IpcHandlerMessageQueueData));
+	s32 ret = CreateMessageQueue((void**)IpcHandlerMessageQueueData, ARRAY_LENGTH(IpcHandlerMessageQueueData));
 	if (ret < 0)
 		return;
 
@@ -210,14 +204,11 @@ void IpcHandler(void)
 
 		if ((armctrl & IPC_ARM_INCOMING) == 0)
 		{
-			printk("UNKNOWN INTERRUPT: %x / %x\n", read32(HW_ARMIRQFLAG),
-			       read32(HW_ARMIRQMASK));
+			printk("UNKNOWN INTERRUPT: %x / %x\n", read32(HW_ARMIRQFLAG), read32(HW_ARMIRQMASK));
 			continue;
 		}
 
-		u32 set = IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) ?
-		              IPC_ARM_ACK_OUT :
-		              0;
+		u32 set = IpcCircBuf.WaitingInBufferAmount < (IPC_CIRCULAR_BUFFER_SIZE - 1) ? IPC_ARM_ACK_OUT : 0;
 		mask32(HW_IPC_ARMCTRL, (u32) ~(IPC_ARM_IX1 | IPC_ARM_IX2), set | IPC_ARM_INCOMING);
 		ClearAndEnableIPCInterrupt();
 
@@ -234,8 +225,7 @@ void IpcHandler(void)
 		switch (messageFromPPC->Request.Command)
 		{
 			default:
-				printk("Dispatch switch ERROR: %d cmd: %d\n", IPC_EINVAL,
-				       messageFromPPC->Request.Command);
+				printk("Dispatch switch ERROR: %d cmd: %d\n", IPC_EINVAL, messageFromPPC->Request.Command);
 				ret = IPC_EINVAL;
 				break;
 
@@ -246,8 +236,7 @@ void IpcHandler(void)
 					break;
 				}
 				DCInvalidateRange(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN);
-				const u32 pathlen =
-				    strnlen(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN);
+				const u32 pathlen = strnlen(messageFromPPC->Request.Message.Open.Filepath, MAX_PATHLEN);
 				if (pathlen >= MAX_PATHLEN)
 				{
 					printk("IPC: failed open path check: path=%s len=%d\n",
@@ -257,8 +246,7 @@ void IpcHandler(void)
 				}
 
 				ret = OpenFDAsync(messageFromPPC->Request.Message.Open.Filepath,
-				                  messageFromPPC->Request.Message.Open.Mode,
-				                  messageQueue, messageFromPPC);
+				                  messageFromPPC->Request.Message.Open.Mode, messageQueue, messageFromPPC);
 				break;
 
 			case IOS_CLOSE:
@@ -274,10 +262,8 @@ void IpcHandler(void)
 					break;
 				}
 
-				ret = ReadFDAsync(filedescId,
-				                  messageFromPPC->Request.Message.Read.MessageData,
-				                  messageFromPPC->Request.Message.Read.Length,
-				                  messageQueue, messageFromPPC);
+				ret = ReadFDAsync(filedescId, messageFromPPC->Request.Message.Read.MessageData,
+				                  messageFromPPC->Request.Message.Read.Length, messageQueue, messageFromPPC);
 				break;
 
 			case IOS_WRITE:
@@ -291,17 +277,13 @@ void IpcHandler(void)
 				DCInvalidateRange(messageFromPPC->Request.Message.Write.MessageData,
 				                  messageFromPPC->Request.Message.Write.Length);
 
-				ret = WriteFDAsync(filedescId,
-				                   messageFromPPC->Request.Message.Write.MessageData,
-				                   messageFromPPC->Request.Message.Write.Length,
-				                   messageQueue, messageFromPPC);
+				ret = WriteFDAsync(filedescId, messageFromPPC->Request.Message.Write.MessageData,
+				                   messageFromPPC->Request.Message.Write.Length, messageQueue, messageFromPPC);
 				break;
 
 			case IOS_SEEK:
-				ret = SeekFDAsync(filedescId,
-				                  messageFromPPC->Request.Message.Seek.Where,
-				                  messageFromPPC->Request.Message.Seek.Whence,
-				                  messageQueue, messageFromPPC);
+				ret = SeekFDAsync(filedescId, messageFromPPC->Request.Message.Seek.Where,
+				                  messageFromPPC->Request.Message.Seek.Whence, messageQueue, messageFromPPC);
 				break;
 
 			case IOS_IOCTL:
@@ -324,44 +306,35 @@ void IpcHandler(void)
 				DCInvalidateRange(messageFromPPC->Request.Message.Ioctl.IoBuffer,
 				                  messageFromPPC->Request.Message.Ioctl.IoLength);
 
-				ret = IoctlFDAsync(filedescId,
-				                   messageFromPPC->Request.Message.Ioctl.Ioctl,
+				ret = IoctlFDAsync(filedescId, messageFromPPC->Request.Message.Ioctl.Ioctl,
 				                   messageFromPPC->Request.Message.Ioctl.InputBuffer,
 				                   messageFromPPC->Request.Message.Ioctl.InputLength,
 				                   messageFromPPC->Request.Message.Ioctl.IoBuffer,
-				                   messageFromPPC->Request.Message.Ioctl.IoLength,
-				                   messageQueue, messageFromPPC);
+				                   messageFromPPC->Request.Message.Ioctl.IoLength, messageQueue, messageFromPPC);
 				break;
 
 			case IOS_IOCTLV:
 				const u32 totalArgc = messageFromPPC->Request.Message.Ioctlv.InputArgc +
 
 				                      messageFromPPC->Request.Message.Ioctlv.IoArgc;
-				if (totalArgc != 0 &&
-				    !ValidateAddress(messageFromPPC->Request.Message.Ioctlv.MessageData,
-				                     totalArgc * sizeof(IoctlvMessageData)))
+				if (totalArgc != 0 && !ValidateAddress(messageFromPPC->Request.Message.Ioctlv.MessageData,
+				                                       totalArgc * sizeof(IoctlvMessageData)))
 				{
 					ret = IPC_EACCES;
 					break;
 				}
 
-				DCInvalidateRange(messageFromPPC->Request.Message.Ioctlv.MessageData,
-				                  totalArgc * sizeof(IoctlvMessageData));
+				DCInvalidateRange(messageFromPPC->Request.Message.Ioctlv.MessageData, totalArgc * sizeof(IoctlvMessageData));
 				u32 i = 0;
 				for (; i < totalArgc; ++i)
 				{
 					if (messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length != 0 &&
-					    !ValidateAddress(messageFromPPC->Request.Message.Ioctlv
-					                         .MessageData[i]
-					                         .Data,
-					                     messageFromPPC->Request.Message.Ioctlv
-					                         .MessageData[i]
-					                         .Length))
+					    !ValidateAddress(messageFromPPC->Request.Message.Ioctlv.MessageData[i].Data,
+					                     messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length))
 						break;
 
-					DCInvalidateRange(
-					    messageFromPPC->Request.Message.Ioctlv.MessageData[i].Data,
-					    messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length);
+					DCInvalidateRange(messageFromPPC->Request.Message.Ioctlv.MessageData[i].Data,
+					                  messageFromPPC->Request.Message.Ioctlv.MessageData[i].Length);
 				}
 
 				if (i != totalArgc)
@@ -370,12 +343,10 @@ void IpcHandler(void)
 					break;
 				}
 
-				ret = IoctlvFDAsync(filedescId,
-				                    messageFromPPC->Request.Message.Ioctlv.Ioctl,
+				ret = IoctlvFDAsync(filedescId, messageFromPPC->Request.Message.Ioctlv.Ioctl,
 				                    messageFromPPC->Request.Message.Ioctlv.InputArgc,
 				                    messageFromPPC->Request.Message.Ioctlv.IoArgc,
-				                    messageFromPPC->Request.Message.Ioctlv.MessageData,
-				                    messageQueue, messageFromPPC);
+				                    messageFromPPC->Request.Message.Ioctlv.MessageData, messageQueue, messageFromPPC);
 				break;
 		}
 
@@ -432,8 +403,7 @@ s32 ResourceReply(IpcMessage* message, s32 requestReturnValue)
 
 	IpcMessage* messageToSend = NULL;
 	MessageQueue* queue = message->Callback;
-	if (!(queue == NULL || (message->IsInQueue != 0 &&
-	                        message->UsedByProcessId == CurrentThread->ProcessId)))
+	if (!(queue == NULL || (message->IsInQueue != 0 && message->UsedByProcessId == CurrentThread->ProcessId)))
 		goto restore_and_return;
 
 	message->Request.Result = requestReturnValue;
@@ -468,8 +438,7 @@ s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource)
 		return ret;
 
 	IpcMessage* receivedMessage = NULL;
-	ret = ReceiveMessageFromQueue(&IpcMessageQueueArray[message - IpcMessageArray],
-	                              (void**)&receivedMessage, None);
+	ret = ReceiveMessageFromQueue(&IpcMessageQueueArray[message - IpcMessageArray], (void**)&receivedMessage, None);
 	if (ret == IPC_SUCCESS && receivedMessage != message)
 		ret = IPC_EINVAL;
 

@@ -73,9 +73,8 @@ void InitializeThreadContext()
 
 	for (u16 i = 0; i < MAX_THREADS; i++)
 	{
-		//gcc works by having a downwards stack, hence setting the stack to the upper limit
-		Threads[i].DefaultThreadStack =
-		    ((u32)&__thread_stacks_area_start) + (u32)(STACK_SIZE * (i + 1));
+  //gcc works by having a downwards stack, hence setting the stack to the upper limit
+		Threads[i].DefaultThreadStack = ((u32)&__thread_stacks_area_start) + (u32)(STACK_SIZE * (i + 1));
 	}
 
 #endif
@@ -102,8 +101,8 @@ void ThreadQueue_RemoveThread(ThreadQueue* threadQueue, ThreadInfo* threadToRemo
 
 void ThreadQueue_PushThread(ThreadQueue* threadQueue, ThreadInfo* thread)
 {
-	//not sure if this is correct. it works, and seems to be what the asm in ios kinda looks like
-	//however, looking in ghidra it looks completely different. what is ghidra thinking, and why?
+ //not sure if this is correct. it works, and seems to be what the asm in ios kinda looks like
+ //however, looking in ghidra it looks completely different. what is ghidra thinking, and why?
 	if (threadQueue == NULL || thread == NULL)
 		return;
 
@@ -140,8 +139,7 @@ __attribute__((target("arm"))) __attribute__((noreturn)) void ScheduleYield(void
 
 #ifndef MIOS
 	SetDomainAccessControlRegister(DomainAccessControlTable[CurrentThread->ProcessId]);
-	MemoryTranslationTable[0xD0] =
-	    (u32)HardwareRegistersAccessTable[CurrentThread->ProcessId];
+	MemoryTranslationTable[0xD0] = (u32)HardwareRegistersAccessTable[CurrentThread->ProcessId];
 	TlbInvalidate();
 	FlushMemory();
 #endif
@@ -164,8 +162,7 @@ __attribute__((target("arm"))) __attribute__((noreturn)) void ScheduleYield(void
 #jump to thread\n\
 		movs 	pc, lr\n"
 	    :
-	    : [threadContext] "r"(CurrentThread), [threadContextOffset] "J"(offsetof(ThreadInfo, Context)),
-	      [stackOffset] "J"(offsetof(ThreadInfo, UserContext)));
+	    : [threadContext] "r"(CurrentThread), [threadContextOffset] "J"(offsetof(ThreadInfo, Context)), [stackOffset] "J"(offsetof(ThreadInfo, UserContext)));
 	__builtin_unreachable();
 }
 
@@ -245,13 +242,11 @@ s32 CreateThread(u32 main, void* arg, u32* stack_top, u32 stacksize, s32 priorit
 #else
 	selectedThread->InitialPriority = priority;
 	selectedThread->Context.LinkRegister = (u32)ThreadEndFunction;
-	selectedThread->Context.StackPointer =
-	    stack_top == NULL ? selectedThread->DefaultThreadStack : (u32)stack_top;
+	selectedThread->Context.StackPointer = stack_top == NULL ? selectedThread->DefaultThreadStack : (u32)stack_top;
 #endif
 
-	//set thread state correctly
-	selectedThread->Context.StatusRegister =
-	    ((main & 0x01) == 1) ? (SPSR_USER_MODE | SPSR_THUMB_MODE) : SPSR_USER_MODE;
+ //set thread state correctly
+	selectedThread->Context.StatusRegister = ((main & 0x01) == 1) ? (SPSR_USER_MODE | SPSR_THUMB_MODE) : SPSR_USER_MODE;
 	selectedThread->NextThread = NULL;
 	selectedThread->ThreadQueue = NULL;
 	selectedThread->JoinQueue = NULL;
@@ -274,12 +269,10 @@ s32 StartThread(const s32 threadId)
 		goto restore_and_return;
 	}
 
-	ThreadInfo* threadToStart =
-	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
+	ThreadInfo* threadToStart = (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    threadToStart->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && threadToStart->ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -327,12 +320,10 @@ s32 CancelThread(const s32 threadId, u32 return_value)
 		goto restore_and_return;
 	}
 
-	ThreadInfo* threadToCancel =
-	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
+	ThreadInfo* threadToCancel = (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    threadToCancel->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && threadToCancel->ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -380,12 +371,10 @@ s32 JoinThread(const s32 threadId, u32* returnedValue)
 		goto restore_and_return;
 	}
 
-	ThreadInfo* threadToJoin =
-	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
+	ThreadInfo* threadToJoin = (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    threadToJoin->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && threadToJoin->ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -406,8 +395,8 @@ s32 JoinThread(const s32 threadId, u32* returnedValue)
 		*returnedValue = threadToJoin->ReturnValue;
 
 	if (threadState != Dead)
-		gecko_printf("thread %d is not dead, but join from %d resumed\n",
-		             _GetThreadID(threadToJoin), _GetThreadID(CurrentThread));
+		gecko_printf("thread %d is not dead, but join from %d resumed\n", _GetThreadID(threadToJoin),
+		             _GetThreadID(CurrentThread));
 
 	threadToJoin->ThreadState = Unset;
 restore_and_return:
@@ -426,12 +415,10 @@ s32 SuspendThread(const s32 threadId)
 		goto restore_and_return;
 	}
 
-	ThreadInfo* threadToSuspend =
-	    (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
+	ThreadInfo* threadToSuspend = (threadId == 0 && CurrentThread != NULL) ? CurrentThread : &Threads[threadId];
 
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    threadToSuspend->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && threadToSuspend->ProcessId != CurrentThread->ProcessId)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
@@ -487,9 +474,8 @@ s32 GetThreadPriority(const s32 threadId)
 		goto return_error;
 
 	thread = &Threads[threadId];
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    thread->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && thread->ProcessId != CurrentThread->ProcessId)
 		goto return_error;
 
 	ret = thread->Priority;
@@ -518,9 +504,8 @@ s32 SetThreadPriority(const s32 threadId, s32 priority)
 	if (thread == NULL)
 		thread = &Threads[threadId];
 
-	//does the current thread even own the thread?
-	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 &&
-	    thread->ProcessId != CurrentThread->ProcessId)
+ //does the current thread even own the thread?
+	if (CurrentThread != NULL && CurrentThread->ProcessId != 0 && thread->ProcessId != CurrentThread->ProcessId)
 		goto return_error;
 
 #ifndef MIOS
@@ -615,8 +600,8 @@ s32 LaunchModule(const char* path)
 	if (GetUID() != 0)
 		return IPC_EACCES;
 
-	//*technically* heapid 0 isn't correct here. the kernel heap id just happens to be always 0, but... :)
-	//but hey, this is what IOS did!
+ //*technically* heapid 0 isn't correct here. the kernel heap id just happens to be always 0, but... :)
+ //but hey, this is what IOS did!
 	Elf32_Ehdr* elfHeader = (Elf32_Ehdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Ehdr));
 	if (elfHeader == NULL)
 		return IPC_EMAX;
@@ -646,22 +631,20 @@ s32 LaunchModule(const char* path)
 	if (ret != sizeof(Elf32_Ehdr))
 		goto cleanup_launch;
 
-	if (ELFMAGIC != *((u32*)&elfHeader->e_ident[EI_MAG0]) ||
-	    IOSELFINFO != *((u32*)&elfHeader->e_ident[EI_CLASS]))
+	if (ELFMAGIC != *((u32*)&elfHeader->e_ident[EI_MAG0]) || IOSELFINFO != *((u32*)&elfHeader->e_ident[EI_CLASS]))
 	{
 		ret = IPC_EINVAL;
 		goto cleanup_launch;
 	}
 
-	if (elfHeader->e_machine != EM_ARM || elfHeader->e_type != ET_EXEC ||
-	    elfHeader->e_version != 1 || (elfHeader->e_flags & 0x21) != 0)
+	if (elfHeader->e_machine != EM_ARM || elfHeader->e_type != ET_EXEC || elfHeader->e_version != 1 ||
+	    (elfHeader->e_flags & 0x21) != 0)
 	{
 		ret = IPC_EINVAL;
 		goto cleanup_launch;
 	}
 
-	programHeaders =
-	    (Elf32_Phdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
+	programHeaders = (Elf32_Phdr*)AllocateOnHeap(KernelHeapId, sizeof(Elf32_Phdr) * elfHeader->e_phnum);
 	if (!programHeaders)
 	{
 		ret = IPC_EMAX;
@@ -703,8 +686,7 @@ s32 LaunchModule(const char* path)
 			                      .IsCached = 1 };
 
 		if (MapMemory(&section) != 0)
-			panic("Unable to map region %08x [%d bytes]\n",
-			      section.VirtualAddress, section.Size);
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
 		ret = SeekFD(fd, (s32)programHeader->p_offset, 0);
 		if (ret < 0)
@@ -714,11 +696,11 @@ s32 LaunchModule(const char* path)
 		if (ret != (s32)programHeader->p_filesz)
 			goto cleanup_launch;
 
-		//if the filecontent < the memory size we need to clear it
+  //if the filecontent < the memory size we need to clear it
 		if (ret < (s32)programHeader->p_memsz)
 			memset((void*)programHeader->p_vaddr, 0, programHeader->p_memsz - (u32)ret);
 
-		//unknown flags
+  //unknown flags
 		switch (programHeader->p_flags)
 		{
 			case 2:
@@ -735,17 +717,15 @@ s32 LaunchModule(const char* path)
 
 		section.Domain = FLAGSTODOMAIN(programHeader->p_flags << 6);
 		if (MapMemory(&section) != 0)
-			panic("Unable to map region %08x [%d bytes]\n",
-			      section.VirtualAddress, section.Size);
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
-		//map virtual address
+  //map virtual address
 		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
 		if (MapMemory(&section) != 0)
-			panic("Unable to map region %08x [%d bytes]\n",
-			      section.VirtualAddress, section.Size);
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
-		//no idea why but hey, you do you IOS
+  //no idea why but hey, you do you IOS
 		ret = elfHeader->e_phnum;
 	}
 
@@ -771,13 +751,11 @@ s32 LaunchModule(const char* path)
 	const ModuleInfo* module = (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
 	for (u32 index = 0; index < noteSize; index++)
 	{
-		s32 threadId =
-		    CreateThread(module[index].EntryPoint, (void*)module[index].UserId,
-		                 (u32*)module[index].StackAddress,
-		                 module[index].StackSize, module[index].Priority, 1);
+		s32 threadId = CreateThread(module[index].EntryPoint, (void*)module[index].UserId, (u32*)module[index].StackAddress,
+		                            module[index].StackSize, module[index].Priority, 1);
 		Threads[threadId].ProcessId = module[index].UserId;
 
-		//wtf IOS?
+  //wtf IOS?
 		u32 currentProcessId = CurrentThread->ProcessId;
 		CurrentThread->ProcessId = 0;
 		StartThread(threadId);

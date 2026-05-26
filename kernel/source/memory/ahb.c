@@ -102,13 +102,13 @@ void _ahb_flush_to(AHBDEV dev)
 			return;
 	}
 
-	//NOTE: 0xd8b000x, not 0xd8b400x!
+ //NOTE: 0xd8b000x, not 0xd8b400x!
 	u32 val = _mc_read32(HW_AHB_08);
 	if (!(val & mask))
 	{
 		switch (dev)
 		{
-			// 2 to 10 in IOS, add more
+   // 2 to 10 in IOS, add more
 			case AHB_UNKN2:
 			case AHB_NAND:
 			case AHB_AES:
@@ -149,12 +149,12 @@ void _ahb_flush_to(AHBDEV dev)
 				clear32(HW_SPARE0, 0x2000000);
 				mask32(HW_ARB_CFG_M9, 0x7c0, 0xc0);
 				break;
-			//0, 1, 11 in IOS, add more
+   //0, 1, 11 in IOS, add more
 			case AHB_UNKN12:
 			case AHB_STARLET:
 			case AHB_1:
 				write32(HW_AHB_08, val & (~mask));
-				// wtfux
+    // wtfux
 				write32(HW_AHB_08, val | mask);
 				write32(HW_AHB_08, val | mask);
 				write32(HW_AHB_08, val | mask);

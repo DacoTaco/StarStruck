@@ -34,12 +34,10 @@ static u16 _lastAllocatedCluster = 0;
 static bool _lastAllocatedClusterInitialized = false;
 
 // Traverse the FAT chain from startCluster by clusterIndex steps.
-static inline u16 TraverseClusterChain(SuperBlockInfo* superblock,
-                                       u16 startCluster, u32 clusterIndex)
+static inline u16 TraverseClusterChain(SuperBlockInfo* superblock, u16 startCluster, u32 clusterIndex)
 {
 	u16 cluster = startCluster;
-	for (u32 i = 0; i < clusterIndex; i++)
-		cluster = superblock->FatEntries[cluster];
+	for (u32 i = 0; i < clusterIndex; i++) cluster = superblock->FatEntries[cluster];
 	return cluster;
 }
 
@@ -77,8 +75,7 @@ static u16 FindReservedCluster(SuperBlockInfo* superblock)
 }
 
 // Update all FAT chains and FST entries to reflect relocated clusters
-static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
-                                    SFFSClusterPair* relocationMap, u32 count)
+static void ClusterRelocationUpdate(SuperBlockInfo* superblock, SFFSClusterPair* relocationMap, u32 count)
 {
 	u32 start = _superblockOffset >> CLUSTER_SIZE_SHIFT;
 	u32 end = start + (_fileSystemDataSize >> CLUSTER_SIZE_SHIFT);
@@ -86,7 +83,7 @@ static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
  // Step 1: Update FAT chain pointers
 	for (u32 i = start; i < end; i++)
 	{
-		// Only check valid cluster pointers (not special values above SFFSLastNode)
+  // Only check valid cluster pointers (not special values above SFFSLastNode)
 		if (superblock->FatEntries[i] > SFFSLastNode)
 			continue;
 
@@ -100,13 +97,13 @@ static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
 		}
 	}
 
-	// Step 2: Update FST StartCluster fields
+ // Step 2: Update FST StartCluster fields
 	u32 fstEntryCount = GetFstEntryCount();
 	for (u32 inode = 0; inode < fstEntryCount; inode++)
 	{
 		FileSystemTableEntry* entry = GetFstEntry(superblock, inode);
 
-		// Only process files
+  // Only process files
 		if (entry->Mode.Fields.Type != S_IFREG)
 			continue;
 
@@ -115,14 +112,14 @@ static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
 			if (entry->StartCluster != relocationMap[j][0])
 				continue;
 
-			// Update StartCluster to new location
+   // Update StartCluster to new location
 			entry->StartCluster = relocationMap[j][1];
 			break;
 		}
 	}
 
-	// Step 3: Update write chain head pointer
-	// Tracks first cluster of chain being written during file write operations
+ // Step 3: Update write chain head pointer
+ // Tracks first cluster of chain being written during file write operations
 	for (u32 i = 0; i < count; i++)
 	{
 		if (_writeChain[0] != relocationMap[i][0])
@@ -132,8 +129,8 @@ static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
 		break;
 	}
 
-	// Step 4: Update write chain tail pointer
-	// Tracks last cluster of chain being written during file write operations
+ // Step 4: Update write chain tail pointer
+ // Tracks last cluster of chain being written during file write operations
 	for (u32 i = 0; i < count; i++)
 	{
 		if (_writeChain[1] != relocationMap[i][0])
@@ -145,12 +142,10 @@ static void ClusterRelocationUpdate(SuperBlockInfo* superblock,
 }
 
 // Helper: Mark all clusters in a block with a specific status
-static inline void MarkBlockStatus(SuperBlockInfo* superblock, u32 blockCluster,
-                                   u32 clustersPerBlock, u16 status)
+static inline void MarkBlockStatus(SuperBlockInfo* superblock, u32 blockCluster, u32 clustersPerBlock, u16 status)
 {
 	u32 blockStart = blockCluster & (u32)(~(clustersPerBlock - 1));
-	for (u32 i = 0; i < clustersPerBlock; i++)
-		superblock->FatEntries[blockStart + i] = status;
+	for (u32 i = 0; i < clustersPerBlock; i++) superblock->FatEntries[blockStart + i] = status;
 }
 
 // Helper: Check if a block has mixed usage (both free and used clusters)
@@ -163,7 +158,7 @@ static bool IsBlockMixed(SuperBlockInfo* superblock, u32 blockCluster, u32 clust
 	{
 		u16 fatEntry = superblock->FatEntries[blockCluster + i];
 
-		// Skip reserved, bad, or erased blocks entirely
+  // Skip reserved, bad, or erased blocks entirely
 		if (fatEntry == SFFSReservedNode || fatEntry == SFFSBadNode || fatEntry == SFFSErasedNode)
 			return false;
 
@@ -185,21 +180,20 @@ static bool IsBlockMixed(SuperBlockInfo* superblock, u32 blockCluster, u32 clust
 }
 
 // Helper: Rollback failed relocations and mark destination block as bad
-static void RollbackRelocations(SuperBlockInfo* superblock,
-                                SFFSClusterPair* relocationMap, u32 relocationCount,
-                                u32 failedDestBlock, u32 clustersPerBlock)
+static void RollbackRelocations(SuperBlockInfo* superblock, SFFSClusterPair* relocationMap,
+                                u32 relocationCount, u32 failedDestBlock, u32 clustersPerBlock)
 {
-	// Restore original FAT pointers for all relocated clusters
+ // Restore original FAT pointers for all relocated clusters
 	for (u32 i = 0; i < relocationCount; i++)
 	{
 		u16 srcCluster = relocationMap[i][0];
 		u16 dstCluster = relocationMap[i][1];
 
-		// Restore source cluster's original chain pointer
+  // Restore source cluster's original chain pointer
 		superblock->FatEntries[srcCluster] = superblock->FatEntries[dstCluster];
 	}
 
-	// Clean up destination block - convert erased clusters back to free
+ // Clean up destination block - convert erased clusters back to free
 	u32 destBlockStart = failedDestBlock & (u32)(-clustersPerBlock);
 	for (u32 j = 0; j < clustersPerBlock; j++)
 	{
@@ -208,10 +202,10 @@ static void RollbackRelocations(SuperBlockInfo* superblock,
 			superblock->FatEntries[clusterIdx] = SFFSFreeNode;
 	}
 
-	// Mark the failed destination block as bad
+ // Mark the failed destination block as bad
 	MarkBlockStatus(superblock, failedDestBlock, clustersPerBlock, SFFSBadNode);
 
-	// Update statistics
+ // Update statistics
 	AddBadBlockStats(clustersPerBlock);
 }
 
@@ -222,17 +216,17 @@ s32 RescueFailingBlock(SuperBlockInfo* superblock, u16 failingCluster)
 {
 	const u32 clustersPerBlock = GetClustersPerBlock();
 
-	// Calculate block-aligned start of the failing block
+ // Calculate block-aligned start of the failing block
 	u32 failingBlock = (u32)failingCluster & (u32)(~(clustersPerBlock - 1));
 
-	// VLA for relocation map
+ // VLA for relocation map
 	SFFSClusterPair relocationMap[clustersPerBlock];
 	u32 validClusterCount = 0;
 
-	// Step 1: Scan the failing block to find all valid clusters
+ // Step 1: Scan the failing block to find all valid clusters
 	for (u32 i = 0; i < clustersPerBlock; i++)
 	{
-		// Skip special values (not part of a valid chain)
+  // Skip special values (not part of a valid chain)
 		if (superblock->FatEntries[failingBlock + i] >= SFFSReservedNode)
 			continue;
 
@@ -240,23 +234,23 @@ s32 RescueFailingBlock(SuperBlockInfo* superblock, u16 failingCluster)
 		validClusterCount++;
 	}
 
-	// Step 2: Retry loop to find a working reserved block
+ // Step 2: Retry loop to find a working reserved block
 	while (true)
 	{
-		// Find a reserved block for relocation
+  // Find a reserved block for relocation
 		u16 reservedBlock = FindReservedCluster(superblock) & 0xFFFF;
 
-		// No reserved blocks available - cannot rescue
+  // No reserved blocks available - cannot rescue
 		if (reservedBlock == SFFSBadNode)
 			return FS_EFBIG;
 
-		// Erase the reserved block to prepare it for use
+  // Erase the reserved block to prepare it for use
 		MarkBlockStatus(superblock, reservedBlock, clustersPerBlock, SFFSErasedNode);
 
-		// Update statistics: reserved block becomes free space temporarily
+  // Update statistics: reserved block becomes free space temporarily
 		_sffStats.ReservedClusters -= clustersPerBlock;
 
-		// If no valid clusters to rescue, just mark the block bad and return
+  // If no valid clusters to rescue, just mark the block bad and return
 		if (validClusterCount == 0)
 		{
 			MarkBlockStatus(superblock, failingBlock, clustersPerBlock, SFFSBadNode);
@@ -264,31 +258,30 @@ s32 RescueFailingBlock(SuperBlockInfo* superblock, u16 failingCluster)
 			return IPC_SUCCESS;
 		}
 
-		// Step 3: Copy all valid clusters to the reserved block
-		// Original uses while loop that continues while copies succeed
+  // Step 3: Copy all valid clusters to the reserved block
+  // Original uses while loop that continues while copies succeed
 		u32 index = 0;
 		while (CopyClusters(relocationMap[index][0], (u16)(reservedBlock + index), 1) == IPC_SUCCESS)
 		{
-			// Update FAT during copy (matches original behavior)
-			superblock->FatEntries[reservedBlock + index] =
-			    superblock->FatEntries[relocationMap[index][0]];
+   // Update FAT during copy (matches original behavior)
+			superblock->FatEntries[reservedBlock + index] = superblock->FatEntries[relocationMap[index][0]];
 			relocationMap[index][1] = (u16)(reservedBlock + index);
 			index++;
 
-			// All clusters copied successfully
+   // All clusters copied successfully
 			if (index >= validClusterCount)
 			{
-				// Step 4: Update FAT chains to point to new locations
+    // Step 4: Update FAT chains to point to new locations
 				ClusterRelocationUpdate(superblock, relocationMap, validClusterCount);
 
-				// Step 5: Mark the failing block as bad
+    // Step 5: Mark the failing block as bad
 				MarkBlockStatus(superblock, failingBlock, clustersPerBlock, SFFSBadNode);
 				_sffStats.BadClusters += clustersPerBlock;
 				return IPC_SUCCESS;
 			}
 		}
 
-		// Copy failed - mark this reserved block as bad and retry with another
+  // Copy failed - mark this reserved block as bad and retry with another
 		MarkBlockStatus(superblock, reservedBlock, clustersPerBlock, SFFSBadNode);
 		_sffStats.BadClusters += clustersPerBlock;
 	}
@@ -297,7 +290,7 @@ s32 RescueFailingBlock(SuperBlockInfo* superblock, u16 failingCluster)
 // Format the filesystem: initialize superblock, FAT and FST, persist to NAND
 s32 Format(u32 userId, FSHandle* fileHandles, u32 fileHandleCount)
 {
-	//Root-only operation
+ //Root-only operation
 	if (userId != 0 || fileHandles == NULL || fileHandleCount == 0)
 		return FS_EACCESS;
 
@@ -312,7 +305,7 @@ s32 Format(u32 userId, FSHandle* fileHandles, u32 fileHandleCount)
 		return ret;
 	}
 
-	//Create an in-memory superblock and initialize FAT/FST
+ //Create an in-memory superblock and initialize FAT/FST
 	SuperBlockInfo* superblock = CreateSuperBlock();
 	if (superblock == NULL)
 	{
@@ -320,7 +313,7 @@ s32 Format(u32 userId, FSHandle* fileHandles, u32 fileHandleCount)
 		goto format_cleanup;
 	}
 
-	//Initialize root inode (inode 0) as an empty directory
+ //Initialize root inode (inode 0) as an empty directory
 	FileSystemTableEntry* root = GetFstEntry(superblock, 0);
 	strncpy(root->Name, "/", sizeof(root->Name));
 	root->Mode.Value = 0;
@@ -336,21 +329,20 @@ s32 Format(u32 userId, FSHandle* fileHandles, u32 fileHandleCount)
 	root->GroupId = 0;
 	root->SFFSGeneration = 0;
 
-	//Clear file handle table passed in by caller (usually the module-global array)
-	for (u32 i = 0; i < fileHandleCount; i++)
-		((FSHandle*)fileHandles)[i].InUse = 0;
+ //Clear file handle table passed in by caller (usually the module-global array)
+	for (u32 i = 0; i < fileHandleCount; i++) ((FSHandle*)fileHandles)[i].InUse = 0;
 
-	//Recompute filesystem statistics
+ //Recompute filesystem statistics
 	ret = StatSuperblock(superblock);
 	if (ret != IPC_SUCCESS)
 		goto format_cleanup;
 
-	//Mark block-aligned regions as reserved before writing
+ //Mark block-aligned regions as reserved before writing
 	ret = MarkBlocksReserved(superblock);
 	if (ret != IPC_SUCCESS)
 		goto format_cleanup;
 
-	//Persist the new superblock to NAND
+ //Persist the new superblock to NAND
 	ret = TryWriteSuperblock();
 	if (ret != IPC_SUCCESS)
 		goto format_cleanup;
@@ -372,17 +364,17 @@ s32 ReclaimBlocks(SuperBlockInfo* superblock)
 {
 	u32 clustersPerBlock = GetClustersPerBlock();
 
-	// Early exit if only 1 cluster per block (can't do wear leveling)
+ // Early exit if only 1 cluster per block (can't do wear leveling)
 	if (clustersPerBlock == 1)
 		return FS_ENOENT;
 
-	// VLA - matches IOS dynamic stack allocation: (clustersPerBlock * 4) + 4 bytes
+ // VLA - matches IOS dynamic stack allocation: (clustersPerBlock * 4) + 4 bytes
 	SFFSClusterPair relocationMap[clustersPerBlock + 1];
 
 	u32 startCluster = _superblockOffset >> CLUSTER_SIZE_SHIFT;
 	u32 clusterCount = _fileSystemDataSize >> CLUSTER_SIZE_SHIFT;
 
-	// Main retry loop - continues until success or unrecoverable error
+ // Main retry loop - continues until success or unrecoverable error
 	while (true)
 	{
 		u16 reclaimedBlocks[8] = { 0 };
@@ -392,7 +384,7 @@ s32 ReclaimBlocks(SuperBlockInfo* superblock)
 		u32 currentReservedIdx = 0;
 		s32 returnCode = 0;
 
-		// Step 1: Find and prepare reserved blocks for relocation
+  // Step 1: Find and prepare reserved blocks for relocation
 		u32 reservedBlockCount = 0;
 		for (u32 i = 0; i < 8; i++)
 		{
@@ -402,38 +394,37 @@ s32 ReclaimBlocks(SuperBlockInfo* superblock)
 			if (foundCluster == SFFSBadNode)
 				break;
 
-			// Erase the reserved block to prepare it for use
+   // Erase the reserved block to prepare it for use
 			MarkBlockStatus(superblock, foundCluster, clustersPerBlock, SFFSErasedNode);
 			reservedBlockCount++;
 		}
 
-		// No reserved blocks available - cannot proceed
+  // No reserved blocks available - cannot proceed
 		if (reservedBlockCount == 0)
 			return FS_ENOENT;
 
-		// Step 2: Scan filesystem for mixed-usage blocks and relocate them
+  // Step 2: Scan filesystem for mixed-usage blocks and relocate them
 		u32 currentReservedBlock = reservedBlocks[0];
 		bool encounteredError = false;
 
-		for (u32 blockCluster = startCluster;
-		     blockCluster < startCluster + clusterCount && !encounteredError;
+		for (u32 blockCluster = startCluster; blockCluster < startCluster + clusterCount && !encounteredError;
 		     blockCluster += clustersPerBlock)
 		{
-			// Check if this block has mixed usage
+   // Check if this block has mixed usage
 			if (!IsBlockMixed(superblock, blockCluster, clustersPerBlock))
 				continue;
 
-			// Step 3: Relocate all used clusters from this mixed block
+   // Step 3: Relocate all used clusters from this mixed block
 			for (u32 i = 0; i < clustersPerBlock && !encounteredError; i++)
 			{
 				u16 srcCluster = (u16)(blockCluster + i);
 				u16 fatEntry = superblock->FatEntries[srcCluster];
 
-				// Only relocate valid cluster chains (not special values)
+    // Only relocate valid cluster chains (not special values)
 				if (fatEntry > SFFSLastNode)
 					continue;
 
-				// Switch to next reserved block if current one is full
+    // Switch to next reserved block if current one is full
 				if (relocationCount == clustersPerBlock)
 				{
 					ClusterRelocationUpdate(superblock, relocationMap, relocationCount);
@@ -444,31 +435,27 @@ s32 ReclaimBlocks(SuperBlockInfo* superblock)
 
 				u16 dstCluster = (u16)(currentReservedBlock + relocationCount);
 
-				// Attempt to copy cluster data
+    // Attempt to copy cluster data
 				returnCode = CopyClusters(srcCluster, dstCluster, 1);
 				if (returnCode != IPC_SUCCESS)
 				{
-					// Copy failed - rollback and retry with different reserved block
-					RollbackRelocations(superblock, relocationMap, relocationCount,
-					                    currentReservedBlock, clustersPerBlock);
+     // Copy failed - rollback and retry with different reserved block
+					RollbackRelocations(superblock, relocationMap, relocationCount, currentReservedBlock, clustersPerBlock);
 
-					// Mark partial progress as reserved before retrying
+     // Mark partial progress as reserved before retrying
 					for (u32 j = 0; j < currentReservedIdx; j++)
-						MarkBlockStatus(superblock, reclaimedBlocks[j],
-						                clustersPerBlock, SFFSReservedNode);
+						MarkBlockStatus(superblock, reclaimedBlocks[j], clustersPerBlock, SFFSReservedNode);
 
 					currentReservedIdx++;
-					for (u32 j = currentReservedIdx;
-					     j < 8 && reservedBlocks[j] != SFFSBadNode; j++)
-						MarkBlockStatus(superblock, reservedBlocks[j],
-						                clustersPerBlock, SFFSReservedNode);
+					for (u32 j = currentReservedIdx; j < 8 && reservedBlocks[j] != SFFSBadNode; j++)
+						MarkBlockStatus(superblock, reservedBlocks[j], clustersPerBlock, SFFSReservedNode);
 
 					TryWriteSuperblock();
 					encounteredError = true;
 					break; // Break to retry loop
 				}
 
-				// Relocation successful - update FAT and tracking structures
+    // Relocation successful - update FAT and tracking structures
 				superblock->FatEntries[dstCluster] = fatEntry;
 				superblock->FatEntries[srcCluster] = SFFSFreeNode;
 
@@ -480,39 +467,39 @@ s32 ReclaimBlocks(SuperBlockInfo* superblock)
 			if (encounteredError)
 				break;
 
-			// Step 4: Erase and record the now-empty source block
+   // Step 4: Erase and record the now-empty source block
 			MarkBlockStatus(superblock, blockCluster, clustersPerBlock, SFFSErasedNode);
 			reclaimedBlocks[reclaimedCount++] = (u16)blockCluster;
 
-			// Stop if we've reclaimed enough or ran out of reserved blocks
+   // Stop if we've reclaimed enough or ran out of reserved blocks
 			if (reclaimedCount == 8 || reservedBlocks[currentReservedIdx + 1] == SFFSBadNode)
 				break;
 		}
 
-		// If error occurred, retry from the beginning
+  // If error occurred, retry from the beginning
 		if (encounteredError)
 			continue;
 
-		// Step 5: Finalize successful relocation
+  // Step 5: Finalize successful relocation
 		if (reclaimedCount == 0)
 			return FS_ENOENT; // No blocks could be reclaimed
 
-		// Apply final batch of relocations
+  // Apply final batch of relocations
 		if (relocationCount != 0)
 		{
 			ClusterRelocationUpdate(superblock, relocationMap, relocationCount);
 			currentReservedIdx++;
 		}
 
-		// Mark reclaimed blocks as reserved for future wear leveling
+  // Mark reclaimed blocks as reserved for future wear leveling
 		for (u32 i = 0; i < currentReservedIdx; i++)
 			MarkBlockStatus(superblock, reclaimedBlocks[i], clustersPerBlock, SFFSReservedNode);
 
-		// Mark any unused reserved blocks as reserved
+  // Mark any unused reserved blocks as reserved
 		for (u32 i = currentReservedIdx; i < 8 && reservedBlocks[i] != SFFSBadNode; i++)
 			MarkBlockStatus(superblock, reservedBlocks[i], clustersPerBlock, SFFSReservedNode);
 
-		// Success - flush changes and return
+  // Success - flush changes and return
 		return TryWriteSuperblock();
 	}
 }
@@ -545,26 +532,26 @@ s32 DeletePath(const u32 uid, const u16 gid, const char* path)
 	if (fileNode == SFFSErasedNode)
 		return FS_ENOENT;
 
-	// Track if we need to flush and if clusters were freed
+ // Track if we need to flush and if clusters were freed
 	bool clustersFreed = false;
 	bool superblockFlushed = false;
 
-	// Get FST entry for the target
+ // Get FST entry for the target
 	FileSystemTableEntry* entry = GetFstEntry(superblock, fileNode);
 	FileSystemEntryType entryType = entry->Mode.Fields.Type;
 
-	// Check if it's a directory
+ // Check if it's a directory
 	if (entryType == S_IFDIR)
 	{
-		// Check if directory has children
+  // Check if directory has children
 		if (entry->StartCluster != SFFSErasedNode)
 		{
-			// Check if any files in directory tree are open
+   // Check if any files in directory tree are open
 			ret = ProcessInodeAction(superblock, fileNode, CheckIfOpenInode);
 			if (ret != IPC_SUCCESS)
 				return ret;
 
-			// Recursively delete directory contents
+   // Recursively delete directory contents
 			ret = ProcessInodeAction(superblock, fileNode, UnlinkInode);
 			if (ret != IPC_SUCCESS)
 				return ret;
@@ -574,15 +561,15 @@ s32 DeletePath(const u32 uid, const u16 gid, const char* path)
 	}
 	else
 	{
-		// It's a file - check if currently open
+  // It's a file - check if currently open
 		ret = CheckIfFileOpen(fileNode);
 		if (ret != IPC_SUCCESS)
 			return ret;
 
-		// Get first cluster of file
+  // Get first cluster of file
 		u16 cluster = entry->StartCluster;
 
-		// Free the file's cluster chain
+  // Free the file's cluster chain
 		while (cluster != SFFSLastNode)
 		{
 			clustersFreed = true;
@@ -594,23 +581,23 @@ s32 DeletePath(const u32 uid, const u16 gid, const char* path)
 		}
 	}
 
-	// Remove inode from parent's sibling chain
+ // Remove inode from parent's sibling chain
 	ret = UnlinkTargetInode(superblock, directoryNode, fileNode);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	// Update inode statistics
+ // Update inode statistics
 	RemoveUsedInodeStats(1);
 	if (clustersFreed)
 	{
-		// Attempt block reclamation, if success mark superblock as flushed
+  // Attempt block reclamation, if success mark superblock as flushed
 		if (ReclaimBlocks(superblock) == IPC_SUCCESS)
 			superblockFlushed = true;
 
 		ret = IPC_SUCCESS;
 	}
 
-	// Flush superblock to persist changes
+ // Flush superblock to persist changes
 	if (!superblockFlushed)
 		ret = TryWriteSuperblock();
 
@@ -621,7 +608,7 @@ static inline bool IsValidPath(const char* path, const u32 pathLen)
 {
 	for (u32 i = 0; i < (pathLen); i++)
 	{
-		//only allow characters >= 0x20 (space) and <= 0x7E (~)
+  //only allow characters >= 0x20 (space) and <= 0x7E (~)
 		if ((path)[i] < ' ' || (path)[i] > '~')
 			return false;
 	}
@@ -655,7 +642,7 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 	if (destinationDirectoryInode == SFFSErasedNode)
 		return FS_ENOENT;
 
-	// Require write permission on both source parent and destination parent
+ // Require write permission on both source parent and destination parent
 	s32 ret = CheckUserPermissions(superblock, sourceDirectoryInode, userId, groupId, Write);
 	if (ret != IPC_SUCCESS)
 		return ret;
@@ -671,13 +658,13 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 	st_mode sourceMode = srcEntry->Mode;
 	switch (sourceMode.Fields.Type)
 	{
-		//dont allow file basename to change. filename is used in the file encryption so if that changes...
-		//moving it is fine though, just no file rename
+			//dont allow file basename to change. filename is used in the file encryption so if that changes...
+			//moving it is fine though, just no file rename
 		case S_IFREG:
 			if (strncmp(sourceName, destinationName, MAX_FILE_SIZE) != 0)
 				return FS_EINVAL;
 			break;
-		//directories are fine if they are not open down the tree
+			//directories are fine if they are not open down the tree
 		case S_IFDIR:
 			ret = ProcessInodeAction(superblock, sourceInode, CheckIfOpenInode);
 			break;
@@ -816,8 +803,7 @@ s32 ReadDirectory(const u32 uid, const u16 gid, const char* path, char* files, u
 	return IPC_SUCCESS;
 }
 
-s32 CreateDirectory(const u32 uid, const u16 gid, const char* path,
-                    u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm)
+s32 CreateDirectory(const u32 uid, const u16 gid, const char* path, u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm)
 {
 	// Validate path length and characters (0x20-0x7E)
 	u32 pathLen = GetPathLength(path);
@@ -860,11 +846,10 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char* path,
 	// Initialize FST entry for new directory
 	FileSystemTableEntry* newEntry = GetFstEntry(superblock, newInode);
 	strncpy(newEntry->Name, fileName, MAX_FILE_SIZE);
-	newEntry->Mode =
-	    (st_mode){ .Fields = { .Type = S_IFDIR,
-		                       .OwnerPermissions = (u8)(ownerPerm & 0x3),
-		                       .GroupPermissions = (u8)(groupPerm & 0x3),
-		                       .OtherPermissions = (u8)(otherPerm & 0x3) } };
+	newEntry->Mode = (st_mode){ .Fields = { .Type = S_IFDIR,
+		                                    .OwnerPermissions = (u8)(ownerPerm & 0x3),
+		                                    .GroupPermissions = (u8)(groupPerm & 0x3),
+		                                    .OtherPermissions = (u8)(otherPerm & 0x3) } };
 	newEntry->Attributes = attributes;
 	newEntry->StartCluster = SFFSErasedNode; // Empty directory
 	newEntry->FileSize = 0;
@@ -882,9 +867,8 @@ s32 CreateDirectory(const u32 uid, const u16 gid, const char* path,
 	return TryWriteSuperblock();
 }
 
-s32 CreateFileInner(SuperBlockInfo* superblock, u32 userId, u16 groupId,
-                    const char* path, u8 attributes, u32 ownerPermissions,
-                    u32 groupPermissions, u32 otherPermissions, u16* inodeOutput)
+s32 CreateFileInner(SuperBlockInfo* superblock, u32 userId, u16 groupId, const char* path, u8 attributes,
+                    u32 ownerPermissions, u32 groupPermissions, u32 otherPermissions, u16* inodeOutput)
 {
 	u32 pathLen = GetPathLength(path);
 	if (pathLen == 0)
@@ -916,11 +900,10 @@ s32 CreateFileInner(SuperBlockInfo* superblock, u32 userId, u16 groupId,
 
 	FileSystemTableEntry* newEntry = GetFstEntry(superblock, newInode);
 	strncpy(newEntry->Name, fileName, MAX_FILE_SIZE);
-	newEntry->Mode =
-	    (st_mode){ .Fields = { .Type = S_IFREG,
-		                       .OwnerPermissions = (u8)(ownerPermissions & 0x3),
-		                       .GroupPermissions = (u8)(groupPermissions & 0x3),
-		                       .OtherPermissions = (u8)(otherPermissions & 0x3) } };
+	newEntry->Mode = (st_mode){ .Fields = { .Type = S_IFREG,
+		                                    .OwnerPermissions = (u8)(ownerPermissions & 0x3),
+		                                    .GroupPermissions = (u8)(groupPermissions & 0x3),
+		                                    .OtherPermissions = (u8)(otherPermissions & 0x3) } };
 	newEntry->Attributes = attributes;
 	newEntry->StartCluster = SFFSLastNode; // No data yet
 	newEntry->FileSize = 0;
@@ -939,16 +922,15 @@ s32 CreateFileInner(SuperBlockInfo* superblock, u32 userId, u16 groupId,
 	return IPC_SUCCESS;
 }
 
-s32 CreateFile(const u32 userId, const u16 groupId, const char* path, u8 attributes,
-               u8 ownerPermissions, u8 groupPermissions, u8 otherPermissions)
+s32 CreateFile(const u32 userId, const u16 groupId, const char* path, u8 attributes, u8 ownerPermissions,
+               u8 groupPermissions, u8 otherPermissions)
 {
 	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
-	s32 ret = CreateFileInner(superblock, userId, groupId, path, attributes,
-	                          (u32)ownerPermissions, (u32)groupPermissions,
-	                          (u32)otherPermissions, (u16*)NULL);
+	s32 ret = CreateFileInner(superblock, userId, groupId, path, attributes, (u32)ownerPermissions,
+	                          (u32)groupPermissions, (u32)otherPermissions, (u16*)NULL);
 	if (ret == IPC_SUCCESS)
 		ret = TryWriteSuperblock();
 	return ret;
@@ -1020,8 +1002,7 @@ static u16 AllocateCluster(SuperBlockInfo* superblock)
 	{
 		u32 totalRange = _superblockOffset + _fileSystemDataSize;
 		u32 generationCount = 1 << (_fileSystemMetadataSizeShift & 0xFF);
-		u32 generationOffset = (superblock->Version << 20) &
-		                       ((totalRange + generationCount) - 1);
+		u32 generationOffset = (superblock->Version << 20) & ((totalRange + generationCount) - 1);
 
 		// Clamp to valid data region
 		if (generationOffset < totalRange)
@@ -1036,8 +1017,7 @@ static u16 AllocateCluster(SuperBlockInfo* superblock)
 
 		// Align to block boundary and convert to cluster index
 		u32 blockAlignMask = (u32)(-(GetClustersPerBlock()));
-		_lastAllocatedCluster =
-		    (u16)((generationOffset >> CLUSTER_SIZE_SHIFT) & blockAlignMask);
+		_lastAllocatedCluster = (u16)((generationOffset >> CLUSTER_SIZE_SHIFT) & blockAlignMask);
 		_lastAllocatedClusterInitialized = true;
 	}
 
@@ -1082,8 +1062,7 @@ static u16 AllocateCluster(SuperBlockInfo* superblock)
 			{
 				// Refresh entire block as erased
 				for (index = 0; index < clustersPerBlock; index++)
-					superblock->FatEntries[(blockCluster & -clustersPerBlock) + index] =
-					    SFFSErasedNode;
+					superblock->FatEntries[(blockCluster & -clustersPerBlock) + index] = SFFSErasedNode;
 
 				firstFreeCluster = blockCluster;
 				goto reclaimBlocks;
@@ -1133,8 +1112,7 @@ s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData* paths, u32* size
 	s32 ret = IPC_SUCCESS;
 	//Pre-calculate total clusters needed for all files
 	u32 clusterCount = 0;
-	for (u32 i = 0; i < numberOfFiles; ++i)
-		clusterCount += (sizes[i] + CLUSTER_SIZE - 1) / CLUSTER_SIZE;
+	for (u32 i = 0; i < numberOfFiles; ++i) clusterCount += (sizes[i] + CLUSTER_SIZE - 1) / CLUSTER_SIZE;
 
 	if (_sffStats.FreeClusters < clusterCount)
 		return FS_EFBIG;
@@ -1144,8 +1122,7 @@ s32 MassCreateFiles(u32 userId, u16 groupId, IoctlvMessageData* paths, u32* size
 	for (u32 i = 0; i < numberOfFiles; ++i)
 	{
 		u16 inode = 0;
-		ret = CreateFileInner(superblock, userId, groupId,
-		                      (const char*)paths[i].Data, 0, 3, 0, 0, &inode);
+		ret = CreateFileInner(superblock, userId, groupId, (const char*)paths[i].Data, 0, 3, 0, 0, &inode);
 		if (ret != IPC_SUCCESS)
 			break;
 
@@ -1231,8 +1208,7 @@ s32 ReadFile(FSHandle* handle, u8* data, u32 length)
 	for (u32 bytesRead = 0; bytesRead < length; bytesRead += CLUSTER_SIZE, chainIndex++)
 	{
 		_fileSalt.ChainIndex = chainIndex;
-		ret = ReadClusters(cluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify,
-		                   &_fileSalt, data + bytesRead, NULL);
+		ret = ReadClusters(cluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify, &_fileSalt, data + bytesRead, NULL);
 
 		if (ret == IPC_SUCCESS)
 		{
@@ -1254,8 +1230,8 @@ s32 ReadFile(FSHandle* handle, u8* data, u32 length)
 		if (newCluster != SFFSBadNode)
 		{
 			_fileSalt.ChainIndex = chainIndex;
-			ret = WriteClusters(newCluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify,
-			                    &_fileSalt, data + bytesRead, NULL);
+			ret = WriteClusters(newCluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify, &_fileSalt,
+			                    data + bytesRead, NULL);
 
 			bool writeSucceeded;
 			if (ret == IPC_SUCCESS)
@@ -1280,8 +1256,7 @@ s32 ReadFile(FSHandle* handle, u8* data, u32 length)
 			// Re-traverse the chain from StartCluster to re-establish the current
 			// cluster position after WriteClusters/RescueFailingBlock may have
 			// modified FAT entries, making our local `cluster` stale.
-			u16 reTraversedCluster =
-			    TraverseClusterChain(superblock, fstEntry->StartCluster, chainIndex);
+			u16 reTraversedCluster = TraverseClusterChain(superblock, fstEntry->StartCluster, chainIndex);
 
 			if (writeSucceeded)
 			{
@@ -1371,8 +1346,8 @@ s32 WriteFile(FSHandle* handle, const void* data, u32 length)
 		_fileSalt.ChainIndex = clusterIndex;
 
 		// Write cluster with encryption and HMAC
-		ret = WriteClusters(newCluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify,
-		                    &_fileSalt, (u8*)data + bytesWritten, NULL);
+		ret = WriteClusters(newCluster, 1, ClusterFlagsEncryptDecrypt | ClusterFlagsVerify, &_fileSalt,
+		                    (u8*)data + bytesWritten, NULL);
 
 		if (ret == FS_BADBLOCK)
 		{
@@ -1427,8 +1402,7 @@ s32 WriteFile(FSHandle* handle, const void* data, u32 length)
 	{
 		// Find the cluster at filePosition by traversing the chain
 		u16 currentCluster = fstEntry->StartCluster;
-		for (u32 remainingOffset = filePosition - CLUSTER_SIZE;
-		     remainingOffset != 0; remainingOffset -= CLUSTER_SIZE)
+		for (u32 remainingOffset = filePosition - CLUSTER_SIZE; remainingOffset != 0; remainingOffset -= CLUSTER_SIZE)
 			currentCluster = superblock->FatEntries[currentCluster];
 
 		nextCluster = superblock->FatEntries[currentCluster];

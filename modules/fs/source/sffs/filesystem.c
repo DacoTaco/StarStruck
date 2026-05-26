@@ -45,46 +45,40 @@ s32 TryWriteSuperblock()
 	_selectedSuperBlock->Version++;
 
  //find free superblock, which wraps around after 16 attempts
-	//with each loop we increase superBlockIndex and update _selectedSuperblockIndex
-	for (superBlockIndex = 0; !successful && superBlockIndex < 0x10; superBlockIndex++,
-	    _selectedSuperblockIndex = (_selectedSuperblockIndex + 1) & 0x0F)
+ //with each loop we increase superBlockIndex and update _selectedSuperblockIndex
+	for (superBlockIndex = 0; !successful && superBlockIndex < 0x10;
+	     superBlockIndex++, _selectedSuperblockIndex = (_selectedSuperblockIndex + 1) & 0x0F)
 	{
 		bool allClustersReserved = true;
 
-		// Calculate shift difference between metadata size and block size
-		const u32 shiftDiff =
-		    _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
+  // Calculate shift difference between metadata size and block size
+		const u32 shiftDiff = _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
 
-		// Calculate the offset within the superblock region (mask with region size - 1)
-		u32 regionOffset = _selectedSuperblockIndex &
-		                   (u32)((1 << (shiftDiff & 0xFF)) - 1);
+  // Calculate the offset within the superblock region (mask with region size - 1)
+		u32 regionOffset = _selectedSuperblockIndex & (u32)((1 << (shiftDiff & 0xFF)) - 1);
 
-		// Calculate FAT cluster offset based on whether superblock spans multiple blocks
+  // Calculate FAT cluster offset based on whether superblock spans multiple blocks
 		u32 fatClusterOffset =
 		    (SelectedNandSizeInfo.BlockSizeBitShift < _fileSystemMetadataSizeShift - 4) ?
 		        (regionOffset << ((shiftDiff - 4) & 0xFF))
 		            << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF) :
-		        regionOffset
-		            << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF);
+		        regionOffset << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF);
 
-		// Calculate superblock size in clusters (shift from 256KB base)
+  // Calculate superblock size in clusters (shift from 256KB base)
 		u32 superblockSizeShift = (_fileSystemMetadataSizeShift - 0x12) & 0xFF;
 
-		// Calculate the starting cluster index for this superblock slot
-		u32 superblockClusterIndex =
-		    ((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) +
-		    fatClusterOffset +
-		    ((_selectedSuperblockIndex >> (shiftDiff & 0xFF)) << superblockSizeShift);
+  // Calculate the starting cluster index for this superblock slot
+		u32 superblockClusterIndex = ((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) + fatClusterOffset +
+		                             ((_selectedSuperblockIndex >> (shiftDiff & 0xFF)) << superblockSizeShift);
 
-		// Number of clusters per block
+  // Number of clusters per block
 		u32 clustersPerBlock = GetClustersPerBlock();
 
-		// Total clusters in superblock
+  // Total clusters in superblock
 		u32 superblockClusterCount = 1 << superblockSizeShift;
 
-		// Check if all FAT entries for this superblock region are reserved
-		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount;
-		     clusterOffset += clustersPerBlock)
+  // Check if all FAT entries for this superblock region are reserved
+		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount; clusterOffset += clustersPerBlock)
 		{
 			if (_selectedSuperBlock->FatEntries[superblockClusterIndex + clusterOffset] != SFFSReservedNode)
 			{
@@ -96,10 +90,10 @@ s32 TryWriteSuperblock()
 		if (!allClustersReserved)
 			continue;
 
-		// Store cluster index in salt data for HMAC calculation
+  // Store cluster index in salt data for HMAC calculation
 		_superblockSalt.ChainIndex = superblockClusterIndex;
 
-		// Write the superblock with HMAC signature
+  // Write the superblock with HMAC signature
 		ret = WriteClusters((u16)superblockClusterIndex, superblockClusterCount, ClusterFlagsVerify,
 		                    &_superblockSalt, (u8*)_selectedSuperBlock, NULL);
 
@@ -112,22 +106,20 @@ s32 TryWriteSuperblock()
 		if (ret != FS_BADBLOCK)
 			continue;
 
-		// Mark all clusters in the bad block(s) as bad
-		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount;
-		     clusterOffset += clustersPerBlock)
+  // Mark all clusters in the bad block(s) as bad
+		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount; clusterOffset += clustersPerBlock)
 		{
-			// Get the block-aligned cluster index
-			u32 blockBaseCluster = (superblockClusterIndex + clusterOffset) &
-			                       ~(clustersPerBlock - 1);
+   // Get the block-aligned cluster index
+			u32 blockBaseCluster = (superblockClusterIndex + clusterOffset) & ~(clustersPerBlock - 1);
 
-			// Mark all clusters in this block as bad
+   // Mark all clusters in this block as bad
 			for (u32 i = 0; i < clustersPerBlock; i++)
 			{
 				_selectedSuperBlock->FatEntries[blockBaseCluster + i] = SFFSBadNode;
 			}
 		}
 
-		// Increment version to try again with updated FAT
+  // Increment version to try again with updated FAT
 		_selectedSuperBlock->Version++;
 	}
 
@@ -158,7 +150,7 @@ s32 InitSuperblockInfo(bool clearInfo)
 		case 0x1E:
 			_fileSystemMetadataSizeShift = 0x16;
 			break;
-			//invalid or unsupported nand size
+   //invalid or unsupported nand size
 		default:
 			return FS_NOTIMPL;
 	}
@@ -168,9 +160,8 @@ s32 InitSuperblockInfo(bool clearInfo)
 		return FS_NOTIMPL;
 
 	//calculate size of the nand that can contain data: nandsize - 1MB - superblock area size
-	_fileSystemDataSize =
-	    (u32)((1 << (u8)(SelectedNandSizeInfo.NandSizeBitShift & 0xFF)) - NAND_SYSTEM_AREA_SIZE) -
-	    (1 << _fileSystemMetadataSizeShift);
+	_fileSystemDataSize = (u32)((1 << (u8)(SelectedNandSizeInfo.NandSizeBitShift & 0xFF)) - NAND_SYSTEM_AREA_SIZE) -
+	                      (1 << _fileSystemMetadataSizeShift);
 	//setup superblock storage and salt data
 	_selectedSuperBlock = &_superblockStorage;
 	memset(&_superblockSalt, 0, sizeof(SaltData));
@@ -191,8 +182,7 @@ SuperBlockInfo* CreateSuperBlock(void)
 	if (!_superblockInitialized)
 	{
 		_selectedSuperBlock->Version = 1;
-		if (OSGetIOSCData(KEYRING_CONST_NAND_GEN,
-		                  (u32*)&_selectedSuperBlock->Generation) != IPC_SUCCESS)
+		if (OSGetIOSCData(KEYRING_CONST_NAND_GEN, (u32*)&_selectedSuperBlock->Generation) != IPC_SUCCESS)
 			return _selectedSuperBlock;
 	}
 
@@ -283,8 +273,7 @@ SuperBlockInfo* SelectSuperBlock()
 
 		for (u32 index = 0; index < MAX_SUPERBLOCK_CNT; index++)
 		{
-			const u32 shiftDiff = _fileSystemMetadataSizeShift -
-			                      SelectedNandSizeInfo.BlockSizeBitShift;
+			const u32 shiftDiff = _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
 
 			// Calculate the offset within the superblock region
 			u32 regionOffset = (u32)((1 << (shiftDiff & 0xFF)) - 1) & index;
@@ -294,24 +283,19 @@ SuperBlockInfo* SelectSuperBlock()
 			    (SelectedNandSizeInfo.BlockSizeBitShift < _fileSystemMetadataSizeShift - 4) ?
 			        (u16)((regionOffset << ((shiftDiff - 4) & 0xFF))
 			              << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF)) :
-			        (u16)(regionOffset << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) &
-			                               0xFF));
+			        (u16)(regionOffset << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF));
 
 			// Calculate the cluster index for this superblock candidate
 			u32 clusterIndex =
-			    (u32)((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) +
-			    fatClusterOffset +
-			    (u32)((index >> (shiftDiff & 0xFF))
-			          << ((_fileSystemMetadataSizeShift - 0x12) & 0xFF));
+			    (u32)((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) + fatClusterOffset +
+			    (u32)((index >> (shiftDiff & 0xFF)) << ((_fileSystemMetadataSizeShift - 0x12) & 0xFF));
 
 			// Read the first cluster of the superblock (unencrypted, no HMAC)
-			ret = ReadClusters((u16)clusterIndex, 1, ClusterFlagsNone, NULL,
-			                   (u8*)_selectedSuperBlock, NULL);
+			ret = ReadClusters((u16)clusterIndex, 1, ClusterFlagsNone, NULL, (u8*)_selectedSuperBlock, NULL);
 
 			// Check if read was successful (or had correctable ECC error)
 			// and validate superblock identifier and generation
-			if ((ret == IPC_SUCCESS || ret == FS_EAGAIN) &&
-			    _selectedSuperBlock->Identifier == SuperblockIdentifier &&
+			if ((ret == IPC_SUCCESS || ret == FS_EAGAIN) && _selectedSuperBlock->Identifier == SuperblockIdentifier &&
 			    sffsGeneration <= _selectedSuperBlock->Generation + 1)
 			{
 				// Update generation if needed
@@ -332,22 +316,18 @@ SuperBlockInfo* SelectSuperBlock()
 			goto _selectSuperBlockEnd;
 
 		// Now read the full superblock with HMAC verification
-		const u32 shiftDiff =
-		    _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
+		const u32 shiftDiff = _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
 		u32 regionOffset = (u32)((1 << (shiftDiff & 0xFF)) - 1) & (u32)superBlockIndex;
 
 		u32 fatClusterOffset =
 		    (SelectedNandSizeInfo.BlockSizeBitShift < _fileSystemMetadataSizeShift - 4) ?
 		        ((regionOffset << ((shiftDiff - 4) & 0xFF))
 		         << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF)) :
-		        (regionOffset
-		         << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF));
+		        (regionOffset << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF));
 
 		u32 superblockSizeShift = _fileSystemMetadataSizeShift - 0x12;
-		u32 clusterIndex =
-		    ((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) +
-		    fatClusterOffset +
-		    (((u32)superBlockIndex >> (shiftDiff & 0xFF)) << (superblockSizeShift & 0xFF));
+		u32 clusterIndex = ((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) + fatClusterOffset +
+		                   (((u32)superBlockIndex >> (shiftDiff & 0xFF)) << (superblockSizeShift & 0xFF));
 
 		// Store cluster index in salt data for HMAC calculation
 		_superblockSalt.ChainIndex = clusterIndex;
@@ -550,14 +530,10 @@ s32 MarkBlocksReserved(SuperBlockInfo* superblock)
 	const u32 startCluster = _superblockOffset >> CLUSTER_SIZE_SHIFT;
 	const u32 clusterCount = _fileSystemDataSize >> CLUSTER_SIZE_SHIFT;
 	const u32 endCluster = startCluster + clusterCount;
-	const u32 blocksShift =
-	    (SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF;
+	const u32 blocksShift = (SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF;
 	const u32 clustersPerBlock = GetClustersPerBlock();
 	const u32 metadataClusters = 1u << (_fileSystemMetadataSizeShift - CLUSTER_SIZE_SHIFT);
-	const u32 maxBlocks = ((endCluster + metadataClusters) >>
-	                       (SelectedNandSizeInfo.BlockSizeBitShift - 8)) *
-	                          3 >>
-	                      1;
+	const u32 maxBlocks = ((endCluster + metadataClusters) >> (SelectedNandSizeInfo.BlockSizeBitShift - 8)) * 3 >> 1;
 	u32 reservedBlocks = _sffStats.BadClusters >> blocksShift;
 	if (reservedBlocks >= maxBlocks)
 		return IPC_SUCCESS;
@@ -684,14 +660,12 @@ s32 GetPathUsage(const char* path, u32* clusters, u32* inodes)
 
 // Performs validation, optionally resolves directory + filename, checks
 // read permission on the parent directory and returns the FST attributes.
-s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut,
-                  u16* groupIdOut, u8* attributesOut, u8* ownerPermOut,
-                  u8* groupPermOut, u8* otherPermOut)
+s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut, u16* groupIdOut,
+                  u8* attributesOut, u8* ownerPermOut, u8* groupPermOut, u8* otherPermOut)
 {
 	// Validate input pointers and path format/length
-	if (path == NULL || path[0] != '/' || userIdOut == NULL ||
-	    groupIdOut == NULL || attributesOut == NULL || ownerPermOut == NULL ||
-	    groupPermOut == NULL || otherPermOut == NULL)
+	if (path == NULL || path[0] != '/' || userIdOut == NULL || groupIdOut == NULL || attributesOut == NULL ||
+	    ownerPermOut == NULL || groupPermOut == NULL || otherPermOut == NULL)
 		return FS_EINVAL;
 
 	u32 pathLen = strnlen(path, MAX_FILE_PATH);

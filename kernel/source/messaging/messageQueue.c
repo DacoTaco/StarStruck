@@ -36,8 +36,7 @@ s32 CreateMessageQueue(void** ptr, u32 numberOfMessages)
 	}
 
 #ifndef MIOS
-	if (CheckMemoryPointer(ptr, numberOfMessages * sizeof(u32), 4,
-	                       CurrentThread->ProcessId, 0) < 0)
+	if (CheckMemoryPointer(ptr, numberOfMessages * sizeof(u32), 4, CurrentThread->ProcessId, 0) < 0)
 	{
 		queueId = IPC_EINVAL;
 		goto restore_and_return;

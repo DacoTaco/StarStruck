@@ -42,8 +42,7 @@ typedef union
 	u32 Value;
 } ShaControl;
 
-static const u32 Sha1InitialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE,
-	                                                 0x10325476, 0xC3D2E1F0 };
+static const u32 Sha1InitialState[SHA_NUM_WORDS] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 };
 static u8 LastBlockBuffer[(SHA_BLOCK_SIZE * 2)] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 static FinalShaHash HmacBufferFinal ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
 static u8 HmacKeyPrePad[SHA_BLOCK_SIZE] ALIGNED(SHA_BLOCK_SIZE) = { 0x00 };
@@ -57,7 +56,7 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 	s32 ret = IPC_EINVAL;
 	write32(SHA_CMD, 0);
 
-	//chainingMode 0 == reset. so we set the internal hash states to the initial state
+ //chainingMode 0 == reset. so we set the internal hash states to the initial state
 	if (command == InitShaState)
 	{
 		memcpy(hashContext->ShaStates, Sha1InitialState, sizeof(Sha1InitialState));
@@ -65,15 +64,15 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 		ret = IPC_SUCCESS;
 	}
 
-	//floors data size to blocks of 512 bits
+ //floors data size to blocks of 512 bits
 	const u32 flooredDataSize = inputSize & (u32)(~(SHA_BLOCK_SIZE - 1));
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
-	//happens with all commands
+ //happens with all commands
 	if (flooredDataSize != 0)
 	{
-		//check the requested blocks to be processed
+  //check the requested blocks to be processed
 		numberOfBlocks = (flooredDataSize / 64) - 1;
 		if (numberOfBlocks >= 1024)
 			return IOSC_INVALID_SIZE;
@@ -83,13 +82,10 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 			return IOSC_INVALID_SIZE;
 
 		//copy over the states from the context to the registers
-		for (s8 i = 0; i < SHA_NUM_WORDS; i++)
-			write32((u32)(SHA_H0 + (i * 4)), hashContext->ShaStates[i]);
+		for (s8 i = 0; i < SHA_NUM_WORDS; i++) write32((u32)(SHA_H0 + (i * 4)), hashContext->ShaStates[i]);
 
 		write32(SHA_SRC, VirtualToPhysical((u32)input));
-		ShaControl control = { .Fields = { .Execute = 1,
-			                               .GenerateIrq = 1,
-			                               .NumberOfBlocks = numberOfBlocks & 0x3FF } };
+		ShaControl control = { .Fields = { .Execute = 1, .GenerateIrq = 1, .NumberOfBlocks = numberOfBlocks & 0x3FF } };
 
 		write32(SHA_CMD, control.Value);
 		void* message;
@@ -148,8 +144,7 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 		}
 
 		//copy over the states from the registers to the context
-		for (s8 i = 0; i < SHA_NUM_WORDS; i++)
-			finalHashBuffer[i] = read32((u32)(SHA_H0 + (i * 4)));
+		for (s8 i = 0; i < SHA_NUM_WORDS; i++) finalHashBuffer[i] = read32((u32)(SHA_H0 + (i * 4)));
 
 		ret = IPC_SUCCESS;
 	}
@@ -159,8 +154,7 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 	{
 		hashContext->Length += flooredDataSize * 8;
 		//copy over the states from the registers to the context
-		for (s8 i = 0; i < SHA_NUM_WORDS; i++)
-			hashContext->ShaStates[i] = read32((u32)(SHA_H0 + (i * 4)));
+		for (s8 i = 0; i < SHA_NUM_WORDS; i++) hashContext->ShaStates[i] = read32((u32)(SHA_H0 + (i * 4)));
 
 		ret = IPC_SUCCESS;
 	}
@@ -168,8 +162,7 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 	return ret;
 }
 
-static s32 VerifyHashesArray(const void* hashData, u32 sizeHashElement,
-                             u32 amountHashElements, const void* hashes)
+static s32 VerifyHashesArray(const void* hashData, u32 sizeHashElement, u32 amountHashElements, const void* hashes)
 {
 	if (amountHashElements == 0)
 		return IPC_SUCCESS;
@@ -189,8 +182,8 @@ static s32 VerifyHashesArray(const void* hashData, u32 sizeHashElement,
 	{
 		ret = GenerateSha(&hashContext, hashDataPtr, inputSize, InitShaState, outputHash);
 		if (ret == IPC_SUCCESS)
-			ret = GenerateSha(&hashContext, hashDataPtr + inputSize,
-			                  sizeHashElement - inputSize, FinalizeShaState, outputHash);
+			ret = GenerateSha(&hashContext, hashDataPtr + inputSize, sizeHashElement - inputSize,
+			                  FinalizeShaState, outputHash);
 
 		if (ret < 0)
 			break;
@@ -247,8 +240,8 @@ static s32 GenerateHmac_DerivedKeyPad(const void* signer, const u32 signerSize, 
 	GenerateHmac_DerivedKeyPad(signer, signerSize, 0x5c)
 
 // perform inner hash, start appending message
-static s32 GenerateHmac_Init(ShaContext* const hashContext, const void* input,
-                             const u32 inputSize, const void* signer, const u32 signerSize)
+static s32 GenerateHmac_Init(ShaContext* const hashContext, const void* input, const u32 inputSize,
+                             const void* signer, const u32 signerSize)
 {
 	s32 ret = GenerateHmac_DerivedKeyPad_Inner(signer, signerSize);
 	if (ret != IPC_SUCCESS)
@@ -267,9 +260,8 @@ static s32 GenerateHmac_Init(ShaContext* const hashContext, const void* input,
 }
 
 // continue appending message
-static s32 GenerateHmac_Contribute(ShaContext* const hashContext,
-                                   const void* firstInput, const u32 firstInputSize,
-                                   const void* secondInput, const u32 secondInputsize)
+static s32 GenerateHmac_Contribute(ShaContext* const hashContext, const void* firstInput,
+                                   const u32 firstInputSize, const void* secondInput, const u32 secondInputsize)
 {
 	s32 ret = IPC_SUCCESS;
 
@@ -280,17 +272,15 @@ static s32 GenerateHmac_Contribute(ShaContext* const hashContext,
 		return ret;
 
 	if (secondInputsize != 0)
-		ret = GenerateSha(hashContext, secondInput, secondInputsize,
-		                  ContributeShaState, NULL);
+		ret = GenerateSha(hashContext, secondInput, secondInputsize, ContributeShaState, NULL);
 
 	return ret;
 }
 
 // finish the inner hash, perform outer hash, output
 static s32 GenerateHmac_Finalize(ShaContext* const hashContext, const void* firstInput,
-                                 const u32 firstInputSize, const void* secondInput,
-                                 const u32 secondInputsize, const void* signer,
-                                 const u32 signerSize, u32* output)
+                                 const u32 firstInputSize, const void* secondInput, const u32 secondInputsize,
+                                 const void* signer, const u32 signerSize, u32* output)
 {
 	s32 ret = GenerateHmac_DerivedKeyPad_Outer(signer, signerSize);
 	if (ret != IPC_SUCCESS)
@@ -303,8 +293,7 @@ static s32 GenerateHmac_Finalize(ShaContext* const hashContext, const void* firs
 		return ret;
 
 	// finish appending message
-	ret = GenerateSha(hashContext, secondInput, secondInputsize,
-	                  FinalizeShaState, HmacBufferFinal);
+	ret = GenerateSha(hashContext, secondInput, secondInputsize, FinalizeShaState, HmacBufferFinal);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
@@ -362,8 +351,7 @@ void ShaEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(ipcMessage->Request.Message.Open.Filepath,
-				             SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
+				ret = memcmp(ipcMessage->Request.Message.Open.Filepath, SHA_DEVICE_NAME, SHA_DEVICE_NAME_SIZE);
 				if (ret != IPC_SUCCESS)
 					ret = IPC_ENOENT;
 				//not needed, since 0 == IPC_SUCCESS anyway
@@ -387,11 +375,9 @@ void ShaEngineHandler(void)
 						if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 							break;
 
-						ret = GenerateSha(
-						    (ShaContext*)ioctlvMessage->MessageData[1].Data,
-						    ioctlvMessage->MessageData[0].Data,
-						    ioctlvMessage->MessageData[0].Length, (ShaCommandType)ioctl,
-						    (u32*)ioctlvMessage->MessageData[2].Data);
+						ret = GenerateSha((ShaContext*)ioctlvMessage->MessageData[1].Data,
+						                  ioctlvMessage->MessageData[0].Data, ioctlvMessage->MessageData[0].Length,
+						                  (ShaCommandType)ioctl, (u32*)ioctlvMessage->MessageData[2].Data);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -399,12 +385,11 @@ void ShaEngineHandler(void)
 						break;
 
 					case InitHMacState:
-						ret = GenerateHmac_Init(
-						    (ShaContext*)ioctlvMessage->MessageData[1].Data,
-						    ioctlvMessage->MessageData[4].Data,
-						    ioctlvMessage->MessageData[4].Length,
-						    ioctlvMessage->MessageData[3].Data,
-						    ioctlvMessage->MessageData[3].Length);
+						ret = GenerateHmac_Init((ShaContext*)ioctlvMessage->MessageData[1].Data,
+						                        ioctlvMessage->MessageData[4].Data,
+						                        ioctlvMessage->MessageData[4].Length,
+						                        ioctlvMessage->MessageData[3].Data,
+						                        ioctlvMessage->MessageData[3].Length);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -412,12 +397,11 @@ void ShaEngineHandler(void)
 						break;
 
 					case ContributeHMacState:
-						ret = GenerateHmac_Contribute(
-						    (ShaContext*)ioctlvMessage->MessageData[1].Data,
-						    ioctlvMessage->MessageData[4].Data,
-						    ioctlvMessage->MessageData[4].Length,
-						    ioctlvMessage->MessageData[0].Data,
-						    ioctlvMessage->MessageData[0].Length);
+						ret = GenerateHmac_Contribute((ShaContext*)ioctlvMessage->MessageData[1].Data,
+						                              ioctlvMessage->MessageData[4].Data,
+						                              ioctlvMessage->MessageData[4].Length,
+						                              ioctlvMessage->MessageData[0].Data,
+						                              ioctlvMessage->MessageData[0].Length);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -426,14 +410,10 @@ void ShaEngineHandler(void)
 
 					case FinalizeHmacState:
 						ret = GenerateHmac_Finalize(
-						    (ShaContext*)ioctlvMessage->MessageData[1].Data,
-						    ioctlvMessage->MessageData[4].Data,
-						    ioctlvMessage->MessageData[4].Length,
-						    ioctlvMessage->MessageData[0].Data,
-						    ioctlvMessage->MessageData[0].Length,
-						    ioctlvMessage->MessageData[3].Data,
-						    ioctlvMessage->MessageData[3].Length,
-						    (u32*)ioctlvMessage->MessageData[2].Data);
+						    (ShaContext*)ioctlvMessage->MessageData[1].Data, ioctlvMessage->MessageData[4].Data,
+						    ioctlvMessage->MessageData[4].Length, ioctlvMessage->MessageData[0].Data,
+						    ioctlvMessage->MessageData[0].Length, ioctlvMessage->MessageData[3].Data,
+						    ioctlvMessage->MessageData[3].Length, (u32*)ioctlvMessage->MessageData[2].Data);
 
 						if (ret != IPC_SUCCESS)
 							goto sendReply;
@@ -449,16 +429,13 @@ void ShaEngineHandler(void)
 
 						ret = VerifyHashesArray(hashCompareAgainst, 0x400, 31, dataToCheck);
 						if (ret < 0)
-							HMAC_Panic("MessageData subblock failed to verify against H0 hash\n",
-							           hashCompareAgainst);
+							HMAC_Panic("MessageData subblock failed to verify against H0 hash\n", hashCompareAgainst);
 
-						ret = VerifyHashesArray(dataToCheck, 0x26c, 1,
-						                        dataToCheck + hash_h0_offset + 0x280);
+						ret = VerifyHashesArray(dataToCheck, 0x26c, 1, dataToCheck + hash_h0_offset + 0x280);
 						if (ret < 0)
 							HMAC_Panic("H0 hashes failed to verify\n", hashCompareAgainst);
 
-						ret = VerifyHashesArray(dataToCheck + 0x280, 0xa0, 1,
-						                        dataToCheck + hash_h1_offset + 0x340);
+						ret = VerifyHashesArray(dataToCheck + 0x280, 0xa0, 1, dataToCheck + hash_h1_offset + 0x340);
 						if (ret < 0)
 							HMAC_Panic("H1 hashes failed to verify\n", hashCompareAgainst);
 

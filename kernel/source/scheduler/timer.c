@@ -50,14 +50,13 @@ u32 ConvertDelayToTicks(u32 delay)
 		return (delay >> 2) + (delay >> 6) + delay;
 
 	//fallback
-	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) +
-	       (delay >> 7);
+	return delay + (delay >> 1) + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 7);
 #else
 	if (IsWiiMode == 0)
 		return (delay >> 2) + delay + (delay >> 6);
 
-	return (delay >> 1) + delay + (delay >> 2) + (delay >> 3) + (delay >> 6) +
-	       (delay >> 8) + (delay >> 9) + (delay >> 10) + (delay >> 0xc);
+	return (delay >> 1) + delay + (delay >> 2) + (delay >> 3) + (delay >> 6) + (delay >> 8) + (delay >> 9) +
+	       (delay >> 10) + (delay >> 0xc);
 #endif
 }
 
@@ -75,9 +74,8 @@ void QueueTimer(TimerInfo* timerInfo)
 	//otherwise make it 0
 	if (nextTimer != CurrentTimer)
 	{
-		nextTimer->IntervalInTicks = (timePassed < nextTimer->IntervalInTicks) ?
-		                                 nextTimer->IntervalInTicks - timePassed :
-		                                 0;
+		nextTimer->IntervalInTicks =
+		    (timePassed < nextTimer->IntervalInTicks) ? nextTimer->IntervalInTicks - timePassed : 0;
 	}
 
 	while (1)
@@ -180,8 +178,7 @@ void TimerHandler(void)
 					if (timerInfo->IntervalInTicks + interval < timerTicks)
 						timerTicks = 1;
 					else
-						timerTicks =
-						    ((timerInfo->IntervalInTicks - timerTicks) + interval) - 1;
+						timerTicks = ((timerInfo->IntervalInTicks - timerTicks) + interval) - 1;
 
 					timerInfo->IntervalInTicks = timerTicks;
 					QueueTimer(timerInfo);
@@ -336,14 +333,12 @@ s32 StopOrDestroyTimer(s32 timerId, s32 destroyTimer)
 	if (CurrentTimer->NextTimer == timerInfo)
 	{
 		PreviousTimerValue = read32(HW_TIMER);
-		if (nextTimer->IntervalInTicks + timerInfo->IntervalInTicks <=
-		    read32(HW_TIMER - prevTimerValue))
+		if (nextTimer->IntervalInTicks + timerInfo->IntervalInTicks <= read32(HW_TIMER - prevTimerValue))
 		{
 			nextTimer->IntervalInTicks = 0;
 			goto clear_previousTimer;
 		}
-		prevTimerValue = nextTimer->IntervalInTicks +
-		                 (timerInfo->IntervalInTicks - read32(HW_TIMER) - prevTimerValue);
+		prevTimerValue = nextTimer->IntervalInTicks + (timerInfo->IntervalInTicks - read32(HW_TIMER) - prevTimerValue);
 	}
 	else
 		PreviousTimerValue = nextTimer->IntervalInTicks + timerInfo->IntervalInTicks;

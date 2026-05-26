@@ -19,7 +19,5 @@ s32 CloseFD(s32 fd);
 s32 ReadFD(s32 fd, void* buf, u32 len);
 s32 WriteFD(s32 fd, const void* buf, u32 len);
 s32 SeekFD(s32 fd, s32 offset, SeekMode origin);
-s32 IoctlFD(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength,
-            void* outputBuffer, u32 outputBufferLength);
-s32 IoctlvFD(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
-             IoctlvMessageData* vectors);
+s32 IoctlFD(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength, void* outputBuffer, u32 outputBufferLength);
+s32 IoctlvFD(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors);

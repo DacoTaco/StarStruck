@@ -35,9 +35,7 @@ typedef enum
 } ClusterFlags;
 
 /* Cluster-level operations with optional encryption/HMAC */
-s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt,
-                 u8* data, u32* hmacOut);
-s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt,
-                  u8* data, u32* hmacData);
+s32 ReadClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt, u8* data, u32* hmacOut);
+s32 WriteClusters(u16 cluster, u32 count, ClusterFlags flags, SaltData* salt, u8* data, u32* hmacData);
 s32 CopyClusters(u16 srcCluster, u16 dstCluster, u32 count);
 s32 CheckCluster(u32 cluster);

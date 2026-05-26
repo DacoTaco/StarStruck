@@ -48,8 +48,7 @@ s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
 	}
 
 #ifndef MIOS
-	if (CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId,
-	                       CurrentThread->ProcessId) != 0 ||
+	if (CheckMemoryPointer(devicePath, devicePathLen, 3, CurrentThread->ProcessId, CurrentThread->ProcessId) != 0 ||
 	    queueid < 0 || queueid >= MAX_MESSAGEQUEUES)
 	{
 		ret = IPC_EINVAL;
@@ -65,8 +64,7 @@ s32 RegisterResourceManager(const char* devicePath, const s32 queueid)
 
 	for (resourceManagerId = 0; resourceManagerId < MAX_DEVICES; resourceManagerId++)
 	{
-		if (strncmp(devicePath, ResourceManagers[resourceManagerId].DevicePath,
-		            MAX_PATHLEN - 1) == 0)
+		if (strncmp(devicePath, ResourceManagers[resourceManagerId].DevicePath, MAX_PATHLEN - 1) == 0)
 		{
 			ret = IPC_EEXIST;
 			goto returnRegisterResource;

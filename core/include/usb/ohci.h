@@ -14,35 +14,33 @@ IOS. printk - printk implementation in ios
 #include "types.h"
 #include "usb/usb.h"
 
-#define ED_SET(field, value) \
-	(((value) & ED_##field##_MASK) << ED_##field##_SHIFT)
-#define ED_GET(field, var) (((var) >> ED_##field##_SHIFT) & ED_##field##_MASK)
-#define ED_CLEAR(field, var) \
-	((var) & (~ED_##field##_MASK << ED_##field##_SHIFT))
+#define ED_SET(field, value) (((value) & ED_##field##_MASK) << ED_##field##_SHIFT)
+#define ED_GET(field, var)   (((var) >> ED_##field##_SHIFT) & ED_##field##_MASK)
+#define ED_CLEAR(field, var) ((var) & (~ED_##field##_MASK << ED_##field##_SHIFT))
 
 /* Upper 5 bits are free for driver's use */
-#define ED_WII31     0x80000000
+#define ED_WII31             0x80000000
 /* MaximumPacketSize */
-#define ED_MPS_SHIFT 16
-#define ED_MPS_MASK  (u32)(0x7ff) /* 11 bits */
+#define ED_MPS_SHIFT         16
+#define ED_MPS_MASK          (u32)(0x7ff) /* 11 bits */
 /* 1-bit flags */
-#define ED_ISO       (1U << 15)
-#define ED_SKIP      (1U << 14)
-#define ED_LOWSPEED  (1U << 13)
+#define ED_ISO               (1U << 15)
+#define ED_SKIP              (1U << 14)
+#define ED_LOWSPEED          (1U << 13)
 /* Direction */
-#define ED_DIR_SHIFT 11
-#define ED_DIR_MASK  (0x03 << ED_DIR_SHIFT)
-#define ED_OUT       (0x01 << ED_DIR_SHIFT)
-#define ED_IN        (0x02 << ED_DIR_SHIFT)
+#define ED_DIR_SHIFT         11
+#define ED_DIR_MASK          (0x03 << ED_DIR_SHIFT)
+#define ED_OUT               (0x01 << ED_DIR_SHIFT)
+#define ED_IN                (0x02 << ED_DIR_SHIFT)
 /* EndpointNumber */
-#define ED_EN_SHIFT  7
-#define ED_EN_MASK   (0x0f << ED_EN_SHIFT)
+#define ED_EN_SHIFT          7
+#define ED_EN_MASK           (0x0f << ED_EN_SHIFT)
 /* FunctionAddress */
-#define ED_FA_SHIFT  0
-#define ED_FA_MASK   (0x7f << ED_FA_SHIFT)
+#define ED_FA_SHIFT          0
+#define ED_FA_MASK           (0x7f << ED_FA_SHIFT)
 /* Head */
-#define ED_C         (0x02U) /* toggle carry */
-#define ED_H         (0x01U) /* halted */
+#define ED_C                 (0x02U) /* toggle carry */
+#define ED_H                 (0x01U) /* halted */
 
 typedef struct OhciEndpointDescriptor_t
 {
@@ -58,29 +56,28 @@ typedef struct OhciEndpointDescriptor_t
 	struct OhciEndpointDescriptor_t* Next;
 } OhciEndpointDescriptor;
 
-#define TD_SET(field, value) \
-	(((u32)(value) & TD_##field##_MASK) << TD_##field##_SHIFT)
-#define TD_GET(field, var) (((var) >> TD_##field##_SHIFT) & TD_##field##_MASK)
+#define TD_SET(field, value) (((u32)(value) & TD_##field##_MASK) << TD_##field##_SHIFT)
+#define TD_GET(field, var)   (((var) >> TD_##field##_SHIFT) & TD_##field##_MASK)
 
 /* ConditionCode */
-#define TD_CC_SHIFT        28
-#define TD_CC_MASK         0x0f
+#define TD_CC_SHIFT          28
+#define TD_CC_MASK           0x0f
 /* ErrorCount */
-#define TD_EC_SHIFT        26
-#define TD_EC_MASK         0x03
+#define TD_EC_SHIFT          26
+#define TD_EC_MASK           0x03
 /* DataToggle */
-#define TD_DT_SHIFT        24
-#define TD_DT_MASK         0x03
+#define TD_DT_SHIFT          24
+#define TD_DT_MASK           0x03
 /* DelayInterrupt */
-#define TD_DI_SHIFT        21
-#define TD_DI_MASK         0x07
+#define TD_DI_SHIFT          21
+#define TD_DI_MASK           0x07
 /* Direction/PID */
-#define TD_DP_SHIFT        19
-#define TD_DP_MASK         0x03
-#define TD_DP_OUT          (0x1 << TD_DP_SHIFT)
-#define TD_DP_IN           (0x2 << TD_DP_SHIFT)
+#define TD_DP_SHIFT          19
+#define TD_DP_MASK           0x03
+#define TD_DP_OUT            (0x1 << TD_DP_SHIFT)
+#define TD_DP_IN             (0x2 << TD_DP_SHIFT)
 /* BufferRounding */
-#define TD_R               (1 << 18)
+#define TD_R                 (1 << 18)
 
 typedef struct OhciTransferDescriptor_t
 {
@@ -130,10 +127,8 @@ typedef struct
 	u16 PwsOffset[8];
 } OhciTransferDescriptorIsoc;
 
-#define OHCI_SET(field, value) \
-	(((value) & OHCI_##field##_MASK) << OHCI_##field##_SHIFT)
-#define OHCI_GET(field, var) \
-	(((var) >> OHCI_##field##_SHIFT) & OHCI_##field##_MASK)
+#define OHCI_SET(field, value)     (((value) & OHCI_##field##_MASK) << OHCI_##field##_SHIFT)
+#define OHCI_GET(field, var)       (((var) >> OHCI_##field##_SHIFT) & OHCI_##field##_MASK)
 
 #define OHCI_INTR_SO               0x1U
 #define OHCI_INTR_WDH              0x2U

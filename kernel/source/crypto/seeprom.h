@@ -17,8 +17,8 @@
 #include "crypto/nand.h"
 
 void SEEPROM_GetKoreanCommonKey(u8 data[OTP_COMMONKEY_SIZE]);
-void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40], u32* ng_key_id,
-                         char ng_id_str[0x40], u8 ng_signature[60]);
+void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40], u32* ng_key_id, char ng_id_str[0x40],
+                         u8 ng_signature[60]);
 
 s32 SEEPROM_GetPRNGSeed(void);
 s32 SEEPROM_UpdatePRNGSeed(void);

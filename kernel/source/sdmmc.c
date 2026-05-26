@@ -194,10 +194,9 @@ void sdmmc_needs_discover(void)
 
 	card.cid = MMC_R1(cmd.c_resp);
 	resp = (u8*)cmd.c_resp;
-	gecko_printf("CID: mid=%02x name='%c%c%c%c%c%c%c' prv=%d.%d psn=%02x%02x%02x%02x mdt=%d/%d\n",
-	             resp[14], resp[13], resp[12], resp[11], resp[10], resp[9],
-	             resp[8], resp[7], resp[6], resp[5] >> 4, resp[5] & 0xf, resp[4],
-	             resp[3], resp[2], resp[0] & 0xf, 2000 + (resp[0] >> 4));
+	gecko_printf("CID: mid=%02x name='%c%c%c%c%c%c%c' prv=%d.%d psn=%02x%02x%02x%02x mdt=%d/%d\n", resp[14],
+	             resp[13], resp[12], resp[11], resp[10], resp[9], resp[8], resp[7], resp[6], resp[5] >> 4,
+	             resp[5] & 0xf, resp[4], resp[3], resp[2], resp[0] & 0xf, 2000 + (resp[0] >> 4));
 
 	DPRINTF(2, ("sdmmc: SD_SEND_RELATIVE_ADDRESS\n"));
 	memset(&cmd, 0, sizeof(cmd));
@@ -238,8 +237,7 @@ void sdmmc_needs_discover(void)
 	if (resp[13] == 0xe)
 	{ // sdhc
 		unsigned int c_size = resp[7] << 16 | resp[6] << 8 | resp[5];
-		gecko_printf("sdmmc: sdhc mode, c_size=%u, card size = %uk\n", c_size,
-		             (c_size + 1) * 512);
+		gecko_printf("sdmmc: sdhc mode, c_size=%u, card size = %uk\n", c_size, (c_size + 1) * 512);
 		card.timeout = 250 * 1000000; // spec says read timeout is 100ms and write/erase timeout is 250ms
 		card.num_sectors = (c_size + 1) * 1024; // number of 512-byte sectors
 	}
@@ -255,15 +253,11 @@ void sdmmc_needs_discover(void)
 		c_size |= (resp[6] >> 6);
 		c_size_mult = (resp[5] & 3) << 1;
 		c_size_mult |= resp[4] >> 7;
-		gecko_printf("taac=%u nsac=%u read_bl_len=%u c_size=%u c_size_mult=%u card size=%u bytes\n",
-		             taac, nsac, read_bl_len, c_size, c_size_mult,
-		             (c_size + 1) * (4 << c_size_mult) * (1 << read_bl_len));
-		static const unsigned int time_unit[] = { 1,       10,      100,
-			                                      1000,    10000,   100000,
-			                                      1000000, 10000000 };
-		static const unsigned int time_value[] = { 1,  10, 12, 13, 15, 20,
-			                                       25, 30, 35, 40, 45, 50,
-			                                       55, 60, 70, 80 }; // must div by 10
+		gecko_printf("taac=%u nsac=%u read_bl_len=%u c_size=%u c_size_mult=%u card size=%u bytes\n", taac, nsac,
+		             read_bl_len, c_size, c_size_mult, (c_size + 1) * (4 << c_size_mult) * (1 << read_bl_len));
+		static const unsigned int time_unit[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000 };
+		static const unsigned int time_value[] = { 1,  10, 12, 13, 15, 20, 25, 30,
+			                                       35, 40, 45, 50, 55, 60, 70, 80 }; // must div by 10
 		card.timeout = time_unit[taac & 7] * time_value[(taac >> 3) & 0xf] / 10;
 		gecko_printf("calculated timeout =  %uns\n", card.timeout);
 		card.num_sectors = (c_size + 1) * (4 << c_size_mult) * (1 << read_bl_len) / 512;
@@ -304,9 +298,9 @@ int sdmmc_select(void)
 	cmd.c_flags = SCF_RSP_R1B;
 	sdhc_exec_command(card.handle, &cmd);
 	gecko_printf("%s: resp=%x\n", __FUNCTION__, MMC_R1(cmd.c_resp));
-	//	sdhc_dump_regs(card.handle);
+ //	sdhc_dump_regs(card.handle);
 
-	//	gecko_printf("present state = %x\n", HREAD4(hp, SDHC_PRESENT_STATE));
+ //	gecko_printf("present state = %x\n", HREAD4(hp, SDHC_PRESENT_STATE));
 	if (cmd.c_error)
 	{
 		gecko_printf("sdmmc: MMC_SELECT card failed with %d.\n", cmd.c_error);
@@ -343,7 +337,7 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void* data)
 {
 	struct sdmmc_command cmd;
 
-	//	gecko_printf("%s(%u, %u, %p)\n", __FUNCTION__, blk_start, blk_count, data);
+ //	gecko_printf("%s(%u, %u, %p)\n", __FUNCTION__, blk_start, blk_count, data);
 	if (card.inserted == 0)
 	{
 		gecko_printf("sdmmc: READ: no card inserted.\n");
@@ -450,7 +444,7 @@ int sdmmc_get_sectors(void)
 		return -1;
 	}
 
-	//	sdhc_error(sdhci->reg_base, "num sectors = %u", sdhci->num_sectors);
+ //	sdhc_error(sdhci->reg_base, "num sectors = %u", sdhci->num_sectors);
 
 	return card.num_sectors;
 }

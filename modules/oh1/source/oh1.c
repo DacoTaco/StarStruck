@@ -67,8 +67,7 @@ static int SetModuleDeviceMessage(OH1ModuleControl*, IpcMessage* message)
 
 static int CreateUSBDeviceQueue(OH1ModuleControl* module, int deviceEvent)
 {
-	int ret = OSCreateMessageQueue(_deviceQueueBuffers,
-	                               sizeof(_deviceQueueBuffers) / sizeof(u32));
+	int ret = OSCreateMessageQueue(_deviceQueueBuffers, sizeof(_deviceQueueBuffers) / sizeof(u32));
 	if (ret < 0)
 		return ret;
 
@@ -120,8 +119,7 @@ static int HandleOpen(OH1ModuleControl*, const IpcRequest* request)
  /* Parse vendor ID */
 	len = 0;
 	subdevice_chr = *nextToken;
-	while (subdevice_chr != '\0' && subdevice_chr != '/')
-		subdevice_chr = nextToken[++len];
+	while (subdevice_chr != '\0' && subdevice_chr != '/') subdevice_chr = nextToken[++len];
 	memcpy(vendor, nextToken, len);
 
  /* Parse product ID */
@@ -171,8 +169,7 @@ static int HandleIoctl(OH1ModuleControl* module, IpcMessage* message, bool* isAs
 
 	if (ioctl->Ioctl == USBV0_IOCTL_SUSPENDDEV || ioctl->Ioctl == USBV0_IOCTL_RESUMEDEV)
 	{
-		if (ioctl->InputBuffer || ioctl->InputLength != 0 || ioctl->IoBuffer ||
-		    ioctl->IoLength != 0)
+		if (ioctl->InputBuffer || ioctl->InputLength != 0 || ioctl->IoBuffer || ioctl->IoLength != 0)
 			return IPC_EINVAL;
 
 		u8 port = GetPortIndex(deviceIndex);
@@ -219,8 +216,7 @@ static int HandleIoctlv(OH1ModuleControl* module, IpcMessage* message, bool* isA
 	if (ioctlv->Ioctl == USBV0_IOCTL_GETPORTSTATUS)
 	{
 		vector = ioctlv->MessageData;
-		if (ioctlv->InputArgc != 1 || ioctlv->IoArgc != 1 || !vector[0].Data ||
-		    !vector[1].Data)
+		if (ioctlv->InputArgc != 1 || ioctlv->IoArgc != 1 || !vector[0].Data || !vector[1].Data)
 			return IPC_EINVAL;
 
 		u32 queryPort = *(u32*)vector[0].Data;
@@ -238,15 +234,13 @@ static int HandleIoctlv(OH1ModuleControl* module, IpcMessage* message, bool* isA
 			return IPC_EINVAL;
 
 		vector = ioctlv->MessageData;
-		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 4 ||
-		    !vector[1].Data)
+		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 4 || !vector[1].Data)
 			return IPC_EINVAL;
 
 		u8 port = *(u8*)vector[0].Data;
 		if (port < module->NumberOfDownstreamPorts)
 		{
-			module->HardwareRegisters->RootHubPortStatus[port] =
-			    *(u32*)vector[1].Data;
+			module->HardwareRegisters->RootHubPortStatus[port] = *(u32*)vector[1].Data;
 			result = IPC_SUCCESS;
 		}
 	}
@@ -261,20 +255,19 @@ static int HandleIoctlv(OH1ModuleControl* module, IpcMessage* message, bool* isA
 		}
 
 		vector = ioctlv->MessageData;
-		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 1 ||
-		    !vector[1].Data || vector[2].Length != 1 || !vector[2].Data)
+		if (vector[0].Length != 1 || !vector[0].Data || vector[1].Length != 1 || !vector[1].Data ||
+		    vector[2].Length != 1 || !vector[2].Data)
 			return IPC_EINVAL;
 
 		u8 num_elements = *(u8*)vector[0].Data;
-		if (vector[3].Length != num_elements * sizeof(DeviceListEntry) ||
-		    (num_elements != 0 && !vector[3].Data))
+		if (vector[3].Length != num_elements * sizeof(DeviceListEntry) || (num_elements != 0 && !vector[3].Data))
 			return IPC_EINVAL;
 
 		u8* count = (u8*)vector[2].Data;
 		u8 iface_class = *(u8*)vector[1].Data;
 		DeviceListEntry* dest_ptr = (DeviceListEntry*)vector[3].Data;
 		result = PopulateDeviceList(dest_ptr, num_elements, iface_class, count);
-		/* TODO: shouldn't this pass "num_elements * sizeof(DeviceListEntry)"? */
+  /* TODO: shouldn't this pass "num_elements * sizeof(DeviceListEntry)"? */
 		OSDCFlushRange(vector[3].Data, num_elements);
 		OSDCFlushRange(count, sizeof(*count));
 	}
@@ -342,7 +335,7 @@ static int WorkerThread(OH1ModuleControl* module)
 	u16 length;
 	u8 device = module->DeviceEvent;
 
-	/* TODO: the original code was declaring the queue to be 0x10 in size. This
+ /* TODO: the original code was declaring the queue to be 0x10 in size. This
 	 * seems a mistake, but it needs to be double-checked. */
 	int queueId = OSCreateMessageQueue(queueBuffer, sizeof(queueBuffer) / sizeof(u32));
 	int ret = OSRegisterEventHandler(device, queueId, NULL);
@@ -361,14 +354,13 @@ static int WorkerThread(OH1ModuleControl* module)
 		while (ret != 0);
 
 		interruptStatus = registers->InterruptStatus;
-		// Check WritebackDoneHead flag
+  // Check WritebackDoneHead flag
 		if (interruptStatus & OHCI_INTR_WDH)
 		{
 			OSAhbFlushFrom(module->AHBDeviceToFlush);
 			OSAhbFlushTo(AHB_STARLET);
-			OhciTransferDescriptor* swappedTransfer =
-			    MASK_PTR(module->Hcca->HeadDone, swap_u32(0xfffffff0));
-			/* Reverse the list */
+			OhciTransferDescriptor* swappedTransfer = MASK_PTR(module->Hcca->HeadDone, swap_u32(0xfffffff0));
+   /* Reverse the list */
 			OhciTransferDescriptor* previousSwapped = NULL;
 			while (swappedTransfer != 0)
 			{
@@ -396,7 +388,7 @@ static int WorkerThread(OH1ModuleControl* module)
 						char* currentBuffer = swap_ptr(lastTransfer->std.CurrentBuffer);
 						if (currentBuffer)
 						{
-							/* The transfer is not complete: CurrentBuffer
+       /* The transfer is not complete: CurrentBuffer
 							 * points to the byte after the last successfully
 							 * transferred one */
 							char* lastBuffer = swap_ptr(lastTransfer->std.LastBuffer);
@@ -416,13 +408,11 @@ static int WorkerThread(OH1ModuleControl* module)
 				{
 					ioRequest->ErrorCount++;
 					printk("OHCI processing TD error: 0x%x\n", conditionCode);
-					printk("OHCI processing TD error for td  %p with irp %p\n",
-					       lastTransfer, ioRequest);
+					printk("OHCI processing TD error for td  %p with irp %p\n", lastTransfer, ioRequest);
 					endpoint = ioRequest->EndpointDescriptor;
 					u32 dw0 = swap_u32(endpoint->dw0);
 					OhciTransferDescriptor* head = swap_ptr(endpoint->Head);
-					printk("TD error for ed  %p; ed flag = 0x%x headP = %p\n",
-					       endpoint, dw0, head);
+					printk("TD error for ed  %p; ed flag = 0x%x headP = %p\n", endpoint, dw0, head);
 					printk("TD error for ed  %p\n", endpoint);
 					OSAhbFlushFrom(module->AHBDeviceToFlush);
 					OSAhbFlushTo(AHB_STARLET);
@@ -436,20 +426,19 @@ static int WorkerThread(OH1ModuleControl* module)
 				}
 				lastTransfer = td_next;
 			}
-			/* Setting the bit clears it */
+   /* Setting the bit clears it */
 			registers->InterruptStatus = OHCI_INTR_WDH;
 		}
-		/* Check RootHubStatusChange flag */
+  /* Check RootHubStatusChange flag */
 		if (interruptStatus & OHCI_INTR_RHSC)
 		{
-			if ((module->State & OH1_STATE_DEVICE_QUERIED) != 0 &&
-			    (module->State & OH1_STATE_PROCESSING_EVENTS) != 0)
+			if ((module->State & OH1_STATE_DEVICE_QUERIED) != 0 && (module->State & OH1_STATE_PROCESSING_EVENTS) != 0)
 			{
 				OSSendMessage(module->QueueId, _statusChangeMessage, 0);
 			}
 			registers->InterruptStatus = OHCI_INTR_RHSC;
 		}
-		/* Clear all other bits */
+  /* Clear all other bits */
 		registers->InterruptStatus = interruptStatus & ~(OHCI_INTR_WDH | OHCI_INTR_RHSC);
 		OSClearAndEnableEvent(device);
 	}
@@ -484,7 +473,7 @@ int main(void)
 		goto error;
 
 	module->TimerQueue = rc;
-	/* Post a status change message request, in order to update the status of
+ /* Post a status change message request, in order to update the status of
 	 * the hub ports. */
 	rc = OSCreateTimer(0, 0, module->TimerQueue, _statusChangeMessage);
 	if (rc < 0)
@@ -515,7 +504,7 @@ int main(void)
 
 	if ((regs->Control & OHCI_CTRL_IR) != 0)
 	{
-		/* OwnershipChangerequest */
+  /* OwnershipChangerequest */
 		regs->EnableInterrupts = OHCI_INTR_OC;
 		regs->CommandStatus = OHCI_CS_OCR;
 		SleepModule(module, 50000);
@@ -528,16 +517,16 @@ int main(void)
 		regs->Control &= OHCI_CTRL_RWC;
 	}
 
-	/* We expect the host controller to be in reset state */
+ /* We expect the host controller to be in reset state */
 	if (OHCI_GET(CTRL_HCFS, regs->Control) != OHCI_CTRL_HCFS_RESET)
 	{
 		rc = IPC_NOTREADY;
 		goto error_destroy_timer_queue;
 	}
 
-	/* Nominal value of the frame interval, according to the specs */
+ /* Nominal value of the frame interval, according to the specs */
 	module->FrameInterval = 11999;
-	/* Reset the controller; the loop below waits until the reset is
+ /* Reset the controller; the loop below waits until the reset is
 	 * complete */
 	regs->CommandStatus |= OHCI_CS_HCR;
 	SleepModule(module, 10000);
@@ -555,28 +544,24 @@ int main(void)
 
 	frame_interval = module->FrameInterval;
 	u32 largest_data_packet = (frame_interval * 6 - 1260) / 7;
-	regs->FrameInterrupt = OHCI_SET(FI_FI, frame_interval) |
-	                       OHCI_SET(FI_FSMPS, largest_data_packet);
-	/* Spec says that the periodic start should be a 10% off the
+	regs->FrameInterrupt = OHCI_SET(FI_FI, frame_interval) | OHCI_SET(FI_FSMPS, largest_data_packet);
+ /* Spec says that the periodic start should be a 10% off the
 	 * HcFmInterval. */
 	regs->PeriodicStart = (frame_interval * 9) / 10;
 	regs->BulkHeadEndpoint = NULL;
 	regs->ControlHeadEndpoint = NULL;
 	regs->Hcca = module->Hcca;
-	u32 desired_interrupts = OHCI_INTR_MIE | OHCI_INTR_OC | OHCI_INTR_RHSC |
-	                         OHCI_INTR_FNO | OHCI_INTR_UE | OHCI_INTR_RD |
-	                         OHCI_INTR_WDH | OHCI_INTR_SO;
+	u32 desired_interrupts = OHCI_INTR_MIE | OHCI_INTR_OC | OHCI_INTR_RHSC | OHCI_INTR_FNO | OHCI_INTR_UE |
+	                         OHCI_INTR_RD | OHCI_INTR_WDH | OHCI_INTR_SO;
 	regs->InterruptStatus = desired_interrupts;
 	regs->EnableInterrupts = desired_interrupts;
-	regs->Control = OHCI_CTRL_RWC | OHCI_SET(CTRL_HCFS, OHCI_CTRL_HCFS_OPERATIONAL) |
-	                OHCI_SET(CTRL_CBSR, 3);
+	regs->Control = OHCI_CTRL_RWC | OHCI_SET(CTRL_HCFS, OHCI_CTRL_HCFS_OPERATIONAL) | OHCI_SET(CTRL_CBSR, 3);
 
-	/* No idea what this does */
+ /* No idea what this does */
 	_ehciRegisters->ChickenBits |= EHCI_CHICKENBITS_INIT;
 
 	s32 priority = OSGetThreadPriority(0);
-	rc = OSCreateThread((ThreadFunc)WorkerThread, module, _workerThreadStack,
-	                    sizeof(_workerThreadStack), priority, 1);
+	rc = OSCreateThread((ThreadFunc)WorkerThread, module, _workerThreadStack, sizeof(_workerThreadStack), priority, 1);
 	if (rc < 0)
 		goto error_destroy_timer_queue;
 

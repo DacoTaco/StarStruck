@@ -83,7 +83,7 @@ static inline void WriteRegister32(u32 address, u32 value)
 
 //IOS Patches
 const IosPatch OpenFSAsFlash = {
-	//Pattern
+ //Pattern
 	{
 	    0x23, 0x00, //mov        r3,#0x0
 	    0x2b, 0x01, //cmp        r3,#0x1
@@ -93,7 +93,7 @@ const IosPatch OpenFSAsFlash = {
 
 	},
 
-	//Apply Patch
+ //Apply Patch
 	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x01);
@@ -101,7 +101,7 @@ const IosPatch OpenFSAsFlash = {
 };
 
 const IosPatch OpenFSAsFS = {
-	//Pattern
+ //Pattern
 	{
 	    0x23, 0x01, //mov        r3,#0x0
 	    0x2b, 0x01, //cmp        r3,#0x1
@@ -111,7 +111,7 @@ const IosPatch OpenFSAsFS = {
 
 	},
 
-	//Apply Patch
+ //Apply Patch
 	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x00);
@@ -120,7 +120,7 @@ const IosPatch OpenFSAsFS = {
 
 //Ahbprot : 68 1B -> 0x23 0xFF
 const IosPatch AhbProtPatcher = {
-	//Pattern - patch by tuedj
+ //Pattern - patch by tuedj
 	{
 	    0x68, 0x5B, // ldr r3,[r3,#4]  ; get TMD pointer
 	    0x22, 0xEC, 0x00, 0x52, // movls r2, 0x1D8
@@ -130,7 +130,7 @@ const IosPatch AhbProtPatcher = {
 	    0x07, 0xDB // lsls r3, r3, #31; check AHBPROT bit
 	},
 
-	//Apply Patch
+ //Apply Patch
 	[](u8* address) {
 	    gprintf("Found ES_AHBPROT check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 8, 0x23); // li r3, 0xFF.aka, make it look like the TMD had max settings
@@ -161,23 +161,18 @@ const IosPatch DebugRedirectionPatch = {
 	    if ((((u32)address) & 0x90000000) != 0)
 		    return;
 
-	    u8 patch[] = {
-		    0xE9, 0xAD, 0x40, 0x1F, 0xE1, 0x5E, 0x30, 0xB2, 0xE2, 0x03, 0x30,
-		    0xFF, 0xE3, 0x53, 0x00, 0xAB, 0x1A, 0x00, 0x00, 0x07, 0xE3, 0x50,
-		    0x00, 0x04, 0x1A, 0x00, 0x00, 0x05, 0xE5, 0x9F, 0x30, 0x58, 0xE5,
-		    0xD1, 0x20, 0x00, 0xEB, 0x00, 0x00, 0x04, 0xE2, 0x81, 0x10, 0x01,
-		    0xE3, 0x52, 0x00, 0x00, 0x1A, 0xFF, 0xFF, 0xFA, 0xE8, 0x3D, 0x40,
-		    0x1F, 0xE1, 0xB0, 0xF0, 0x0E, 0xE3, 0xA0, 0x00, 0xD0, 0xE5, 0x83,
-		    0x00, 0x00, 0xE3, 0xA0, 0x02, 0x0B, 0xE1, 0x80, 0x0A, 0x02, 0xE5,
-		    0x83, 0x00, 0x10, 0xE3, 0xA0, 0x00, 0x19, 0xE5, 0x83, 0x00, 0x0C,
-		    0xE5, 0x93, 0x00, 0x0C, 0xE3, 0x10, 0x00, 0x01, 0x1A, 0xFF, 0xFF,
-		    0xFC, 0xE5, 0x93, 0x00, 0x10, 0xE3, 0x10, 0x03, 0x01, 0xE3, 0xA0,
-		    0x00, 0x00, 0xE5, 0x83, 0x00, 0x00, 0x0A, 0xFF, 0xFF, 0xF0, 0xE1,
-		    0xA0, 0xF0, 0x0E, 0x0D, 0x80, 0x68, 0x14
-	    };
+	    u8 patch[] = { 0xE9, 0xAD, 0x40, 0x1F, 0xE1, 0x5E, 0x30, 0xB2, 0xE2, 0x03, 0x30, 0xFF, 0xE3,
+		               0x53, 0x00, 0xAB, 0x1A, 0x00, 0x00, 0x07, 0xE3, 0x50, 0x00, 0x04, 0x1A, 0x00,
+		               0x00, 0x05, 0xE5, 0x9F, 0x30, 0x58, 0xE5, 0xD1, 0x20, 0x00, 0xEB, 0x00, 0x00,
+		               0x04, 0xE2, 0x81, 0x10, 0x01, 0xE3, 0x52, 0x00, 0x00, 0x1A, 0xFF, 0xFF, 0xFA,
+		               0xE8, 0x3D, 0x40, 0x1F, 0xE1, 0xB0, 0xF0, 0x0E, 0xE3, 0xA0, 0x00, 0xD0, 0xE5,
+		               0x83, 0x00, 0x00, 0xE3, 0xA0, 0x02, 0x0B, 0xE1, 0x80, 0x0A, 0x02, 0xE5, 0x83,
+		               0x00, 0x10, 0xE3, 0xA0, 0x00, 0x19, 0xE5, 0x83, 0x00, 0x0C, 0xE5, 0x93, 0x00,
+		               0x0C, 0xE3, 0x10, 0x00, 0x01, 0x1A, 0xFF, 0xFF, 0xFC, 0xE5, 0x93, 0x00, 0x10,
+		               0xE3, 0x10, 0x03, 0x01, 0xE3, 0xA0, 0x00, 0x00, 0xE5, 0x83, 0x00, 0x00, 0x0A,
+		               0xFF, 0xFF, 0xF0, 0xE1, 0xA0, 0xF0, 0x0E, 0x0D, 0x80, 0x68, 0x14 };
 
-	    for (u32 i = 0; i < sizeof(patch); i += 4)
-		    WriteRegister32(((u32)address) + i, *(u32*)&patch[i]);
+	    for (u32 i = 0; i < sizeof(patch); i += 4) WriteRegister32(((u32)address) + i, *(u32*)&patch[i]);
 
 	    //redirect svc handler
 	    WriteRegister32(SRAMADDR(0xFFFF0028), (0xFFFF0000) | (u32)address);
@@ -285,23 +280,21 @@ s8 PatchIOS(std::vector<IosPatch> patches)
 
 	while ((u32)mem_block < 0x93FFFFFF)
 	{
-		auto iterator =
-		    std::find_if(patches.begin(), patches.end(),
-		                 [&patchesFound, mem_block](const IosPatch& iosPatch) {
-			                 s32 patchSize = iosPatch.Pattern.size();
-			                 if (memcmp(mem_block, &iosPatch.Pattern[0], patchSize) != 0)
-				                 return false;
+		auto iterator = std::find_if(patches.begin(), patches.end(), [&patchesFound, mem_block](const IosPatch& iosPatch) {
+			s32 patchSize = iosPatch.Pattern.size();
+			if (memcmp(mem_block, &iosPatch.Pattern[0], patchSize) != 0)
+				return false;
 
-			                 //Apply patch
-			                 iosPatch.Patch(mem_block);
+			//Apply patch
+			iosPatch.Patch(mem_block);
 
-			                 //flush cache
-			                 u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
-			                 DCFlushRange(address, (patchSize >> 5 << 5) + 64);
-			                 ICInvalidateRange(address, (patchSize >> 5 << 5) + 64);
-			                 patchesFound++;
-			                 return true;
-		                 });
+			//flush cache
+			u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
+			DCFlushRange(address, (patchSize >> 5 << 5) + 64);
+			ICInvalidateRange(address, (patchSize >> 5 << 5) + 64);
+			patchesFound++;
+			return true;
+		});
 
 		if (iterator != patches.end() && patchesFound == patches.size())
 			break;
@@ -331,30 +324,27 @@ s8 PatchIOSKernel(std::vector<IosPatch> patches)
 	u8* mem_block = reinterpret_cast<u8*>(SRAMADDR(0xFFFF0000));
 	while ((u32)mem_block < SRAMADDR(0xFFFFFFFF))
 	{
-		auto iterator =
-		    std::find_if(patches.begin(), patches.end(),
-		                 [&patchesFound, mem_block](const IosPatch& iosPatch) {
-			                 u32 patchSize = iosPatch.Pattern.size();
-			                 u32 matches = 0;
-			                 for (matches = 0; matches < patchSize; matches++)
-			                 {
-				                 if (ReadRegister8(((u32)mem_block) + matches) !=
-				                     iosPatch.Pattern[matches])
-					                 break;
-			                 }
+		auto iterator = std::find_if(patches.begin(), patches.end(), [&patchesFound, mem_block](const IosPatch& iosPatch) {
+			u32 patchSize = iosPatch.Pattern.size();
+			u32 matches = 0;
+			for (matches = 0; matches < patchSize; matches++)
+			{
+				if (ReadRegister8(((u32)mem_block) + matches) != iosPatch.Pattern[matches])
+					break;
+			}
 
-			                 if (matches != patchSize)
-				                 return false;
+			if (matches != patchSize)
+				return false;
 
-			                 //Apply patch
-			                 iosPatch.Patch(mem_block);
+			//Apply patch
+			iosPatch.Patch(mem_block);
 
-			                 //flush cache
-			                 u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
-			                 DCFlushRange(address, (matches >> 5 << 5) + 64);
-			                 ICInvalidateRange(address, (matches >> 5 << 5) + 64);
-			                 return true;
-		                 });
+			//flush cache
+			u8* address = (u8*)(((u32)mem_block) >> 5 << 5);
+			DCFlushRange(address, (matches >> 5 << 5) + 64);
+			ICInvalidateRange(address, (matches >> 5 << 5) + 64);
+			return true;
+		});
 
 		if (iterator != patches.end() && patchesFound == patches.size())
 			break;

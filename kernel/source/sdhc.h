@@ -179,19 +179,14 @@ void sdhc_irq(void);
 #define SDHC_VENDOR_VERS_MASK      0xff
 
 /* SDHC_CAPABILITIES decoding */
-#define SDHC_BASE_FREQ_KHZ(cap) \
-	((((cap) >> SDHC_BASE_FREQ_SHIFT) & SDHC_BASE_FREQ_MASK) * 1000)
-#define SDHC_TIMEOUT_FREQ(cap) \
-	(((cap) >> SDHC_TIMEOUT_FREQ_SHIFT) & SDHC_TIMEOUT_FREQ_MASK)
-#define SDHC_TIMEOUT_FREQ_KHZ(cap)                                      \
-	(((cap) & SDHC_TIMEOUT_FREQ_UNIT) ? SDHC_TIMEOUT_FREQ(cap) * 1000 : \
-	                                    SDHC_TIMEOUT_FREQ(cap))
+#define SDHC_BASE_FREQ_KHZ(cap)    ((((cap) >> SDHC_BASE_FREQ_SHIFT) & SDHC_BASE_FREQ_MASK) * 1000)
+#define SDHC_TIMEOUT_FREQ(cap)     (((cap) >> SDHC_TIMEOUT_FREQ_SHIFT) & SDHC_TIMEOUT_FREQ_MASK)
+#define SDHC_TIMEOUT_FREQ_KHZ(cap) \
+	(((cap) & SDHC_TIMEOUT_FREQ_UNIT) ? SDHC_TIMEOUT_FREQ(cap) * 1000 : SDHC_TIMEOUT_FREQ(cap))
 
 /* SDHC_HOST_CTL_VERSION decoding */
-#define SDHC_SPEC_VERSION(hcv) \
-	(((hcv) >> SDHC_SPEC_VERS_SHIFT) & SDHC_SPEC_VERS_MASK)
-#define SDHC_VENDOR_VERSION(hcv) \
-	(((hcv) >> SDHC_VENDOR_VERS_SHIFT) & SDHC_VENDOR_VERS_MASK)
+#define SDHC_SPEC_VERSION(hcv)   (((hcv) >> SDHC_SPEC_VERS_SHIFT) & SDHC_SPEC_VERS_MASK)
+#define SDHC_VENDOR_VERSION(hcv) (((hcv) >> SDHC_VENDOR_VERS_SHIFT) & SDHC_VENDOR_VERS_MASK)
 
 struct sdmmc_command;
 

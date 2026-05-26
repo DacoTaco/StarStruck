@@ -39,7 +39,7 @@ int printk(const char* fmt, ...)
  //it expects data to be sent in chunks of 16 bytes
  //it buffers this untill a newline is sent.
  //since we are sending a string, we will send 15 bytes + null byte.
-	//in the end, we will end it all with a newline + null byte, if our string did not have any
+ //in the end, we will end it all with a newline + null byte, if our string did not have any
 	s32 index = 0;
 	char syscallBuffer[16] = { 0 };
 	while (index < len)

@@ -62,8 +62,7 @@ s32 OpenBoot2FileHandle(void)
   // Check maps[0] - if it has valid signature and matches maps[1]
 		if (memcmp(&maps[0], blockSignature, 8) == 0)
 		{
-			if (memcmp(&maps[0], &maps[1], 0x4C) == 0 ||
-			    memcmp(&maps[0], &maps[2], 0x4C) == 0)
+			if (memcmp(&maps[0], &maps[1], 0x4C) == 0 || memcmp(&maps[0], &maps[2], 0x4C) == 0)
 				validMap = &maps[0];
 		}
 
@@ -126,8 +125,7 @@ s32 OpenBoot2FileHandle(void)
 
 static s32 EraseNextBoot2Block(void)
 {
-	const u32 blockSizeShift =
-	    (SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF;
+	const u32 blockSizeShift = (SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF;
 	u32 block = _boot2Handle.PageIndex >> blockSizeShift;
 	bool found = false;
 
@@ -175,8 +173,7 @@ static s32 WriteBoot2Page(bool writeEcc)
 
 	while (true)
 	{
-		ret = WriteNandPage(_boot2Handle.PageIndex, _boot2Handle.PageBuffer,
-		                    NULL, 0, writeEcc);
+		ret = WriteNandPage(_boot2Handle.PageIndex, _boot2Handle.PageBuffer, NULL, 0, writeEcc);
 		if (ret == IPC_SUCCESS)
 			break;
 
@@ -229,15 +226,12 @@ static s32 FinishBoot2Write(void)
 			return ret;
 	}
   // Always set PageIndex to end of block (IOS 58 logic)
-	_boot2Handle.PageIndex =
-	    (_boot2Handle.PageIndex & ~(pagesPerBlock - 1)) + pagesPerBlock - 1;
+	_boot2Handle.PageIndex = (_boot2Handle.PageIndex & ~(pagesPerBlock - 1)) + pagesPerBlock - 1;
 
  // Write blockmap in triplicate at last page (0x4C bytes each, total 0xE4)
 	memcpy(_boot2Handle.PageBuffer, &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
-	memcpy(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap),
-	       &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
-	memcpy(_boot2Handle.PageBuffer + (sizeof(Boot2BlockMap) * 2),
-	       &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
+	memcpy(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
+	memcpy(_boot2Handle.PageBuffer + (sizeof(Boot2BlockMap) * 2), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
 	_boot2Handle.PageCursor = sizeof(Boot2BlockMap) * 3;
 	ret = WriteBoot2Page(false);
 	if (ret == IPC_SUCCESS)
@@ -268,9 +262,7 @@ static s32 WriteBoot2Copy(u32 size)
 		if (size < blockSize)
 		{
 			minimumPage = (index * pagesPerBlock) +
-			              (((size + pageSize) - 1) >>
-			               (SelectedNandSizeInfo.PageSizeBitShift & 0xFF)) -
-			              1;
+			              (((size + pageSize) - 1) >> (SelectedNandSizeInfo.PageSizeBitShift & 0xFF)) - 1;
 			break;
 		}
 		size -= blockSize;
@@ -293,22 +285,20 @@ static s32 WriteBoot2Copy(u32 size)
 		copies += blockIndex < index ? 1 : -1;
 	}
 
-	// Iterate over available boot2 copies, check for bad blocks, copy pages, handle errors/retries
+ // Iterate over available boot2 copies, check for bad blocks, copy pages, handle errors/retries
 	u32 maxBlocks = BOOT2_BLOCKS_COUNT;
 	for (index = 0; index <= blockIndex; index++)
 	{
 		if (copies < 0)
 			return IPC_EMAX;
 
-		// Skip bad blocks (marked as 1 in blockmap)
+  // Skip bad blocks (marked as 1 in blockmap)
 		if (_boot2Handle.BlockMap.Blocks[index] == 1)
 			continue;
 
 		while (_boot2Handle.BlockMap.Blocks[maxBlocks] != 0) maxBlocks--;
 
-		ret = DeleteCluster(
-		    maxBlocks
-		    << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF));
+		ret = DeleteCluster(maxBlocks << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF));
 
 		for (u32 i = 0; ret == IPC_SUCCESS && i < pagesPerBlock; i++)
 		{
@@ -319,10 +309,8 @@ static s32 WriteBoot2Copy(u32 size)
 			{
 				_boot2Handle.BlockMap.Generation++;
 				memcpy(_boot2Handle.PageBuffer, &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
-				memcpy(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap),
-				       &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
-				memcpy(_boot2Handle.PageBuffer + (sizeof(Boot2BlockMap) * 2),
-				       &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
+				memcpy(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
+				memcpy(_boot2Handle.PageBuffer + (sizeof(Boot2BlockMap) * 2), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
 				memset(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap) * 3, 0,
 				       GetPageSize() - (sizeof(Boot2BlockMap) * 3));
 
@@ -407,8 +395,7 @@ s32 HandleDevBoot2Message(IpcMessage* message)
 	switch (message->Request.Command)
 	{
 		case IOS_WRITE:
-			return HandleBoot2Write(message->Request.Message.Write.MessageData,
-			                        message->Request.Message.Write.Length);
+			return HandleBoot2Write(message->Request.Message.Write.MessageData, message->Request.Message.Write.Length);
 		case IOS_CLOSE:
 			return CloseBoot2FileHandle();
 		case IOS_IOCTL:

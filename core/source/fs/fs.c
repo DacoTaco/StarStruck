@@ -18,8 +18,7 @@
 
 static s32 _fd = -1;
 static u8 _cmd_buf[0x100] ALIGNED(0x20);
-StaticAssert(sizeof(GetAttributesParameters) <= sizeof(_cmd_buf),
-             "GetAttributesParameters too large for _cmd_buf");
+StaticAssert(sizeof(GetAttributesParameters) <= sizeof(_cmd_buf), "GetAttributesParameters too large for _cmd_buf");
 
 static s32 GetFileDescriptor(void)
 {
@@ -38,7 +37,7 @@ s32 OpenFile(const char* path, AccessMode mode)
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
-	/* Copy through the module-local buffer to guarantee DMA-accessible memory. */
+ /* Copy through the module-local buffer to guarantee DMA-accessible memory. */
 	memcpy(_cmd_buf, path, len + 1);
 	return OSOpenFD((const char*)_cmd_buf, (s32)mode);
 }
@@ -205,15 +204,13 @@ s32 SetAttributes(const char* path, u32 uid, u16 gid, u8 attrib, u8 owner, u8 gr
 	return OSIoctlFD(fd, IOCTL_SETATTR, param, sizeof(FileOperationsParameter), NULL, 0);
 }
 
-s32 GetAttributes(const char* path, u32* uid, u16* gid, u32* attrib, u32* owner,
-                  u32* group, u32* other)
+s32 GetAttributes(const char* path, u32* uid, u16* gid, u32* attrib, u32* owner, u32* group, u32* other)
 {
 	s32 fd = GetFileDescriptor();
 	if (fd < 0)
 		return fd;
 
-	if (path == NULL || uid == NULL || gid == NULL || attrib == NULL ||
-	    owner == NULL || group == NULL || other == NULL)
+	if (path == NULL || uid == NULL || gid == NULL || attrib == NULL || owner == NULL || group == NULL || other == NULL)
 		return FS_EINVAL;
 
 	u32 len = strnlen(path, MAX_FILE_PATH);
@@ -224,8 +221,7 @@ s32 GetAttributes(const char* path, u32* uid, u16* gid, u32* attrib, u32* owner,
 	memset(buf, 0, sizeof(GetAttributesParameters));
 	strncpy(buf->Path, path, sizeof(buf->Path) - 1);
 
-	s32 ret = OSIoctlFD(fd, IOCTL_GETATTR, buf->Path, sizeof(buf->Path),
-	                    &buf->Parameters, sizeof(buf->Parameters));
+	s32 ret = OSIoctlFD(fd, IOCTL_GETATTR, buf->Path, sizeof(buf->Path), &buf->Parameters, sizeof(buf->Parameters));
 	if (ret == 0)
 	{
 		*uid = buf->Parameters.UserId;
@@ -318,15 +314,13 @@ s32 SetFileVersionControl(const char* path, u8 version)
 	strncpy(param->Path, path, sizeof(param->Path) - 1);
 	param->Attributes = version;
 
-	return OSIoctlFD(fd, IOCTL_SETFILEVERCTRL, param,
-	                 sizeof(FileOperationsParameter), NULL, 0);
+	return OSIoctlFD(fd, IOCTL_SETFILEVERCTRL, param, sizeof(FileOperationsParameter), NULL, 0);
 }
 
 //Create a file and write the data
 //This function uses an intermediate temp file in /tmp to ensure the final write is correct
 //after which it is renamed to the final path, and all necessary parent directories are created if they don't exist
-s32 CreateAndWriteFile(const char* filepath, u8 attrib, u8 owner, u8 group,
-                       u8 other, const u8* data, u32 len)
+s32 CreateAndWriteFile(const char* filepath, u8 attrib, u8 owner, u8 group, u8 other, const u8* data, u32 len)
 {
 	//compile the temp path and delete it just in case
 	char* tempPath = "/tmp/000000000000";

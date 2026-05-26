@@ -149,10 +149,9 @@ struct sdmmc_function
 	sdmmc_response raw_cid;  /* temp. storage for decoding */
 };
 
-#define SDMMC_LOCK(sc)   lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
-#define SDMMC_UNLOCK(sc) lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
-#define SDMMC_ASSERT_LOCKED(sc) \
-	KASSERT(lockstatus(&((sc))->sc_lock) == LK_EXCLUSIVE)
+#define SDMMC_LOCK(sc)          lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
+#define SDMMC_UNLOCK(sc)        lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
+#define SDMMC_ASSERT_LOCKED(sc) KASSERT(lockstatus(&((sc))->sc_lock) == LK_EXCLUSIVE)
 
 #include "messaging/ipc.h"
 
@@ -250,8 +249,7 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void* data);
 #define MMC_CSD_MMCVER_4_0        4 /* MMC 4 */
 #define MMC_CSD_READ_BL_LEN(resp) MMC_RSP_BITS((resp), 80, 4)
 #define MMC_CSD_C_SIZE(resp)      MMC_RSP_BITS((resp), 62, 12)
-#define MMC_CSD_CAPACITY(resp) \
-	((MMC_CSD_C_SIZE((resp)) + 1) << (MMC_CSD_C_SIZE_MULT((resp)) + 2))
+#define MMC_CSD_CAPACITY(resp)    ((MMC_CSD_C_SIZE((resp)) + 1) << (MMC_CSD_C_SIZE_MULT((resp)) + 2))
 #define MMC_CSD_C_SIZE_MULT(resp) MMC_RSP_BITS((resp), 47, 3)
 
 /* MMC v1 R2 response (CID) */
@@ -308,8 +306,7 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void* data);
 #define SD_CSD_READ_BLK_MISALIGN(resp)  MMC_RSP_BITS((resp), 77, 1)
 #define SD_CSD_DSR_IMP(resp)            MMC_RSP_BITS((resp), 76, 1)
 #define SD_CSD_C_SIZE(resp)             MMC_RSP_BITS((resp), 62, 12)
-#define SD_CSD_CAPACITY(resp) \
-	((SD_CSD_C_SIZE((resp)) + 1) << (SD_CSD_C_SIZE_MULT((resp)) + 2))
+#define SD_CSD_CAPACITY(resp)           ((SD_CSD_C_SIZE((resp)) + 1) << (SD_CSD_C_SIZE_MULT((resp)) + 2))
 #define SD_CSD_V2_C_SIZE(resp)          MMC_RSP_BITS((resp), 48, 22)
 #define SD_CSD_V2_CAPACITY(resp)        ((SD_CSD_V2_C_SIZE((resp)) + 1) << 10)
 #define SD_CSD_V2_BL_LEN                0x9 /* 512 */

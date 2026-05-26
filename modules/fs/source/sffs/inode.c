@@ -285,11 +285,11 @@ u32 GetFreeInode(SuperBlockInfo* superblock)
 		FileSystemTableEntry* entry = GetFstEntry(superblock, i);
 
   // Check if entry type is S_IFZERO (unused/free)
-		// IOS checks: (Mode.Value & 3) == 0, which checks the Type field (top 2 bits)
+  // IOS checks: (Mode.Value & 3) == 0, which checks the Type field (top 2 bits)
 		if (entry->Mode.Fields.Type == S_IFZERO)
 			return i;
 	}
 
-	// No free inode found
+ // No free inode found
 	return SFFSErasedNode;
 }

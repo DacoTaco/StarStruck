@@ -53,10 +53,8 @@ Copyright (C) 2021			DacoTaco
 #define CR_ICACHE                   (1 << 12)
 
 #define MEMBLOCK_COUNT(start, end)  ((end - start) / LINESIZE)
-#define ALIGN_FORWARD(addr) \
-	((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE - 1))))
-#define ALIGN_BACKWARD(addr) \
-	((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE - 1))))
+#define ALIGN_FORWARD(addr)         ((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE - 1))))
+#define ALIGN_BACKWARD(addr)        ((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE - 1))))
 
 void _dc_inval_entries(const void* start, u32 count);
 void _dc_flush_entries(const void* start, u32 count);
@@ -204,7 +202,7 @@ u32 dma_addr(void* p)
 			addr |= 0x0d400000;
 			break;
 	}
-	//gecko_printf("DMA to %p: address %08x\n", p, addr);
+ //gecko_printf("DMA to %p: address %08x\n", p, addr);
 	return addr;
 }
 
@@ -276,7 +274,7 @@ void* _kmallocMemorySection(KernelMemoryType type)
 
 s32 MapMemoryAsSection(MemorySection* memorySection)
 {
-	/*Example of a mapping : 
+ /*Example of a mapping : 
 	 virtual address : 0xFFF00000
 	 physical address : 0xFFF00000
 	 size : 0x00100000
@@ -291,7 +289,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	if (memorySection == NULL)
 		return IPC_EINVAL;
 
-	//either map section as regular section, or section with writeback cache & buffer enabled
+ //either map section as regular section, or section with writeback cache & buffer enabled
 	u32 translationBase = SECTION_PAGE;
 	if (memorySection->IsCached != 0)
 		translationBase |= WRITEBACK_CACHE;
@@ -310,7 +308,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 //In all honesty, i don't full understand what it is doing in here...
 s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 {
-	/*
+ /*
 		Example of a mapping : 
 		virtual address : 0x13A70000
 		physical address : 0x13A70000
@@ -340,8 +338,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		if (pageValue == NULL)
 			return IPC_ENOMEM;
 
-		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) |
-		                PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
+		*entry = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 	}
 	else
 	{
@@ -349,8 +346,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 			return IPC_EINVAL;
 		else if (mode != 0)
 		{
-			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) |
-			                   PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
+			pageValue = (u32*)((0xFFFFFC00 & (u32)pageValue) | PAGE_DOMAIN(memorySection->Domain) | COURSE_PAGE);
 			*entry = pageValue;
 		}
 
@@ -366,9 +362,8 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 		type |= WRITEBACK_CACHE;
 
 	pageValue[COURSEPAGE_ENTRY_VALUE(memorySection->VirtualAddress)] =
-	    (memorySection->PhysicalAddress & 0xFFFFF000) | type |
-	    APX_VALUE(3, accessRights) | APX_VALUE(2, accessRights) |
-	    APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
+	    (memorySection->PhysicalAddress & 0xFFFFF000) | type | APX_VALUE(3, accessRights) |
+	    APX_VALUE(2, accessRights) | APX_VALUE(1, accessRights) | APX_VALUE(0, accessRights);
 	DCFlushRange(pageValue, 0x1000);
 	memorySection->Size -= 0x1000;
 	memorySection->PhysicalAddress += 0x1000;
@@ -391,12 +386,11 @@ s32 MapMemory(MemorySection* entry)
 		if (memorySection.Size == 0)
 			break;
 
-		//page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
-		if ((memorySection.VirtualAddress & 0xFFFFF) == 0 &&
-		    (memorySection.PhysicalAddress & 0xFFFFF) == 0 && memorySection.Size >= 0xFFFFF)
+  //page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
+		if ((memorySection.VirtualAddress & 0xFFFFF) == 0 && (memorySection.PhysicalAddress & 0xFFFFF) == 0 &&
+		    memorySection.Size >= 0xFFFFF)
 			ret = MapMemoryAsSection(&memorySection);
-		else if (((memorySection.VirtualAddress & 0xFFF) != 0 ||
-		          (memorySection.PhysicalAddress & 0xFFF) != 0) ||
+		else if (((memorySection.VirtualAddress & 0xFFF) != 0 || (memorySection.PhysicalAddress & 0xFFF) != 0) ||
 		         memorySection.Size < 0x1000)
 		{
 			ret = IPC_EINVAL;
@@ -433,8 +427,7 @@ s32 MapHardwareRegisters()
 		for (u32 i = 0; i < 0x100; i++)
 		{
 			if (*pageValue == 0)
-				*pageValue = (i * 0x1000) + (0x0D000000 | SECTION_PAGE |
-				                             PAGE_DOMAIN(0x0A) | AP_VALUE(AP_NOUSER));
+				*pageValue = (i * 0x1000) + (0x0D000000 | SECTION_PAGE | PAGE_DOMAIN(0x0A) | AP_VALUE(AP_NOUSER));
 
 			pageValue += 1;
 		}
@@ -443,18 +436,18 @@ s32 MapHardwareRegisters()
 		*page = 0;
 	}
 
-	//fill in some gaps?
+ //fill in some gaps?
 	HardwareRegistersAccessTable[4] = HardwareRegistersAccessTable[6];
 	HardwareRegistersAccessTable[5] = HardwareRegistersAccessTable[6];
 
-	//set defaults to PID 0's access rights
+ //set defaults to PID 0's access rights
 	for (int i = 0; i < MAX_PROCESSES; i++)
 	{
 		if (HardwareRegistersAccessTable[i] == NULL)
 			HardwareRegistersAccessTable[i] = HardwareRegistersAccessTable[0];
 	}
 
-	//set the access rights and return
+ //set the access rights and return
 	*page = HardwareRegistersAccessTable[0];
 	return ret;
 }
@@ -468,8 +461,7 @@ u32 VirtualToPhysical(u32 virtualAddress)
 		physicalAddress = (virtualAddress & 0xFFFFF) | (pageEntry & 0xFFF00000);
 	else if ((pageEntry & PAGE_MASK) == COURSE_PAGE)
 	{
-		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE(virtualAddress) << 2) +
-		                   (pageEntry & 0xFFFFFC00));
+		u32 page = *(u32*)((COURSEPAGE_ENTRY_VALUE(virtualAddress) << 2) + (pageEntry & 0xFFFFFC00));
 		if ((page & PAGE_TYPE_MASK) == COURSE_SECTION)
 			physicalAddress = (virtualAddress & 0xFFF) | (page & 0xFFFFF000);
 	}
@@ -583,8 +575,7 @@ s32 InitializeMemory(void)
 	//init all dacr values for all processes
 	//default is domain no access besides domain 8 & 15 (client) -> 0x40010000;
 	for (s32 i = 0; i < MAX_PROCESSES; i++)
-		DomainAccessControlTable[i] = DOMAIN_VALUE(8, DOMAIN_CLIENT) |
-		                              DOMAIN_VALUE(15, DOMAIN_CLIENT);
+		DomainAccessControlTable[i] = DOMAIN_VALUE(8, DOMAIN_CLIENT) | DOMAIN_VALUE(15, DOMAIN_CLIENT);
 
 	DomainAccessControlTable[0] = 0x55555555; //PID 0 = client access in all domains
 

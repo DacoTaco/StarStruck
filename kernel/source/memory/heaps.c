@@ -46,8 +46,7 @@ s32 CreateHeap(void* ptr, u32 size)
 	}
 #endif
 
-	while (heap_index < MAX_HEAP && heaps[heap_index].Heap != NULL)
-		heap_index++;
+	while (heap_index < MAX_HEAP && heaps[heap_index].Heap != NULL) heap_index++;
 
 	if (heap_index >= MAX_HEAP)
 	{
@@ -108,8 +107,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	u32 irqState = DisableInterrupts();
 	u32 ret = 0;
 
-	if (heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].Heap || size == 0 ||
-	    heaps[heapid].Size < size || alignment < 0x20)
+	if (heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].Heap || size == 0 || heaps[heapid].Size < size || alignment < 0x20)
 	{
 		goto restore_and_return;
 	}
@@ -128,8 +126,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	while (currentBlock != NULL)
 	{
 		blockSize = currentBlock->Size;
-		alignedOffset = (alignment - ((u32)(currentBlock + 1) & (alignment - 1))) &
-		                (alignment - 1);
+		alignedOffset = (alignment - ((u32)(currentBlock + 1) & (alignment - 1))) & (alignment - 1);
 
 		if (alignedSize + alignedOffset <= blockSize &&
 		    (blockToAllocate == NULL || blockSize < blockToAllocate->Size))
@@ -176,7 +173,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	blockToAllocate->NextBlock = NULL;
 	blockToAllocate->PreviousBlock = NULL;
 
-	//add the block header infront of the allocated space if needed (because of alignment)
+ //add the block header infront of the allocated space if needed (because of alignment)
 	currentBlock = (HeapBlock*)(((u32)blockToAllocate) + alignedOffset);
 	if (alignedOffset != 0)
 	{
@@ -184,7 +181,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		currentBlock->NextBlock = blockToAllocate;
 	}
 
-	//get pointer and clear it!
+ //get pointer and clear it!
 	ret = (u32)(currentBlock + 1);
 	if (ret)
 		memset((u8*)ret, 0, size);
@@ -205,13 +202,13 @@ int MergeNextBlockIfUnused(HeapBlock* parentBlock)
 	if (blockToMerge != (HeapBlock*)(((u32)parentBlock) + blockSize))
 		return 0;
 
-	//link parent block with the tomerge's next block and vice versa
+ //link parent block with the tomerge's next block and vice versa
 	HeapBlock* nextBlock = blockToMerge->NextBlock;
 	parentBlock->NextBlock = nextBlock;
 	if (nextBlock != NULL)
 		nextBlock->PreviousBlock = parentBlock;
 
-	//merge sizes
+ //merge sizes
 	parentBlock->Size = blockSize + blockToMerge->Size;
 	return 1;
 }
@@ -221,14 +218,14 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
-	//verify incoming parameters & if the heap is in use
+ //verify incoming parameters & if the heap is in use
 	if (heapid < 0 || heapid >= 0x10 || ptr == NULL || heaps[heapid].Heap == NULL)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
-	//verify the pointer address
+ //verify the pointer address
 	if ((u8*)ptr < ((u8*)heaps[heapid].Heap + sizeof(HeapBlock)) ||
 	    (u8*)ptr >= ((u8*)heaps[heapid].Heap + heaps[heapid].Size))
 	{
@@ -236,7 +233,7 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		goto restore_and_return;
 	}
 
-	//verify the block that the pointer belongs to
+ //verify the block that the pointer belongs to
 	HeapBlock* blockToFree = (HeapBlock*)((u8*)ptr - sizeof(HeapBlock));
 
 	if (blockToFree->BlockState == HeapBlockAligned)
@@ -262,14 +259,14 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		currBlock = nextBlock;
 	}
 
-	//move block to the front
+ //move block to the front
 	if (currBlock == NULL || blockToFree <= firstBlock)
 	{
 		blockToFree->NextBlock = firstBlock;
 		heaps[heapid].FirstBlock = blockToFree;
 		blockToFree->PreviousBlock = NULL;
 	}
-	//just place the block infront of the block closest to us
+ //just place the block infront of the block closest to us
 	else
 	{
 		blockToFree->PreviousBlock = currBlock;
@@ -277,11 +274,11 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		currBlock->NextBlock = blockToFree;
 	}
 
-	//link the next block if needed
+ //link the next block if needed
 	if (blockToFree->NextBlock != NULL)
 		blockToFree->NextBlock->PreviousBlock = blockToFree;
 
-	//merge blocks if we can
+ //merge blocks if we can
 	MergeNextBlockIfUnused(blockToFree);
 	MergeNextBlockIfUnused(blockToFree->PreviousBlock);
 

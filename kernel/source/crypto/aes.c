@@ -91,8 +91,7 @@ void AesEngineHandler(void)
 				ret = IPC_SUCCESS;
 				goto sendReply;
 			case IOS_OPEN:
-				ret = memcmp(ipcMessage->Request.Message.Open.Filepath,
-				             AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
+				ret = memcmp(ipcMessage->Request.Message.Open.Filepath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
 				if (ret != 0)
 					ret = IPC_ENOENT;
     //not needed, since 0 == IPC_SUCCESS anyway
@@ -136,16 +135,12 @@ void AesEngineHandler(void)
 							goto sendReply;
 processAesCommand:
 						IoctlvMessageData* inputData = &ioctlvMessage->MessageData[0];
-						IoctlvMessageData* outputData =
-						    &ioctlvMessage->MessageData[ioctlvMessage->InputArgc];
-						if (inputData->Length != outputData->Length ||
-						    ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
-						    ((u32)inputData->Data & 0x0F) != 0 ||
-						    ((u32)outputData->Data & 0x0F) != 0)
+						IoctlvMessageData* outputData = &ioctlvMessage->MessageData[ioctlvMessage->InputArgc];
+						if (inputData->Length != outputData->Length || ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
+						    ((u32)inputData->Data & 0x0F) != 0 || ((u32)outputData->Data & 0x0F) != 0)
 							goto sendReply;
 						if (ioctl == AES_DECRYPT)
-							memcpy(ivBuffer,
-							       (u8*)inputData->Data + inputData->Length - 0x10, 0x10);
+							memcpy(ivBuffer, (u8*)inputData->Data + inputData->Length - 0x10, 0x10);
 
 						write32(AES_SRC, VirtualToPhysical((u32)inputData->Data));
 						write32(AES_DEST, VirtualToPhysical((u32)outputData->Data));
@@ -153,15 +148,12 @@ processAesCommand:
 						DCInvalidateRange(outputData->Data, outputData->Length);
 						AhbFlushTo(AHB_AES);
 
-						AESCommand command = {
-							.Fields = { .Command = 1,
-							            .GenerateIrq = 1,
-							            .EnableDataHandling = ioctl != AES_COPY,
-							            .IsDecryption = ioctl == AES_DECRYPT,
-							            .ChainIV = 0,
-							            .NumberOfBlocks =
-							                ((inputData->Length - 0x10U) >> 4) & 0xFFF }
-						};
+						AESCommand command = { .Fields = { .Command = 1,
+							                               .GenerateIrq = 1,
+							                               .EnableDataHandling = ioctl != AES_COPY,
+							                               .IsDecryption = ioctl == AES_DECRYPT,
+							                               .ChainIV = 0,
+							                               .NumberOfBlocks = ((inputData->Length - 0x10U) >> 4) & 0xFFF } };
 						write32(AES_CMD, command.Value);
 						u32* irqMessage;
 						ret = ReceiveMessage(AesEventMessageQueueId, (void**)&irqMessage, 0);
@@ -180,9 +172,7 @@ processAesCommand:
 						if (IVVector != NULL)
 						{
 							if (ioctl == AES_ENCRYPT)
-								memcpy(ivBuffer,
-								       (u8*)outputData->Data + outputData->Length - 0x10,
-								       0x10);
+								memcpy(ivBuffer, (u8*)outputData->Data + outputData->Length - 0x10, 0x10);
 
 							if (ioctl <= AES_DECRYPT)
 								memcpy(IVVector->Data, ivBuffer, 0x10);
@@ -190,8 +180,7 @@ processAesCommand:
 							if (sourceVector != NULL)
 								FreeOnHeap(KernelHeapId, sourceVector->Data);
 
-							FreeOnHeap(KernelHeapId,
-							           ipcReply->Request.Message.Ioctlv.MessageData);
+							FreeOnHeap(KernelHeapId, ipcReply->Request.Message.Ioctlv.MessageData);
 							ret = 0;
 						}
 						goto sendReply;

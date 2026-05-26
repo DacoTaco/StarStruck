@@ -21,8 +21,7 @@
 KeyringEntry KeyringEntries[KEYRING_TOTAL_ENTRIES];
 KeyringMetadataType KeyringMetadata[KEYRING_METADATA_TOTAL_ENTRIES];
 
-static inline void Keyring_Init_WithKey(u32 index, KeyType type, KeySubtype subType,
-                                        const void* key, const u32 keySize)
+static inline void Keyring_Init_WithKey(u32 index, KeyType type, KeySubtype subType, const void* key, const u32 keySize)
 {
 	KeyringMetadata[index].IsUsed = 1;
 	KeyringMetadata[index].Kind.Type = type;
@@ -30,8 +29,7 @@ static inline void Keyring_Init_WithKey(u32 index, KeyType type, KeySubtype subT
 	KeyringMetadata[index].KeyringIndex = Keyring_GetKeyIndexFitSize(keySize);
 	Keyring_SetKey(index, key, keySize);
 }
-static inline void Keyring_Init_WithMetadata(u32 index, KeyType type,
-                                             KeySubtype subType, const u32 metadata)
+static inline void Keyring_Init_WithMetadata(u32 index, KeyType type, KeySubtype subType, const u32 metadata)
 {
 	KeyringMetadata[index].IsUsed = 1;
 	KeyringMetadata[index].Kind.Type = type;
@@ -70,35 +68,24 @@ void Keyring_Init(void)
 	SEEPROM_GetKoreanCommonKey(eepromCommonKey);
 	OTP_GetKeys(ngPrivKey, otpCommonKey, nandHmac, nandKey);
 
-	// stored in plaintext in IOS, kept in the source here with a xorpad (to not have the key directly)
-	u8 privkeyAesSd[OTP_NANDKEY_SIZE] = { 0x40, 0xe5, 0x93, 0xfa, 0xbf, 0xe7,
-		                                  0xb8, 0xec, 0xe7, 0x63, 0x1d, 0x08,
-		                                  0xcc, 0x43, 0x0f, 0xaa };
-	for (u32 i = 0; i < OTP_NANDKEY_SIZE; ++i)
-		privkeyAesSd[i] ^= otpCommonKey[i];
+ // stored in plaintext in IOS, kept in the source here with a xorpad (to not have the key directly)
+	u8 privkeyAesSd[OTP_NANDKEY_SIZE] = { 0x40, 0xe5, 0x93, 0xfa, 0xbf, 0xe7, 0xb8, 0xec,
+		                                  0xe7, 0x63, 0x1d, 0x08, 0xcc, 0x43, 0x0f, 0xaa };
+	for (u32 i = 0; i < OTP_NANDKEY_SIZE; ++i) privkeyAesSd[i] ^= otpCommonKey[i];
 
-	Keyring_Init_WithKey(KEYRING_CONST_NG_PRIVATE_KEY, PrivateKey, ECC_233,
-	                     ngPrivKey, OTP_NGPRIVKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_NG_PRIVATE_KEY, PrivateKey, ECC_233, ngPrivKey, OTP_NGPRIVKEY_SIZE);
 	Keyring_Init_WithKey(KEYRING_CONST_NAND_KEY, PrivateKey, AES_128, nandKey, OTP_RNGSEED_SIZE);
 	Keyring_Init_WithKey(KEYRING_CONST_NAND_HMAC, PrivateKey, HMAC, nandHmac, OTP_NANDHMAC_SIZE);
-	Keyring_Init_WithKey(KEYRING_CONST_OTP_COMMON_KEY, PrivateKey, AES_128,
-	                     otpCommonKey, OTP_COMMONKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_OTP_COMMON_KEY, PrivateKey, AES_128, otpCommonKey, OTP_COMMONKEY_SIZE);
 
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_VERSION, Other, UNKNOWN2,
-	                          (u32)IOSC_BOOT2_GetVersion());
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK1, Other, UNKNOWN2,
-	                          (u32)IOSC_BOOT2_GetUnk1());
-	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK2, Other, UNKNOWN2,
-	                          (u32)IOSC_BOOT2_GetUnk2());
-	Keyring_Init_WithMetadata(KEYRING_CONST_NAND_GEN, Other, UNKNOWN2,
-	                          (u32)IOSC_NAND_GetGen());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_VERSION, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetVersion());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK1, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetUnk1());
+	Keyring_Init_WithMetadata(KEYRING_CONST_BOOT2_UNK2, Other, UNKNOWN2, (u32)IOSC_BOOT2_GetUnk2());
+	Keyring_Init_WithMetadata(KEYRING_CONST_NAND_GEN, Other, UNKNOWN2, (u32)IOSC_NAND_GetGen());
 
-	Keyring_Init_WithKey(KEYRING_CONST_OTP_RNG_SEED, PrivateKey, AES_128,
-	                     rngSeed, OTP_RNGSEED_SIZE);
-	Keyring_Init_WithKey(KEYRING_CONST_SD_PRIVATE_KEY, PrivateKey, AES_128,
-	                     privkeyAesSd, OTP_NANDKEY_SIZE);
-	Keyring_Init_WithKey(KEYRING_CONST_EEPROM_COMMON_KEY, PrivateKey, AES_128,
-	                     eepromCommonKey, OTP_COMMONKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_OTP_RNG_SEED, PrivateKey, AES_128, rngSeed, OTP_RNGSEED_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_SD_PRIVATE_KEY, PrivateKey, AES_128, privkeyAesSd, OTP_NANDKEY_SIZE);
+	Keyring_Init_WithKey(KEYRING_CONST_EEPROM_COMMON_KEY, PrivateKey, AES_128, eepromCommonKey, OTP_COMMONKEY_SIZE);
 }
 
 void Keyring_ClearEntryData(u32 keyEntryHandle)
@@ -112,8 +99,7 @@ s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 	s32 previousLink = -1;
 	s16 ret = -1;
 
-	for (s16 currentIndex = 0;
-	     currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
+	for (s16 currentIndex = 0; currentIndex < KEYRING_TOTAL_ENTRIES && runningKeySize < keySize; ++currentIndex)
 	{
 		if (KeyringEntries[currentIndex].IsUsed)
 			continue;
@@ -132,7 +118,7 @@ s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 		runningKeySize += KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
 	}
 
-	// could not fit the requested size, clear the temporarily linked entries
+ // could not fit the requested size, clear the temporarily linked entries
 	if (runningKeySize < keySize)
 	{
 		u32 keyringIndex = (u32)ret;
@@ -190,8 +176,7 @@ s32 Keyring_SetKeyMetadata(u32 keyHandle, const void* data)
 	if (!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
-	memcpy(&KeyringMetadata[keyHandle].Metadata, data,
-	       sizeof(KeyringMetadata[keyHandle].Metadata));
+	memcpy(&KeyringMetadata[keyHandle].Metadata, data, sizeof(KeyringMetadata[keyHandle].Metadata));
 	return IPC_SUCCESS;
 }
 s32 Keyring_GetKeyMetadata(u32 keyHandle, void* data)
@@ -202,8 +187,7 @@ s32 Keyring_GetKeyMetadata(u32 keyHandle, void* data)
 	if (!KeyringMetadata[keyHandle].IsUsed)
 		return IOSC_EINVAL;
 
-	memcpy(data, &KeyringMetadata[keyHandle].Metadata,
-	       sizeof(KeyringMetadata[keyHandle].Metadata));
+	memcpy(data, &KeyringMetadata[keyHandle].Metadata, sizeof(KeyringMetadata[keyHandle].Metadata));
 	return IPC_SUCCESS;
 }
 s32 Keyring_GetKeyMetadataIfOthers(u32 keyHandle, void* data)
@@ -319,7 +303,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 {
 	switch (keyType)
 	{
-		//Public Key Lengths
+  //Public Key Lengths
 		case PublicKey:
 			if (keySubtype == RSA_4096) //RSA 4096 (512 bytes/4096 bits)
 				*keySize = 0x200;
@@ -330,7 +314,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 			else
 				return IOSC_EINVAL;
 			break;
-		//Private Key Lengths
+  //Private Key Lengths
 		case PrivateKey:
 			if (keySubtype == HMAC) //SHA-1 HMAC (20 bytes/160 bits)
 				*keySize = 0x14;
@@ -342,12 +326,12 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 				return IOSC_EINVAL;
 
 			break;
-		//Public + Private Key Combined Lengths
+  //Public + Private Key Combined Lengths
 		case PublicAndPrivateKey:
 			if (keySubtype != ECC_233)
 				return IOSC_EINVAL;
 
-			//ECC 233 (90 bytes/720 bits)
+   //ECC 233 (90 bytes/720 bits)
 			*keySize = 0x5a;
 			break;
 		case Other:
@@ -376,8 +360,7 @@ s32 Keyring_SetKey(u32 keyHandle, const void* data, u32 keySize)
 	u32 bytesCopied = 0;
 	do
 	{
-		if (0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES ||
-		    !KeyringEntries[entryIndex].IsUsed)
+		if (0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
 			return IOSC_EINVAL;
 
 		u32 bytesToCopy = KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
@@ -405,8 +388,7 @@ s32 Keyring_GetKey(u32 keyHandle, void* keyPtr, u32 keySize)
 	u32 bytesCopied = 0;
 	do
 	{
-		if (0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES ||
-		    !KeyringEntries[entryIndex].IsUsed)
+		if (0 > entryIndex || entryIndex >= KEYRING_TOTAL_ENTRIES || !KeyringEntries[entryIndex].IsUsed)
 			return IOSC_EINVAL;
 
 		u32 bytesToCopy = KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;

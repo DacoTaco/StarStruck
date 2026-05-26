@@ -20,8 +20,7 @@
 
 typedef int (*ThreadFunc)(void* arg);
 
-s32 OSCreateThread(ThreadFunc main, void* arg, u32* stack_top, u32 stacksize,
-                   s32 priority, u32 detached);
+s32 OSCreateThread(ThreadFunc main, void* arg, u32* stack_top, u32 stacksize, s32 priority, u32 detached);
 s32 OSJoinThread(s32 threadId, int* returnedValue);
 s32 OSStopThread(s32 threadid, int returnValue);
 s32 OSGetThreadId(void);
@@ -54,18 +53,15 @@ s32 OSCloseFD(s32 fd);
 s32 OSReadFD(s32 fd, void* buf, u32 len);
 s32 OSWriteFD(s32 fd, const void* buf, u32 len);
 s32 OSSeekFD(s32 fd, s32 offset, s32 origin);
-s32 OSIoctlFD(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength,
-              void* outputBuffer, u32 outputBufferLength);
-s32 OSIoctlvFD(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
-               IoctlvMessageData* vectors);
+s32 OSIoctlFD(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength, void* outputBuffer, u32 outputBufferLength);
+s32 OSIoctlvFD(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors);
 s32 OSOpenFDAsync(const char* path, s32 mode, s32 messageQueueId, IpcMessage* message);
 s32 OSCloseFDAsync(s32 fd, s32 messageQueueId, IpcMessage* message);
 s32 OSReadFDAsync(s32 fd, void* buf, u32 len, s32 messageQueueId, IpcMessage* message);
 s32 OSWriteFDAsync(s32 fd, const void* buf, u32 len, s32 messageQueueId, IpcMessage* message);
 s32 OSSeekFDAsync(s32 fd, s32 offset, s32 origin, s32 messageQueueId, IpcMessage* message);
-s32 OSIoctlFDAsync(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength,
-                   void* outputBuffer, u32 outputBufferLength,
-                   s32 messageQueueId, IpcMessage* message);
+s32 OSIoctlFDAsync(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength, void* outputBuffer,
+                   u32 outputBufferLength, s32 messageQueueId, IpcMessage* message);
 s32 OSIoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
                     IoctlvMessageData* vectors, s32 messageQueueId, IpcMessage* message);
 s32 OSResourceReply(IpcMessage* message, s32 requestReturnValue);
@@ -100,27 +96,21 @@ s32 OSSetIOSCData(u32 keyHandle, u32 value);
 s32 OSGetIOSCData(u32 keyHandle, u32* value);
 s32 OSIOSCGetKeySize(u32* keySize, u32 keyHandle);
 s32 OSIOSCGetSignatureSize(u32* signatureSize, u32 keyHandle);
-s32 OSIOSCEncrypt(u32 keyHandle, void* ivData, const void* inputData,
-                  u32 dataSize, void* outputData);
-s32 OSIOSCEncryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize,
-                       void* outputData, s32 messageQueueId, IpcMessage* message);
-s32 OSIOSCDecrypt(u32 keyHandle, void* ivData, const void* inputData,
-                  u32 dataSize, void* outputData);
-s32 OSIOSCDecryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize,
-                       void* outputData, s32 messageQueueId, IpcMessage* message);
-s32 OSIOSCGenerateBlockMAC(ShaContext* context, const void* inputData, u32 inputSize,
-                           const void* customData, u32 customDataSize, u32 keyHandle,
-                           HMacCommandType hmacCommand, void* signData);
-s32 OSIOSCGenerateBlockMACAsync(ShaContext* context, const void* inputData, u32 inputSize,
-                                const void* customData, u32 customDataSize, u32 keyHandle,
-                                HMacCommandType hmacCommand, void* signData,
-                                s32 messageQueueId, IpcMessage* message);
+s32 OSIOSCEncrypt(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData);
+s32 OSIOSCEncryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData,
+                       s32 messageQueueId, IpcMessage* message);
+s32 OSIOSCDecrypt(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData);
+s32 OSIOSCDecryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData,
+                       s32 messageQueueId, IpcMessage* message);
+s32 OSIOSCGenerateBlockMAC(ShaContext* context, const void* inputData, u32 inputSize, const void* customData,
+                           u32 customDataSize, u32 keyHandle, HMacCommandType hmacCommand, void* signData);
+s32 OSIOSCGenerateBlockMACAsync(ShaContext* context, const void* inputData, u32 inputSize, const void* customData,
+                                u32 customDataSize, u32 keyHandle, HMacCommandType hmacCommand,
+                                void* signData, s32 messageQueueId, IpcMessage* message);
 
-s32 OSIOSCGenerateHash(ShaContext* context, const void* inputData,
-                       u32 inputSize, u32 chain_flag, void* digest);
-s32 OSIOSCGenerateHashAsync(ShaContext* context, const void* inputData,
-                            u32 inputSize, u32 chain_flag, void* digest,
-                            s32 messageQueueId, IpcMessage* message);
+s32 OSIOSCGenerateHash(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag, void* digest);
+s32 OSIOSCGenerateHashAsync(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag,
+                            void* digest, s32 messageQueueId, IpcMessage* message);
 
 // Special IOS syscall to print something to debug device
 void OSPrintk(const char* str);

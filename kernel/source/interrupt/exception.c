@@ -17,15 +17,10 @@ Copyright (C) 2008, 2009	Haxx Enterprises <bushing@gmail.com>
 #include "interrupt/undefined.h"
 #include "panic.h"
 
-const char* exceptions[] = { "RESET",
-	                         "UNDEFINED INSTR",
-	                         "SWI",
-	                         "INSTR ABORT",
-	                         "DATA ABORT",
-	                         "RESERVED",
-	                         "IRQ",
-	                         "FIQ",
-	                         "(unknown exception type)" };
+const char* exceptions[] = {
+	"RESET", "UNDEFINED INSTR",         "SWI", "INSTR ABORT", "DATA ABORT", "RESERVED", "IRQ",
+	"FIQ",   "(unknown exception type)"
+};
 
 const char* aborts[] = { "UNDEFINED",
 	                     "Alignment",
@@ -115,12 +110,11 @@ void ExceptionHandler(u32 type, u32 spsr, u32* regs)
 	if (type != 3)
 	{
 		gecko_printf("Code dump:\n");
-		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc - 16, read32(pc - 16),
-		             read32(pc - 12), read32(pc - 8), read32(pc - 4));
-		gecko_printf("%08x: *%08x %08x %08x %08x\n", pc, read32(pc),
-		             read32(pc + 4), read32(pc + 8), read32(pc + 12));
-		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc + 16, read32(pc + 16),
-		             read32(pc + 20), read32(pc + 24), read32(pc + 28));
+		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc - 16, read32(pc - 16), read32(pc - 12),
+		             read32(pc - 8), read32(pc - 4));
+		gecko_printf("%08x: *%08x %08x %08x %08x\n", pc, read32(pc), read32(pc + 4), read32(pc + 8), read32(pc + 12));
+		gecko_printf("%08x:  %08x %08x %08x %08x\n", pc + 16, read32(pc + 16), read32(pc + 20),
+		             read32(pc + 24), read32(pc + 28));
 	}
 	panic2(0, PANIC_EXCEPTION);
 }

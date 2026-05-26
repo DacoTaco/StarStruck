@@ -27,8 +27,8 @@ typedef enum __attribute__((__packed__))
 // Similar to POSIX st_mode but simplified to 8 bits with 2-bit permission fields
 typedef union
 {
-	//DO NOT CHANGE THE ORDER OF THIS STRUCTURE
-	//IT WILL BREAK THINGS AS IT IS WRITTEN TO NAND
+ //DO NOT CHANGE THE ORDER OF THIS STRUCTURE
+ //IT WILL BREAK THINGS AS IT IS WRITTEN TO NAND
 	struct
 	{
 		u8 OwnerPermissions : 2;
@@ -130,21 +130,19 @@ static inline u32 GetFatArraySize()
 
 static inline FileSystemTableEntry* GetFstEntry(SuperBlockInfo* superblock, u32 inode)
 {
-	// FAT size = 2 << (NandSizeBitShift - CLUSTER_SIZE_SHIFT) bytes (when using 512MB nand)
-	// FST base = FAT base + FAT size
-	// Each FST entry is 0x20 (32) bytes
+ // FAT size = 2 << (NandSizeBitShift - CLUSTER_SIZE_SHIFT) bytes (when using 512MB nand)
+ // FST base = FAT base + FAT size
+ // Each FST entry is 0x20 (32) bytes
 
 	//its basically comes down to `return &superblock->FstEntries[inode];` but dynamically calculating the fst base
-	FileSystemTableEntry* fstBase =
-	    (FileSystemTableEntry*)((u8*)superblock->FatEntries + GetFatArraySize());
+	FileSystemTableEntry* fstBase = (FileSystemTableEntry*)((u8*)superblock->FatEntries + GetFatArraySize());
 	return &fstBase[inode];
 }
 
 // Helper to calculate total number of FST entries
 static inline u32 GetFstEntryCount(void)
 {
-	return (GetSuperBlockSize() - GetFatArraySize() - offsetof(SuperBlockInfo, FatEntries)) /
-	       sizeof(FileSystemTableEntry);
+	return (GetSuperBlockSize() - GetFatArraySize() - offsetof(SuperBlockInfo, FatEntries)) / sizeof(FileSystemTableEntry);
 }
 
 // Path utilities
@@ -162,9 +160,8 @@ s32 GetStats(SFFSStatistics* stats);
 s32 GetPathUsage(const char* path, u32* clusters, u32* inodes);
 
 // Retrieve file attributes for the specified path.
-s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut,
-                  u16* groupIdOut, u8* attributesOut, u8* ownerPermOut,
-                  u8* groupPermOut, u8* otherPermOut);
+s32 GetAttributes(u32 userId, u16 groupId, const char* path, u32* userIdOut, u16* groupIdOut,
+                  u8* attributesOut, u8* ownerPermOut, u8* groupPermOut, u8* otherPermOut);
 
 //Set Attributes of a file or directory
 s32 SetAttributes(u32 callerUserId, const char* path, u32 userId, u16 groupId, u8 attributes,

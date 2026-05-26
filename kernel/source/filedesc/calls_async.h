@@ -19,8 +19,7 @@ s32 CloseFDAsync(s32 fd, s32 messageQueueId, IpcMessage* message);
 s32 ReadFDAsync(s32 fd, void* buf, u32 len, s32 messageQueueId, IpcMessage* message);
 s32 WriteFDAsync(s32 fd, const void* buf, u32 len, s32 messageQueueId, IpcMessage* message);
 s32 SeekFDAsync(s32 fd, s32 offset, SeekMode origin, s32 messageQueueId, IpcMessage* message);
-s32 IoctlFDAsync(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength,
-                 void* outputBuffer, u32 outputBufferLength, s32 messageQueueId,
-                 IpcMessage* message);
-s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
-                  IoctlvMessageData* vectors, s32 messageQueueId, IpcMessage* message);
+s32 IoctlFDAsync(s32 fd, u32 requestId, void* inputBuffer, u32 inputBufferLength, void* outputBuffer,
+                 u32 outputBufferLength, s32 messageQueueId, IpcMessage* message);
+s32 IoctlvFDAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors,
+                  s32 messageQueueId, IpcMessage* message);

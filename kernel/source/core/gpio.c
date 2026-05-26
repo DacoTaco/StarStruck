@@ -81,6 +81,5 @@ void ResetGPIODevices(void)
 	set32(HW_GPIO1OUT, read32(HW_GPIO1OUT) & ((0xFF000000 | GP_ALL) ^ GP_DISPIN));
 
  //wakeup/reset all devices except some cpu stuff?
-	set32(HW_RESETS, read32(HW_RESETS) |
-	                     (0x0FFFFFFF ^ (HW_RST_UNKN1 | RSTB_CPU | SRSTB_CPU)));
+	set32(HW_RESETS, read32(HW_RESETS) | (0x0FFFFFFF ^ (HW_RST_UNKN1 | RSTB_CPU | SRSTB_CPU)));
 }

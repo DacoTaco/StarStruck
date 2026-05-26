@@ -51,7 +51,7 @@ static s32 flashHandle = -1;
 int main(int argc, char** argv)
 //---------------------------------------------------------------------------------
 {
-	// Initialise the video system
+ // Initialise the video system
 	VIDEO_Init();
 
 	vmode = VIDEO_GetPreferredMode(NULL);
@@ -66,10 +66,9 @@ int main(int argc, char** argv)
 	if (vmode->viTVMode & VI_NON_INTERLACE)
 		VIDEO_WaitVSync();
 
-	// Initialize the console
+ // Initialize the console
 	CON_Init(xfb, (vmode->viWidth + vmode->viXOrigin - 640) / 2,
-	         (vmode->viHeight + vmode->viYOrigin - 480) / 2, 640, 480,
-	         640 * VI_DISPLAY_PIX_SZ);
+	         (vmode->viHeight + vmode->viYOrigin - 480) / 2, 640, 480, 640 * VI_DISPLAY_PIX_SZ);
 	CheckForGecko();
 	VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
 
@@ -82,8 +81,8 @@ int main(int argc, char** argv)
 	printf("AHB Access Enabled\n");
 	write16(0x0d8b420a, 0);
 
-	// This function initialises the attached controllers
-	//WPAD_Init();
+ // This function initialises the attached controllers
+ //WPAD_Init();
 	PAD_Init();
 
 	if (!fatMountSimple("sd", &__io_wiisd))
@@ -98,11 +97,11 @@ int main(int argc, char** argv)
 	flashHandle = IOS_Open("/dev/flash", IPC_OPEN_READ);
 	if (flashHandle < 0)
 	{
-		//patch IOS and retry via /dev/fs
+  //patch IOS and retry via /dev/fs
 		printf("\npatching /dev/fs open...");
 		if (PatchIOS({ OpenFSAsFlash }) > 0)
 		{
-			//the patch should have made /dev/fs work like /dev/flash on open
+   //the patch should have made /dev/fs work like /dev/flash on open
 			flashHandle = IOS_Open("/dev/fs", IPC_OPEN_READ);
 			if (flashHandle >= 0)
 				PatchIOS({ OpenFSAsFS }); //restore the original open check for /dev/fs, so it doesn't mess with stuff
@@ -129,11 +128,10 @@ int main(int argc, char** argv)
 	NandStats stats = { .PageSize = pageSize,
 		                .EccSize = eccSize,
 		                .ChunkSize = pageSize + eccSize,
-		                .PagesPerBlock =
-		                    1u << ((info.BlockSizeBitShift - info.PageSizeBitShift) & 0xFF) };
+		                .PagesPerBlock = 1u << ((info.BlockSizeBitShift - info.PageSizeBitShift) & 0xFF) };
 
-	gprintf("NAND stats: page=%u ecc=%u chunk=%u pages per block=%u\n",
-	        stats.PageSize, stats.EccSize, stats.ChunkSize, stats.PagesPerBlock);
+	gprintf("NAND stats: page=%u ecc=%u chunk=%u pages per block=%u\n", stats.PageSize, stats.EccSize,
+	        stats.ChunkSize, stats.PagesPerBlock);
 
 	while (1)
 	{
@@ -205,14 +203,12 @@ int main(int argc, char** argv)
 						totalWritten += wrote;
 						// advance past the bad page
 						IOS_Seek(flashHandle, 1, SEEK_CUR);
-						gprintf("Wrote bad page, total=%llu bytes\n",
-						        (unsigned long long)totalWritten);
+						gprintf("Wrote bad page, total=%llu bytes\n", (unsigned long long)totalWritten);
 						continue;
 					}
 
 					if (readData < 0)
-						throw new std::string("IOS_Read failed with error code " +
-						                      std::to_string(readData));
+						throw new std::string("IOS_Read failed with error code " + std::to_string(readData));
 
 					if (readData == 0)
 						break;

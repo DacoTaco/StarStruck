@@ -12,14 +12,13 @@
 
 // tells calls_inner.h to produce the <name>FD syscall functions in its include, with this template
 // they all share this exact shape, except Open
-#define WRAP_INNER_CALL(rettype, name, arguments)                                 \
-	rettype name##FD(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments))                    \
-	{                                                                             \
-		const u32 state = DisableInterrupts();                                    \
-		const rettype ret =                                                       \
-		    name##FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_EVEN arguments), NULL, NULL); \
-		RestoreInterrupts(state);                                                 \
-		return ret;                                                               \
+#define WRAP_INNER_CALL(rettype, name, arguments)                                                 \
+	rettype name##FD(ARGEXTRACT_DO(ARGEXTRACT_FULL arguments))                                    \
+	{                                                                                             \
+		const u32 state = DisableInterrupts();                                                    \
+		const rettype ret = name##FD_Inner(ARGEXTRACT_DO(ARGEXTRACT_EVEN arguments), NULL, NULL); \
+		RestoreInterrupts(state);                                                                 \
+		return ret;                                                                               \
 	}
 
 #include "calls_inner.h"

@@ -111,8 +111,7 @@ void AddDeviceToDevList(DeviceListEntry* deviceList, u8 entryIndex, s8 deviceInd
 	deviceList[entryIndex].ProductId = Devices[deviceIndex].ProductId;
 }
 
-int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
-                       u8 interfaceClass, u8* countOutput)
+int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount, u8 interfaceClass, u8* countOutput)
 {
 	u8 interfaceIndex;
 	s8 deviceIndex;
@@ -129,8 +128,7 @@ int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
 		}
 		else
 		{
-			for (interfaceIndex = 0; interfaceIndex < Devices[deviceIndex].NumberOfInterfaces;
-			     interfaceIndex++)
+			for (interfaceIndex = 0; interfaceIndex < Devices[deviceIndex].NumberOfInterfaces; interfaceIndex++)
 			{
 				if (Devices[deviceIndex].Interfaces[interfaceIndex].InterfaceClass == interfaceClass)
 				{
@@ -147,8 +145,7 @@ int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
 	return IPC_SUCCESS;
 }
 
-void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting,
-                  u8 class, u8 subClass, u8 protocol)
+void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting, u8 class, u8 subClass, u8 protocol)
 {
 	int i = Devices[deviceIndex].NumberOfInterfaces;
 	DeviceInterface* iface = &Devices[deviceIndex].Interfaces[i];

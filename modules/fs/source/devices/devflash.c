@@ -43,8 +43,7 @@ bool IsDevFlashFileHandle(s32 fd)
 	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)fd;
 
   // Check if fd points within our _interfaceHandles array
-	if (handle >= &_interfaceHandles[0] &&
-	    handle <= &_interfaceHandles[MAX_FLASH_HANDLES - 1])
+	if (handle >= &_interfaceHandles[0] && handle <= &_interfaceHandles[MAX_FLASH_HANDLES - 1])
 		return true;
 
 	return false;
@@ -56,23 +55,23 @@ bool IsDevFlashFileHandle(s32 fd)
 // meaning when a handle is reused it will continue from the last position instead of starting at 0 lawl
 s32 OpenFlashHandle(void)
 {
-	// Loop through the available handle slots
+ // Loop through the available handle slots
 	for (u32 i = 0; i < MAX_FLASH_HANDLES; i++)
 	{
 		FlashInterfaceHandle* handle = &_interfaceHandles[i];
 
-		// Check if slot is free
+  // Check if slot is free
 		if (handle->IsActive == 0)
 		{
-			// Mark as active
+   // Mark as active
 			handle->IsActive = 1;
 
-			// Return the address of this handle as the file descriptor
+   // Return the address of this handle as the file descriptor
 			return (s32)handle;
 		}
 	}
 
-	// All slots are occupied
+ // All slots are occupied
 	return IPC_ENOMEM; // -5
 }
 #endif
@@ -103,8 +102,7 @@ static inline s32 HandleReadMessage(FlashInterfaceHandle* handle, const ReadMess
 }
 
 // Handle IOS_WRITE for /dev/flash
-static inline s32 HandleWriteMessage(FlashInterfaceHandle* handle,
-                                     const WriteMessage* writeMsg,
+static inline s32 HandleWriteMessage(FlashInterfaceHandle* handle, const WriteMessage* writeMsg,
                                      const u32 pageSize, const u32 pageWithEcc)
 {
 	u32 writeLen = writeMsg->Length;
@@ -135,8 +133,7 @@ static inline s32 HandleCloseMessage(FlashInterfaceHandle* handle)
 	return IPC_SUCCESS;
 }
 
-static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle,
-                                     const IoctlMessage* ioctlMsg,
+static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle, const IoctlMessage* ioctlMsg,
                                      const NandSizeInformation* nandSizeInfo)
 {
 	void* const outBuffer = ioctlMsg->IoBuffer;
@@ -159,12 +156,10 @@ static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle,
 
 		case IOCTL_ERASE_BLOCK:
 		case IOCTL_CHECK_BAD_BLOCK:
-			const u32 blockShift =
-			    ((CLUSTER_SIZE_SHIFT - nandSizeInfo->PageSizeBitShift) & 0xFF);
+			const u32 blockShift = ((CLUSTER_SIZE_SHIFT - nandSizeInfo->PageSizeBitShift) & 0xFF);
 
-			return ioctlMsg->Ioctl == IOCTL_ERASE_BLOCK ?
-			           DeleteCluster(handle->NandPosition >> blockShift) :
-			           CheckClusterBlocks(handle->NandPosition >> blockShift);
+			return ioctlMsg->Ioctl == IOCTL_ERASE_BLOCK ? DeleteCluster(handle->NandPosition >> blockShift) :
+			                                              CheckClusterBlocks(handle->NandPosition >> blockShift);
 
 		default:
 			return IPC_EINVAL;
@@ -175,10 +170,10 @@ static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle,
 static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMessage* seekMsg,
                                     const NandSizeInformation* nandSizeInfo)
 {
-	// Calculate total pages in NAND
+ // Calculate total pages in NAND
 	u32 totalPages = GetNandMaxPages(nandSizeInfo);
 
-	// Calculate new position based on whence
+ // Calculate new position based on whence
 	u32 newPos;
 	switch (seekMsg->Whence)
 	{
@@ -195,7 +190,7 @@ static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMess
 			return IPC_EINVAL;
 	}
 
-	// Validate new position is within bounds
+ // Validate new position is within bounds
 	if (newPos >= totalPages)
 		return IPC_EINVAL;
 
@@ -206,28 +201,26 @@ static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMess
 // Handle all IPC messages for /dev/flash device
 s32 HandleDevFlashMessage(IpcMessage* message)
 {
-	// Get handle from file descriptor
+ // Get handle from file descriptor
 	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)message->Request.FileDescriptor;
 
-	// Get NAND size info (IOS 58 calls FS_GetNandSizeInfo_ at function start)
+ // Get NAND size info (IOS 58 calls FS_GetNandSizeInfo_ at function start)
 	NandSizeInformation nandSizeInfo;
 	s32 ret = GetNandSizeInfo(&nandSizeInfo);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
-	// Calculate page size with ECC for read/write operations
+ // Calculate page size with ECC for read/write operations
 	const u32 pageSize = GetNandPageSize(&nandSizeInfo);
 	const u32 pageWithEcc = pageSize + GetNandEccSize(&nandSizeInfo);
 
-	// Route to appropriate handler based on command type
+ // Route to appropriate handler based on command type
 	switch (message->Request.Command)
 	{
 		case IOS_READ:
-			return HandleReadMessage(handle, &message->Request.Message.Read,
-			                         pageSize, pageWithEcc);
+			return HandleReadMessage(handle, &message->Request.Message.Read, pageSize, pageWithEcc);
 		case IOS_WRITE:
-			return HandleWriteMessage(handle, &message->Request.Message.Write,
-			                          pageSize, pageWithEcc);
+			return HandleWriteMessage(handle, &message->Request.Message.Write, pageSize, pageWithEcc);
 		case IOS_SEEK:
 			return HandleSeekMessage(handle, &message->Request.Message.Seek, &nandSizeInfo);
 		case IOS_IOCTL:

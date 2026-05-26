@@ -83,11 +83,9 @@ const u32 PPC_WiiResetVector[0x0D] = {
 	 __DATE__[2] == 't' ? 0x10 :                               \
 	 __DATE__[2] == 'v' ? 0x11 :                               \
 	                      0x12)
-#define _BUILD_DAY_BCD \
-	((__DATE__[4] == ' ' ? 0 : ((__DATE__[4] - '0') * 16)) + (__DATE__[5] - '0'))
-#define _BUILD_YEAR_BCD (((__DATE__[9] - '0') * 16) + (__DATE__[10] - '0'))
-#define STARSTRUCK_BUILDDATE \
-	IOS_BUILDDATE(_BUILD_DAY_BCD, _BUILD_MONTH_BCD, _BUILD_YEAR_BCD)
+#define _BUILD_DAY_BCD       ((__DATE__[4] == ' ' ? 0 : ((__DATE__[4] - '0') * 16)) + (__DATE__[5] - '0'))
+#define _BUILD_YEAR_BCD      (((__DATE__[9] - '0') * 16) + (__DATE__[10] - '0'))
+#define STARSTRUCK_BUILDDATE IOS_BUILDDATE(_BUILD_DAY_BCD, _BUILD_MONTH_BCD, _BUILD_YEAR_BCD)
 
 void PPCHardReset(void)
 {
@@ -270,19 +268,16 @@ void PPCStart(void)
 	AhbFlushFrom(AHB_1);
 
 	//set some DIFlags that *might* have to do with the hardware its disabling & reenabling
-	write32(HW_RESETS, read32(HW_RESETS) |
-	                       (u32)(~(RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 |
-	                               RSTB_GFX | RSTB_GFXTCPE | RSTB_PI)));
+	write32(HW_RESETS, read32(HW_RESETS) | (u32)(~(RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 |
+	                                               RSTB_GFX | RSTB_GFXTCPE | RSTB_PI)));
 	udelay(1);
 	mask32(HW_DIFLAGS, 0x07EF8F, 0x30);
 	udelay(1);
-	set32(HW_RESETS, (RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 |
-	                  RSTB_GFX | RSTB_GFXTCPE | RSTB_PI));
+	set32(HW_RESETS, (RSTB_DSP | RSTB_IOPI | RSTB_IOSI | RSTB_AI_I2S3 | RSTB_GFX | RSTB_GFXTCPE | RSTB_PI));
 	udelay(1);
 
 	//setup some GPIOS that make no sense for GC mode
-	mask32(HW_GPIO1OUT, GP_AVE_SDA | GP_AVE_SCL | GP_SENSORBAR | GP_SLOTLED,
-	       read32(HW_GPIO1BOUT));
+	mask32(HW_GPIO1OUT, GP_AVE_SDA | GP_AVE_SCL | GP_SENSORBAR | GP_SLOTLED, read32(HW_GPIO1BOUT));
 	write32(HW_GPIO1OWNER, 0);
 	write32(HW_GPIO1DIR, GP_OUTPUTS);
 #else

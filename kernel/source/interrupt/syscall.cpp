@@ -50,18 +50,16 @@ template <typename ReturnType, typename... Args>
 constexpr ArgCounter<ReturnType, Args...> GetArgumentCount(ReturnType (*)(Args...));
 
 // Helper macro to create a SyscallEntry with automatic stack argument count deduction
-#define SYSCALL(func)                                                     \
-	{                                                                     \
-		.Handler = reinterpret_cast<const void*>(func),                   \
-		.StackArgumentCount = decltype(GetArgumentCount(func))::stackArgs \
+#define SYSCALL(func)                                                                                                     \
+	{                                                                                                                     \
+		.Handler = reinterpret_cast<const void*>(func), .StackArgumentCount = decltype(GetArgumentCount(func))::stackArgs \
 	}
 #define SYSCALL_NULL                                 \
 	{                                                \
 		.Handler = nullptr, .StackArgumentCount = 0, \
 	}
 
-typedef s32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5,
-                              u32 r6, u32 r7, u32 r8, u32 r9);
+typedef s32 (*SyscallHandler)(u32 r0, u32 r1, u32 r2, u32 r3, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8, u32 r9);
 
 static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls"))) = {
 	SYSCALL(CreateThread), //0x0000
@@ -208,18 +206,14 @@ extern "C" s32 HandleSyscall(u16 syscall)
 	if (threadContext != NULL)
 	{
 		gecko_printf("Context (%p / SPSR %08x):\n", threadContext, threadContext->StatusRegister);
-		gecko_printf("  R0-R3: %08x %08x %08x %08x\n",
-		             threadContext->Registers[0], threadContext->Registers[1],
-		             threadContext->Registers[2], threadContext->Registers[3]);
-		gecko_printf("  R4-R7: %08x %08x %08x %08x\n",
-		             threadContext->Registers[4], threadContext->Registers[5],
-		             threadContext->Registers[6], threadContext->Registers[7]);
-		gecko_printf("  R8-R11: %08x %08x %08x %08x\n",
-		             threadContext->Registers[8], threadContext->Registers[9],
-		             threadContext->Registers[10], threadContext->Registers[11]);
-		gecko_printf("  R12-R15: %08x %08x %08x %08x\n",
-		             threadContext->Registers[12], threadContext->Registers[13],
-		             threadContext->Registers[14], threadContext->Registers[15]);
+		gecko_printf("  R0-R3: %08x %08x %08x %08x\n", threadContext->Registers[0],
+		             threadContext->Registers[1], threadContext->Registers[2], threadContext->Registers[3]);
+		gecko_printf("  R4-R7: %08x %08x %08x %08x\n", threadContext->Registers[4],
+		             threadContext->Registers[5], threadContext->Registers[6], threadContext->Registers[7]);
+		gecko_printf("  R8-R11: %08x %08x %08x %08x\n", threadContext->Registers[8],
+		             threadContext->Registers[9], threadContext->Registers[10], threadContext->Registers[11]);
+		gecko_printf("  R12-R15: %08x %08x %08x %08x\n", threadContext->Registers[12],
+		             threadContext->Registers[13], threadContext->Registers[14], threadContext->Registers[15]);
 	}
 	else
 		gecko_printf("threadContext == NULL");
@@ -263,6 +257,5 @@ extern "C" s32 HandleSyscall(u16 syscall)
 	}
 
 	//dive into the handler
-	return handler(args[0], args[1], args[2], args[3], args[4], args[5],
-	               args[6], args[7], args[8], args[9]);
+	return handler(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
 }

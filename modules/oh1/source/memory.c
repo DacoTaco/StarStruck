@@ -48,8 +48,7 @@ void FreeMemory(void* ptr)
 
 WiiTransferDescriptor* AllocateTransferDescriptor(void)
 {
-	WiiTransferDescriptor* transferDescriptor =
-	    OSAlignedAllocateMemory(_moduleHeap, sizeof(WiiTransferDescriptor), 0x10);
+	WiiTransferDescriptor* transferDescriptor = OSAlignedAllocateMemory(_moduleHeap, sizeof(WiiTransferDescriptor), 0x10);
 
 	if (transferDescriptor)
 		memset(transferDescriptor, 0, sizeof(WiiTransferDescriptor));
@@ -59,8 +58,7 @@ WiiTransferDescriptor* AllocateTransferDescriptor(void)
 
 bool IsTransferDescriptorOnHead(void* ptr)
 {
-	return ptr && ((u32)ptr & 0xf) == 0 && ptr >= OH1_HEAP_BASE &&
-	       (u32)ptr < ((u32)OH1_HEAP_BASE + OH1_HEAP_SIZE);
+	return ptr && ((u32)ptr & 0xf) == 0 && ptr >= OH1_HEAP_BASE && (u32)ptr < ((u32)OH1_HEAP_BASE + OH1_HEAP_SIZE);
 }
 
 OhciTransferDescriptorIsoc* AllocateIsocTransferDescriptor(void)

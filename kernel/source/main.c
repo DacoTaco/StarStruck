@@ -92,8 +92,7 @@ void kernel_main(void)
 {
 	gecko_printf("Compat mode kernel thread init\n");
  //create IRQ Timer handler thread
-	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack,
-	                       TIMERSTACKSIZE, 0x7E, 1);
+	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack, TIMERSTACKSIZE, 0x7E, 1);
 	s32 threadId = ret;
  //set thread to run as a system thread
 	if (ret >= 0)
@@ -191,8 +190,7 @@ void kernel_main(void)
 	{
 		MemorySection section;
 		Elf32_Phdr header = headers[index];
-		if (header.p_type != PT_LOAD || (header.p_flags & 0x0FF00000) == 0 ||
-		    header.p_vaddr == (u32)__headers_addr)
+		if (header.p_type != PT_LOAD || (header.p_flags & 0x0FF00000) == 0 || header.p_vaddr == (u32)__headers_addr)
 			continue;
 
 		section.PhysicalAddress = header.p_paddr;
@@ -213,24 +211,21 @@ void kernel_main(void)
 		section.IsCached = 1;
 		s32 ret = MapMemory(&section);
 		if (ret != 0)
-			panic("Unable to map region %08x [%d bytes]\n",
-			      section.VirtualAddress, section.Size);
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
   //map cached version
 		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
 		ret = MapMemory(&section);
 		if (ret != 0)
-			panic("Unable to map region %08x [%d bytes]\n",
-			      section.VirtualAddress, section.Size);
+			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
-		printk("load segment @ [%08lx, %08lx] (%ld bytes)\n", header.p_vaddr,
-		       header.p_vaddr + header.p_memsz, header.p_memsz);
+		printk("load segment @ [%08lx, %08lx] (%ld bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz,
+		       header.p_memsz);
 
   //clear memory that didn't have stuff loaded in from the elf
 		if (header.p_filesz < header.p_memsz)
-			memset((void*)(header.p_vaddr + header.p_filesz), 0,
-			       header.p_memsz - header.p_filesz);
+			memset((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
 	}
 
 	const u32 modules_cnt = __modules_size / sizeof(ModuleInfo);
@@ -383,8 +378,7 @@ void InitialiseSystem(void)
 	ConfigureGPIO();
 	ResetGPIODevices();
 #else
-	write32(HW_RESETS, read32(HW_RESETS) |
-	                       (u32)(~(RSTB_IODI | RSTB_DIRSTB | RSTB_CPU | SRSTB_CPU)));
+	write32(HW_RESETS, read32(HW_RESETS) | (u32)(~(RSTB_IODI | RSTB_DIRSTB | RSTB_CPU | SRSTB_CPU)));
 #endif
 
  //Set clock speed
@@ -430,10 +424,8 @@ u32 _main(void)
 	InitialiseSystem();
 
 #ifndef MIOS
-	gecko_printf("IOSflags: %08x %08x %08x\n", read32(0xffffff00),
-	             read32(0xffffff04), read32(0xffffff08));
-	gecko_printf("          %08x %08x %08x\n", read32(0xffffff0c),
-	             read32(0xffffff10), read32(0xffffff14));
+	gecko_printf("IOSflags: %08x %08x %08x\n", read32(0xffffff00), read32(0xffffff04), read32(0xffffff08));
+	gecko_printf("          %08x %08x %08x\n", read32(0xffffff0c), read32(0xffffff10), read32(0xffffff14));
 #endif
 
 #ifdef MIOS
@@ -466,8 +458,7 @@ u32 _main(void)
 	InitializeThreadContext();
 
 	//create main kernel thread
-	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32*)_mainStack,
-	                            MAINSTACKSIZE, 0x7F, 1);
+	s32 threadId = CreateThread((u32)kernel_main, NULL, (u32*)_mainStack, MAINSTACKSIZE, 0x7F, 1);
 	//set thread to run as a system thread
 	Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 

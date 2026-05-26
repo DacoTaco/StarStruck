@@ -97,35 +97,34 @@ int main(void)
 			ret = GetPathUsage("/tmp", &tmpClusters, &tmpInodes);
 			if (ret == IPC_SUCCESS)
 			{
-				// If /tmp exists but has less than 2 inodes (just the dir itself),
-				// it's empty so we can skip deletion/recreation
+    // If /tmp exists but has less than 2 inodes (just the dir itself),
+    // it's empty so we can skip deletion/recreation
 				if (tmpInodes < 2)
 					goto _ClearClusterCache;
 			}
-			//all error are ignored
+   //all error are ignored
 			else if (ret != FS_ENOENT)
 				break;
 
-			// Delete existing /tmp if it exists
+   // Delete existing /tmp if it exists
 			ret = DeletePath(0, 0, "/tmp");
 			if (ret != IPC_SUCCESS && ret != FS_ENOENT)
 				break;
 
-			// Create fresh /tmp directory with full permissions (rwx for owner/group/other)
+   // Create fresh /tmp directory with full permissions (rwx for owner/group/other)
 			ret = CreateDirectory(0, 0, "/tmp", 0, 3, 3, 3);
 			if (ret != IPC_SUCCESS)
 				break;
 
-			// Fall through to clear cluster cache
+   // Fall through to clear cluster cache
 			goto _ClearClusterCache;
 		}
 		case FS_NOFILESYSTEM:
 _ClearClusterCache:
-			for (s32 i = 0; i < FS_CLUSTER_CACHE_ENTRIES; i++)
-				ClusterCacheEntries[i].FileHandle = NULL;
+			for (s32 i = 0; i < FS_CLUSTER_CACHE_ENTRIES; i++) ClusterCacheEntries[i].FileHandle = NULL;
 			break;
 		default:
-			// Other errors, fall through to main loop
+   // Other errors, fall through to main loop
 			break;
 	}
 
@@ -138,16 +137,14 @@ _Main_Loop:
 			continue;
 
 		s32 ipcRet = ret;
-		// If initialization succeeded, process the message
+  // If initialization succeeded, process the message
 		if (ret == IPC_SUCCESS)
 		{
 			if (_fsShutdown == 1)
 				ipcRet = FS_ESHUTDOWN;
-			else if (ipcMessage->Request.Command != IOS_OPEN &&
-			         IsDevFlashFileHandle(ipcMessage->Request.FileDescriptor))
+			else if (ipcMessage->Request.Command != IOS_OPEN && IsDevFlashFileHandle(ipcMessage->Request.FileDescriptor))
 				ipcRet = HandleDevFlashMessage(ipcMessage);
-			else if (ipcMessage->Request.Command != IOS_OPEN &&
-			         IsBoot2FileHandle(ipcMessage->Request.FileDescriptor))
+			else if (ipcMessage->Request.Command != IOS_OPEN && IsBoot2FileHandle(ipcMessage->Request.FileDescriptor))
 				ipcRet = HandleDevBoot2Message(ipcMessage);
 			else
 			{
@@ -181,7 +178,7 @@ _Main_Loop:
 			}
 		}
 
-		// Reply to the caller
+  // Reply to the caller
 		OSResourceReply(ipcMessage, ipcRet);
 	}
 	return 0;

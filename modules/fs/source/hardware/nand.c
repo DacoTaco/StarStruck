@@ -608,13 +608,12 @@ static void LogCommand(u32 page, CommandType commandType, s32 returnValue)
 	}
 	else
 	{
-		//oh no, an error to log
+  //oh no, an error to log
 		u32 index = 0;
 		if (NandInterfaceLog.ErrorIndex == (ERROR_LOG_SIZE - 1))
 		{
 			index = NandInterfaceLog.ErrorOverflowIndex;
-			NandInterfaceLog.ErrorOverflowIndex =
-			    (NandInterfaceLog.ErrorOverflowIndex + 1) & (ERROR_LOG_SIZE - 2);
+			NandInterfaceLog.ErrorOverflowIndex = (NandInterfaceLog.ErrorOverflowIndex + 1) & (ERROR_LOG_SIZE - 2);
 		}
 		else
 		{
@@ -673,11 +672,11 @@ static s32 SendNandCommand(u8 cmd, u8 address, u32 flags, u32 dataLength)
 
 	s32 ret = 0;
 
-	//reset the nand interface before sending the command
-	//this clears up and leftover state the interface might have been in
+ //reset the nand interface before sending the command
+ //this clears up and leftover state the interface might have been in
 	write32(NAND_CMD, 0);
 
-	// Send the command
+ // Send the command
 	const NandCommand command = { .Fields = { .Execute = 1,
 		                                      .Wait = (flags & WaitFlag) > 0,
 		                                      .GenerateIrq = (flags & IrqFlag) > 0,
@@ -700,7 +699,7 @@ static s32 SendNandCommand(u8 cmd, u8 address, u32 flags, u32 dataLength)
 	}
 	else
 	{
-		//Wait for command to end
+  //Wait for command to end
 		while (READ_CMD().Fields.Execute)
 		{
 		}
@@ -711,7 +710,7 @@ static s32 SendNandCommand(u8 cmd, u8 address, u32 flags, u32 dataLength)
 
 	ret = -1;
 return_error:
-	// Wait for command to end
+ // Wait for command to end
 	while (READ_CMD().Fields.Execute)
 	{
 	}
@@ -731,7 +730,7 @@ s32 InitializeNand(void)
 	if (IsNandInitialized())
 		return IPC_SUCCESS;
 
-	// Enable NAND controller
+ // Enable NAND controller
 	set32(NAND_CONF, 0x08000000);
 
 	s32 ret = OSCreateMessageQueue(&_irqMessageQueue, 4);
@@ -754,7 +753,7 @@ s32 InitializeNand(void)
 	if (ret != 0)
 		goto destroy_iosc_return;
 
-	// Reset/init the interface
+ // Reset/init the interface
 	ret = SendNandCommand(DEFAULT_RESET_CMD, 0, IrqFlag | WaitFlag, 0);
 	if (ret != 0)
 		goto destroy_and_return;
@@ -777,16 +776,14 @@ s32 InitializeNand(void)
 
 		memcpy(&SelectedNandChip, &SupportedNandChips[index], sizeof(NandInformation));
 
-		// Set config according to the nand information + force enable & 512MB chip
+  // Set config according to the nand information + force enable & 512MB chip
 		u32 config = 0x88000000 | (SelectedNandChip.Info.ChipType << 0x1C) |
 		             (SelectedNandChip.Info.ChipAttributes1 << 0x18) |
 		             (SelectedNandChip.Info.ChipAttributes2 << 0x10) |
-		             (SelectedNandChip.Info.ChipAttributes3 << 0x8) |
-		             SelectedNandChip.Info.ChipAttributes4;
+		             (SelectedNandChip.Info.ChipAttributes3 << 0x8) | SelectedNandChip.Info.ChipAttributes4;
 
 		write32(NAND_CONF, config);
-		write32(NAND_CLKDIV, (read32(NAND_CLKDIV) & 0xFFFFFFFE) |
-		                         SelectedNandChip.Extension.ClockDivisorValue);
+		write32(NAND_CLKDIV, (read32(NAND_CLKDIV) & 0xFFFFFFFE) | SelectedNandChip.Extension.ClockDivisorValue);
 		break;
 	}
 
@@ -811,7 +808,7 @@ destroy_iosc_return:
 destroy_irq_return:
 	OSDestroyMessageQueue(IrqMessageQueueId);
 return_init:
-	// Read config & disable its enable pin
+ // Read config & disable its enable pin
 	clear32(NAND_CONF, 0x08000000);
 	return ret;
 }
@@ -820,8 +817,7 @@ static s32 ReadNandStatus(void)
 {
 	OSDCInvalidateRange(_nandInfoBuffer, ARRAY_LENGTH(_nandInfoBuffer));
 	SetNandData(_nandInfoBuffer, (void*)-1);
-	s32 ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadStatusPrefix,
-	                          0, ReadFlag, 0x40);
+	s32 ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadStatusPrefix, 0, ReadFlag, 0x40);
 	if (ret != 0)
 		return ret;
 
@@ -835,7 +831,7 @@ s32 DeleteCluster(u32 cluster)
 {
 	s32 ret;
 
-	// Validate cluster is within NAND bounds
+ // Validate cluster is within NAND bounds
 	if (cluster >= GetMaxClusters())
 	{
 		ret = IPC_EINVAL;
@@ -848,31 +844,29 @@ s32 DeleteCluster(u32 cluster)
 		goto logAndReturn;
 	}
 
-	// Clear bit 31 of NAND_CONF before erase
+ // Clear bit 31 of NAND_CONF before erase
 	clear32(NAND_CONF, 0x80000000);
 
-	// Convert cluster to page number: cluster << (CLUSTER_SIZE_SHIFT - PageSizeBitShift)
-	u32 pageNumber =
-	    (u32)cluster
-	    << ((CLUSTER_SIZE_SHIFT - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF);
+ // Convert cluster to page number: cluster << (CLUSTER_SIZE_SHIFT - PageSizeBitShift)
+	u32 pageNumber = (u32)cluster << ((CLUSTER_SIZE_SHIFT - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF);
 	SetNandAddress(0xFFFFFFFF, pageNumber);
 
-	// Send delete prefix command (block erase setup)
+ // Send delete prefix command (block erase setup)
 	ret = SendNandCommand(SelectedNandChip.Info.Commands.DeletePrefix,
 	                      SelectedNandChip.Info.Commands.InputAddress & 0x1C, 0, 0);
 	if (ret != IPC_SUCCESS)
 		goto logAndReturn;
 
-	// Send delete command (block erase execute) with IRQ and wait
+ // Send delete command (block erase execute) with IRQ and wait
 	ret = SendNandCommand(SelectedNandChip.Info.Commands.Delete, 0, IrqFlag | WaitFlag, 0);
 	if (ret != IPC_SUCCESS)
 		goto logAndReturn;
 
-	// Read status to check if erase succeeded
+ // Read status to check if erase succeeded
 	ret = ReadNandStatus();
 
 logAndReturn:
-	// Set bit 31 of NAND_CONF after erase
+ // Set bit 31 of NAND_CONF after erase
 	set32(NAND_CONF, 0x80000000);
 	LogCommand(cluster, DeleteCommand, ret);
 	return ret;
@@ -887,7 +881,7 @@ s32 CopyCluster(u16 srcCluster, u16 dstCluster)
 	s32 ret = IPC_SUCCESS;
 	const u32 pagesPerCluster = GetPagesPerCluster();
 
-	// Copy each page within the cluster
+ // Copy each page within the cluster
 	for (u32 i = 0; i < pagesPerCluster; i++)
 	{
 		u32 srcPage = (u32)srcCluster * pagesPerCluster + i;
@@ -907,51 +901,50 @@ s32 CopyPage(u32 srcPage, u32 dstPage)
 	s32 ret = IPC_SUCCESS;
 	bool usedReadBuffer = false;
 
-	// Calculate max page count
+ // Calculate max page count
 	const u32 maxPages = GetMaxPages();
 
-	// Validate parameters
+ // Validate parameters
 	if (srcPage >= maxPages || dstPage >= maxPages || srcPage == dstPage)
 		return IPC_EINVAL;
 
 	if (!IsNandInitialized())
 		return IPC_ENOENT;
 
-	// Clear bit 31 of NAND_CONF
+ // Clear bit 31 of NAND_CONF
 	clear32(NAND_CONF, 0x80000000);
 
-	// Calculate shift amount for block comparison
-	const u32 blockShift = (SelectedNandChip.Info.SizeInfo.BlockSizeBitShift -
-	                        SelectedNandChip.Info.SizeInfo.PageSizeBitShift) &
-	                       0xFF;
+ // Calculate shift amount for block comparison
+	const u32 blockShift =
+	    (SelectedNandChip.Info.SizeInfo.BlockSizeBitShift - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF;
 
-	// Check if chip supports copy-back and pages are in same block
+ // Check if chip supports copy-back and pages are in same block
 	if (SelectedNandChip.Info.SizeInfo.SupportPageCopy == 0 ||
 	    ((srcPage >> blockShift) & (SelectedNandChip.Info.SizeInfo.PageCopyMask - 1)) !=
 	        ((dstPage >> blockShift) & (SelectedNandChip.Info.SizeInfo.PageCopyMask - 1)))
 	{
-		// Pages not in same block or no copy-back support - use read buffer
+  // Pages not in same block or no copy-back support - use read buffer
 		usedReadBuffer = true;
 
-		// Read source page into buffer
+  // Read source page into buffer
 		ret = ReadNandPage(srcPage, _readPageBuffer, _writePageBuffer, true);
 		if (ret != IPC_SUCCESS && ret != IPC_ECC && ret != IPC_ECC_CRIT)
 			goto copyPageEnd;
 
-		// Write buffer to destination page
+  // Write buffer to destination page
 		ret = WriteNandPage(dstPage, _readPageBuffer, _writePageBuffer, 0, true);
 	}
 	else
 	{
-		// Use NAND copy-back feature for same-block copies
+  // Use NAND copy-back feature for same-block copies
 		u8 readAddress = 0;
 
-		// Determine read command based on chip type
+  // Determine read command based on chip type
 		if (SelectedNandChip.Info.Commands.ReadPrefix == UNUSED_CMD)
 			readAddress = (u8)SelectedNandChip.Info.Commands.InputAddress;
 		else
 		{
-			// Setup for copy-back read
+   // Setup for copy-back read
 			SetNandAddress(0, srcPage);
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadPrefix,
 			                      SelectedNandChip.Info.Commands.InputAddress, 0, 0);
@@ -959,46 +952,44 @@ s32 CopyPage(u32 srcPage, u32 dstPage)
 				goto copyPageEnd;
 		}
 
-		// Determine which read command to use
+  // Determine which read command to use
 		u8 readCmd = SelectedNandChip.Info.Commands.ReadCopyBack == UNUSED_CMD ?
 		                 SelectedNandChip.Info.Commands.Read :
 		                 SelectedNandChip.Info.Commands.ReadCopyBack;
 
-		// Read from source
+  // Read from source
 		SetNandAddress(0, srcPage);
 		ret = SendNandCommand(readCmd, readAddress, IrqFlag | WaitFlag, 0);
 		if (ret != IPC_SUCCESS)
 			goto copyPageEnd;
 
-		// Write copy-back to destination
+  // Write copy-back to destination
 		SetNandAddress(0, dstPage);
 		ret = SendNandCommand(SelectedNandChip.Info.Commands.WriteCopyBackPrefix,
 		                      SelectedNandChip.Info.Commands.InputAddress, 0, 0);
 		if (ret != IPC_SUCCESS)
 			goto copyPageEnd;
 
-		// Check if we need delete prefix
+  // Check if we need delete prefix
 		if (SelectedNandChip.Info.Commands.WriteCopyBack != UNUSED_CMD)
 		{
-			ret = SendNandCommand(SelectedNandChip.Info.Commands.WriteCopyBack,
-			                      0, IrqFlag | WaitFlag, 0);
+			ret = SendNandCommand(SelectedNandChip.Info.Commands.WriteCopyBack, 0, IrqFlag | WaitFlag, 0);
 			if (ret != IPC_SUCCESS)
 				goto copyPageEnd;
 		}
 
-		// Read status to verify
+  // Read status to verify
 		ret = ReadNandStatus();
 	}
 
 copyPageEnd:
-	// Restore bit 31 of NAND_CONF
+ // Restore bit 31 of NAND_CONF
 	set32(NAND_CONF, 0x80000000);
 
-	// Only log if we used the read buffer path
+ // Only log if we used the read buffer path
 	if (!usedReadBuffer)
 	{
-		LogCommand(dstPage >>
-		               ((CLUSTER_SIZE_SHIFT - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF),
+		LogCommand(dstPage >> ((CLUSTER_SIZE_SHIFT - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF),
 		           CopyCommand, ret);
 	}
 
@@ -1034,11 +1025,11 @@ s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 	const u8* ecc = (u8*)eccBuffer;
 	u8* data = (u8*)dataBuffer;
 
-	/* If calculated ECC equals the stored ECC region, nothing to do */
+ /* If calculated ECC equals the stored ECC region, nothing to do */
 	if (memcmp(ecc + 0x40, ecc + readOffset, spareSize) == 0)
 		return IPC_SUCCESS;
 
-	/* Number of 32-bit ECC entries in the spare area */
+ /* Number of 32-bit ECC entries in the spare area */
 	u32 eccEntries = spareSize / 4;
 	for (u32 index = 0; index < eccEntries; index++)
 	{
@@ -1048,12 +1039,11 @@ s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 		if (eccCalc == eccRead)
 			continue;
 
-		const u32 xoredEcc = (eccRead >> 0x18 | (eccRead & 0xFF0000) >> 0x08 |
-		                      (eccRead & 0xFF00) << 0x08 | (eccRead << 0x18)) ^
-		                     (eccCalc >> 0x18 | (eccCalc & 0xFF0000) >> 0x08 |
-		                      (eccCalc & 0xFF00) << 0x08 | (eccCalc << 0x18));
+		const u32 xoredEcc =
+		    (eccRead >> 0x18 | (eccRead & 0xFF0000) >> 0x08 | (eccRead & 0xFF00) << 0x08 | (eccRead << 0x18)) ^
+		    (eccCalc >> 0x18 | (eccCalc & 0xFF0000) >> 0x08 | (eccCalc & 0xFF00) << 0x08 | (eccCalc << 0x18));
 		u32 syndrome = xoredEcc & 0x0FFF0FFF;
-		// Single-bit error in ECC
+  // Single-bit error in ECC
 		if (!((syndrome - 1) & syndrome))
 		{
 			ret = IPC_ECC;
@@ -1061,15 +1051,15 @@ s32 CorrectNandData(void* dataBuffer, void* eccBuffer)
 		}
 
 		u32 unknown = syndrome >> 0x10;
-		// Is it still recoverable?
+  // Is it still recoverable?
 		if ((((syndrome | 0xFFFFF000) ^ unknown) & 0xFFFF) != 0xFFFF)
 			return IPC_ECC_CRIT;
 
-		// Select bit 3-12
+  // Select bit 3-12
 		u32 location = (unknown >> 3) & 0x1FF;
 		u8* dataPointer = (u8*)(data + location + index * 0x200);
 		u8 correctedByte = (1 << (unknown & 0x07)) ^ *dataPointer;
-		// lol memcpy for 1 byte? silly ios, must be for the mem1 bug i suppose
+  // lol memcpy for 1 byte? silly ios, must be for the mem1 bug i suppose
 		memcpy(dataPointer, &correctedByte, 1);
 		ret = IPC_ECC;
 	}
@@ -1101,8 +1091,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, bool readEcc)
 
 	const u32 pageSize = GetPageSize();
 	const u32 eccSize = GetEccSize();
-	const u32 spareSize =
-	    4 << ((SelectedNandChip.Info.SizeInfo.PageSizeBitShift - 9) & 0xFF);
+	const u32 spareSize = 4 << ((SelectedNandChip.Info.SizeInfo.PageSizeBitShift - 9) & 0xFF);
 	SetNandAddress(0, pageNumber);
 	if (SelectedNandChip.Info.Commands.ReadPrefix != UNUSED_CMD)
 	{
@@ -1130,8 +1119,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, bool readEcc)
 	}
 
 	flags = IrqFlag | WaitFlag | ReadFlag | (!readEcc ? 0 : EccFlag);
-	ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, read_address,
-	                      flags, pageSize + eccSize);
+	ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, read_address, flags, pageSize + eccSize);
 	if (ret != 0)
 		goto return_read;
 
@@ -1152,8 +1140,7 @@ s32 ReadNandPage(u32 pageNumber, void* data, void* ecc, bool readEcc)
 		ret = CorrectNandData(data, EccBuffer);
 
 return_read:
-	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift),
-	           ReadCommand, ret);
+	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift), ReadCommand, ret);
 	return ret;
 }
 
@@ -1204,8 +1191,7 @@ s32 WriteNandPage(u32 pageNumber, void* data, void* ecc, u8 unknownWriteflag, bo
 	SetNandData(data, EccBuffer);
 	flags = IrqFlag | WriteFlag | (writeEcc ? EccFlag : 0);
 	ret = SendNandCommand(SelectedNandChip.Info.Commands.WritePrefix,
-	                      SelectedNandChip.Info.Commands.InputAddress, flags,
-	                      GetPageSize());
+	                      SelectedNandChip.Info.Commands.InputAddress, flags, GetPageSize());
 	if (ret != 0)
 		goto return_write;
 
@@ -1248,8 +1234,7 @@ s32 WriteNandPage(u32 pageNumber, void* data, void* ecc, u8 unknownWriteflag, bo
 			SetNandAddress(address, pageNumber);
 			SetNandData(EccBuffer, (void*)-1);
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.WritePrefix,
-			                      SelectedNandChip.Info.Commands.InputAddress,
-			                      IrqFlag | WriteFlag, GetEccSize());
+			                      SelectedNandChip.Info.Commands.InputAddress, IrqFlag | WriteFlag, GetEccSize());
 		}
 		else
 		{
@@ -1259,8 +1244,7 @@ s32 WriteNandPage(u32 pageNumber, void* data, void* ecc, u8 unknownWriteflag, bo
 			SetNandData(EccBuffer, (void*)-1);
 
 			ret = SendNandCommand(SelectedNandChip.Info.Commands.RandomDataInput,
-			                      SelectedNandChip.Info.Commands.InputAddress & 3,
-			                      IrqFlag | WriteFlag, GetEccSize());
+			                      SelectedNandChip.Info.Commands.InputAddress & 3, IrqFlag | WriteFlag, GetEccSize());
 		}
 
 		if (ret != 0)
@@ -1276,8 +1260,7 @@ return_write:
 		ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, 0, 0, 0);
 
 	set32(NAND_CONF, 0x08000000);
-	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift),
-	           WriteCommand, ret);
+	LogCommand(pageNumber >> (0xe - SelectedNandChip.Info.SizeInfo.PageSizeBitShift), WriteCommand, ret);
 	return ret;
 }
 
@@ -1291,11 +1274,8 @@ s32 CheckClusterBlocks(u32 cluster)
 		return IPC_NOTREADY;
 
 	s32 ret;
-	u32 unkn = (u32)(cluster >>
-	                 (((u8)SelectedNandChip.Info.SizeInfo.BlockSizeBitShift - 0x0E) & 0xFF))
-	           << ((SelectedNandChip.Info.SizeInfo.BlockSizeBitShift -
-	                SelectedNandChip.Info.SizeInfo.PageSizeBitShift) &
-	               0xFF);
+	u32 unkn = (u32)(cluster >> (((u8)SelectedNandChip.Info.SizeInfo.BlockSizeBitShift - 0x0E) & 0xFF))
+	           << ((SelectedNandChip.Info.SizeInfo.BlockSizeBitShift - SelectedNandChip.Info.SizeInfo.PageSizeBitShift) & 0xFF);
 	for (u32 i = 0; i < 2; i++)
 	{
 		if (SelectedNandChip.Info.Commands.ReadPost != UNUSED_CMD)
@@ -1303,8 +1283,7 @@ s32 CheckClusterBlocks(u32 cluster)
 			OSDCInvalidateRange(EccBuffer, GetEccSize());
 			SetNandAddress(0, unkn + i);
 			SetNandData(EccBuffer, (void*)-1);
-			ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadPost,
-			                      SelectedNandChip.Info.Commands.InputAddress,
+			ret = SendNandCommand(SelectedNandChip.Info.Commands.ReadPost, SelectedNandChip.Info.Commands.InputAddress,
 			                      IrqFlag | ReadFlag | WaitFlag, GetEccSize());
 			if (ret != 0)
 				return ret;
@@ -1325,8 +1304,7 @@ s32 CheckClusterBlocks(u32 cluster)
 
 			OSDCInvalidateRange(EccBuffer, GetEccSize());
 			SetNandData(EccBuffer, (void*)-1);
-			ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, 0,
-			                      IrqFlag | ReadFlag | WaitFlag, GetEccSize());
+			ret = SendNandCommand(SelectedNandChip.Info.Commands.Read, 0, IrqFlag | ReadFlag | WaitFlag, GetEccSize());
 			if (ret != 0)
 				return 0;
 

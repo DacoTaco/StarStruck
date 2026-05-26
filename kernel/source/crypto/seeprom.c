@@ -26,13 +26,12 @@ static u8 SEEPROM_Dummy_CommonKey[OTP_COMMONKEY_SIZE] = { 0 };
 static u32 SEEPROM_Dummy_MsId = 3;
 static u32 SEEPROM_Dummy_CaId = 2;
 static u32 SEEPROM_Dummy_NgKeyId = 0x69D2A2EF;
-static u8 SEEPROM_Dummy_NgSignature[60] = {
-	0x00, 0x50, 0xcc, 0x52, 0xdf, 0x22, 0x17, 0xf1, 0xe9, 0x3e, 0xe1, 0x9d,
-	0x5b, 0xb0, 0xe7, 0x51, 0x0e, 0x5b, 0xf4, 0xcb, 0xd2, 0x0b, 0x9f, 0xa4,
-	0xf4, 0x39, 0x45, 0x2b, 0x14, 0x9b, 0x00, 0xbd, 0xd5, 0x81, 0x3b, 0x42,
-	0xdd, 0x86, 0x03, 0xaa, 0x0b, 0xd5, 0x90, 0x9e, 0x8d, 0x5b, 0x3e, 0xd8,
-	0x2c, 0x57, 0x5b, 0x54, 0xe7, 0x5a, 0x01, 0x1f, 0x27, 0xb8, 0xa5, 0xf2
-};
+static u8 SEEPROM_Dummy_NgSignature[60] = { 0x00, 0x50, 0xcc, 0x52, 0xdf, 0x22, 0x17, 0xf1, 0xe9, 0x3e,
+	                                        0xe1, 0x9d, 0x5b, 0xb0, 0xe7, 0x51, 0x0e, 0x5b, 0xf4, 0xcb,
+	                                        0xd2, 0x0b, 0x9f, 0xa4, 0xf4, 0x39, 0x45, 0x2b, 0x14, 0x9b,
+	                                        0x00, 0xbd, 0xd5, 0x81, 0x3b, 0x42, 0xdd, 0x86, 0x03, 0xaa,
+	                                        0x0b, 0xd5, 0x90, 0x9e, 0x8d, 0x5b, 0x3e, 0xd8, 0x2c, 0x57,
+	                                        0x5b, 0x54, 0xe7, 0x5a, 0x01, 0x1f, 0x27, 0xb8, 0xa5, 0xf2 };
 
 typedef struct
 {
@@ -249,8 +248,8 @@ void SEEPROM_GetKoreanCommonKey(u8 data[OTP_COMMONKEY_SIZE])
 
 	RestoreInterrupts(cookie);
 }
-void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40],
-                         u32* ng_key_id, char ng_id_str[0x40], u8 ng_signature[60])
+void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40], u32* ng_key_id, char ng_id_str[0x40],
+                         u8 ng_signature[60])
 {
 	const u32 cookie = DisableInterrupts();
 	u32 ng_id;
@@ -261,8 +260,7 @@ void SEEPROM_GetIdsAndNg(char ms_id_str[0x40], char ca_id_str[0x40],
 		SEEPROM_ReadBuffer(0, &ms_id, sizeof(SEEPROM_Dummy_MsId) / sizeof(u16));
 		SEEPROM_ReadBuffer(2, &ca_id, sizeof(SEEPROM_Dummy_CaId) / sizeof(u16));
 		SEEPROM_ReadBuffer(4, ng_key_id, sizeof(SEEPROM_Dummy_NgKeyId) / sizeof(u16));
-		SEEPROM_ReadBuffer(6, ng_signature,
-		                   sizeof(SEEPROM_Dummy_NgSignature) / sizeof(u16));
+		SEEPROM_ReadBuffer(6, ng_signature, sizeof(SEEPROM_Dummy_NgSignature) / sizeof(u16));
 	}
 	else
 	{
@@ -349,8 +347,7 @@ s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter* data, s32* counter_write_index)
 		u32 value = 0;
 		for (u32 i = 0; i < sizeof(BOOT2_Counter); i += sizeof(u16))
 		{
-			ret = SEEPROM_ReadWord(
-			    (0x48 + current_counter * sizeof(BOOT2_Counter) + i) / sizeof(u16), &value);
+			ret = SEEPROM_ReadWord((0x48 + current_counter * sizeof(BOOT2_Counter) + i) / sizeof(u16), &value);
 			const u16 word_value = value & 0xffff;
 			memcpy(&data_ptr[i], &word_value, sizeof(u16));
 			if (ret != IPC_SUCCESS)
@@ -364,13 +361,11 @@ s32 SEEPROM_BOOT2_GetCounter(BOOT2_Counter* data, s32* counter_write_index)
 	u32 lowest_value = (u32)-1;
 	for (u32 current_counter = 0; current_counter < 2; ++current_counter)
 	{
-		if (BOOT2_ComputeCounterChecksum(&read_data[current_counter]) ==
-		    read_data[current_counter].Checksum)
+		if (BOOT2_ComputeCounterChecksum(&read_data[current_counter]) == read_data[current_counter].Checksum)
 		{
 			char* const data_ptr = (char*)(&read_data[current_counter].UpdateTag);
 			const u32 current_value = (u32)(data_ptr[3]) | ((u32)(data_ptr[2]) << 8) |
-			                          ((u32)(data_ptr[1]) << 16) |
-			                          ((u32)(data_ptr[0]) << 24);
+			                          ((u32)(data_ptr[1]) << 16) | ((u32)(data_ptr[0]) << 24);
 			if (highest_value <= current_value)
 			{
 				ptr_out = data_ptr;
@@ -415,8 +410,7 @@ s32 SEEPROM_BOOT2_UpdateCounter(const BOOT2_Counter* data, s32 counter_write_ind
 	for (u32 i = 0; i < sizeof(*data); i += sizeof(u16))
 	{
 		memcpy(&value, &data_ptr[i], sizeof(u16));
-		ret = SEEPROM_SendWord(
-		    (0x48 + (u32)counter_write_index * sizeof(*data) + i) / sizeof(u16), value);
+		ret = SEEPROM_SendWord((0x48 + (u32)counter_write_index * sizeof(*data) + i) / sizeof(u16), value);
 		if (ret != IPC_SUCCESS)
 			break;
 	}
@@ -436,8 +430,7 @@ s32 SEEPROM_NAND_GetCounter(NAND_Counter* data, s32* counter_write_index)
 		u32 value = 0;
 		for (u32 i = 0; i < sizeof(NAND_Counter); i += sizeof(u16))
 		{
-			ret = SEEPROM_ReadWord(
-			    (0x5c + current_counter * sizeof(NAND_Counter) + i) / sizeof(u16), &value);
+			ret = SEEPROM_ReadWord((0x5c + current_counter * sizeof(NAND_Counter) + i) / sizeof(u16), &value);
 			const u16 word_value = value & 0xffff;
 			memcpy(&data_ptr[i], &word_value, sizeof(u16));
 			if (ret != IPC_SUCCESS)
@@ -451,13 +444,11 @@ s32 SEEPROM_NAND_GetCounter(NAND_Counter* data, s32* counter_write_index)
 	u32 lowest_value = (u32)-1;
 	for (u32 current_counter = 0; current_counter < 3; ++current_counter)
 	{
-		if (NAND_ComputeCounterChecksum(&read_data[current_counter]) ==
-		    read_data[current_counter].Checksum)
+		if (NAND_ComputeCounterChecksum(&read_data[current_counter]) == read_data[current_counter].Checksum)
 		{
 			char* const data_ptr = (char*)(&read_data[current_counter].NandGen);
 			const u32 current_value = (u32)(data_ptr[3]) | ((u32)(data_ptr[2]) << 8) |
-			                          ((u32)(data_ptr[1]) << 16) |
-			                          ((u32)(data_ptr[0]) << 24);
+			                          ((u32)(data_ptr[1]) << 16) | ((u32)(data_ptr[0]) << 24);
 			if (highest_value <= current_value)
 			{
 				ptr_out = data_ptr;
@@ -502,8 +493,7 @@ s32 SEEPROM_NAND_UpdateCounter(const NAND_Counter* data, s32 counter_write_index
 	for (u32 i = 0; i < sizeof(*data); i += sizeof(u16))
 	{
 		memcpy(&value, &data_ptr[i], sizeof(u16));
-		ret = SEEPROM_SendWord(
-		    (0x5c + (u32)counter_write_index * sizeof(*data) + i) / sizeof(u16), value);
+		ret = SEEPROM_SendWord((0x5c + (u32)counter_write_index * sizeof(*data) + i) / sizeof(u16), value);
 		if (ret != IPC_SUCCESS)
 			break;
 	}

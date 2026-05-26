@@ -123,7 +123,5 @@ void SetDeviceProductId(s8 deviceIndex, u16 productId);
 void SetDeviceClass(s8 deviceIndex, u8 class, u8 subclass, u8 protocol);
 int SetDeviceIPCMessage(s8 deviceIndex, IpcMessage* message);
 void AddDeviceToDevList(DeviceListEntry* deviceList, u8 entryIndex, s8 deviceIndex);
-int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount,
-                       u8 interfaceClass, u8* countOutput);
-void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting,
-                  u8 class, u8 subClass, u8 protocol);
+int PopulateDeviceList(DeviceListEntry* deviceList, u8 maxCount, u8 interfaceClass, u8* countOutput);
+void AddInterface(s8 deviceIndex, u8 interfaceNumber, u8 alternateSetting, u8 class, u8 subClass, u8 protocol);

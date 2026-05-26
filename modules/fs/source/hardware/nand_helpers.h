@@ -54,11 +54,9 @@ INLINE_HELPER u32 GetSpareSize(void)
 }
 INLINE_HELPER u32 GetPagesPerBlock(void)
 {
-	return 1 << ((SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) &
-	             0xFF);
+	return 1 << ((SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF);
 }
 INLINE_HELPER u32 GetBlockIndexFromPage(u32 pageIndex)
 {
-	return pageIndex >>
-	       ((SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF);
+	return pageIndex >> ((SelectedNandSizeInfo.BlockSizeBitShift - SelectedNandSizeInfo.PageSizeBitShift) & 0xFF);
 }

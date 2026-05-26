@@ -47,6 +47,5 @@ u32 GetFreeInode(SuperBlockInfo* superblock);
 s32 UnlinkTargetInode(SuperBlockInfo* superblock, u32 parentInode, u32 targetInode);
 
 // Access control and validation
-s32 CheckUserPermissions(SuperBlockInfo* superblock, u32 inode, u32 uid,
-                         u16 gid, AccessMode mode);
+s32 CheckUserPermissions(SuperBlockInfo* superblock, u32 inode, u32 uid, u16 gid, AccessMode mode);
 s32 CheckIfFileOpen(u32 inode);
