@@ -158,7 +158,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL(IOSC_DeleteObject), //0x005C
 	SYSCALL_NULL, //0x005D
 	SYSCALL_NULL, //0x005E
-	SYSCALL_NULL, //0x005F
+	SYSCALL(IOSC_ImportPublicKey), //0x005F
 	SYSCALL_NULL, //0x0060
 	SYSCALL_NULL, //0x0061
 	SYSCALL(IOSC_SetData), //0x0062

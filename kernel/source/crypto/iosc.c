@@ -320,6 +320,40 @@ static s32 _IOSC_GenerateHash(const ShaContext* context, const void* inputData, 
 	return ret;
 }
 
+static s32 _IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle)
+{
+	KeyType keyType = PrivateKey;
+	KeySubtype keySubtype = AES_128;
+	u32 keySize = 0;
+
+ /* must be a custom slot and not the reserved RSA root key; otherwise deny access early */
+	if (keyHandle < KEYRING_CUSTOM_START_INDEX || keyHandle == RSA4096_ROOTKEY)
+		return IOSC_EACCES;
+
+ /* determine the stored type/subtype for this handle */
+	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
+	if (keyType != PublicKey)
+		return IOSC_INVALID_OBJTYPE;
+
+	s32 ret = Keyring_FindKeySize(&keySize, keyHandle);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	ret = Keyring_SetKey(keyHandle, keyData, keySize);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+ /* only accept RSA public keys here (2048 or 4096) */
+	if (keySubtype != RSA_2048 && keySubtype != RSA_4096)
+		return IOSC_EINVAL;
+
+	ret = Keyring_SetKeyMetadata(keyHandle, metadata);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	return IPC_SUCCESS;
+}
+
 static s32 IOSC_SetNewKeyKind(u32* keyHandle, KeyType type, KeySubtype subtype)
 {
 	u32 size = 0;
@@ -615,6 +649,47 @@ s32 IOSC_SEEPROM_UpdatePRNGSeed(void)
 	{                                                                                    \
 		mainRetVarName = IOSC_EACCES;                                                    \
 	}
+
+s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		u32 keySize = 0;
+
+  /* Verify caller owns this key (RSA4096_ROOTKEY is allowed inside helper) */
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+  /* Determine expected key size */
+		ret = Keyring_FindKeySize(&keySize, keyHandle);
+		if (ret != IPC_SUCCESS)
+			break;
+
+  /* Validate key data pointer */
+		ret = IOSC_CheckCurrentProcessCanRead(keyData, keySize);
+		if (ret != IPC_SUCCESS)
+			break;
+
+  /* If metadata pointer provided, validate 4 bytes */
+		if (metadata != NULL)
+		{
+			ret = IOSC_CheckCurrentProcessCanRead(metadata, sizeof(u32));
+			if (ret != IPC_SUCCESS)
+				break;
+		}
+
+  /* Call internal implementation */
+		ret = _IOSC_ImportPublicKey(keyData, metadata, keyHandle);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
 
 s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, const u32 inputSize,
                            const u32 chain_flag, void* digest, const s32 messageQueueId, IpcMessage* message)

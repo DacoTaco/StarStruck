@@ -38,6 +38,7 @@ s32 IOSC_EncryptAsync(const u32 keyHandle, void* ivData, const void* inputData, 
 s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize, void* outputData);
 s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize,
                       void* outputData, const s32 messageQueueId, IpcMessage* message);
+s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle);
 s32 IOSC_GenerateBlockMACAsync(const ShaContext* context, const void* inputData, const u32 inputSize, const void* customData,
                                const u32 customDataSize, const u32 keyHandle, const HMacCommandType hmacCommand,
                                const void* signData, const s32 messageQueueId, IpcMessage* message);

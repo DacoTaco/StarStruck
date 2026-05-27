@@ -96,6 +96,7 @@ s32 OSSetIOSCData(u32 keyHandle, u32 value);
 s32 OSGetIOSCData(u32 keyHandle, u32* value);
 s32 OSIOSCGetKeySize(u32* keySize, u32 keyHandle);
 s32 OSIOSCGetSignatureSize(u32* signatureSize, u32 keyHandle);
+s32 OSIOSCImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle);
 s32 OSIOSCEncrypt(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData);
 s32 OSIOSCEncryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData,
                        s32 messageQueueId, IpcMessage* message);
