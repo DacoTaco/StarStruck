@@ -33,9 +33,9 @@ __attribute__((target("arm"))) void udelay(u32 delay)
 
 	u32 then = read32(HW_TIMER) + ticks;
 
- //There are 2 possibilities in waiting here
- //either the HW_Timer value is smaller than our future time (regular wait)
- //or our future overflowed and we have to wait on the timer to overflow back to 0
+	//There are 2 possibilities in waiting here
+	//either the HW_Timer value is smaller than our future time (regular wait)
+	//or our future overflowed and we have to wait on the timer to overflow back to 0
 	if (read32(HW_TIMER) < then)
 	{
 		while (read32(HW_TIMER) < then);

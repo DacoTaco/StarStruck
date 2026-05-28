@@ -56,7 +56,7 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 	s32 ret = IPC_EINVAL;
 	write32(SHA_CMD, 0);
 
- //chainingMode 0 == reset. so we set the internal hash states to the initial state
+	//chainingMode 0 == reset. so we set the internal hash states to the initial state
 	if (command == InitShaState)
 	{
 		memcpy(hashContext->ShaStates, Sha1InitialState, sizeof(Sha1InitialState));
@@ -64,15 +64,15 @@ static s32 GenerateSha(ShaContext* hashContext, const void* input, const u32 inp
 		ret = IPC_SUCCESS;
 	}
 
- //floors data size to blocks of 512 bits
+	//floors data size to blocks of 512 bits
 	const u32 flooredDataSize = inputSize & (u32)(~(SHA_BLOCK_SIZE - 1));
 	DCFlushRange(input, flooredDataSize);
 	AhbFlushTo(AHB_SHA1);
 
- //happens with all commands
+	//happens with all commands
 	if (flooredDataSize != 0)
 	{
-  //check the requested blocks to be processed
+		//check the requested blocks to be processed
 		numberOfBlocks = (flooredDataSize / 64) - 1;
 		if (numberOfBlocks >= 1024)
 			return IOSC_INVALID_SIZE;

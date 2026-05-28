@@ -298,9 +298,9 @@ int sdmmc_select(void)
 	cmd.c_flags = SCF_RSP_R1B;
 	sdhc_exec_command(card.handle, &cmd);
 	gecko_printf("%s: resp=%x\n", __FUNCTION__, MMC_R1(cmd.c_resp));
- //	sdhc_dump_regs(card.handle);
+	//	sdhc_dump_regs(card.handle);
 
- //	gecko_printf("present state = %x\n", HREAD4(hp, SDHC_PRESENT_STATE));
+	//	gecko_printf("present state = %x\n", HREAD4(hp, SDHC_PRESENT_STATE));
 	if (cmd.c_error)
 	{
 		gecko_printf("sdmmc: MMC_SELECT card failed with %d.\n", cmd.c_error);
@@ -337,7 +337,7 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void* data)
 {
 	struct sdmmc_command cmd;
 
- //	gecko_printf("%s(%u, %u, %p)\n", __FUNCTION__, blk_start, blk_count, data);
+	//	gecko_printf("%s(%u, %u, %p)\n", __FUNCTION__, blk_start, blk_count, data);
 	if (card.inserted == 0)
 	{
 		gecko_printf("sdmmc: READ: no card inserted.\n");
@@ -444,7 +444,7 @@ int sdmmc_get_sectors(void)
 		return -1;
 	}
 
- //	sdhc_error(sdhci->reg_base, "num sectors = %u", sdhci->num_sectors);
+	//	sdhc_error(sdhci->reg_base, "num sectors = %u", sdhci->num_sectors);
 
 	return card.num_sectors;
 }

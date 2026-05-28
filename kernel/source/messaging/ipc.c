@@ -166,7 +166,7 @@ void IpcHandler(void)
 	if (ret != IPC_SUCCESS)
 		return;
 
- // enable incoming & outgoing ipc messages from PPC
+	// enable incoming & outgoing ipc messages from PPC
 	if ((read32(HW_IPC_PPCCTRL) & (IPC_PPC_IY1 | IPC_PPC_IY2)) == 0)
 		write32(HW_IPC_PPCCTRL, read32(HW_IPC_PPCCTRL) & (IPC_PPC_IY1 | IPC_PPC_IY2));
 
@@ -176,7 +176,7 @@ void IpcHandler(void)
 	IpcMessage* messageFromPPC = NULL;
 	while (1)
 	{
-  //wait for a valid message
+		//wait for a valid message
 		while (ReceiveMessage(messageQueue, (void**)&messagePointer, None) != IPC_SUCCESS);
 		messageFromPPC = (void*)read32(HW_IPC_PPCMSG);
 		if (messagePointer->Request.Command == IOS_REPLY)
@@ -221,7 +221,7 @@ void IpcHandler(void)
 		messageFromPPC->Request.RequestCommand = messageFromPPC->Request.Command;
 		ret = IPC_SUCCESS;
 
-  // systematically check pointers for access and invalidate them
+		// systematically check pointers for access and invalidate them
 		switch (messageFromPPC->Request.Command)
 		{
 			default:
@@ -385,7 +385,7 @@ static void IpcInitMessageQueues(void)
 
 void IpcInit(void)
 {
- //init ipc interrupts
+	//init ipc interrupts
 	write32(HW_IPC_ARMCTRL, (IPC_ARM_IX1 | IPC_ARM_IX2));
 	IpcInitMessageQueues();
 }
@@ -447,10 +447,10 @@ s32 SendMessageCheckReceive(IpcMessage* message, ResourceManager* resource)
 
 void ipc_shutdown(void)
 {
- // Don't kill message registers so our PPC side doesn't get confused
- //write32(HW_IPC_ARMMSG, 0);
- //write32(HW_IPC_PPCMSG, 0);
- // Do kill flags so Nintendo's SDK doesn't get confused
+	// Don't kill message registers so our PPC side doesn't get confused
+	//write32(HW_IPC_ARMMSG, 0);
+	//write32(HW_IPC_PPCMSG, 0);
+	// Do kill flags so Nintendo's SDK doesn't get confused
 	write32(HW_IPC_PPCCTRL, IPC_CTRL_RESET);
 	write32(HW_IPC_ARMCTRL, IPC_CTRL_RESET);
 	irq_disable(IRQ_IPC);

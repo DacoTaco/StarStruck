@@ -14,8 +14,8 @@ Copyright (C) 2008, 2009	Hector Martin "marcan" <marcan@marcansoft.com>
 typedef enum
 {
 	AHB_STARLET = 0, //or MEM2 or some controller or bus or ??
-	AHB_1 = 1, //ppc or something else???
-	AHB_UNKN2 = 2, //Unknown
+	AHB_1 = 1,       //ppc or something else???
+	AHB_UNKN2 = 2,   //Unknown
 	AHB_NAND = 3,
 	AHB_AES = 4,
 	AHB_SHA1 = 5,
@@ -24,7 +24,7 @@ typedef enum
 	AHB_UNKN8 = 8, //Unknown
 	AHB_SDHC = 9,
 	AHB_UNKN10 = 0x0A, //Unknown
-	AHB_OHCI = 0x0B, //Unknown
+	AHB_OHCI = 0x0B,   //Unknown
 	AHB_UNKN12 = 0x0C, //Unknown
 } AHBDEV;
 

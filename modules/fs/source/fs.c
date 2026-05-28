@@ -41,10 +41,10 @@ static s32 ProcessOpenMessage(IpcMessage* message)
 	bool openFlash = false;
 #endif
 
- // Check if path starts with "/dev/"
+	// Check if path starts with "/dev/"
 	if (strncmp(path, "/dev/", 5) == 0)
 	{
-  // Check for "/dev/fs"
+		// Check for "/dev/fs"
 		if (strncmp(path + 5, "fs", 3) == 0)
 			openFs = true;
 #ifdef ENABLE_DEV_FLASH
@@ -57,7 +57,7 @@ static s32 ProcessOpenMessage(IpcMessage* message)
 			return FS_EINVAL;
 	}
 
- // Handle based on detected device type
+	// Handle based on detected device type
 	if (openFs)
 		return GetFSHandle(uid, gid, SFFSErasedNode, 0, 0);
 #ifdef ENABLE_DEV_FLASH
@@ -91,32 +91,32 @@ int main(void)
 	switch (ret)
 	{
 		case IPC_SUCCESS: {
-      // Get usage info for /tmp directory
+			// Get usage info for /tmp directory
 			u32 tmpClusters;
 			u32 tmpInodes;
 			ret = GetPathUsage("/tmp", &tmpClusters, &tmpInodes);
 			if (ret == IPC_SUCCESS)
 			{
-    // If /tmp exists but has less than 2 inodes (just the dir itself),
-    // it's empty so we can skip deletion/recreation
+				// If /tmp exists but has less than 2 inodes (just the dir itself),
+				// it's empty so we can skip deletion/recreation
 				if (tmpInodes < 2)
 					goto _ClearClusterCache;
 			}
-   //all error are ignored
+			//all error are ignored
 			else if (ret != FS_ENOENT)
 				break;
 
-   // Delete existing /tmp if it exists
+			// Delete existing /tmp if it exists
 			ret = DeletePath(0, 0, "/tmp");
 			if (ret != IPC_SUCCESS && ret != FS_ENOENT)
 				break;
 
-   // Create fresh /tmp directory with full permissions (rwx for owner/group/other)
+			// Create fresh /tmp directory with full permissions (rwx for owner/group/other)
 			ret = CreateDirectory(0, 0, "/tmp", 0, 3, 3, 3);
 			if (ret != IPC_SUCCESS)
 				break;
 
-   // Fall through to clear cluster cache
+			// Fall through to clear cluster cache
 			goto _ClearClusterCache;
 		}
 		case FS_NOFILESYSTEM:
@@ -124,7 +124,7 @@ _ClearClusterCache:
 			for (s32 i = 0; i < FS_CLUSTER_CACHE_ENTRIES; i++) ClusterCacheEntries[i].FileHandle = NULL;
 			break;
 		default:
-   // Other errors, fall through to main loop
+			// Other errors, fall through to main loop
 			break;
 	}
 
@@ -137,7 +137,7 @@ _Main_Loop:
 			continue;
 
 		s32 ipcRet = ret;
-  // If initialization succeeded, process the message
+		// If initialization succeeded, process the message
 		if (ret == IPC_SUCCESS)
 		{
 			if (_fsShutdown == 1)
@@ -178,7 +178,7 @@ _Main_Loop:
 			}
 		}
 
-  // Reply to the caller
+		// Reply to the caller
 		OSResourceReply(ipcMessage, ipcRet);
 	}
 	return 0;

@@ -53,7 +53,7 @@ static u8 gecko_console_enabled = 0;
 static u32 _gecko_command(u32 command)
 {
 	u32 i;
- // Memory Card Port B (Channel 1, Device 0, Frequency 3 (32Mhz Clock))
+	// Memory Card Port B (Channel 1, Device 0, Frequency 3 (32Mhz Clock))
 	write32(EXI1_CSR, 0xd0);
 	write32(EXI1_DATA, command);
 	write32(EXI1_CR, 0x19);
@@ -66,7 +66,7 @@ static u32 _gecko_command(u32 command)
 static u32 _gecko_getid(void)
 {
 	u32 i;
- // Memory Card Port B (Channel 1, Device 0, Frequency 3 (32Mhz Clock))
+	// Memory Card Port B (Channel 1, Device 0, Frequency 3 (32Mhz Clock))
 	write32(EXI1_CSR, 0xd0);
 	write32(EXI1_DATA, 0);
 	write32(EXI1_CR, 0x19);
@@ -93,7 +93,7 @@ u32 _gecko_recvbyte(u8* recvbyte)
 	i = _gecko_command(0xA0000000);
 	if (i & 0x08000000)
 	{
-  // Return 1 if byte was received
+		// Return 1 if byte was received
 		*recvbyte = (i >> 16) & 0xff;
 		return 1;
 	}

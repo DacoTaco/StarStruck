@@ -18,11 +18,11 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 	u32 clusterCount = 0;
 	u32 inodeCount = 1; // Start at 1 to count the current directory
 
-  // Get the first child inode from the parent's StartCluster field
+	// Get the first child inode from the parent's StartCluster field
 	FileSystemTableEntry* parentEntry = GetFstEntry(superblock, inode);
 	u32 currentInode = parentEntry->StartCluster;
 
-  // Traverse the sibling chain
+	// Traverse the sibling chain
 	while (currentInode != SFFSErasedNode)
 	{
 		FileSystemTableEntry* entry = GetFstEntry(superblock, currentInode);
@@ -31,14 +31,14 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 		switch (action)
 		{
 			case MarkInodePending:
-    // Set high bit of FileSize to mark as pending delete
+				// Set high bit of FileSize to mark as pending delete
 				FileSystemTableEntry* markEntry = GetFstEntry(superblock, currentInode);
 				markEntry->FileSize |= FILE_DELETED_FLAG;
 				break;
 			case UnlinkInode:
 				break;
 			case CheckIfOpenInode:
-    // if its not a file, skip
+				// if its not a file, skip
 				for (int i = 0; i < FS_MAX_FILE_HANDLES; i++)
 				{
 					FSHandle* handle = &_fileHandles[i];
@@ -48,30 +48,30 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 				break;
 
 			case GetUsedClusters:
-    // if its not a file, skip
+				// if its not a file, skip
 				if (entryType != S_IFREG)
 					break;
 
-    // Check if file is open - use handle's size if so
+				// Check if file is open - use handle's size if so
 				u32 handleIndex = 0;
 				for (; handleIndex < FS_MAX_FILE_HANDLES; handleIndex++)
 				{
 					FSHandle* handle = &_fileHandles[handleIndex];
 					if (handle->InUse == 1 && handle->Inode == currentInode)
 					{
-      // File is open, use handle's size
+						// File is open, use handle's size
 						clusterCount += (entry->FileSize + (CLUSTER_SIZE - 1)) >> CLUSTER_SIZE_SHIFT;
 						break;
 					}
 				}
-    // File not open, use FST entry's file size
+				// File not open, use FST entry's file size
 				if (handleIndex == FS_MAX_FILE_HANDLES)
 					clusterCount += (entry->FileSize + (CLUSTER_SIZE - 1)) >> CLUSTER_SIZE_SHIFT;
 
 				break;
 
 			case GetUsedInodes:
-    // if its not a file, skip
+				// if its not a file, skip
 				if (entryType != S_IFREG)
 					break;
 
@@ -82,7 +82,7 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 				break;
 		}
 
-  // If this is a directory, recurse into it
+		// If this is a directory, recurse into it
 		if (entryType == S_IFDIR)
 		{
 			s32 recursiveResult = ProcessInodeAction(superblock, currentInode, action);
@@ -101,8 +101,8 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 			}
 		}
 
-  // Unlink action: free FAT chain and clear FST entry
-  // This is done AFTER recursion so subdirectories are cleaned first
+		// Unlink action: free FAT chain and clear FST entry
+		// This is done AFTER recursion so subdirectories are cleaned first
 		if (action == UnlinkInode)
 		{
 			if (entryType == S_IFREG)
@@ -117,16 +117,16 @@ s32 ProcessInodeAction(SuperBlockInfo* superblock, u32 inode, InodeAction action
 				}
 			}
 
-   // Clear the FST entry attributes
+			// Clear the FST entry attributes
 			entry->Mode.Value = 0;
 			RemoveUsedInodeStats(1);
 		}
 
-  // Move to the next sibling
+		// Move to the next sibling
 		currentInode = entry->Sibling;
 	}
 
- // Return appropriate value based on action
+	// Return appropriate value based on action
 	if (action == GetUsedClusters)
 		return (s32)clusterCount;
 	if (action == GetUsedInodes)
@@ -155,18 +155,18 @@ u32 FindInode(SuperBlockInfo* superblock, u32 parentInode, const char* name)
 		*componentPtr = '\0';
 		componentPtr = component;
 
-  // Check if component name is too long (max 12 chars for SFFS)
+		// Check if component name is too long (max 12 chars for SFFS)
 		if (strnlen(componentPtr, MAX_FILE_SIZE + 1) == (MAX_FILE_SIZE + 1))
 		{
 			error = FS_EINVAL;
 			break;
 		}
 
-  // Get the StartCluster of the current directory (first child inode)
+		// Get the StartCluster of the current directory (first child inode)
 		FileSystemTableEntry* entry = GetFstEntry(superblock, currentInode);
 		currentInode = entry->StartCluster;
 
-  // Search through siblings for matching name
+		// Search through siblings for matching name
 		for (; currentInode != SFFSErasedNode; currentInode = entry->Sibling)
 		{
 			entry = GetFstEntry(superblock, currentInode);
@@ -191,8 +191,8 @@ u32 FindInode(SuperBlockInfo* superblock, u32 parentInode, const char* name)
 // Path must start with '/'
 u32 FindInodeByPath(SuperBlockInfo* superblock, const char* path)
 {
- // If path is just "/", return root inode (0)
- // otherwise, skip leading '/' and search from root
+	// If path is just "/", return root inode (0)
+	// otherwise, skip leading '/' and search from root
 	return path[1] == '\0' ? 0 : FindInode(superblock, 0, path + 1);
 }
 
@@ -202,16 +202,16 @@ s32 UnlinkTargetInode(SuperBlockInfo* superblock, u32 parentInode, u32 targetIno
 	FileSystemTableEntry* parentEntry = GetFstEntry(superblock, parentInode);
 	FileSystemTableEntry* targetEntry = GetFstEntry(superblock, targetInode);
 
- // Check if target is first child (parent's StartCluster points to target)
+	// Check if target is first child (parent's StartCluster points to target)
 	if (parentEntry->StartCluster == targetInode)
 	{
-  // Update parent's StartCluster to point to target's sibling
+		// Update parent's StartCluster to point to target's sibling
 		u16 targetSibling = targetEntry->Sibling;
 		parentEntry->StartCluster = targetSibling;
 	}
 	else
 	{
-  // Traverse sibling chain to find the inode that points to target
+		// Traverse sibling chain to find the inode that points to target
 		bool found = false;
 		u32 currentInode = parentEntry->StartCluster;
 
@@ -221,7 +221,7 @@ s32 UnlinkTargetInode(SuperBlockInfo* superblock, u32 parentInode, u32 targetIno
 
 			if (currentEntry->Sibling == targetInode)
 			{
-    // Found it - update current's sibling to skip target
+				// Found it - update current's sibling to skip target
 				u16 targetSibling = targetEntry->Sibling;
 				currentEntry->Sibling = targetSibling;
 				found = true;
@@ -235,7 +235,7 @@ s32 UnlinkTargetInode(SuperBlockInfo* superblock, u32 parentInode, u32 targetIno
 			return FS_ENOENT;
 	}
 
- // Clear the mode value to mark this FST entry as unused.
+	// Clear the mode value to mark this FST entry as unused.
 	targetEntry->Mode.Value = S_IFZERO;
 
 	return IPC_SUCCESS;
@@ -247,7 +247,7 @@ s32 CheckIfFileOpen(u32 inode)
 	for (u32 i = 0; i < FS_MAX_FILE_HANDLES; i++)
 	{
 		FSHandle* handle = &_fileHandles[i];
-  // Check both InUse flag and Inode match
+		// Check both InUse flag and Inode match
 		if (handle->InUse != 0 && handle->Inode == inode)
 		{
 			return FS_EFDOPEN;
@@ -284,12 +284,12 @@ u32 GetFreeInode(SuperBlockInfo* superblock)
 	{
 		FileSystemTableEntry* entry = GetFstEntry(superblock, i);
 
-  // Check if entry type is S_IFZERO (unused/free)
-  // IOS checks: (Mode.Value & 3) == 0, which checks the Type field (top 2 bits)
+		// Check if entry type is S_IFZERO (unused/free)
+		// IOS checks: (Mode.Value & 3) == 0, which checks the Type field (top 2 bits)
 		if (entry->Mode.Fields.Type == S_IFZERO)
 			return i;
 	}
 
- // No free inode found
+	// No free inode found
 	return SFFSErasedNode;
 }

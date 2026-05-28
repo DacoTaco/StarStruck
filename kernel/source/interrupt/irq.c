@@ -28,7 +28,7 @@ EventHandler eventHandlers[MAX_DEVICES];
 
 void IrqInit(void)
 {
- //enable timer, nand, aes, sha1, reset & unknown12 interrupts
+	//enable timer, nand, aes, sha1, reset & unknown12 interrupts
 	write32(HW_ARMIRQMASK, IRQF_TIMER | IRQF_NAND | IRQF_AES | IRQF_SHA1 | IRQF_UNKN12 | IRQF_RESET);
 	set32(HW_DIFLAGS, 6);
 }
@@ -130,7 +130,7 @@ s32 ClearAndEnableDIInterrupt(void)
 #ifdef MIOS
 void ClearAndEnableIPCInterrupt(u32 interrupts)
 {
- //only enable timer
+	//only enable timer
 	write32(HW_ARMIRQMASK, IRQF_TIMER);
 	u32 inter = DisableInterrupts();
 	u32 flags = 0;
@@ -244,21 +244,21 @@ void irq_shutdown(void)
 
 void IrqHandler(ThreadContext* context)
 {
- //Enqueue current thread
+	//Enqueue current thread
 	CurrentThread->ThreadState = Ready;
 	ThreadQueue_PushThread(&SchedulerQueue, CurrentThread);
 
 #ifndef MIOS
- //set dacr so we can access everything
+	//set dacr so we can access everything
 	SetDomainAccessControlRegister(0x55555555);
 #endif
 
 	u32 flags = read32(HW_ARMIRQFLAG) & read32(HW_ARMIRQMASK);
- //gecko_printf("In IRQ handler: 0x%08x\n", flags);
+	//gecko_printf("In IRQ handler: 0x%08x\n", flags);
 
 	if (flags & IRQF_TIMER)
 	{
-  //gecko_printf("IRQ: Timer\n");
+		//gecko_printf("IRQ: Timer\n");
 		write32(HW_ALARM, 0);
 		write32(HW_ARMIRQFLAG, IRQF_TIMER);
 		EnqueueEventHandler(IRQ_TIMER);
@@ -266,19 +266,19 @@ void IrqHandler(ThreadContext* context)
 
 	if (flags & IRQF_OHCI1)
 	{
-  //gecko_printf("IRQ: OHCI1\n");
+		//gecko_printf("IRQ: OHCI1\n");
 		clear32(HW_ARMIRQMASK, IRQF_OHCI1);
 		write32(HW_ARMIRQFLAG, IRQF_OHCI1);
 		EnqueueEventHandler(IRQ_OHCI1);
 	}
 
- //power button
+	//power button
 	if (flags & IRQF_GPIO1)
 	{
-  //gecko_printf("IRQ: GPIO1\n");
+		//gecko_printf("IRQ: GPIO1\n");
 #ifdef MIOS
 		clear32(HW_ARMIRQMASK, IRQ_GPIO1);
-  //MIOS Executes something here. is it like a reset?
+		//MIOS Executes something here. is it like a reset?
 #else
 		write32(HW_GPIO1INTFLAG, 0xFFFFFF); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_GPIO1);
@@ -288,15 +288,15 @@ void IrqHandler(ThreadContext* context)
 #ifdef MIOS
 	if (flags & IRQF_UNKNMIOS)
 	{
-  //gecko_printf("IRQ: UNKNMIOS\n");
+		//gecko_printf("IRQ: UNKNMIOS\n");
 		clear32(HW_ARMIRQMASK, IRQ_UNKNMIOS);
-  //MIOS Executes something here. is it like a reset?
+		//MIOS Executes something here. is it like a reset?
 	}
 #else
 
 	if (flags & IRQF_NAND)
 	{
-  //gecko_printf("IRQ: NAND\n");
+		//gecko_printf("IRQ: NAND\n");
 		EnqueueEventHandler(IRQ_NAND);
 		write32(NAND_CMD, 0x7fffffff); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_NAND);
@@ -304,37 +304,37 @@ void IrqHandler(ThreadContext* context)
 
 	if (flags & IRQF_GPIO1B)
 	{
-  //gecko_printf("IRQ: GPIO1B\n");
+		//gecko_printf("IRQ: GPIO1B\n");
 		write32(HW_GPIO1BINTFLAG, 0xFFFFFF); // shut it up
 		write32(HW_ARMIRQFLAG, IRQF_GPIO1B);
 	}
 	if (flags & IRQF_RESET)
 	{
-  //gecko_printf("IRQ: RESET\n");
+		//gecko_printf("IRQ: RESET\n");
 		write32(HW_ARMIRQFLAG, IRQF_RESET);
 	}
 	if (flags & IRQF_IPC)
 	{
-  //gecko_printf("IRQ: IPC\n");
+		//gecko_printf("IRQ: IPC\n");
 		clear32(HW_ARMIRQMASK, IRQF_IPC);
 		write32(HW_ARMIRQFLAG, IRQF_IPC);
 		EnqueueEventHandler(IRQ_IPC);
 	}
 	if (flags & IRQF_SHA1)
 	{
-  //gecko_printf("IRQ: SHA1\n");
+		//gecko_printf("IRQ: SHA1\n");
 		write32(HW_ARMIRQFLAG, IRQF_SHA1);
 		EnqueueEventHandler(IRQ_SHA1);
 	}
 	if (flags & IRQF_AES)
 	{
-  //gecko_printf("IRQ: AES\n");
+		//gecko_printf("IRQ: AES\n");
 		write32(HW_ARMIRQFLAG, IRQF_AES);
 		EnqueueEventHandler(IRQ_AES);
 	}
 	if (flags & IRQF_SDHC)
 	{
-  //gecko_printf("IRQ: SDHC\n");
+		//gecko_printf("IRQ: SDHC\n");
 		clear32(HW_ARMIRQMASK, IRQF_SDHC);
 		write32(HW_ARMIRQFLAG, IRQF_SDHC);
 		sdhc_irq();

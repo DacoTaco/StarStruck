@@ -23,19 +23,19 @@ void _configureUsbController(u32 hardwareRevision)
 	if (hardwareRevision > 2)
 		hardwareRevision = 2;
 
- //IOS does something weird here. it has an array somewhere with the following data
- //data : 02 00 00 00 04 00 00 00 05 0F 00 00
- //yet it only loads 1 or 2 bytes? o.O
- //code in ghidra :
- /* 	_USB_REG_B0 = (((byte)ARRAY_ffff9ea8[hardwareRevision * 4] & 0xf) * 5 - 4 & 0xff) << 8 | 0x20000;
+	//IOS does something weird here. it has an array somewhere with the following data
+	//data : 02 00 00 00 04 00 00 00 05 0F 00 00
+	//yet it only loads 1 or 2 bytes? o.O
+	//code in ghidra :
+	/* 	_USB_REG_B0 = (((byte)ARRAY_ffff9ea8[hardwareRevision * 4] & 0xf) * 5 - 4 & 0xff) << 8 | 0x20000;
 		_USB_REG_B4 = ((byte)ARRAY_ffff9ea8[hardwareRevision * 4] & 0xf) << 8 | ((byte)ARRAY_ffff9ea8[hardwareRevision * 4 + 1] & 0xf) << 0x17 | 0x2014;*/
 
- //result on wii : rev 1 -> B0 = 0x21018, B4 : 0x2414
+	//result on wii : rev 1 -> B0 = 0x21018, B4 : 0x2414
 	u32 index = hardwareRevision << 2;
 	u8 value = _usbConfigurations[index] & 0x0F;
 	u8 subValue = _usbConfigurations[index + 1] & 0x0F;
 
- //yay, usb controller magic values!
+	//yay, usb controller magic values!
 	write32(USB_REG_B0, ((((value * 5) - 4) & 0xFF) << 8) | 0x20000);
 	write32(USB_REG_B4, value << 8 | subValue << 0x17 | 0x2014);
 }

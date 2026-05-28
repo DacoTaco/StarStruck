@@ -76,7 +76,7 @@ typedef struct
 	DeviceType DeviceType;
 	u8 Zero;
 	u8 PortIndex;
-	u8 LowSpeed2;  // unused
+	u8 LowSpeed2; // unused
 	u8 IsLowSpeed;
 	u8 MaxPower;
 	u16 VendorId;

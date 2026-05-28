@@ -83,17 +83,17 @@ static inline void WriteRegister32(u32 address, u32 value)
 
 //IOS Patches
 const IosPatch OpenFSAsFlash = {
- //Pattern
+	//Pattern
 	{
-	    0x23, 0x00, //mov        r3,#0x0
-	    0x2b, 0x01, //cmp        r3,#0x1
-	    0xd1, 0x02, //bne        LAB_200057f6
+	    0x23, 0x00,             //mov        r3,#0x0
+	    0x2b, 0x01,             //cmp        r3,#0x1
+	    0xd1, 0x02,             //bne        LAB_200057f6
 	    0xf7, 0xff, 0xfe, 0x00, //bl         FS_OpenInterface
-	    0xe0, 0x1a, //b          LAB_2000582c
+	    0xe0, 0x1a,             //b          LAB_2000582c
 
 	},
 
- //Apply Patch
+	//Apply Patch
 	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x01);
@@ -101,17 +101,17 @@ const IosPatch OpenFSAsFlash = {
 };
 
 const IosPatch OpenFSAsFS = {
- //Pattern
+	//Pattern
 	{
-	    0x23, 0x01, //mov        r3,#0x0
-	    0x2b, 0x01, //cmp        r3,#0x1
-	    0xd1, 0x02, //bne        LAB_200057f6
+	    0x23, 0x01,             //mov        r3,#0x0
+	    0x2b, 0x01,             //cmp        r3,#0x1
+	    0xd1, 0x02,             //bne        LAB_200057f6
 	    0xf7, 0xff, 0xfe, 0x00, //bl         FS_OpenInterface
-	    0xe0, 0x1a, //b          LAB_2000582c
+	    0xe0, 0x1a,             //b          LAB_2000582c
 
 	},
 
- //Apply Patch
+	//Apply Patch
 	[](u8* address) {
 	    gprintf("Found /dev/flash open check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 1, 0x00);
@@ -120,17 +120,17 @@ const IosPatch OpenFSAsFS = {
 
 //Ahbprot : 68 1B -> 0x23 0xFF
 const IosPatch AhbProtPatcher = {
- //Pattern - patch by tuedj
+	//Pattern - patch by tuedj
 	{
-	    0x68, 0x5B, // ldr r3,[r3,#4]  ; get TMD pointer
+	    0x68, 0x5B,             // ldr r3,[r3,#4]  ; get TMD pointer
 	    0x22, 0xEC, 0x00, 0x52, // movls r2, 0x1D8
-	    0x18, 0x9B, // adds r3, r3, r2 ; add offset of access rights field in TMD
-	    0x68, 0x1B, // ldr r3, [r3]    ; load access rights (haxxme!)
-	    0x46, 0x98, // mov r8, r3      ; store it for the DVD video bitcheck later
-	    0x07, 0xDB // lsls r3, r3, #31; check AHBPROT bit
+	    0x18, 0x9B,             // adds r3, r3, r2 ; add offset of access rights field in TMD
+	    0x68, 0x1B,             // ldr r3, [r3]    ; load access rights (haxxme!)
+	    0x46, 0x98,             // mov r8, r3      ; store it for the DVD video bitcheck later
+	    0x07, 0xDB              // lsls r3, r3, #31; check AHBPROT bit
 	},
 
- //Apply Patch
+	//Apply Patch
 	[](u8* address) {
 	    gprintf("Found ES_AHBPROT check @ 0x%X, patching...\n", address);
 	    WriteRegister8((u32)address + 8, 0x23); // li r3, 0xFF.aka, make it look like the TMD had max settings

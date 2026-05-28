@@ -35,7 +35,7 @@ static inline u32 _read32(u32 addr)
 int main(int argc, char** argv)
 //---------------------------------------------------------------------------------
 {
- // Initialise the video system
+	// Initialise the video system
 	VIDEO_Init();
 
 	vmode = VIDEO_GetPreferredMode(NULL);
@@ -50,14 +50,14 @@ int main(int argc, char** argv)
 	if (vmode->viTVMode & VI_NON_INTERLACE)
 		VIDEO_WaitVSync();
 
- // Initialize the console
+	// Initialize the console
 	CON_Init(xfb, (vmode->viWidth + vmode->viXOrigin - 640) / 2,
 	         (vmode->viHeight + vmode->viYOrigin - 480) / 2, 640, 480, 640 * VI_DISPLAY_PIX_SZ);
 	CheckForGecko();
 	VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
 
- // This function initialises the attached controllers
- //WPAD_Init();
+	// This function initialises the attached controllers
+	//WPAD_Init();
 	PAD_Init();
 
 	printf("Hello World!\n");
@@ -72,17 +72,17 @@ int main(int argc, char** argv)
 	s8 mini_loaded = 0;
 	while (1)
 	{
-  // Call WPAD_ScanPads each loop, this reads the latest controller states
+		// Call WPAD_ScanPads each loop, this reads the latest controller states
 		WPAD_ScanPads();
 		PAD_ScanPads();
 
-  // WPAD_ButtonsDown tells us which buttons were pressed in this loop
-  // this is a "one shot" state which will not fire again until the button has been released
+		// WPAD_ButtonsDown tells us which buttons were pressed in this loop
+		// this is a "one shot" state which will not fire again until the button has been released
 		u32 pressed = 0; //WPAD_ButtonsDown(0);
 		u32 gcPressed ATTRIBUTE_ALIGN(32) = PAD_ButtonsDown(0);
 		u32 output ATTRIBUTE_ALIGN(32) = 0xB16B00B5;
 
-  // We return to the launcher application via exit
+		// We return to the launcher application via exit
 		if (pressed & WPAD_BUTTON_HOME || gcPressed & PAD_BUTTON_START)
 		{
 			if (!mini_loaded)
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 			printf("poking MEM2\n");
 			*(vu32*)0x90001234 = 0x9001CAFE;
 			DCFlushRange((void*)0x90001234, 4);
-   /*write32(0x91234567, 0x9001CAFE);
+			/*write32(0x91234567, 0x9001CAFE);
 			DCFlushRange((void*)0x90001234, 4);   */
 			printf("opening ES : %d\n", __ES_Init());
 			printf("sending IOS_Ioctl : 0x%08X - 0x%08X\n", (u32)&pressed, (u32)&output);
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 			if (mini_loaded)
 				continue;
 
-   //load mini
+			//load mini
 			gprintf("loading mini...\n");
 
 			s32 fd = -1;
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 				memcpy(mini, armboot_bin, armboot_bin_size);
 				DCFlushRange(mini, armboot_bin_size);
 
-    //time to drop the exploit bomb on /dev/sha
+				//time to drop the exploit bomb on /dev/sha
 				fd = IOS_Open("/dev/sha", 0);
 				if (fd < 0)
 					throw "Failed to open /dev/sha : " + std::to_string(fd);
@@ -146,27 +146,27 @@ int main(int argc, char** argv)
 				if (params == NULL)
 					throw "failed to alloc IOS call data";
 
-    //overwrite the thread 0 state with address 0 (0x80000000)
+				//overwrite the thread 0 state with address 0 (0x80000000)
 				memset(params, 0, sizeof(ioctlv) * 4);
 				params[1].data = (void*)0xFFFE0028;
 				params[1].len = 0;
 				DCFlushRange(params, sizeof(ioctlv) * 4);
 
-    //set code to load new ios via syscall 43
+				//set code to load new ios via syscall 43
 				memcpy((void*)0x80000000, loadkernel_bin, loadkernel_bin_size);
 				DCFlushRange((void*)0x80000000, loadkernel_bin_size);
 				ICInvalidateRange((void*)0x80000000, loadkernel_bin_size);
 
-    //send sha init command
+				//send sha init command
 				mini_loaded = 1;
 				s32 ret = IOS_Ioctlv(fd, 0x00, 1, 2, params);
 				if (ret < 0)
 					throw "failed to send SHA init : " + std::to_string(ret);
 
-    //invalidate fd as its no longer valid
+				//invalidate fd as its no longer valid
 				fd = -1;
 
-    //this is stuff done by libogc when reloading IOS, this is copy paste of that :)
+				//this is stuff done by libogc when reloading IOS, this is copy paste of that :)
 				raw_irq_handler_t irq_handler;
 				__MaskIrq(IM_PI_ACR);
 				irq_handler = IRQ_Free(IRQ_PI_ACR);

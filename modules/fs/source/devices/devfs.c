@@ -29,12 +29,12 @@ s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size)
 	s32 fd = NAND_RESULT_ACCESS;
 	u32 index = 0;
 
- // Find first free handle
+	// Find first free handle
 	for (index = 0; index < FS_MAX_FILE_HANDLES; index++)
 	{
 		if (_fileHandles[index].InUse != 0)
 			continue;
-  // Initialize the handle
+		// Initialize the handle
 		_fileHandles[index].InUse = 1;
 		_fileHandles[index].UserId = userId;
 		_fileHandles[index].GroupId = groupId;
@@ -48,7 +48,7 @@ s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size)
 		break;
 	}
 
- // Return pointer to handle as fd if found
+	// Return pointer to handle as fd if found
 	if (index != FS_MAX_FILE_HANDLES)
 		fd = (s32)&_fileHandles[index];
 	return fd;
@@ -57,32 +57,32 @@ s32 GetFSHandle(u32 userId, u16 groupId, u32 inode, AccessMode mode, u32 size)
 // Open a file and return its handle
 s32 GetFileHandle(u32 userId, u16 groupId, const char* path, AccessMode mode)
 {
- // Validate path length
+	// Validate path length
 	u32 pathLen = GetPathLength(path);
 	if (pathLen == 0)
 		return FS_EINVAL;
 
- // Get superblock
+	// Get superblock
 	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
- // Find inode for path
+	// Find inode for path
 	u32 inode = FindInodeByPath(superblock, path);
 	if (inode == SFFSErasedNode)
 		return FS_ENOENT;
 
- // Get FST entry and check if it's a file (not directory)
+	// Get FST entry and check if it's a file (not directory)
 	FileSystemTableEntry* fstEntry = GetFstEntry(superblock, inode);
 	if ((fstEntry->Mode.Fields.Type & S_IFMT) != S_IFREG)
 		return FS_EINVAL;
 
- // Check permissions
+	// Check permissions
 	s32 ret = CheckUserPermissions(superblock, inode, userId, groupId, mode);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
- // Allocate handle and return as fd
+	// Allocate handle and return as fd
 	s32 fd = GetFSHandle(userId, groupId, inode, mode, fstEntry->FileSize);
 	if (fd < 0)
 		return FS_EFDEXHAUSTED;
@@ -95,16 +95,16 @@ s32 CloseHandle(FSHandle* handle)
 {
 	s32 ret = IPC_SUCCESS;
 
- // Validate handle pointer
+	// Validate handle pointer
 	if ((s32)handle < 0)
 		return FS_EINVAL;
 
- // Get superblock
+	// Get superblock
 	SuperBlockInfo* superblock = SelectSuperBlock();
 	if (superblock == NULL)
 		return FS_NOFILESYSTEM;
 
- // Flush superblock if needed
+	// Flush superblock if needed
 	if (handle->ShouldFlushSuperblock != 0)
 	{
 		ret = TryWriteSuperblock();
@@ -112,7 +112,7 @@ s32 CloseHandle(FSHandle* handle)
 			return ret;
 	}
 
- // Mark handle as inactive
+	// Mark handle as inactive
 	handle->InUse = 0;
 
 	return ret;
@@ -124,11 +124,11 @@ s32 HandleDevFsClose(IpcMessage* message)
 	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
 	s32 ret = IPC_SUCCESS;
 
- // Check if handle has an error stored
+	// Check if handle has an error stored
 	if (handle->Error != 0)
 		ret = (s32)handle->Error;
 
- // Find and flush any cached cluster data for this handle
+	// Find and flush any cached cluster data for this handle
 	ClusterCacheEntry* cache = FindCachedCluster(handle);
 	if (cache != NULL)
 	{
@@ -136,12 +136,12 @@ s32 HandleDevFsClose(IpcMessage* message)
 		if (flushRet != IPC_SUCCESS)
 			ret = flushRet;
 
-  // Clear the cache entry
+		// Clear the cache entry
 		cache->FileHandle = NULL;
 	}
 
- // Check if this is the special /dev/fs handle (Inode = 0xFFFF)
- // If so, just mark as closed without further action
+	// Check if this is the special /dev/fs handle (Inode = 0xFFFF)
+	// If so, just mark as closed without further action
 	if (handle->Inode == SFFSErasedNode)
 		handle->InUse = 0;
 	else // Close regular file handle
@@ -159,16 +159,16 @@ s32 HandleDevFsRead(IpcMessage* message)
 {
 	FSHandle* handle = (FSHandle*)message->Request.FileDescriptor;
 
- // Propagate any deferred error stored on the handle
+	// Propagate any deferred error stored on the handle
 	s32 ret = (s32)handle->Error;
 	if (ret != 0)
 		return ret;
 
- // The /dev/fs control handle (Inode == SFFSErasedNode) cannot be directly read
+	// The /dev/fs control handle (Inode == SFFSErasedNode) cannot be directly read
 	if (handle->Inode == SFFSErasedNode)
 		return FS_EINVAL;
 
- // Require read permission (AccessMode::Read, bit 0)
+	// Require read permission (AccessMode::Read, bit 0)
 	if ((handle->Mode & Read) == 0)
 		return FS_EACCESS;
 
@@ -176,7 +176,7 @@ s32 HandleDevFsRead(IpcMessage* message)
 	u32 readLen = message->Request.Message.Read.Length;
 	s32 progress = 0;
 
- // Clamp to the bytes actually remaining in the file
+	// Clamp to the bytes actually remaining in the file
 	if (handle->Size < readLen + handle->FilePointer)
 		readLen = handle->Size - handle->FilePointer;
 
@@ -186,7 +186,7 @@ s32 HandleDevFsRead(IpcMessage* message)
 		cache = FindCachedCluster(handle);
 		if (cache != NULL && cache->DataOffset == (handle->FilePointer & CLUSTER_MASK))
 		{
-   // Cache hit: copy the required bytes from the buffered cluster
+			// Cache hit: copy the required bytes from the buffered cluster
 			u32 offsetInCluster = handle->FilePointer - cache->DataOffset;
 			u32 bytesToCopy = CLUSTER_SIZE - offsetInCluster;
 			if (readLen < bytesToCopy)
@@ -199,15 +199,15 @@ s32 HandleDevFsRead(IpcMessage* message)
 			continue;
 		}
 
-  // Cache miss – determine how to load the next cluster
+		// Cache miss – determine how to load the next cluster
 		u32 clusterAlignedPos = handle->FilePointer & CLUSTER_MASK;
 		u8* outputBuffer;
 		if ((handle->FilePointer & (CLUSTER_SIZE - 1)) == 0 && readLen >= CLUSTER_SIZE &&
 		    ((u32)(output + progress) & 0x3F) == 0)
 		{
-   // Fast path: fptr is cluster-aligned, caller buffer is 64-byte aligned,
-   // and at least one full cluster remains – read directly into output buffer
-   // (no intermediate copy through the cache).
+			// Fast path: fptr is cluster-aligned, caller buffer is 64-byte aligned,
+			// and at least one full cluster remains – read directly into output buffer
+			// (no intermediate copy through the cache).
 			outputBuffer = output + progress;
 			readLen -= CLUSTER_SIZE;
 			progress += (s32)CLUSTER_SIZE;
@@ -219,8 +219,8 @@ s32 HandleDevFsRead(IpcMessage* message)
 		}
 		else
 		{
-   // Normal path: load the cluster into a cache entry; the data will be
-   // served byte-by-byte on the next loop iteration(s).
+			// Normal path: load the cluster into a cache entry; the data will be
+			// served byte-by-byte on the next loop iteration(s).
 			ClusterCacheEntry* entry;
 			if (cache == NULL)
 			{
@@ -262,16 +262,16 @@ s32 HandleDevFsWrite(IpcMessage* message)
 	u32 writeLen = message->Request.Message.Write.Length;
 	s32 progress = 0;
 
- // Propagate any deferred error stored on the handle
+	// Propagate any deferred error stored on the handle
 	s32 ret = (s32)handle->Error;
 	if (ret != 0)
 		return ret;
 
- // The /dev/fs control handle (Inode == SFFSErasedNode) cannot be written
+	// The /dev/fs control handle (Inode == SFFSErasedNode) cannot be written
 	if (handle->Inode == SFFSErasedNode)
 		return FS_EINVAL;
 
- // Require write permission (AccessMode::Write, bit 1)
+	// Require write permission (AccessMode::Write, bit 1)
 	if ((handle->Mode & Write) == 0)
 		return FS_EACCESS;
 
@@ -281,15 +281,15 @@ s32 HandleDevFsWrite(IpcMessage* message)
 		cache = FindCachedCluster(handle);
 		if (cache == NULL || cache->DataOffset != (handle->FilePointer & CLUSTER_MASK))
 		{
-   // Cache miss: the desired cluster is not in the cache
+			// Cache miss: the desired cluster is not in the cache
 			u32 clusterAlignedPos = handle->FilePointer & CLUSTER_MASK;
 
 			if ((handle->FilePointer & (CLUSTER_SIZE - 1)) == 0 && writeLen >= CLUSTER_SIZE &&
 			    ((u32)(writeData + progress) & 0x3F) == 0)
 			{
-    // Fast path: fptr is cluster-aligned, at least one full cluster remains,
-    // and the caller's buffer is 64-byte aligned – write straight to NAND
-    // without staging through the cluster cache.
+				// Fast path: fptr is cluster-aligned, at least one full cluster remains,
+				// and the caller's buffer is 64-byte aligned – write straight to NAND
+				// without staging through the cluster cache.
 				ret = CheckFreeClustersCached();
 				if (ret != IPC_SUCCESS)
 					return ret;
@@ -312,8 +312,8 @@ s32 HandleDevFsWrite(IpcMessage* message)
 				continue;
 			}
 
-   // Slow path: stage the cluster through the cache so sub-cluster and
-   // unaligned writes can be merged with existing file data.
+			// Slow path: stage the cluster through the cache so sub-cluster and
+			// unaligned writes can be merged with existing file data.
 			if (cache == NULL)
 				cache = GetClusterCacheEntry(handle);
 			else
@@ -325,20 +325,20 @@ s32 HandleDevFsWrite(IpcMessage* message)
 
 			cache->DataOffset = clusterAlignedPos;
 
-   // Pre-load how much existing file data lives in this cluster slot.
-   // If the write position is at or beyond EOF, DataSize == 0 and we
-   // can skip reading – the cluster will be entirely new data.
+			// Pre-load how much existing file data lives in this cluster slot.
+			// If the write position is at or beyond EOF, DataSize == 0 and we
+			// can skip reading – the cluster will be entirely new data.
 			u32 remaining = handle->Size - clusterAlignedPos;
 			cache->DataSize = remaining < CLUSTER_SIZE ? remaining : CLUSTER_SIZE;
 			if (cache->DataSize == 0)
 				continue;
 
-   // Read the existing cluster content so that we can do a partial overwrite
+			// Read the existing cluster content so that we can do a partial overwrite
 			ret = SeekFile(handle, (s32)clusterAlignedPos, SeekSet);
 			if (ret != IPC_SUCCESS)
 				return ret;
 
-   // Temporarily grant read permission if the handle was opened write-only
+			// Temporarily grant read permission if the handle was opened write-only
 			bool needsReadPerm = (handle->Mode & Read) == 0;
 			if (needsReadPerm)
 				handle->Mode |= Read;
@@ -347,17 +347,17 @@ s32 HandleDevFsWrite(IpcMessage* message)
 			if (needsReadPerm)
 				handle->Mode &= ~(u32)Read;
 
-   // On next iteration the cache hit branch takes over
+			// On next iteration the cache hit branch takes over
 			if (ret != IPC_SUCCESS)
 				return ret;
 		}
 		else
 		{
-   // Cache hit: fptr is within the already-loaded cluster
+			// Cache hit: fptr is within the already-loaded cluster
 			if (!cache->Unallocated)
 			{
-    // First write to this cache entry: verify space is available before
-    // marking it dirty to avoid leaving the cache in an inconsistent state.
+				// First write to this cache entry: verify space is available before
+				// marking it dirty to avoid leaving the cache in an inconsistent state.
 				ret = CheckFreeClustersCached();
 				if (ret != IPC_SUCCESS)
 					return ret;
@@ -379,15 +379,15 @@ s32 HandleDevFsWrite(IpcMessage* message)
 			if (handle->Size < newFptr)
 				handle->Size = newFptr;
 
-   // Extend DataSize if the write moved fptr past the previously tracked end
+			// Extend DataSize if the write moved fptr past the previously tracked end
 			if (cache->DataOffset + cache->DataSize < handle->FilePointer)
 				cache->DataSize = handle->FilePointer - cache->DataOffset;
 
-   // If fptr is still inside the cluster, keep accumulating writes
+			// If fptr is still inside the cluster, keep accumulating writes
 			if ((handle->FilePointer & (CLUSTER_SIZE - 1)) != 0)
 				continue;
 
-   // Cluster boundary reached – flush to NAND
+			// Cluster boundary reached – flush to NAND
 			ret = FlushCachedCluster(cache);
 			if (ret != IPC_SUCCESS)
 				return ret;
@@ -449,8 +449,8 @@ s32 HandleDevFsIoctl(IpcMessage* message)
 
 			SFFSStatistics* out = (SFFSStatistics*)ioctl->IoBuffer;
 			ret = GetStats(out);
-   // Adjust free/used cluster counts to account for dirty cache entries
-   // that are not yet flushed to NAND
+			// Adjust free/used cluster counts to account for dirty cache entries
+			// that are not yet flushed to NAND
 			u32 dirtyCount = 0;
 			for (u32 i = 0; i < FS_CLUSTER_CACHE_ENTRIES; i++)
 			{
@@ -501,7 +501,7 @@ s32 HandleDevFsIoctl(IpcMessage* message)
 			return DeletePath(handle->UserId, handle->GroupId, (const char*)ioctl->InputBuffer);
 
 		case IOCTL_RENAME:
-   // Expect two MAX_FILE_PATH buffers concatenated: source path then destination path
+			// Expect two MAX_FILE_PATH buffers concatenated: source path then destination path
 			const FileRenameParameter* paths = (const FileRenameParameter*)ioctl->InputBuffer;
 			return Rename(handle->UserId, handle->GroupId, paths->Source, paths->Destination);
 
@@ -519,15 +519,15 @@ s32 HandleDevFsIoctl(IpcMessage* message)
 			                             (u32)versionControlParameters->Attributes);
 
 		case IOCTL_GETFILESTATS:
-   // Propagate any error recorded on the handle (e.g. from a failed open)
+			// Propagate any error recorded on the handle (e.g. from a failed open)
 			if (handle->Error != 0)
 				return (s32)handle->Error;
 
-   // Stats are only available when the file was opened for reading
+			// Stats are only available when the file was opened for reading
 			if ((handle->Mode & Read) == 0)
 				return FS_EACCESS;
 
-   // Control/directory handles (no backing inode) don't carry file stats
+			// Control/directory handles (no backing inode) don't carry file stats
 			if (handle->Inode == SFFSErasedNode)
 				return FS_EINVAL;
 
@@ -553,9 +553,9 @@ s32 HandleDevFsIoctlv(IpcMessage* message)
 	switch (ioctlvMessage->Ioctl)
 	{
 		case IOCTLV_READDIR: {
-   //parameters are :
-   // in: [filepath, num_entries (optional)],
-   //out: [name_list (optional), num_entries]
+			//parameters are :
+			// in: [filepath, num_entries (optional)],
+			//out: [name_list (optional), num_entries]
 			if (ioctlvMessage->MessageData[0].Length != MAX_FILE_PATH)
 				return FS_EINVAL;
 
@@ -582,9 +582,9 @@ s32 HandleDevFsIoctlv(IpcMessage* message)
 			return ReadDirectory(handle->UserId, handle->GroupId, filePath, files, numberOfEntries);
 		}
 		case IOCTLV_GETUSAGE: {
-   // parameters are:
-   // in: [filepath]
-   // out: [clusters, inodes]
+			// parameters are:
+			// in: [filepath]
+			// out: [clusters, inodes]
 			if (ioctlvMessage->InputArgc != 1 || ioctlvMessage->IoArgc != 2)
 				return FS_EINVAL;
 
@@ -597,9 +597,9 @@ s32 HandleDevFsIoctlv(IpcMessage* message)
 			                    (u32*)ioctlvMessage->MessageData[1].Data, (u32*)ioctlvMessage->MessageData[2].Data);
 		}
 		case IOCTLV_MASSCREATE: {
-   // parameters are:
-   // in: [filepath_0, ..., filepath_N-1, sizes_array]
-   // out: none
+			// parameters are:
+			// in: [filepath_0, ..., filepath_N-1, sizes_array]
+			// out: none
 			if (ioctlvMessage->InputArgc < 2 || ioctlvMessage->IoArgc != 0)
 				return FS_EINVAL;
 
@@ -607,11 +607,11 @@ s32 HandleDevFsIoctlv(IpcMessage* message)
 			IoctlvMessageData* sizesVector = &ioctlvMessage->MessageData[numberOfFiles];
 			u32* sizes = (u32*)sizesVector->Data;
 
-   // The last input vector holds the sizes array: one u32 per file
+			// The last input vector holds the sizes array: one u32 per file
 			if (sizesVector->Length != numberOfFiles * sizeof(u32))
 				return FS_EINVAL;
 
-   // Validate each file path
+			// Validate each file path
 			for (u32 i = 0; i < numberOfFiles; i++)
 			{
 				u32 pathLen = strnlen((const char*)ioctlvMessage->MessageData[i].Data, MAX_FILE_PATH);
@@ -622,7 +622,7 @@ s32 HandleDevFsIoctlv(IpcMessage* message)
 			return MassCreateFiles(handle->UserId, handle->GroupId, ioctlvMessage->MessageData, sizes, numberOfFiles);
 		}
 		default:
-   // Unknown/unsupported IOCTLV
+			// Unknown/unsupported IOCTLV
 			return FS_EINVAL;
 	}
 }

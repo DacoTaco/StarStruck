@@ -48,7 +48,7 @@ void Keyring_Init(void)
 	u8 rngSeed[OTP_RNGSEED_SIZE];
 	u32 ngId;
 
- // mark all as unused, no links, invalid types
+	// mark all as unused, no links, invalid types
 	for (s32 i = 0; i < KEYRING_METADATA_TOTAL_ENTRIES; ++i)
 	{
 		KeyringMetadata[i].IsUsed = 0;
@@ -68,7 +68,7 @@ void Keyring_Init(void)
 	SEEPROM_GetKoreanCommonKey(eepromCommonKey);
 	OTP_GetKeys(ngPrivKey, otpCommonKey, nandHmac, nandKey);
 
- // stored in plaintext in IOS, kept in the source here with a xorpad (to not have the key directly)
+	// stored in plaintext in IOS, kept in the source here with a xorpad (to not have the key directly)
 	u8 privkeyAesSd[OTP_NANDKEY_SIZE] = { 0x40, 0xe5, 0x93, 0xfa, 0xbf, 0xe7, 0xb8, 0xec,
 		                                  0xe7, 0x63, 0x1d, 0x08, 0xcc, 0x43, 0x0f, 0xaa };
 	for (u32 i = 0; i < OTP_NANDKEY_SIZE; ++i) privkeyAesSd[i] ^= otpCommonKey[i];
@@ -118,7 +118,7 @@ s16 Keyring_GetKeyIndexFitSize(const u32 keySize)
 		runningKeySize += KEYRING_SINGLE_ENTRY_KEY_MAX_SIZE;
 	}
 
- // could not fit the requested size, clear the temporarily linked entries
+	// could not fit the requested size, clear the temporarily linked entries
 	if (runningKeySize < keySize)
 	{
 		u32 keyringIndex = (u32)ret;
@@ -303,7 +303,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 {
 	switch (keyType)
 	{
-  //Public Key Lengths
+			//Public Key Lengths
 		case PublicKey:
 			if (keySubtype == RSA_4096) //RSA 4096 (512 bytes/4096 bits)
 				*keySize = 0x200;
@@ -314,7 +314,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 			else
 				return IOSC_EINVAL;
 			break;
-  //Private Key Lengths
+			//Private Key Lengths
 		case PrivateKey:
 			if (keySubtype == HMAC) //SHA-1 HMAC (20 bytes/160 bits)
 				*keySize = 0x14;
@@ -326,12 +326,12 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 				return IOSC_EINVAL;
 
 			break;
-  //Public + Private Key Combined Lengths
+			//Public + Private Key Combined Lengths
 		case PublicAndPrivateKey:
 			if (keySubtype != ECC_233)
 				return IOSC_EINVAL;
 
-   //ECC 233 (90 bytes/720 bits)
+			//ECC 233 (90 bytes/720 bits)
 			*keySize = 0x5a;
 			break;
 		case Other:

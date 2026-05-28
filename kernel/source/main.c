@@ -75,7 +75,7 @@ void DiThread()
 	CreateTimer(0, 2500, queueId, (void*)0xbabecafe);
 	while (1)
 	{
-  //don't ask. i have no idea why this is here haha
+		//don't ask. i have no idea why this is here haha
 		for (u32 i = 0; i < 0x1800000; i += 0x80000)
 		{
 			for (u32 y = 0; y < 6; y++)
@@ -91,17 +91,17 @@ void DiThread()
 void kernel_main(void)
 {
 	gecko_printf("Compat mode kernel thread init\n");
- //create IRQ Timer handler thread
+	//create IRQ Timer handler thread
 	s32 ret = CreateThread((u32)TimerHandler, NULL, (u32*)TimerMainStack, TIMERSTACKSIZE, 0x7E, 1);
 	s32 threadId = ret;
- //set thread to run as a system thread
+	//set thread to run as a system thread
 	if (ret >= 0)
 		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start IRQ thread!\n");
 
- //Boot the PPC content
+	//Boot the PPC content
 	PPCStart();
 
 	udelay(1000);
@@ -126,17 +126,17 @@ void IdleThread()
 
 void kernel_main(void)
 {
- //create IRQ Timer handler thread
+	//create IRQ Timer handler thread
 	s32 ret = CreateThread((u32)TimerHandler, NULL, NULL, 0, 0x7E, 1);
 	s32 threadId = ret;
- //set thread to run as a system thread
+	//set thread to run as a system thread
 	if (ret >= 0)
 		Threads[threadId].Context.StatusRegister |= SPSR_SYSTEM_MODE;
 
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start IRQ thread!\n");
 
- //not sure what this is about, if you know please let us know.
+	//not sure what this is about, if you know please let us know.
 	u32 hardwareVersion, hardwareRevision;
 	GetHollywoodVersion(&hardwareVersion, &hardwareRevision);
 	if (hardwareVersion == 0)
@@ -151,7 +151,7 @@ void kernel_main(void)
 		}
 	}
 
- //create AES Engine handler thread & also set it to run as system thread
+	//create AES Engine handler thread & also set it to run as system thread
 	ret = CreateThread((u32)AesEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	threadId = ret;
 	if (ret >= 0)
@@ -160,7 +160,7 @@ void kernel_main(void)
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start AES thread!\n");
 
- //create SHA Engine handler thread & also set it to run as system thread
+	//create SHA Engine handler thread & also set it to run as system thread
 	ret = CreateThread((u32)ShaEngineHandler, NULL, NULL, 0, 0x7E, 1);
 	threadId = ret;
 	if (ret > 0)
@@ -171,7 +171,7 @@ void kernel_main(void)
 
 	IOSC_InitInformation();
 
- //create IPC handler thread & also set it to run as system thread
+	//create IPC handler thread & also set it to run as system thread
 	ret = CreateThread((u32)IpcHandler, NULL, NULL, 0, 0x5C, 1);
 	threadId = ret;
 	if (ret > 0)
@@ -184,7 +184,7 @@ void kernel_main(void)
 	if (ret < 0 || StartThread(threadId) < 0)
 		panic("failed to start IPC thread!\n");
 
- //loop the program headers and map/launch all modules
+	//loop the program headers and map/launch all modules
 	Elf32_Phdr* headers = (Elf32_Phdr*)__headers_addr;
 	for (u32 index = 1; index < 0x0F; index++)
 	{
@@ -198,7 +198,7 @@ void kernel_main(void)
 		section.Domain = FLAGSTODOMAIN(header.p_flags);
 		section.Size = (header.p_memsz + 0xFFF) & 0xFFFFF000;
 
-  //set section access
+		//set section access
 		if (header.p_flags & PF_X)
 			section.AccessRights = AP_ROUSER;
 		else if (header.p_flags & PF_W)
@@ -213,7 +213,7 @@ void kernel_main(void)
 		if (ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
-  //map cached version
+		//map cached version
 		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
 		ret = MapMemory(&section);
@@ -223,7 +223,7 @@ void kernel_main(void)
 		printk("load segment @ [%08lx, %08lx] (%ld bytes)\n", header.p_vaddr, header.p_vaddr + header.p_memsz,
 		       header.p_memsz);
 
-  //clear memory that didn't have stuff loaded in from the elf
+		//clear memory that didn't have stuff loaded in from the elf
 		if (header.p_filesz < header.p_memsz)
 			memset((void*)(header.p_vaddr + header.p_filesz), 0, header.p_memsz - header.p_filesz);
 	}
@@ -252,8 +252,8 @@ void kernel_main(void)
 	u32 vector;
 	FRESULT fres = 0;
 
-   //wait for boot2 init to have worked
-   //the init loads boot2 which can block the main thread.
+	//wait for boot2 init to have worked
+	//the init loads boot2 which can block the main thread.
 	//to make it not crash, we added a idle thread that can be removed later when the boot2 booting is removed
 	threadId = CreateThread((u32)IdleThread, NULL, NULL, 0, 0x00, 1);
 	if (threadId > 0)
@@ -339,26 +339,26 @@ void InitialiseSystem(void)
 #else
 	IsWiiMode = 1;
 #endif
- //Enable PPC EXI control
+	//Enable PPC EXI control
 	set32(HW_EXICTRL, EXICTRL_ENABLE_EXI);
 
 #ifndef MIOS
- //enable protection on our MEM2 addresses & SRAM
+	//enable protection on our MEM2 addresses & SRAM
 	ProtectMemory(true, (void*)0x13620000, (void*)0x1FFFFFFF);
 
- //????
+	//????
 	write32(HW_EXICTRL, read32(HW_EXICTRL) & 0xFFFFFFEF);
 #endif
 
- //set some hollywood ahb registers????
+	//set some hollywood ahb registers????
 	if (hardwareVersion == 1 && hardwareRevision == 0)
 		write32(HW_ARB_CFG_CPU, (read32(HW_ARB_CFG_CPU) & 0xFFFF000F) | 1);
 
 #ifndef MIOS
- // ¯\_(ツ)_/¯
+	// ¯\_(ツ)_/¯
 	write32(HW_AHB_10, 0);
 
- //Set boot0 B10 & B11? found in IOS58.
+	//Set boot0 B10 & B11? found in IOS58.
 	set32(HW_BOOT0, 0xC00);
 #endif
 
@@ -370,21 +370,21 @@ void InitialiseSystem(void)
 	ConfigureVideoInterfacePLL(0);
 #endif
 
- //Configure USB Host
+	//Configure USB Host
 	ConfigureUsbController(hardwareRevision);
 
 #ifndef MIOS
- //Configure GPIO pins
+	//Configure GPIO pins
 	ConfigureGPIO();
 	ResetGPIODevices();
 #else
 	write32(HW_RESETS, read32(HW_RESETS) | (u32)(~(RSTB_IODI | RSTB_DIRSTB | RSTB_CPU | SRSTB_CPU)));
 #endif
 
- //Set clock speed
+	//Set clock speed
 	SetStarletClock();
 
- //reset registers
+	//reset registers
 #ifndef MIOS
 	write32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & ((0xFF000000 | GP_ALL) ^ GP_DISPIN));
 	write32(HW_GPIO1DIR, read32(HW_GPIO1DIR) | GP_DISPIN);
@@ -396,7 +396,7 @@ void InitialiseSystem(void)
 	write32(AES_CMD, 0);
 	write32(SHA_CMD, 0);
 
- //Enable all ARM irq's except for 2 unknown irq's ( 0x4200 )
+	//Enable all ARM irq's except for 2 unknown irq's ( 0x4200 )
 	write32(HW_ARMIRQFLAG, 0xFFFFBDFF);
 	write32(HW_ARMIRQMASK, 0);
 	write32(HW_ARMFIQMASK, 0);

@@ -18,7 +18,7 @@
 // Flash interface handle structure - tracks state of /dev/flash file handle
 typedef struct
 {
-	u32 NandPosition;  // Current page position for read/write/seek
+	u32 NandPosition; // Current page position for read/write/seek
 	bool IsActive;    // Handle open/closed state (1 = open, 0 = closed)
 } FlashInterfaceHandle;
 CHECK_SIZE(FlashInterfaceHandle, 8);
@@ -26,10 +26,10 @@ CHECK_OFFSET(FlashInterfaceHandle, 0x00, NandPosition);
 CHECK_OFFSET(FlashInterfaceHandle, 0x04, IsActive);
 
 // IOCTL commands for /dev/flash (raw NAND access)
-#define IOCTL_GET_STATS       1  // Get NAND size info (0x1C bytes)
-#define IOCTL_GET_LOG         2  // Get NAND error log (0x198 bytes)
-#define IOCTL_ERASE_BLOCK     3  // Erase block at current position
-#define IOCTL_CHECK_BAD_BLOCK 4  // Check if block is bad (-13 = bad)
+#define IOCTL_GET_STATS       1 // Get NAND size info (0x1C bytes)
+#define IOCTL_GET_LOG         2 // Get NAND error log (0x198 bytes)
+#define IOCTL_ERASE_BLOCK     3 // Erase block at current position
+#define IOCTL_CHECK_BAD_BLOCK 4 // Check if block is bad (-13 = bad)
 
 // Interface handles for /dev/flash
 #define MAX_FLASH_HANDLES     2
@@ -42,7 +42,7 @@ bool IsDevFlashFileHandle(s32 fd)
 {
 	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)fd;
 
-  // Check if fd points within our _interfaceHandles array
+	// Check if fd points within our _interfaceHandles array
 	if (handle >= &_interfaceHandles[0] && handle <= &_interfaceHandles[MAX_FLASH_HANDLES - 1])
 		return true;
 
@@ -55,23 +55,23 @@ bool IsDevFlashFileHandle(s32 fd)
 // meaning when a handle is reused it will continue from the last position instead of starting at 0 lawl
 s32 OpenFlashHandle(void)
 {
- // Loop through the available handle slots
+	// Loop through the available handle slots
 	for (u32 i = 0; i < MAX_FLASH_HANDLES; i++)
 	{
 		FlashInterfaceHandle* handle = &_interfaceHandles[i];
 
-  // Check if slot is free
+		// Check if slot is free
 		if (handle->IsActive == 0)
 		{
-   // Mark as active
+			// Mark as active
 			handle->IsActive = 1;
 
-   // Return the address of this handle as the file descriptor
+			// Return the address of this handle as the file descriptor
 			return (s32)handle;
 		}
 	}
 
- // All slots are occupied
+	// All slots are occupied
 	return IPC_ENOMEM; // -5
 }
 #endif
@@ -170,10 +170,10 @@ static inline s32 HandleIoctlMessage(FlashInterfaceHandle* handle, const IoctlMe
 static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMessage* seekMsg,
                                     const NandSizeInformation* nandSizeInfo)
 {
- // Calculate total pages in NAND
+	// Calculate total pages in NAND
 	u32 totalPages = GetNandMaxPages(nandSizeInfo);
 
- // Calculate new position based on whence
+	// Calculate new position based on whence
 	u32 newPos;
 	switch (seekMsg->Whence)
 	{
@@ -190,7 +190,7 @@ static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMess
 			return IPC_EINVAL;
 	}
 
- // Validate new position is within bounds
+	// Validate new position is within bounds
 	if (newPos >= totalPages)
 		return IPC_EINVAL;
 
@@ -201,20 +201,20 @@ static inline s32 HandleSeekMessage(FlashInterfaceHandle* handle, const SeekMess
 // Handle all IPC messages for /dev/flash device
 s32 HandleDevFlashMessage(IpcMessage* message)
 {
- // Get handle from file descriptor
+	// Get handle from file descriptor
 	FlashInterfaceHandle* handle = (FlashInterfaceHandle*)message->Request.FileDescriptor;
 
- // Get NAND size info (IOS 58 calls FS_GetNandSizeInfo_ at function start)
+	// Get NAND size info (IOS 58 calls FS_GetNandSizeInfo_ at function start)
 	NandSizeInformation nandSizeInfo;
 	s32 ret = GetNandSizeInfo(&nandSizeInfo);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
- // Calculate page size with ECC for read/write operations
+	// Calculate page size with ECC for read/write operations
 	const u32 pageSize = GetNandPageSize(&nandSizeInfo);
 	const u32 pageWithEcc = pageSize + GetNandEccSize(&nandSizeInfo);
 
- // Route to appropriate handler based on command type
+	// Route to appropriate handler based on command type
 	switch (message->Request.Command)
 	{
 		case IOS_READ:

@@ -23,7 +23,7 @@ IOS. printk - printk implementation in ios
  * This bit flag is used in endpoint descriptors' bEndpointAddress field.
  * It's also one of three fields in control requests bRequestType.
  */
-#define USB_DIR_OUT                     0   /* to device */
+#define USB_DIR_OUT                     0    /* to device */
 #define USB_DIR_IN                      0x80 /* to host */
 
 /*
@@ -100,15 +100,15 @@ IOS. printk - printk implementation in ios
  * are at most sixteen features of each type.)  Hubs may also support a
  * new USB_REQ_TEST_AND_SET_FEATURE to put ports into L1 suspend.
  */
-#define USB_DEVICE_SELF_POWERED         0      /* (read only) */
-#define USB_DEVICE_REMOTE_WAKEUP        1     /* dev may initiate wakeup */
-#define USB_DEVICE_TEST_MODE            2         /* (wired high speed only) */
-#define USB_DEVICE_BATTERY              2           /* (wireless) */
-#define USB_DEVICE_B_HNP_ENABLE         3      /* (otg) dev may initiate HNP */
-#define USB_DEVICE_WUSB_DEVICE          3       /* (wireless)*/
-#define USB_DEVICE_A_HNP_SUPPORT        4     /* (otg) RH port supports HNP */
+#define USB_DEVICE_SELF_POWERED         0 /* (read only) */
+#define USB_DEVICE_REMOTE_WAKEUP        1 /* dev may initiate wakeup */
+#define USB_DEVICE_TEST_MODE            2 /* (wired high speed only) */
+#define USB_DEVICE_BATTERY              2 /* (wireless) */
+#define USB_DEVICE_B_HNP_ENABLE         3 /* (otg) dev may initiate HNP */
+#define USB_DEVICE_WUSB_DEVICE          3 /* (wireless)*/
+#define USB_DEVICE_A_HNP_SUPPORT        4 /* (otg) RH port supports HNP */
 #define USB_DEVICE_A_ALT_HNP_SUPPORT    5 /* (otg) other RH port does */
-#define USB_DEVICE_DEBUG_MODE           6        /* (special devices only) */
+#define USB_DEVICE_DEBUG_MODE           6 /* (special devices only) */
 
 /*
  * Test Mode Selectors
@@ -131,7 +131,7 @@ IOS. printk - printk implementation in ios
 #define USB_DEVICE_U1_ENABLE            48 /* dev may initiate U1 transition */
 #define USB_DEVICE_U2_ENABLE            49 /* dev may initiate U2 transition */
 #define USB_DEVICE_LTM_ENABLE           50 /* dev may send LTM */
-#define USB_INTRF_FUNC_SUSPEND          0 /* function suspend */
+#define USB_INTRF_FUNC_SUSPEND          0  /* function suspend */
 
 #define USB_INTR_FUNC_SUSPEND_OPT_MASK  0xFF00
 /*
@@ -297,14 +297,14 @@ typedef struct
 typedef struct
 {
 	u8 RequestType; //bitmapped request type
-	u8 Request; //bitmapped request
+	u8 Request;     //bitmapped request
 	le16 Value;
 	le16 Index;
 	le16 Length;
 	union
 	{
 		char Data[8];
-  /* This is the struct describing the Data format for the OH1 module */
+		/* This is the struct describing the Data format for the OH1 module */
 		struct
 		{
 			void* Data;

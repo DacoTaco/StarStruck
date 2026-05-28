@@ -38,10 +38,10 @@ typedef struct
 // Small helper for derived NAND values
 typedef struct
 {
-	u32 PageSize;         // bytes per page
-	u32 EccSize;          // bytes per ecc
-	u32 ChunkSize;        // page + ecc
-	u32 PagesPerBlock;   // pages in a block
+	u32 PageSize;      // bytes per page
+	u32 EccSize;       // bytes per ecc
+	u32 ChunkSize;     // page + ecc
+	u32 PagesPerBlock; // pages in a block
 } NandStats;
 
 static const int IOCTL_GET_STATS = 1;
@@ -51,7 +51,7 @@ static s32 flashHandle = -1;
 int main(int argc, char** argv)
 //---------------------------------------------------------------------------------
 {
- // Initialise the video system
+	// Initialise the video system
 	VIDEO_Init();
 
 	vmode = VIDEO_GetPreferredMode(NULL);
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 	if (vmode->viTVMode & VI_NON_INTERLACE)
 		VIDEO_WaitVSync();
 
- // Initialize the console
+	// Initialize the console
 	CON_Init(xfb, (vmode->viWidth + vmode->viXOrigin - 640) / 2,
 	         (vmode->viHeight + vmode->viYOrigin - 480) / 2, 640, 480, 640 * VI_DISPLAY_PIX_SZ);
 	CheckForGecko();
@@ -81,8 +81,8 @@ int main(int argc, char** argv)
 	printf("AHB Access Enabled\n");
 	write16(0x0d8b420a, 0);
 
- // This function initialises the attached controllers
- //WPAD_Init();
+	// This function initialises the attached controllers
+	//WPAD_Init();
 	PAD_Init();
 
 	if (!fatMountSimple("sd", &__io_wiisd))
@@ -97,11 +97,11 @@ int main(int argc, char** argv)
 	flashHandle = IOS_Open("/dev/flash", IPC_OPEN_READ);
 	if (flashHandle < 0)
 	{
-  //patch IOS and retry via /dev/fs
+		//patch IOS and retry via /dev/fs
 		printf("\npatching /dev/fs open...");
 		if (PatchIOS({ OpenFSAsFlash }) > 0)
 		{
-   //the patch should have made /dev/fs work like /dev/flash on open
+			//the patch should have made /dev/fs work like /dev/flash on open
 			flashHandle = IOS_Open("/dev/fs", IPC_OPEN_READ);
 			if (flashHandle >= 0)
 				PatchIOS({ OpenFSAsFS }); //restore the original open check for /dev/fs, so it doesn't mess with stuff

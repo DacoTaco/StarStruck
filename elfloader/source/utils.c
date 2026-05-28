@@ -22,7 +22,7 @@ extern void debug_output(u8 byte);
 
 void udelay(u32 d)
 {
- // should be good to max .2% error
+	// should be good to max .2% error
 	u32 ticks = d * 19 / 10;
 
 	if (ticks < 2)

@@ -30,7 +30,7 @@ ClusterCacheEntry* FindCachedCluster(FSHandle* handle)
 // Get a cache entry for the given handle, evicting the oldest entry if all slots are occupied.
 ClusterCacheEntry* GetClusterCacheEntry(FSHandle* handle)
 {
- // Find a free (unassociated) cache slot
+	// Find a free (unassociated) cache slot
 	u32 cacheSlot = 1;
 	u32 index;
 	for (index = 0; index < FS_CLUSTER_CACHE_ENTRIES; index++)
@@ -51,7 +51,7 @@ ClusterCacheEntry* GetClusterCacheEntry(FSHandle* handle)
 		index = 0;
 	}
 
- //allocate cache entry
+	//allocate cache entry
 	ClusterCacheEntry* entry = &ClusterCacheEntries[index];
 
 	entry->FileHandle = handle;
@@ -66,21 +66,21 @@ s32 FlushCachedCluster(ClusterCacheEntry* cache)
 {
 	FSHandle* handle = cache->FileHandle;
 
- // Early return if no handle or no data needs writing
+	// Early return if no handle or no data needs writing
 	if (handle == NULL || !cache->Unallocated)
 		return IPC_SUCCESS;
 
- // Seek to the cached data's file position
+	// Seek to the cached data's file position
 	s32 ret = SeekFile(handle, (s32)cache->DataOffset, SeekSet);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
- // Write the cached data
+	// Write the cached data
 	ret = WriteFile(handle, cache->Data, cache->DataSize);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
- // Clear the dirty flag
+	// Clear the dirty flag
 	cache->Unallocated = false;
 	return IPC_SUCCESS;
 }

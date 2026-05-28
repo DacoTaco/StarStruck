@@ -202,7 +202,7 @@ u32 dma_addr(void* p)
 			addr |= 0x0d400000;
 			break;
 	}
- //gecko_printf("DMA to %p: address %08x\n", p, addr);
+	//gecko_printf("DMA to %p: address %08x\n", p, addr);
 	return addr;
 }
 
@@ -274,7 +274,7 @@ void* _kmallocMemorySection(KernelMemoryType type)
 
 s32 MapMemoryAsSection(MemorySection* memorySection)
 {
- /*Example of a mapping : 
+	/*Example of a mapping : 
 	 virtual address : 0xFFF00000
 	 physical address : 0xFFF00000
 	 size : 0x00100000
@@ -289,7 +289,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 	if (memorySection == NULL)
 		return IPC_EINVAL;
 
- //either map section as regular section, or section with writeback cache & buffer enabled
+	//either map section as regular section, or section with writeback cache & buffer enabled
 	u32 translationBase = SECTION_PAGE;
 	if (memorySection->IsCached != 0)
 		translationBase |= WRITEBACK_CACHE;
@@ -308,7 +308,7 @@ s32 MapMemoryAsSection(MemorySection* memorySection)
 //In all honesty, i don't full understand what it is doing in here...
 s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 {
- /*
+	/*
 		Example of a mapping : 
 		virtual address : 0x13A70000
 		physical address : 0x13A70000
@@ -386,7 +386,7 @@ s32 MapMemory(MemorySection* entry)
 		if (memorySection.Size == 0)
 			break;
 
-  //page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
+		//page table entries on arm are either 1MB (section) or at least 4KB (level 2 section)
 		if ((memorySection.VirtualAddress & 0xFFFFF) == 0 && (memorySection.PhysicalAddress & 0xFFFFF) == 0 &&
 		    memorySection.Size >= 0xFFFFF)
 			ret = MapMemoryAsSection(&memorySection);
@@ -436,18 +436,18 @@ s32 MapHardwareRegisters()
 		*page = 0;
 	}
 
- //fill in some gaps?
+	//fill in some gaps?
 	HardwareRegistersAccessTable[4] = HardwareRegistersAccessTable[6];
 	HardwareRegistersAccessTable[5] = HardwareRegistersAccessTable[6];
 
- //set defaults to PID 0's access rights
+	//set defaults to PID 0's access rights
 	for (int i = 0; i < MAX_PROCESSES; i++)
 	{
 		if (HardwareRegistersAccessTable[i] == NULL)
 			HardwareRegistersAccessTable[i] = HardwareRegistersAccessTable[0];
 	}
 
- //set the access rights and return
+	//set the access rights and return
 	*page = HardwareRegistersAccessTable[0];
 	return ret;
 }

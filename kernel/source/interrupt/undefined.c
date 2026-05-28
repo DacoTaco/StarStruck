@@ -15,9 +15,9 @@
 
 s32 UndefinedInstructionHandler(unsigned instruction)
 {
- //Nintendo's implementation of a syscall is actually an invalid instruction.
- //the instruction is 0xE6000010 | (syscall_num << 5).
- //so if we do the reverse, we have a syscall
+	//Nintendo's implementation of a syscall is actually an invalid instruction.
+	//the instruction is 0xE6000010 | (syscall_num << 5).
+	//so if we do the reverse, we have a syscall
 	u16 syscall = ((instruction & ~0xE6000010) >> 5) & 0xFFFF;
 	ThreadContext* context = &CurrentThread->UserContext;
 	if (CurrentThread != NULL && (instruction >> 16) == 0xE600 && syscall < 0xFF)
@@ -31,7 +31,7 @@ s32 UndefinedInstructionHandler(unsigned instruction)
 			gecko_printf("syscall handle failed, handling exception...\n");
 	}
 
- //actual invalid instruction lol.
+	//actual invalid instruction lol.
 	ExceptionHandler(1, 0, (u32*)context);
 	return 0;
 }

@@ -44,40 +44,40 @@ s32 TryWriteSuperblock()
 
 	_selectedSuperBlock->Version++;
 
- //find free superblock, which wraps around after 16 attempts
- //with each loop we increase superBlockIndex and update _selectedSuperblockIndex
+	//find free superblock, which wraps around after 16 attempts
+	//with each loop we increase superBlockIndex and update _selectedSuperblockIndex
 	for (superBlockIndex = 0; !successful && superBlockIndex < 0x10;
 	     superBlockIndex++, _selectedSuperblockIndex = (_selectedSuperblockIndex + 1) & 0x0F)
 	{
 		bool allClustersReserved = true;
 
-  // Calculate shift difference between metadata size and block size
+		// Calculate shift difference between metadata size and block size
 		const u32 shiftDiff = _fileSystemMetadataSizeShift - SelectedNandSizeInfo.BlockSizeBitShift;
 
-  // Calculate the offset within the superblock region (mask with region size - 1)
+		// Calculate the offset within the superblock region (mask with region size - 1)
 		u32 regionOffset = _selectedSuperblockIndex & (u32)((1 << (shiftDiff & 0xFF)) - 1);
 
-  // Calculate FAT cluster offset based on whether superblock spans multiple blocks
+		// Calculate FAT cluster offset based on whether superblock spans multiple blocks
 		u32 fatClusterOffset =
 		    (SelectedNandSizeInfo.BlockSizeBitShift < _fileSystemMetadataSizeShift - 4) ?
 		        (regionOffset << ((shiftDiff - 4) & 0xFF))
 		            << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF) :
 		        regionOffset << ((SelectedNandSizeInfo.BlockSizeBitShift - CLUSTER_SIZE_SHIFT) & 0xFF);
 
-  // Calculate superblock size in clusters (shift from 256KB base)
+		// Calculate superblock size in clusters (shift from 256KB base)
 		u32 superblockSizeShift = (_fileSystemMetadataSizeShift - 0x12) & 0xFF;
 
-  // Calculate the starting cluster index for this superblock slot
+		// Calculate the starting cluster index for this superblock slot
 		u32 superblockClusterIndex = ((_superblockOffset + _fileSystemDataSize) >> CLUSTER_SIZE_SHIFT) + fatClusterOffset +
 		                             ((_selectedSuperblockIndex >> (shiftDiff & 0xFF)) << superblockSizeShift);
 
-  // Number of clusters per block
+		// Number of clusters per block
 		u32 clustersPerBlock = GetClustersPerBlock();
 
-  // Total clusters in superblock
+		// Total clusters in superblock
 		u32 superblockClusterCount = 1 << superblockSizeShift;
 
-  // Check if all FAT entries for this superblock region are reserved
+		// Check if all FAT entries for this superblock region are reserved
 		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount; clusterOffset += clustersPerBlock)
 		{
 			if (_selectedSuperBlock->FatEntries[superblockClusterIndex + clusterOffset] != SFFSReservedNode)
@@ -90,10 +90,10 @@ s32 TryWriteSuperblock()
 		if (!allClustersReserved)
 			continue;
 
-  // Store cluster index in salt data for HMAC calculation
+		// Store cluster index in salt data for HMAC calculation
 		_superblockSalt.ChainIndex = superblockClusterIndex;
 
-  // Write the superblock with HMAC signature
+		// Write the superblock with HMAC signature
 		ret = WriteClusters((u16)superblockClusterIndex, superblockClusterCount, ClusterFlagsVerify,
 		                    &_superblockSalt, (u8*)_selectedSuperBlock, NULL);
 
@@ -106,20 +106,20 @@ s32 TryWriteSuperblock()
 		if (ret != FS_BADBLOCK)
 			continue;
 
-  // Mark all clusters in the bad block(s) as bad
+		// Mark all clusters in the bad block(s) as bad
 		for (u32 clusterOffset = 0; clusterOffset < superblockClusterCount; clusterOffset += clustersPerBlock)
 		{
-   // Get the block-aligned cluster index
+			// Get the block-aligned cluster index
 			u32 blockBaseCluster = (superblockClusterIndex + clusterOffset) & ~(clustersPerBlock - 1);
 
-   // Mark all clusters in this block as bad
+			// Mark all clusters in this block as bad
 			for (u32 i = 0; i < clustersPerBlock; i++)
 			{
 				_selectedSuperBlock->FatEntries[blockBaseCluster + i] = SFFSBadNode;
 			}
 		}
 
-  // Increment version to try again with updated FAT
+		// Increment version to try again with updated FAT
 		_selectedSuperBlock->Version++;
 	}
 
@@ -150,7 +150,7 @@ s32 InitSuperblockInfo(bool clearInfo)
 		case 0x1E:
 			_fileSystemMetadataSizeShift = 0x16;
 			break;
-   //invalid or unsupported nand size
+			//invalid or unsupported nand size
 		default:
 			return FS_NOTIMPL;
 	}

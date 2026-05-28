@@ -38,9 +38,9 @@ typedef enum
 
 typedef struct
 {
- // most significant 4 bits (u8 value >> 4)
+	// most significant 4 bits (u8 value >> 4)
 	u8 Type : 4;
- // least significant 4 bits (u8 value & 0xf)
+	// least significant 4 bits (u8 value & 0xf)
 	u8 Subtype : 4;
 } KeyKind;
 CHECK_SIZE(KeyKind, 0x01);

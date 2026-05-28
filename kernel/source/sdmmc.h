@@ -24,22 +24,22 @@ typedef struct sdhc_host* sdmmc_chipset_handle_t;
 
 struct sdmmc_csd
 {
-	int csdver;  /* CSD structure format */
-	int mmcver;  /* MMC version (for CID format) */
-	int capacity; /* total number of sectors */
+	int csdver;      /* CSD structure format */
+	int mmcver;      /* MMC version (for CID format) */
+	int capacity;    /* total number of sectors */
 	int sector_size; /* sector size in bytes */
 	int read_bl_len; /* block length for reads */
- /* ... */
+	                 /* ... */
 };
 
 struct sdmmc_cid
 {
-	int mid;  /* manufacturer identification number */
-	int oid;  /* OEM/product identification number */
-	char pnm[8];  /* product name (MMC v1 has the longest) */
-	int rev;  /* product revision */
-	int psn;  /* product serial number */
-	int mdt;  /* manufacturing date */
+	int mid;     /* manufacturer identification number */
+	int oid;     /* OEM/product identification number */
+	char pnm[8]; /* product name (MMC v1 has the longest) */
+	int rev;     /* product revision */
+	int psn;     /* product serial number */
+	int mdt;     /* manufacturing date */
 };
 
 typedef u_int32_t sdmmc_response[4];
@@ -68,21 +68,21 @@ struct sdmmc_task
 
 struct sdmmc_command
 {
-//	struct sdmmc_task c_task;	/* task queue entry */
-	u_int16_t c_opcode; /* SD or MMC command index */
-	u_int32_t c_arg;  /* SD/MMC command argument */
-	sdmmc_response c_resp; /* response buffer */
-	void* c_data; /* buffer to send or read into */
-	int c_datalen; /* length of data buffer */
-	int c_blklen; /* block length */
-	int c_flags; /* see below */
-#define SCF_ITSDONE     0x0001  /* command is complete */
+	//	struct sdmmc_task c_task;	/* task queue entry */
+	u_int16_t c_opcode;        /* SD or MMC command index */
+	u_int32_t c_arg;           /* SD/MMC command argument */
+	sdmmc_response c_resp;     /* response buffer */
+	void* c_data;              /* buffer to send or read into */
+	int c_datalen;             /* length of data buffer */
+	int c_blklen;              /* block length */
+	int c_flags;               /* see below */
+#define SCF_ITSDONE     0x0001 /* command is complete */
 #define SCF_CMD(flags)  ((flags) & 0x00f0)
 #define SCF_CMD_AC      0x0000
 #define SCF_CMD_ADTC    0x0010
 #define SCF_CMD_BC      0x0020
 #define SCF_CMD_BCR     0x0030
-#define SCF_CMD_READ    0x0040  /* read command (data expected) */
+#define SCF_CMD_READ    0x0040 /* read command (data expected) */
 #define SCF_RSP_BSY     0x0100
 #define SCF_RSP_136     0x0200
 #define SCF_RSP_CRC     0x0400
@@ -103,9 +103,9 @@ struct sdmmc_command
 
 	int c_timeout;
 
- /* Host controller owned fields for data xfer in progress */
+	/* Host controller owned fields for data xfer in progress */
 	int c_resid;   /* remaining I/O */
-	u_char* c_buf;   /* remaining data */
+	u_char* c_buf; /* remaining data */
 };
 
 /*
@@ -135,18 +135,18 @@ struct sdmmc_cis
  */
 struct sdmmc_function
 {
- /* common members */
-	u_int16_t rca;   /* relative card address */
+	/* common members */
+	u_int16_t rca; /* relative card address */
 	int flags;
 #define SFF_ERROR 0x0001 /* function is poo; ignore it */
 #define SFF_SDHC  0x0002 /* SD High Capacity card */
- /* SD card I/O function members */
-	int number;   /* I/O function number or -1 */
-	struct sdmmc_cis cis;  /* decoded CIS */
- /* SD/MMC memory card members */
-	struct sdmmc_csd csd;  /* decoded CSD value */
-	struct sdmmc_cid cid;  /* decoded CID value */
-	sdmmc_response raw_cid;  /* temp. storage for decoding */
+	/* SD card I/O function members */
+	int number;           /* I/O function number or -1 */
+	struct sdmmc_cis cis; /* decoded CIS */
+	/* SD/MMC memory card members */
+	struct sdmmc_csd csd;   /* decoded CSD value */
+	struct sdmmc_cid cid;   /* decoded CID value */
+	sdmmc_response raw_cid; /* temp. storage for decoding */
 };
 
 #define SDMMC_LOCK(sc)          lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
@@ -169,13 +169,13 @@ int sdmmc_check_card(void);
 int sdmmc_ack_card(void);
 int sdmmc_read(u32 blk_start, u32 blk_count, void* data);
 
-/* MMC commands */    /* response type */
-#define MMC_GO_IDLE_STATE         0 /* R0 */
-#define MMC_SEND_OP_COND          1 /* R3 */
-#define MMC_ALL_SEND_CID          2 /* R2 */
-#define MMC_SET_RELATIVE_ADDR     3 /* R1 */
-#define MMC_SELECT_CARD           7 /* R1 */
-#define MMC_SEND_CSD              9 /* R2 */
+/* MMC commands */                   /* response type */
+#define MMC_GO_IDLE_STATE         0  /* R0 */
+#define MMC_SEND_OP_COND          1  /* R3 */
+#define MMC_ALL_SEND_CID          2  /* R2 */
+#define MMC_SET_RELATIVE_ADDR     3  /* R1 */
+#define MMC_SELECT_CARD           7  /* R1 */
+#define MMC_SEND_CSD              9  /* R2 */
 #define MMC_STOP_TRANSMISSION     12 /* R1B */
 #define MMC_SEND_STATUS           13 /* R1 */
 #define MMC_SET_BLOCKLEN          16 /* R1 */
@@ -186,12 +186,12 @@ int sdmmc_read(u32 blk_start, u32 blk_count, void* data);
 #define MMC_WRITE_BLOCK_MULTIPLE  25 /* R1 */
 #define MMC_APP_CMD               55 /* R1 */
 
-/* SD commands */    /* response type */
+/* SD commands */                   /* response type */
 #define SD_SEND_RELATIVE_ADDR     3 /* R6 */
 #define SD_SEND_IF_COND           8 /* R7 */
 
-/* SD application commands */   /* response type */
-#define SD_APP_SET_BUS_WIDTH      6 /* R1 */
+/* SD application commands */        /* response type */
+#define SD_APP_SET_BUS_WIDTH      6  /* R1 */
 #define SD_APP_OP_COND            41 /* R3 */
 
 /* OCR bits */

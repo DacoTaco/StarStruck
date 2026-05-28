@@ -8,37 +8,37 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
-#define IPC_SUCCESS               0     // Success
-#define IPC_EACCES                -1     // Permission denied
-#define IPC_EEXIST                -2     // File exists
-#define IPC_EINTR                 -3     // Waiting operation was interrupted
-#define IPC_EINVAL                -4     // Invalid argument or fd
-#define IPC_EMAX                  -5      // Too many file descriptors open
-#define IPC_ENOENT                -6     // File not found
-#define IPC_EQUEUEEMPTY           -7     // Queue Empty
-#define IPC_EQUEUEFULL            -8     // Queue full
-#define IPC_UNKNOWN               -9     // Unknown error
-#define IPC_NOTREADY              -10     // Not ready
-#define IPC_ECC                   -11     // ECC Error
-#define IPC_ECC_CRIT              -12     // ECC Critical Error
-#define IPC_BADBLOCK              -13     // Bad block
-#define IPC_INVALID_OBJTYPE       -14     // Invalid object type
-#define IPC_INVALID_RNG           -15     // Invalid RNG
-#define IPC_INVALID_FLAG          -16     // Invalid flag
-#define IPC_INVALID_FORMAT        -17     // Invalid format
-#define IPC_INVALID_VERSION       -18     // Invalid version
-#define IPC_INVALID_SIGNER        -19     // Invalid signer
-#define IPC_CHECKVALUE            -20     // Check Value failed
-#define IPC_INTERNALFAIL          -21     // Internal failure
-#define IPC_ENOMEM                -22     // Alloc failed during request
-#define IPC_INVALIDSIZE           -23     // invalid size
+#define IPC_SUCCESS               0   // Success
+#define IPC_EACCES                -1  // Permission denied
+#define IPC_EEXIST                -2  // File exists
+#define IPC_EINTR                 -3  // Waiting operation was interrupted
+#define IPC_EINVAL                -4  // Invalid argument or fd
+#define IPC_EMAX                  -5  // Too many file descriptors open
+#define IPC_ENOENT                -6  // File not found
+#define IPC_EQUEUEEMPTY           -7  // Queue Empty
+#define IPC_EQUEUEFULL            -8  // Queue full
+#define IPC_UNKNOWN               -9  // Unknown error
+#define IPC_NOTREADY              -10 // Not ready
+#define IPC_ECC                   -11 // ECC Error
+#define IPC_ECC_CRIT              -12 // ECC Critical Error
+#define IPC_BADBLOCK              -13 // Bad block
+#define IPC_INVALID_OBJTYPE       -14 // Invalid object type
+#define IPC_INVALID_RNG           -15 // Invalid RNG
+#define IPC_INVALID_FLAG          -16 // Invalid flag
+#define IPC_INVALID_FORMAT        -17 // Invalid format
+#define IPC_INVALID_VERSION       -18 // Invalid version
+#define IPC_INVALID_SIGNER        -19 // Invalid signer
+#define IPC_CHECKVALUE            -20 // Check Value failed
+#define IPC_INTERNALFAIL          -21 // Internal failure
+#define IPC_ENOMEM                -22 // Alloc failed during request
+#define IPC_INVALIDSIZE           -23 // invalid size
 
-#define IOS_SHORT_READ            -1009    // Short read
-#define IOS_EIO                   -1010    // Write failure
+#define IOS_SHORT_READ            -1009 // Short read
+#define IOS_EIO                   -1010 // Write failure
 
 #define ES_INVALID_SIGNATURE_TYPE -1012
-#define ES_FD_EXHAUSTED           -1016    // Max of 3 ES handles exceeded
-#define ES_EINVAL                 -1017    // Invalid argument
+#define ES_FD_EXHAUSTED           -1016 // Max of 3 ES handles exceeded
+#define ES_EINVAL                 -1017 // Invalid argument
 #define ES_DEVICE_ID_MISMATCH     -1020
 #define ES_HASH_MISMATCH          -1022 // Decrypted content hash doesn't match with the hash from the TMD
 #define ES_ENOMEM                 -1024 // Alloc failed during request

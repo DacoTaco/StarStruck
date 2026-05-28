@@ -31,7 +31,7 @@ typedef enum
 {
 	ClusterFlagsNone = 0,
 	ClusterFlagsEncryptDecrypt = 1, // bit 0: decrypt on read, encrypt on write
-	ClusterFlagsVerify = 2, // bit 1: HMAC verify on read, sign on write
+	ClusterFlagsVerify = 2,         // bit 1: HMAC verify on read, sign on write
 } ClusterFlags;
 
 /* Cluster-level operations with optional encryption/HMAC */

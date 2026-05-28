@@ -45,7 +45,7 @@ static inline s32 _LoadELF(s32 fd, u32* outArmEntrypoint, bool* outIsPPCBinary)
 	if (ret != sizeof(Elf32_Ehdr))
 		goto cleanup_loadElf;
 
-   //Is this even an elf?
+	//Is this even an elf?
 	if (elfHeader->e_ident[EI_MAG0] != ELFMAG0 || elfHeader->e_ident[EI_MAG1] != ELFMAG1 ||
 	    elfHeader->e_ident[EI_MAG2] != ELFMAG2 || elfHeader->e_ident[EI_MAG3] != ELFMAG3)
 	{
@@ -53,7 +53,7 @@ static inline s32 _LoadELF(s32 fd, u32* outArmEntrypoint, bool* outIsPPCBinary)
 		goto cleanup_loadElf;
 	}
 
- //And is it a 32bit, MSB, version 1, ARM executable with no RELEXEC/EABI-v1 flags?
+	//And is it a 32bit, MSB, version 1, ARM executable with no RELEXEC/EABI-v1 flags?
 	if (elfHeader->e_ident[EI_CLASS] != ELFCLASS32 || elfHeader->e_ident[EI_DATA] != ELFDATA2MSB ||
 	    elfHeader->e_ident[EI_VERSION] != EV_CURRENT || elfHeader->e_ident[EI_OSABI] != 0x61 || elfHeader->e_type != ET_EXEC ||
 	    elfHeader->e_machine != EM_ARM || elfHeader->e_version != 1 || (elfHeader->e_flags & 0x21) != 0)
@@ -84,8 +84,8 @@ static inline s32 _LoadELF(s32 fd, u32* outArmEntrypoint, bool* outIsPPCBinary)
 		if (phdr->p_type != PT_LOAD)
 			continue;
 
-  // IOS encodes segment destination in p_flags bits 20-27 (PF_MASKOS):
-  // 0x7f = PPC-destined; anything else is ARM-destined (no explicit ARM flag).
+		// IOS encodes segment destination in p_flags bits 20-27 (PF_MASKOS):
+		// 0x7f = PPC-destined; anything else is ARM-destined (no explicit ARM flag).
 		if ((phdr->p_flags & PF_MASKOS) == ELF_PF_PPC)
 		{
 			if (!(*outIsPPCBinary))
@@ -107,7 +107,7 @@ static inline s32 _LoadELF(s32 fd, u32* outArmEntrypoint, bool* outIsPPCBinary)
 		if ((u32)ret != phdr->p_filesz)
 			break;
 
-  // Zero-fill BSS tail of segment if memsz > filesz
+		// Zero-fill BSS tail of segment if memsz > filesz
 		if ((u32)ret < phdr->p_memsz)
 			memset((void*)(phdr->p_vaddr + (u32)ret), 0, phdr->p_memsz - (u32)ret);
 
@@ -137,16 +137,16 @@ static inline s32 _LoadDOL(s32 fd)
 	if (ret != sizeof(DolHeader))
 		goto cleanup_dol;
 
- // Clear BSS section
+	// Clear BSS section
 	memset((void*)PPCVirtToPhys(dolHeader->BSS.Address), 0, dolHeader->BSS.Size);
 
- // Load all text segments
+	// Load all text segments
 	for (int i = 0; i < DOL_TEXT_SEGMENTS; i++)
 	{
 		if (dolHeader->Offsets.Text[i] == 0)
 			continue;
 
-  //align the section size to 32 bytes, it is a dol requirement after all
+		//align the section size to 32 bytes, it is a dol requirement after all
 		u32 size = (dolHeader->Sizes.Text[i] + 0x1f) & ~0x1fu;
 		ret = SeekFD(fd, (s32)dolHeader->Offsets.Text[i], SeekSet);
 		if (ret < 0)
@@ -157,7 +157,7 @@ static inline s32 _LoadDOL(s32 fd)
 			goto cleanup_dol;
 	}
 
- // Load all data segments
+	// Load all data segments
 	for (int i = 0; i < DOL_DATA_SEGMENTS; i++)
 	{
 		if (dolHeader->Offsets.Data[i] == 0)
@@ -185,11 +185,11 @@ s32 LoadBinary(const char* path)
 	u32 armEntrypoint = 0;
 	bool isPPCBinary = false;
 
- // Only UID 0 (kernel/root) is permitted to start the PPC
+	// Only UID 0 (kernel/root) is permitted to start the PPC
 	if (GetUID() != 0)
 		return IPC_EACCES;
 
- // Small staging buffer for the file-type magic pre-read
+	// Small staging buffer for the file-type magic pre-read
 	u8* magicBuf = (u8*)AllocateOnHeap(KernelHeapId, SELFMAG);
 	if (magicBuf == NULL)
 		return IPC_EMAX;
@@ -199,7 +199,7 @@ s32 LoadBinary(const char* path)
 	if (fd < 0)
 		goto return_loadPPC;
 
- // Read SELFMAG bytes to detect ELF vs DOL
+	// Read SELFMAG bytes to detect ELF vs DOL
 	ret = ReadFD(fd, magicBuf, SELFMAG);
 	if (ret != SELFMAG)
 		goto return_loadPPC;
@@ -262,12 +262,12 @@ u32 _SetIOSVersion(u32 newVersion)
 //Setup memory and launch the kernel image at the specified address
 __attribute__((noreturn)) void _LaunchKernel(const void* image, u32 version)
 {
- //clear out the arguments in the header
- //no idea what the point of them is if it clears them but here we are lol
+	//clear out the arguments in the header
+	//no idea what the point of them is if it clears them but here we are lol
 	IosKernelHeader* header = (IosKernelHeader*)image;
 	header->Arguments = 0;
 
- //Disable and clear all interrupts and then flush all caches
+	//Disable and clear all interrupts and then flush all caches
 	DisableInterrupts();
 	write32(HW_ARMIRQMASK, 0);
 	DCFlushAll();
@@ -275,10 +275,10 @@ __attribute__((noreturn)) void _LaunchKernel(const void* image, u32 version)
 	DisableInstructionCache();
 	DisableMMUAndDCache();
 
- // Update the IOS version slot in MEM1
+	// Update the IOS version slot in MEM1
 	u32 oldVersion = _SetIOSVersion(version);
 
- // Write the IOS58 MEM2 memory layout constants into MEM1 to be picked up by the next kernel
+	// Write the IOS58 MEM2 memory layout constants into MEM1 to be picked up by the next kernel
 	write32(MEM1_MEM2PHYSICALSIZE, 0x4000000); // 64 MB size
 	write32(MEM1_MEM2SIMULATESIZE, 0x4000000);
 	write32(MEM1_MEM2BAT, 0x93400000);
@@ -291,19 +291,19 @@ __attribute__((noreturn)) void _LaunchKernel(const void* image, u32 version)
 	DCFlushRange((void*)MEM1_PHYSICALMEM1SIZE, 0x68);
 	gecko_printf("Updated DDR settings in lomem: 0x%08X with 12MB settings\n", MEM1_MEM2PHYSICALSIZE);
 
- // Preserve the NAND clock-divider register and set it to the boot default.
+	// Preserve the NAND clock-divider register and set it to the boot default.
 	u32 oldNandClkDiv = read32(NAND_CLKDIV);
 	write32(NAND_CLKDIV, 1);
 
- //jump to image + header->HeaderSize, the address of the actual payload
+	//jump to image + header->HeaderSize, the address of the actual payload
 	void (*entry)(void) = (void (*)(void))((u32)image + header->HeaderSize);
 	entry();
 
- //something went wrong, lets set ios version back & restore nand register
+	//something went wrong, lets set ios version back & restore nand register
 	_SetIOSVersion(oldVersion);
 	write32(NAND_CLKDIV, oldNandClkDiv);
 
- //it shouldn't return, but who knows why it has code after the jump to entry lol
+	//it shouldn't return, but who knows why it has code after the jump to entry lol
 	__builtin_unreachable();
 }
 
@@ -325,7 +325,7 @@ s32 LoadKernel(const char* path, s32 suspendBroadway, u32 version)
 	if (IpcHandlerThreadId >= 0)
 		SuspendThread(IpcHandlerThreadId);
 
- // Enable protection for the MEM staging area + ios running memory
+	// Enable protection for the MEM staging area + ios running memory
 	ProtectMemory(true, (void*)IOS_STAGING_AREA_START, (void*)0x1FFFFFFF);
 
 	s32 fd = OpenFD(path, Read);
@@ -359,10 +359,10 @@ s32 LoadKernel(const char* path, s32 suspendBroadway, u32 version)
 	if (ret != (s32)len)
 		goto cleanup;
 
- // Set GPIO ownership as IOS does before launching.
+	// Set GPIO ownership as IOS does before launching.
 	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & ((0xFF000000 | GP_ALL) ^ GP_DISPIN));
 
- //launch the kernel image
+	//launch the kernel image
 	_LaunchKernel(staging, version);
 
 cleanup:

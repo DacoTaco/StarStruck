@@ -26,13 +26,13 @@
 
 struct sdhc_host
 {
-	bus_space_tag_t iot;  /* host register set tag */
-	bus_space_handle_t ioh;  /* host register set handle */
-	u_int clkbase;   /* base clock frequency in KHz */
-	int flags;   /* flags for this host */
-	u_int32_t ocr;   /* OCR value from capabilities */
-	u_int8_t regs[14];  /* host controller state */
-	u_int16_t intr_status;  /* soft interrupt status */
+	bus_space_tag_t iot;         /* host register set tag */
+	bus_space_handle_t ioh;      /* host register set handle */
+	u_int clkbase;               /* base clock frequency in KHz */
+	int flags;                   /* flags for this host */
+	u_int32_t ocr;               /* OCR value from capabilities */
+	u_int8_t regs[14];           /* host controller state */
+	u_int16_t intr_status;       /* soft interrupt status */
 	u_int16_t intr_error_status; /* soft error status */
 	int data_command;
 };

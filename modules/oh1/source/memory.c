@@ -34,7 +34,7 @@ s32 CreateHeap(void)
 	if (heap_handle >= 0)
 		return IPC_SUCCESS;
 
- //redundant if check, but whatever. you do you IOS xD
+	//redundant if check, but whatever. you do you IOS xD
 	if (_moduleHeap > 0)
 		OSDestroyHeap(_moduleHeap);
 
@@ -85,7 +85,7 @@ OhciEndpointDescriptor* AllocateEndpointDescriptor(void)
 
 void* ValidateMemoryAddress(void* ptr)
 {
- //redirect SRAM to the dma address space
+	//redirect SRAM to the dma address space
 	if ((ptr >= (void*)0xffff0000) && (ptr != (void*)0xffffffff))
 		ptr = (void*)((int)ptr + 0x0d410000);
 
@@ -111,7 +111,7 @@ void CleanupIORequest(IORequestPacket* ioRequest)
 	if (ioRequest->ControlMessage)
 		OSFreeMemory(_moduleHeap, ioRequest->ControlMessage);
 
- /* Do we really need to zero this? */
+	/* Do we really need to zero this? */
 	memset(ioRequest, 0, sizeof(*ioRequest));
 	OSFreeMemory(_moduleHeap, ioRequest);
 }

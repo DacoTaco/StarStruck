@@ -103,7 +103,7 @@ u8 GetPortIndex(s8 deviceIndex)
 
 void AddDeviceToDevList(DeviceListEntry* deviceList, u8 entryIndex, s8 deviceIndex)
 {
- /* It would be more logical if the first 4 bytes of the destination buffer
+	/* It would be more logical if the first 4 bytes of the destination buffer
 	 * were filled with the device ID, but they are left uninitialized. This is
 	 * consistent with how libogc operates in USB_GetDeviceList(): only the
 	 * vendor and product ID are being read. */

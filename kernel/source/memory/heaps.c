@@ -115,14 +115,14 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	if (heaps[heapid].Heap == NULL)
 		goto restore_and_return;
 
- //align size by 0x20
+	//align size by 0x20
 	u32 alignedSize = (size + 0x1F) & 0xFFFFFFE0;
 	HeapBlock* currentBlock = heaps[heapid].FirstBlock;
 	HeapBlock* blockToAllocate = NULL;
 	u32 blockSize = 0;
 	u32 alignedOffset = 0;
 
- //find the best fitting block that is free
+	//find the best fitting block that is free
 	while (currentBlock != NULL)
 	{
 		blockSize = currentBlock->Size;
@@ -142,7 +142,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		goto restore_and_return;
 
 	HeapBlock* freeBlock = NULL;
- //split up the block if its big enough to do so
+	//split up the block if its big enough to do so
 	if (alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE < blockSize)
 	{
 		blockToAllocate->Size = alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE;
@@ -155,7 +155,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	else
 		freeBlock = blockToAllocate->NextBlock;
 
- //remove from heap list
+	//remove from heap list
 	currentBlock = blockToAllocate->PreviousBlock;
 	if (currentBlock == NULL)
 	{
@@ -168,12 +168,12 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	if (currentBlock->NextBlock != NULL)
 		currentBlock->NextBlock->PreviousBlock = currentBlock;
 
- //mark block as in use & remove it from our available heap
+	//mark block as in use & remove it from our available heap
 	blockToAllocate->BlockState = HeapBlockInUse;
 	blockToAllocate->NextBlock = NULL;
 	blockToAllocate->PreviousBlock = NULL;
 
- //add the block header infront of the allocated space if needed (because of alignment)
+	//add the block header infront of the allocated space if needed (because of alignment)
 	currentBlock = (HeapBlock*)(((u32)blockToAllocate) + alignedOffset);
 	if (alignedOffset != 0)
 	{
@@ -181,7 +181,7 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		currentBlock->NextBlock = blockToAllocate;
 	}
 
- //get pointer and clear it!
+	//get pointer and clear it!
 	ret = (u32)(currentBlock + 1);
 	if (ret)
 		memset((u8*)ret, 0, size);
@@ -202,13 +202,13 @@ int MergeNextBlockIfUnused(HeapBlock* parentBlock)
 	if (blockToMerge != (HeapBlock*)(((u32)parentBlock) + blockSize))
 		return 0;
 
- //link parent block with the tomerge's next block and vice versa
+	//link parent block with the tomerge's next block and vice versa
 	HeapBlock* nextBlock = blockToMerge->NextBlock;
 	parentBlock->NextBlock = nextBlock;
 	if (nextBlock != NULL)
 		nextBlock->PreviousBlock = parentBlock;
 
- //merge sizes
+	//merge sizes
 	parentBlock->Size = blockSize + blockToMerge->Size;
 	return 1;
 }
@@ -218,14 +218,14 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 	u32 irqState = DisableInterrupts();
 	s32 ret = 0;
 
- //verify incoming parameters & if the heap is in use
+	//verify incoming parameters & if the heap is in use
 	if (heapid < 0 || heapid >= 0x10 || ptr == NULL || heaps[heapid].Heap == NULL)
 	{
 		ret = IPC_EINVAL;
 		goto restore_and_return;
 	}
 
- //verify the pointer address
+	//verify the pointer address
 	if ((u8*)ptr < ((u8*)heaps[heapid].Heap + sizeof(HeapBlock)) ||
 	    (u8*)ptr >= ((u8*)heaps[heapid].Heap + heaps[heapid].Size))
 	{
@@ -233,7 +233,7 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		goto restore_and_return;
 	}
 
- //verify the block that the pointer belongs to
+	//verify the block that the pointer belongs to
 	HeapBlock* blockToFree = (HeapBlock*)((u8*)ptr - sizeof(HeapBlock));
 
 	if (blockToFree->BlockState == HeapBlockAligned)
@@ -259,14 +259,14 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		currBlock = nextBlock;
 	}
 
- //move block to the front
+	//move block to the front
 	if (currBlock == NULL || blockToFree <= firstBlock)
 	{
 		blockToFree->NextBlock = firstBlock;
 		heaps[heapid].FirstBlock = blockToFree;
 		blockToFree->PreviousBlock = NULL;
 	}
- //just place the block infront of the block closest to us
+	//just place the block infront of the block closest to us
 	else
 	{
 		blockToFree->PreviousBlock = currBlock;
@@ -274,11 +274,11 @@ s32 FreeOnHeap(s32 heapid, void* ptr)
 		currBlock->NextBlock = blockToFree;
 	}
 
- //link the next block if needed
+	//link the next block if needed
 	if (blockToFree->NextBlock != NULL)
 		blockToFree->NextBlock->PreviousBlock = blockToFree;
 
- //merge blocks if we can
+	//merge blocks if we can
 	MergeNextBlockIfUnused(blockToFree);
 	MergeNextBlockIfUnused(blockToFree->PreviousBlock);
 

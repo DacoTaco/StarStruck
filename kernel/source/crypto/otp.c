@@ -50,7 +50,7 @@ typedef struct
 	u8 Boot1Hash[OTP_BOOT1HASH_SIZE];
 	u8 CommonKey[OTP_COMMONKEY_SIZE];
 	u32 NgId;
- //the ng private key & nand_hmac overlap, wtf?
+	//the ng private key & nand_hmac overlap, wtf?
 	union
 	{
 		struct
@@ -115,7 +115,7 @@ u32 OTP_IsSet(void)
 	{
 		u32 commonKey[OTP_COMMONKEY_SIZE / sizeof(u32)];
 		OTP_FetchData(5, commonKey, OTP_COMMONKEY_SIZE);
-  // if the key isn't all 0x00
+		// if the key isn't all 0x00
 		if ((commonKey[0] | commonKey[1] | commonKey[2] | commonKey[3]) != 0)
 			OTP_CommonKeyIsSet = 1;
 
@@ -159,7 +159,7 @@ void OTP_GetKeys(u8 ng_privkey_out[OTP_NGPRIVKEY_SIZE], u8 common_key_out[OTP_CO
 	if (OTP_IsSet())
 	{
 		OTP_FetchData(5, common_key_out, OTP_COMMONKEY_SIZE);
-  // overlap on the last/first word
+		// overlap on the last/first word
 		OTP_FetchData(10, ng_privkey_out, OTP_NGPRIVKEY_SIZE);
 		OTP_FetchData(17, nand_hmac_out, OTP_NANDHMAC_SIZE);
 		OTP_FetchData(22, nand_key_out, OTP_NANDKEY_SIZE);

@@ -37,7 +37,7 @@ s32 OpenFile(const char* path, AccessMode mode)
 	if (len == MAX_FILE_PATH)
 		return FS_EINVAL;
 
- /* Copy through the module-local buffer to guarantee DMA-accessible memory. */
+	/* Copy through the module-local buffer to guarantee DMA-accessible memory. */
 	memcpy(_cmd_buf, path, len + 1);
 	return OSOpenFD((const char*)_cmd_buf, (s32)mode);
 }

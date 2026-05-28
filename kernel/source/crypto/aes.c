@@ -74,7 +74,7 @@ void AesEngineHandler(void)
 
 	while (1)
 	{
-  //main loop should start here
+		//main loop should start here
 		ret = ReceiveMessage(resourceMessageQueue, (void**)&ipcMessage, None);
 		if (ret != 0)
 			goto receiveMessageError;
@@ -94,8 +94,8 @@ void AesEngineHandler(void)
 				ret = memcmp(ipcMessage->Request.Message.Open.Filepath, AES_DEVICE_NAME, AES_DEVICE_NAME_SIZE);
 				if (ret != 0)
 					ret = IPC_ENOENT;
-    //not needed, since 0 == IPC_SUCCESS anyway
-    /*else
+				//not needed, since 0 == IPC_SUCCESS anyway
+				/*else
 					ret = IPC_SUCCESS;*/
 
 				goto sendReply;
@@ -117,7 +117,7 @@ void AesEngineHandler(void)
 						    ((u32)ioctlvMessage->MessageData[3].Data & 3) != 0)
 							goto sendReply;
 
-      //lets copy over the AES key & IV
+						//lets copy over the AES key & IV
 						u32* key = ioctlvMessage->MessageData[1].Data;
 						u32* iv = ioctlvMessage->MessageData[3].Data;
 						for (int i = 0; i < 4; i++)
@@ -194,8 +194,8 @@ sendReply:
 		continue;
 receiveMessageError:
 		panic("iosReceiveMessage: %d\n", ret);
-  //not sure why ios does this haha
-  //the panic makes it loop forever...
+		//not sure why ios does this haha
+		//the panic makes it loop forever...
 		if (ipcMessage->Request.Command == IOS_CLOSE)
 			break;
 	}

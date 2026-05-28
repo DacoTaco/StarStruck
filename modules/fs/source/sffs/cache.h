@@ -16,10 +16,10 @@ typedef struct
 {
 	u8 Data[0x4000];      // 0x0000: Cluster data buffer
 	FSHandle* FileHandle; // 0x4000: Associated file handle (NULL = free)
-	bool Unallocated;          // 0x4004: Needs write back
+	bool Unallocated;     // 0x4004: Needs write back
 	u8 Padding[3];
-	u32 DataOffset;     // 0x4008: File position for cached data
-	u32 DataSize;       // 0x400C: Size of cached data to write
+	u32 DataOffset; // 0x4008: File position for cached data
+	u32 DataSize;   // 0x400C: Size of cached data to write
 } ClusterCacheEntry;
 CHECK_SIZE(ClusterCacheEntry, 0x4010);
 CHECK_OFFSET(ClusterCacheEntry, 0x0000, Data);

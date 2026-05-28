@@ -39,7 +39,7 @@ s32 OpenBoot2FileHandle(void)
 	u8 blockSignature[8];
 	u32 generation = 0;
 
- //abuse the pagebuffer to contain the copies of maps.
+	//abuse the pagebuffer to contain the copies of maps.
 	Boot2BlockMap* maps = (Boot2BlockMap*)_boot2Handle.PageBuffer;
 
 	if (_boot2Handle.IsOpen)
@@ -59,21 +59,21 @@ s32 OpenBoot2FileHandle(void)
 
 		Boot2BlockMap* validMap = NULL;
 
-  // Check maps[0] - if it has valid signature and matches maps[1]
+		// Check maps[0] - if it has valid signature and matches maps[1]
 		if (memcmp(&maps[0], blockSignature, 8) == 0)
 		{
 			if (memcmp(&maps[0], &maps[1], 0x4C) == 0 || memcmp(&maps[0], &maps[2], 0x4C) == 0)
 				validMap = &maps[0];
 		}
 
-  // Check maps[1] - if it has valid signature and matches maps[2]
+		// Check maps[1] - if it has valid signature and matches maps[2]
 		if (validMap == NULL && memcmp(&maps[1], blockSignature, 8) == 0)
 		{
 			if (memcmp(&maps[1], &maps[2], 0x4C) == 0)
 				validMap = &maps[1];
 		}
 
-  // If we found a valid map with newer generation, use it
+		// If we found a valid map with newer generation, use it
 		if (validMap != NULL && validMap->Generation > generation)
 		{
 			memcpy(&_boot2Handle.BlockMap, validMap, 0x4C);
@@ -83,20 +83,20 @@ s32 OpenBoot2FileHandle(void)
 		pageNumber += pagesPerBlock;
 	}
 
- // Initialize or update blockmap
+	// Initialize or update blockmap
 	if (generation < 2)
 	{
-  // Set generation to 2
+		// Set generation to 2
 		_boot2Handle.BlockMap.Generation = 2;
 
-  // If no valid blockmap found, initialize signature
+		// If no valid blockmap found, initialize signature
 		if (generation == 0)
 			memcpy(&_boot2Handle.BlockMap.Signature, blockSignature, 8);
 
-  // Mark block 0 as bad (reserved)
+		// Mark block 0 as bad (reserved)
 		_boot2Handle.BlockMap.Blocks[0] = 1;
 
-  // Scan blocks 1+ to check which are good/bad, within first 1MB
+		// Scan blocks 1+ to check which are good/bad, within first 1MB
 		u32 blocksInFirstMB = NAND_SYSTEM_AREA_SIZE >> SelectedNandSizeInfo.BlockSizeBitShift;
 		for (u32 blockIdx = 1; blockIdx < blocksInFirstMB; blockIdx++)
 		{
@@ -113,13 +113,13 @@ s32 OpenBoot2FileHandle(void)
 		_boot2Handle.BlockMap.Generation++;
 	}
 
- // Initialize handle state
+	// Initialize handle state
 	_boot2Handle.PageIndex = 0;
 	_boot2Handle.PageCursor = 0;
 	_boot2Handle.IsOpen = true;
 	_boot2Handle.Finished = false;
 
- // Return pointer to blockmap as file descriptor
+	// Return pointer to blockmap as file descriptor
 	return (s32)&_boot2Handle.BlockMap;
 }
 
@@ -200,14 +200,14 @@ static s32 WriteBoot2Page(bool writeEcc)
 
 static s32 FinishBoot2Write(void)
 {
- // If already finished, return EINVAL
+	// If already finished, return EINVAL
 	if (_boot2Handle.Finished)
 		return IPC_EINVAL;
 
 	const u32 pagesPerBlock = GetPagesPerBlock();
 	s32 ret = IPC_SUCCESS;
 
-  // If there is a partial page, flush it
+	// If there is a partial page, flush it
 	if (_boot2Handle.PageCursor != 0)
 	{
 		ret = WriteBoot2Page(true);
@@ -215,7 +215,7 @@ static s32 FinishBoot2Write(void)
 			return ret;
 	}
 
- //nothing written yet
+	//nothing written yet
 	if (_boot2Handle.PageIndex == 0)
 		return IPC_SUCCESS;
 
@@ -225,10 +225,10 @@ static s32 FinishBoot2Write(void)
 		if (ret != IPC_SUCCESS)
 			return ret;
 	}
-  // Always set PageIndex to end of block (IOS 58 logic)
+	// Always set PageIndex to end of block (IOS 58 logic)
 	_boot2Handle.PageIndex = (_boot2Handle.PageIndex & ~(pagesPerBlock - 1)) + pagesPerBlock - 1;
 
- // Write blockmap in triplicate at last page (0x4C bytes each, total 0xE4)
+	// Write blockmap in triplicate at last page (0x4C bytes each, total 0xE4)
 	memcpy(_boot2Handle.PageBuffer, &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
 	memcpy(_boot2Handle.PageBuffer + sizeof(Boot2BlockMap), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
 	memcpy(_boot2Handle.PageBuffer + (sizeof(Boot2BlockMap) * 2), &_boot2Handle.BlockMap, sizeof(Boot2BlockMap));
@@ -245,14 +245,14 @@ static s32 WriteBoot2Copy(u32 size)
 	if (_boot2Handle.PageCursor != 0)
 		return IPC_EINVAL;
 
- // Calculate NAND geometry
+	// Calculate NAND geometry
 	const u32 pagesPerBlock = GetPagesPerBlock();
 	const u32 pageSize = GetPageSize();
 	const u32 blockSize = pagesPerBlock * pageSize;
 	u32 minimumPage = 0;
 	s32 ret = IPC_SUCCESS;
 
- // Find the last block for the main copy, skipping bad and used blocks
+	// Find the last block for the main copy, skipping bad and used blocks
 	u32 index = 0;
 	for (; index < BOOT2_BLOCKS_COUNT; index++)
 	{
@@ -285,14 +285,14 @@ static s32 WriteBoot2Copy(u32 size)
 		copies += blockIndex < index ? 1 : -1;
 	}
 
- // Iterate over available boot2 copies, check for bad blocks, copy pages, handle errors/retries
+	// Iterate over available boot2 copies, check for bad blocks, copy pages, handle errors/retries
 	u32 maxBlocks = BOOT2_BLOCKS_COUNT;
 	for (index = 0; index <= blockIndex; index++)
 	{
 		if (copies < 0)
 			return IPC_EMAX;
 
-  // Skip bad blocks (marked as 1 in blockmap)
+		// Skip bad blocks (marked as 1 in blockmap)
 		if (_boot2Handle.BlockMap.Blocks[index] == 1)
 			continue;
 

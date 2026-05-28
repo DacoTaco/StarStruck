@@ -17,18 +17,18 @@
 // POSIX-style file type constants
 typedef enum __attribute__((__packed__))
 {
-	S_IFZERO = 0,  // Entry not in use
-	S_IFREG = 1,   // Regular file
-	S_IFDIR = 2,   // Directory
-	S_IFMT = 3     // Mask for file type bits
+	S_IFZERO = 0, // Entry not in use
+	S_IFREG = 1,  // Regular file
+	S_IFDIR = 2,  // Directory
+	S_IFMT = 3    // Mask for file type bits
 } FileSystemEntryType;
 
 // Custom st_mode type for SFFS (IOS filesystem mode field)
 // Similar to POSIX st_mode but simplified to 8 bits with 2-bit permission fields
 typedef union
 {
- //DO NOT CHANGE THE ORDER OF THIS STRUCTURE
- //IT WILL BREAK THINGS AS IT IS WRITTEN TO NAND
+	//DO NOT CHANGE THE ORDER OF THIS STRUCTURE
+	//IT WILL BREAK THINGS AS IT IS WRITTEN TO NAND
 	struct
 	{
 		u8 OwnerPermissions : 2;
@@ -71,11 +71,11 @@ CHECK_OFFSET(FileSystemTableEntry, 0x1C, SFFSGeneration);
 typedef struct
 {
 	u32 Identifier; // 0x53464653 or "SFFS"
-	u32 Version; // Version Number, used to pick the newest version
+	u32 Version;    // Version Number, used to pick the newest version
 	u32 Generation;
-	u16 FatEntries[0x8000]; // File Allocation Table, existing of 0x8000 16 bit identifiers
+	u16 FatEntries[0x8000];                  // File Allocation Table, existing of 0x8000 16 bit identifiers
 	FileSystemTableEntry FstEntries[0x17FF]; // File System Table, used to store the file information
-	u8 Padding[0x14]; // Padding to 0x40000
+	u8 Padding[0x14];                        // Padding to 0x40000
 } SuperBlockInfo;
 CHECK_OFFSET(SuperBlockInfo, 0x00, Identifier);
 CHECK_OFFSET(SuperBlockInfo, 0x04, Version);
@@ -130,9 +130,9 @@ static inline u32 GetFatArraySize()
 
 static inline FileSystemTableEntry* GetFstEntry(SuperBlockInfo* superblock, u32 inode)
 {
- // FAT size = 2 << (NandSizeBitShift - CLUSTER_SIZE_SHIFT) bytes (when using 512MB nand)
- // FST base = FAT base + FAT size
- // Each FST entry is 0x20 (32) bytes
+	// FAT size = 2 << (NandSizeBitShift - CLUSTER_SIZE_SHIFT) bytes (when using 512MB nand)
+	// FST base = FAT base + FAT size
+	// Each FST entry is 0x20 (32) bytes
 
 	//its basically comes down to `return &superblock->FstEntries[inode];` but dynamically calculating the fst base
 	FileSystemTableEntry* fstBase = (FileSystemTableEntry*)((u8*)superblock->FatEntries + GetFatArraySize());

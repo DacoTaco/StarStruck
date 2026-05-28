@@ -173,7 +173,7 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData,
 	                                                 MessageQueueId, (IpcMessage*)message);
 
- // On success, aes owns keyBlob and messageData and will free them.
+	// On success, aes owns keyBlob and messageData and will free them.
 	if (ret == IPC_SUCCESS)
 		return IPC_SUCCESS;
 
@@ -229,7 +229,7 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData,
 	                                                 MessageQueueId, (IpcMessage*)message);
 
-  // On success, aes owns keyBlob and messageData and will free them.
+	// On success, aes owns keyBlob and messageData and will free them.
 	if (ret == IPC_SUCCESS)
 		return IPC_SUCCESS;
 
@@ -250,7 +250,7 @@ static s32 _IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputDa
 	if (((u32)inputData & 0x3F) != 0)
 		return -2016;
 
- //hmac command should be the 0 based command, not the merged command
+	//hmac command should be the 0 based command, not the merged command
 	if (hmacCommand > FinalizeHmacState)
 		return IPC_EINVAL;
 
@@ -277,7 +277,7 @@ static s32 _IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputDa
 	          DispatchIoctlv(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData) :
 	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData, messageQueueId, message);
 
- // On success, the SHA engine owns messageData and will free it
+	// On success, the SHA engine owns messageData and will free it
 	if (ret == IPC_SUCCESS)
 		return IPC_SUCCESS;
 
@@ -294,7 +294,7 @@ static s32 _IOSC_GenerateHash(const ShaContext* context, const void* inputData, 
 	if (((u32)inputData & 0x3F) != 0)
 		return IOSC_INVALID_ALIGN;
 
- /* validate sha command: only Init/Contribute/Finalize are allowed */
+	/* validate sha command: only Init/Contribute/Finalize are allowed */
 	if (shaCommand > FinalizeShaState)
 		return IPC_EINVAL;
 
@@ -313,7 +313,7 @@ static s32 _IOSC_GenerateHash(const ShaContext* context, const void* inputData, 
 	              DispatchIoctlv(SHA_STATIC_FILEDESC, shaCommand, 1, 2, messageData) :
 	              DispatchIoctlvAsync(SHA_STATIC_FILEDESC, shaCommand, 1, 2, messageData, messageQueueId, message);
 
- /* On success the SHA engine takes ownership of messageData and will free it */
+	/* On success the SHA engine takes ownership of messageData and will free it */
 	if (ret != IPC_SUCCESS)
 		FreeOnHeap(KernelHeapId, messageData);
 
@@ -326,11 +326,11 @@ static s32 _IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 
 	KeySubtype keySubtype = AES_128;
 	u32 keySize = 0;
 
- /* must be a custom slot and not the reserved RSA root key; otherwise deny access early */
+	/* must be a custom slot and not the reserved RSA root key; otherwise deny access early */
 	if (keyHandle < KEYRING_CUSTOM_START_INDEX || keyHandle == RSA4096_ROOTKEY)
 		return IOSC_EACCES;
 
- /* determine the stored type/subtype for this handle */
+	/* determine the stored type/subtype for this handle */
 	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
 	if (keyType != PublicKey)
 		return IOSC_INVALID_OBJTYPE;
@@ -343,7 +343,7 @@ static s32 _IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 
 	if (ret != IPC_SUCCESS)
 		return IOSC_FAIL_INTERNAL;
 
- /* only accept RSA public keys here (2048 or 4096) */
+	/* only accept RSA public keys here (2048 or 4096) */
 	if (keySubtype != RSA_2048 && keySubtype != RSA_4096)
 		return IOSC_EINVAL;
 
@@ -436,7 +436,7 @@ void IOSC_InitInformation(void)
 }
 s32 IOSC_Init(void)
 {
- // bitset of ProcessIDs allowed to access this key
+	// bitset of ProcessIDs allowed to access this key
 	const u32 HandlesAndOwners[][2] = {
 		{ KEYRING_CONST_NG_PRIVATE_KEY, 3 }, { KEYRING_CONST_NG_ID, RSA4096_ROOTKEY },
 		{ KEYRING_CONST_NAND_KEY, 5 },       { KEYRING_CONST_NAND_HMAC, 5 },
@@ -659,22 +659,22 @@ s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandl
 	{
 		u32 keySize = 0;
 
-  /* Verify caller owns this key (RSA4096_ROOTKEY is allowed inside helper) */
+		/* Verify caller owns this key (RSA4096_ROOTKEY is allowed inside helper) */
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
 
-  /* Determine expected key size */
+		/* Determine expected key size */
 		ret = Keyring_FindKeySize(&keySize, keyHandle);
 		if (ret != IPC_SUCCESS)
 			break;
 
-  /* Validate key data pointer */
+		/* Validate key data pointer */
 		ret = IOSC_CheckCurrentProcessCanRead(keyData, keySize);
 		if (ret != IPC_SUCCESS)
 			break;
 
-  /* If metadata pointer provided, validate 4 bytes */
+		/* If metadata pointer provided, validate 4 bytes */
 		if (metadata != NULL)
 		{
 			ret = IOSC_CheckCurrentProcessCanRead(metadata, sizeof(u32));
@@ -682,7 +682,7 @@ s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandl
 				break;
 		}
 
-  /* Call internal implementation */
+		/* Call internal implementation */
 		ret = _IOSC_ImportPublicKey(keyData, metadata, keyHandle);
 	}
 	while (0);
@@ -779,18 +779,18 @@ s32 IOSC_DeleteObject(u32 keyHandle)
 // accepted; attempting to move a counter backwards returns IOSC_INVALID_VERSION.
 static s32 IOSC_SetData_Inner(u32 keyHandle, u32 value)
 {
- // NG_ID (handle 1) is explicitly protected from writes
+	// NG_ID (handle 1) is explicitly protected from writes
 	if (keyHandle == KEYRING_CONST_NG_ID)
 		return IOSC_EACCES;
 
- // Only keys of type Other may have their metadata written
+	// Only keys of type Other may have their metadata written
 	KeyType keyType = PrivateKey;
 	KeySubtype keySubtype = AES_128;
 	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
 	if (keyType != Other)
 		return IOSC_INVALID_OBJTYPE;
 
- // Counter-type (UNKNOWN2) keys are monotonic: the new value must be >= current value
+	// Counter-type (UNKNOWN2) keys are monotonic: the new value must be >= current value
 	if (keySubtype == UNKNOWN2)
 	{
 		u32 currentValue = 0;
@@ -798,7 +798,7 @@ static s32 IOSC_SetData_Inner(u32 keyHandle, u32 value)
 		if (value < currentValue)
 			return IOSC_INVALID_VERSION;
 
-  // Select the hardware get/update function pair for this key handle
+		// Select the hardware get/update function pair for this key handle
 		s32 (*getFunc)(void);
 		s32 (*updateFunc)(void);
 		switch (keyHandle)
@@ -823,7 +823,7 @@ static s32 IOSC_SetData_Inner(u32 keyHandle, u32 value)
 				return IOSC_FAIL_INTERNAL;
 		}
 
-  // Increment the hardware counter one step at a time until it reaches the target
+		// Increment the hardware counter one step at a time until it reaches the target
 		while ((u32)getFunc() < value)
 		{
 			s32 ret = updateFunc();
@@ -832,7 +832,7 @@ static s32 IOSC_SetData_Inner(u32 keyHandle, u32 value)
 		}
 	}
 
- // Persist the new value into the in-memory keyring metadata
+	// Persist the new value into the in-memory keyring metadata
 	u32 data = value;
 	s32 ret = Keyring_SetKeyMetadata(keyHandle, &data);
 	if (ret != 0)
@@ -848,7 +848,7 @@ s32 IOSC_SetData(u32 keyHandle, u32 value)
 
 	do
 	{
-  // Verify the calling process owns this key (RSA4096_ROOTKEY is always allowed)
+		// Verify the calling process owns this key (RSA4096_ROOTKEY is always allowed)
 		keyRet = IOSC_CheckCurrentProcessOwnsKey(keyHandle);
 		if (keyRet != IPC_SUCCESS)
 			break;
@@ -1039,7 +1039,7 @@ static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, const vo
 		if (ret != IPC_SUCCESS)
 			break;
 
-  // only checks customData when customDataSize != 0 (Contribute/Finalize pass NULL).
+		// only checks customData when customDataSize != 0 (Contribute/Finalize pass NULL).
 		if (customDataSize != 0)
 		{
 			ret = IOSC_CheckCurrentProcessCanRead(customData, 4);

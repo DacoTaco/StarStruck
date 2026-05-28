@@ -46,13 +46,13 @@ typedef struct OhciEndpointDescriptor_t
 {
 	u32 dw0;
 
- /* Lower 4 bits are ignored and available for the driver */
+	/* Lower 4 bits are ignored and available for the driver */
 	void* Tail;
 
- /* Bits 2 and 3 need to be zero; bits 0 and 1 are ED_C and ED_H */
+	/* Bits 2 and 3 need to be zero; bits 0 and 1 are ED_C and ED_H */
 	void* Head;
 
- /* Lower 4 bits are ignored and available for the driver */
+	/* Lower 4 bits are ignored and available for the driver */
 	struct OhciEndpointDescriptor_t* Next;
 } OhciEndpointDescriptor;
 
@@ -100,10 +100,10 @@ typedef struct OhciTransferDescriptor_t
 #define TD_UNEXPECTEDPID  0x07
 #define TD_DATAOVERRUN    0x08
 #define TD_DATAUNDERRUN   0x09
-    /* 0x0A, 0x0B reserved for hardware */
+/* 0x0A, 0x0B reserved for hardware */
 #define TD_BUFFEROVERRUN  0x0C
 #define TD_BUFFERUNDERRUN 0x0D
-    /* 0x0E, 0x0F reserved for HCD */
+/* 0x0E, 0x0F reserved for HCD */
 #define TD_NOTACCESSED    0x0F
 
 typedef struct
@@ -167,8 +167,8 @@ typedef struct
 #define OHCI_FI_FSMPS_SHIFT        16
 
 /* roothub.status bits */
-#define RH_HS_LPS                  0x00000001  /* local power status */
-#define RH_HS_OCI                  0x00000002  /* over current indicator */
+#define RH_HS_LPS                  0x00000001 /* local power status */
+#define RH_HS_OCI                  0x00000002 /* over current indicator */
 #define RH_HS_DRWE                 0x00008000 /* device remote wakeup enable */
 #define RH_HS_LPSC                 0x00010000 /* local power status change */
 #define RH_HS_OCIC                 0x00020000 /* over current indicator change */
@@ -180,13 +180,13 @@ typedef struct
 #define RH_B_PPCM                  0xffff0000 /* port power control mask */
 
 /* roothub.a masks */
-#define RH_A_NDP                   (0xff << 0) /* number of downstream ports */
+#define RH_A_NDP                   (0xff << 0)   /* number of downstream ports */
 #define RH_A_RESERVED              (0x00ffe000U) /* Reserved bits */
-#define RH_A_PSM                   (1 << 8) /* power switching mode */
-#define RH_A_NPS                   (1 << 9) /* no power switching */
-#define RH_A_DT                    (1 << 10) /* device type (mbz) */
-#define RH_A_OCPM                  (1 << 11) /* over current protection mode */
-#define RH_A_NOCP                  (1 << 12) /* no over current protection */
+#define RH_A_PSM                   (1 << 8)      /* power switching mode */
+#define RH_A_NPS                   (1 << 9)      /* no power switching */
+#define RH_A_DT                    (1 << 10)     /* device type (mbz) */
+#define RH_A_OCPM                  (1 << 11)     /* over current protection mode */
+#define RH_A_NOCP                  (1 << 12)     /* no over current protection */
 /* power on to power good time */
 #define RH_A_POTPGT_SHIFT          24
 #define RH_A_POTPGT_MASK           0xff

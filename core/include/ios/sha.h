@@ -36,7 +36,7 @@ CHECK_SIZE(FinalShaHash, 0x14);
 typedef struct __attribute__((packed))
 {
 	u32 ShaStates[SHA_NUM_WORDS];
-	u64 Length;  // length in bits of total data contributed to SHA-1 hash
+	u64 Length; // length in bits of total data contributed to SHA-1 hash
 } ShaContext;
 CHECK_SIZE(ShaContext, 0x1C);
 CHECK_OFFSET(ShaContext, 0x00, ShaStates);

@@ -17,20 +17,20 @@
 // SFFS FAT entry special values
 typedef enum
 {
-	SFFSLastNode = 0xFFFB,  // Last cluster in chain
-	SFFSReservedNode = 0xFFFC,  // Reserved cluster
-	SFFSBadNode = 0xFFFD,   // Bad node
-	SFFSFreeNode = 0xFFFE,   // Empty/free node
-	SFFSErasedNode = 0xFFFF  // Invalid Node
+	SFFSLastNode = 0xFFFB,     // Last cluster in chain
+	SFFSReservedNode = 0xFFFC, // Reserved cluster
+	SFFSBadNode = 0xFFFD,      // Bad node
+	SFFSFreeNode = 0xFFFE,     // Empty/free node
+	SFFSErasedNode = 0xFFFF    // Invalid Node
 } SFFSINodeType;
 
 typedef enum
 {
-	CheckIfOpenInode = 1,      // Check if any file in subtree is open
-	UnlinkInode = 2,         // Delete files and free FAT clusters
+	CheckIfOpenInode = 1, // Check if any file in subtree is open
+	UnlinkInode = 2,      // Delete files and free FAT clusters
 	MarkInodePending = 3, // Mark inodes as pending delete (set bit 31 of FileSize)
-	GetUsedClusters = 4, // Count total clusters used by subtree
-	GetUsedInodes = 5 // Count total inodes used by subtree
+	GetUsedClusters = 4,  // Count total clusters used by subtree
+	GetUsedInodes = 5     // Count total inodes used by subtree
 } InodeAction;
 
 // Inode tree operations
