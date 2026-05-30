@@ -80,6 +80,7 @@ void OSDCInvalidateRange(const void* start, u32 size);
 void OSDCFlushRange(const void* start, u32 size);
 u32 OSGetGDDRVendorCode(void);
 u32 OSGetHollywoodId(void);
+u32 OSGetIosVersion(void);
 u32 OSVirtualToPhysical(u32 virtualAddress);
 
 u32 OSGetCoreClock(void);

@@ -88,6 +88,8 @@ _SYSCALL OSGetKernelFlavor,			0x0047
 _SYSCALL OSGetGDDRVendorCode,		0x0049
 _SYSCALL OSGetHollywoodId,			0x004A
 
+_SYSCALL OSGetIosVersion,			0x004D
+
 _SYSCALL OSVirtualToPhysical,		0x004F
 
 _SYSCALL OSGetCoreClock,			0x0055

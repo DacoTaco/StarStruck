@@ -140,7 +140,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL(GetHollywoodId),             //0x004A
 	SYSCALL_NULL,                        //0x004B
 	SYSCALL_NULL,                        //0x004C
-	SYSCALL_NULL,                        //0x004D
+	SYSCALL(GetIosVersion),              //0x004D
 	SYSCALL_NULL,                        //0x004E
 	SYSCALL(VirtualToPhysical),          //0x004F
 	SYSCALL_NULL,                        //0x0050

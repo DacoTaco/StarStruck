@@ -53,7 +53,7 @@ Copyright (C) 2021			DacoTaco
 #define CR_ICACHE                   (1 << 12)
 
 #define MEMBLOCK_COUNT(start, end)  ((end - start) / LINESIZE)
-#define ALIGN_FORWARD(addr)         ((typeof(addr))((((u32)(addr)) + (LINESIZE) - 1) & (~(u32)(LINESIZE - 1))))
+#define ALIGN_FORWARD(addr)         ((typeof(addr))((((u32)(addr)) + (LINESIZE)-1) & (~(u32)(LINESIZE - 1))))
 #define ALIGN_BACKWARD(addr)        ((typeof(addr))(((u32)(addr)) & (~(u32)(LINESIZE - 1))))
 
 void _dc_inval_entries(const void* start, u32 count);
@@ -621,6 +621,14 @@ ret_init:
 
 	RestoreInterrupts(cookie);
 	return ret;
+}
+
+u32 GetIosVersion(void)
+{
+	if (CurrentThread->ProcessId != ESId)
+		return 0;
+
+	return read32(MEM1_IOSVERSION);
 }
 
 #endif
