@@ -69,10 +69,11 @@
 		"editor.formatOnSave": true,
 		"editor.formatOnPaste": true,
 		"files.eol": "\n",
+		"github.copilot.chat.memory.enabled": false,
 		"mcp": {
 			"servers": {
 				"Ghidra-MCP": {
-					"url": "http://127.0.0.1:8081/sse",
+					"url": "http://127.0.0.1:8080/mcp",
 					"type": "http"
 				}
 			},

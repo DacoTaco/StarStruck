@@ -156,7 +156,7 @@ static const SyscallEntry syscall_handlers[] __attribute__((section(".syscalls")
 	SYSCALL(LaunchModule),               //0x005A
 	SYSCALL(IOSC_CreateObject),          //0x005B
 	SYSCALL(IOSC_DeleteObject),          //0x005C
-	SYSCALL_NULL,                        //0x005D
+	SYSCALL(IOSC_ImportSecretKey),       //0x005D
 	SYSCALL_NULL,                        //0x005E
 	SYSCALL(IOSC_ImportPublicKey),       //0x005F
 	SYSCALL_NULL,                        //0x0060

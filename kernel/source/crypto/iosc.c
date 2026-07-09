@@ -12,6 +12,7 @@
 #include <ios/errno.h>
 #include <ios/ipc.h>
 #include <ios/keyring.h>
+#include <string.h>
 
 #include "crypto/aes.h"
 #include "crypto/iosc.h"
@@ -44,6 +45,7 @@ typedef struct
 } IOSC_InformationHolder;
 
 static IOSC_InformationHolder IOSC_Information;
+static u32 TemporaryBuffer[0x80] ALIGNED(0x40) = { 0 };
 // provisional size, is located at the end of the kernel section
 extern u32 __ioscstack_addr[];
 #define IOSC_SafeStackEnd (u32) __ioscstack_addr
@@ -649,6 +651,159 @@ s32 IOSC_SEEPROM_UpdatePRNGSeed(void)
 	{                                                                                    \
 		mainRetVarName = IOSC_EACCES;                                                    \
 	}
+
+static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 decryptHandle, IOSCSecretKeySecurity flag,
+                                      const u8* signBuffer, const u8* ivData, const u8* keyBuffer)
+{
+	// Only custom slots (> 11), not RSA root key, and not the special 0xFFFFFFFF handle
+	if (importedHandle < 12 || importedHandle == RSA4096_ROOTKEY || importedHandle == (u32)-1)
+		return IOSC_EACCES;
+
+	s32 ret = IPC_SUCCESS;
+	u32 zeroes = 1;
+	if (flag == IOSC_SECRET_ENCRYPTED || flag == IOSC_SECRET_SIGNED_ENCRYPTED)
+	{
+		u32 decryptKeyZeroes = 0;
+		ret = Keyring_GetKeyZeroesIfAnyPrivate(decryptHandle, &decryptKeyZeroes);
+		if (ret != 0)
+			return ret;
+		if (decryptKeyZeroes == 0 || decryptKeyZeroes == 2)
+			zeroes = 2;
+	}
+	ret = Keyring_SetKeyZeroesIfAnyPrivate(importedHandle, zeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	KeyType importedKeyType;
+	KeySubtype importedKeySubType;
+	Keyring_GetKeyTypes(importedHandle, &importedKeyType, &importedKeySubType);
+	if (importedKeyType != PrivateKey)
+		return IOSC_INVALID_OBJTYPE;
+
+	u32 importedKeySize = 0;
+	if (Keyring_FindKeySize(&importedKeySize, importedHandle) != IPC_SUCCESS)
+		return IOSC_INVALID_OBJTYPE;
+
+	// Signature verification
+	if (flag == IOSC_SECRET_SIGNED || flag == IOSC_SECRET_SIGNED_ENCRYPTED)
+	{
+		Keyring_GetKeyTypes(verifyHandle, &importedKeyType, &importedKeySubType);
+		if (importedKeyType != PublicKey)
+			return IOSC_INVALID_OBJTYPE;
+
+		// For SIGNED_ENCRYPTED, MAC must cover the same padded length that AES will later decrypt.
+		//This ensures MAC verification and decryption agree on the payload size.
+		if (flag == IOSC_SECRET_SIGNED_ENCRYPTED && (importedKeySize & 0xf) != 0)
+			importedKeySize = (importedKeySize + 0x10) & 0xfffffff0;
+
+		ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
+		u32 computedHmac[5] __attribute__((aligned(0x40))) = { 0 };
+		_IOSC_GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, NULL, -1, NULL);
+		_IOSC_GenerateBlockMAC(&hmacContext, keyBuffer, importedKeySize, NULL, 0, verifyHandle,
+		                       FinalizeHmacState, computedHmac, -1, NULL);
+		if (memcmp(computedHmac, signBuffer, sizeof(computedHmac)) != 0)
+			return IOSC_FAIL_CHECKVALUE;
+	}
+
+	// Decryption
+	if (flag == IOSC_SECRET_ENCRYPTED || flag == IOSC_SECRET_SIGNED_ENCRYPTED)
+	{
+		Keyring_GetKeyTypes(decryptHandle, &importedKeyType, &importedKeySubType);
+		if (importedKeyType != PrivateKey || importedKeySubType != AES_128)
+			return IOSC_INVALID_OBJTYPE;
+		// Use a separate size for AES (must be 16-byte aligned); Keyring_SetKey keeps the original size.
+		u32 decryptSize = importedKeySize;
+		if ((decryptSize & 0xf) != 0)
+			decryptSize = (decryptSize + 0x10) & 0xfffffff0;
+		ret = _IOSC_Decrypt(decryptHandle, ivData, keyBuffer, decryptSize, TemporaryBuffer, -1, NULL);
+		if (ret == IPC_SUCCESS)
+		{
+			ret = Keyring_SetKey(importedHandle, TemporaryBuffer, importedKeySize);
+			if (ret != IPC_SUCCESS)
+				ret = IOSC_FAIL_INTERNAL;
+		}
+	}
+	else
+	{
+		ret = Keyring_SetKey(importedHandle, keyBuffer, importedKeySize);
+		if (ret != IPC_SUCCESS)
+			ret = IOSC_FAIL_INTERNAL;
+	}
+	return ret;
+}
+
+s32 IOSC_ImportSecretKey(u32 importedHandle, u32 verifyHandle, u32 decryptHandle, IOSCSecretKeySecurity flag,
+                         const u8* signBuffer, const u8* ivData, const u8* keyBuffer)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		u32 keySize = 0;
+
+		// Caller must own the target key slot, unless invalid value
+		if (importedHandle != (u32)-1)
+		{
+			keyRet = IOSC_CheckCurrentProcessOwnsKey(importedHandle);
+			if (keyRet != IPC_SUCCESS)
+				break;
+		}
+
+		// If SIGNED: verify ownership of verifyHandle, get its signature size, check signBuffer
+		if (flag == IOSC_SECRET_SIGNED || flag == IOSC_SECRET_SIGNED_ENCRYPTED)
+		{
+			if (verifyHandle != (u32)-1)
+			{
+				keyRet = IOSC_CheckCurrentProcessOwnsKey(verifyHandle);
+				if (keyRet != IPC_SUCCESS)
+					break;
+			}
+
+			ret = Keyring_GetSignatureSize(&keySize, verifyHandle);
+			if (ret != IPC_SUCCESS)
+				break;
+
+			ret = IOSC_CheckCurrentProcessCanRead(signBuffer, keySize);
+			if (ret != IPC_SUCCESS)
+				break;
+		}
+
+		// Get the byte size of the target key slot
+		ret = Keyring_FindKeySize(&keySize, importedHandle);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		// If ENCRYPTED: verify ownership of decryptHandle, validate ivData, round up key size for AES
+		if (flag == IOSC_SECRET_ENCRYPTED || flag == IOSC_SECRET_SIGNED_ENCRYPTED)
+		{
+			if (decryptHandle != (u32)-1)
+			{
+				keyRet = IOSC_CheckCurrentProcessOwnsKey(decryptHandle);
+				if (keyRet != IPC_SUCCESS)
+					break;
+			}
+
+			ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+			if (ret != IPC_SUCCESS)
+				break;
+
+			// IOS always adds one full AES block before masking (confirmed from assembly: ADD +0x10, BIC 0xF)
+			keySize = (keySize + 0x10) & 0xfffffff0;
+		}
+
+		// Validate the caller's key data buffer is readable
+		ret = IOSC_CheckCurrentProcessCanRead(keyBuffer, keySize);
+		if (ret != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_ImportSecretKeyInner(importedHandle, verifyHandle, decryptHandle, flag, signBuffer, ivData, keyBuffer);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
 
 s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle)
 {

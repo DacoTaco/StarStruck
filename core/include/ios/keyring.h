@@ -9,6 +9,18 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#pragma once
+
+// Security flags for IOSC_ImportSecretKey / IOSC_ExportSecretKey.
+// Bitmask: bit 0 = AES-128 encrypted (use decryptHandle), bit 1 = HMAC-signed (use verifyHandle).
+typedef enum
+{
+	IOSC_SECRET_NO_PROTECTION = 0,    // Plain import, no verification or decryption
+	IOSC_SECRET_ENCRYPTED = 1,        // Key data is AES-128 encrypted
+	IOSC_SECRET_SIGNED = 2,           // Key data has HMAC-MAC signature
+	IOSC_SECRET_SIGNED_ENCRYPTED = 3, // Key data is both signed and encrypted
+} IOSCSecretKeySecurity;
+
 enum
 {
 	KEYRING_CONST_NG_PRIVATE_KEY,
