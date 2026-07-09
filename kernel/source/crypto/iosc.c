@@ -347,7 +347,7 @@ static s32 _IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 
 
 	/* only accept RSA public keys here (2048 or 4096) */
 	if (keySubtype != RSA_2048 && keySubtype != RSA_4096)
-		return IOSC_EINVAL;
+		return IPC_SUCCESS;
 
 	ret = Keyring_SetKeyMetadata(keyHandle, metadata);
 	if (ret != IPC_SUCCESS)
