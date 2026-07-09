@@ -86,7 +86,7 @@ currently `SYSCALL_NULL`. The kernel implementation and the `OS*` wrapper in
 
 | Syscall # | IOS name | Kernel function | `OS*` wrapper | Needed by |
 |-----------|----------|-----------------|--------------|-----------|
-| 0x5D | `IOS_IOSC_ImportSecretKey` | `IOSC_ImportSecretKey(ks, ks_verify, ks_decrypt, flags, sig, iv, key)` | `OSIOSCImportSecretKey` | Steps 3/6 |
+| 0x5D | `IOS_IOSC_ImportSecretKey` | `IOSC_ImportSecretKey(ks, ks_verify, ks_decrypt, flags, sig, iv, key)` | `OSIOSCImportSecretKey` | completed |
 | 0x5F | `IOS_IOSC_ImportPublicKey` | `IOSC_ImportPublicKey(data, rsa_e, keyslot)` | `OSIOSCImportPublicKey` | Step 2 |
 | 0x61 | `IOS_IOSC_ComputeSharedKey` | `IOSC_ComputeSharedKey(ks_priv, ks_pub, ks_shared)` | `OSIOSCComputeSharedKey` | Steps 2/9 |
 | 0x67 | `IOS_IOSC_GenerateHash` | `IOSC_GenerateHash(ctx, data, size, chain_flag, digest)` | `OSIOSCGenerateHash` | Step 2 |
