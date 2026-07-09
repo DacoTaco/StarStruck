@@ -15,6 +15,7 @@
 #include "types.h"
 #include "ios/ipc.h"
 #include "ios/ahb.h"
+#include "ios/keyring.h"
 #include "ios/sha.h"
 #include "ios/messageQueue.h"
 
@@ -93,6 +94,8 @@ s32 OSGetKernelFlavor(s16* type, s16* unk);
 // IOSC Crypto syscalls
 s32 OSIOSCCreateObject(u32* keyHandle, u32 type, u32 subtype);
 s32 OSIOSCDeleteObject(u32 keyHandle);
+s32 OSIOSCImportSecretKey(u32 importedHandle, u32 verifyHandle, u32 decryptHandle, IOSCSecretKeySecurity flag,
+                          const u8* signBuffer, const u8* ivData, const u8* keyBuffer);
 s32 OSSetIOSCData(u32 keyHandle, u32 value);
 s32 OSGetIOSCData(u32 keyHandle, u32* value);
 s32 OSIOSCGetKeySize(u32* keySize, u32 keyHandle);
