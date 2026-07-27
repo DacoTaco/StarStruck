@@ -668,7 +668,7 @@ s32 LaunchModule(const char* path)
 	for (u32 headerIndex = 0; headerIndex < headerCount; headerIndex++)
 	{
 		Elf32_Phdr* programHeader = programHeaders + headerIndex;
-		if (programHeader->p_type == PT_LOAD)
+		if (programHeader->p_type == PT_NOTE)
 		{
 			noteLength = programHeader->p_filesz;
 			noteOffset = programHeader->p_offset;
