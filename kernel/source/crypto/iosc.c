@@ -1225,4 +1225,119 @@ s32 IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputData, cons
 	                                  hmacCommand, signData, -1, NULL);
 }
 
+// Internal implementation of IOSC_ComputeSharedKey
+// Performs ECDH shared key computation using ECC_233 keys
+// All validation and memory access control is done by the wrapper
+static s32 _IOSC_ComputeSharedKeyInner(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	// Get and validate the zeroes/flags from the private key
+	u32 privateKeyZeroes = 0;
+	s32 ret = Keyring_GetKeyZeroesIfAnyPrivate(privateKeyHandle, &privateKeyZeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	// Set the same zeroes on the shared key output
+	ret = Keyring_SetKeyZeroesIfAnyPrivate(sharedKeyHandle, privateKeyZeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	// Validate private key type and subtype
+	KeyType privateKeyType = PrivateKey;
+	KeySubtype privateKeySubtype = AES_128;
+	Keyring_GetKeyTypes(privateKeyHandle, &privateKeyType, &privateKeySubtype);
+	if (privateKeyType != PrivateKey && privateKeyType != PublicAndPrivateKey)
+		return IOSC_INVALID_OBJTYPE;
+	if (privateKeySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	// Validate public key type and subtype
+	KeyType publicKeyType = PrivateKey;
+	KeySubtype publicKeySubtype = AES_128;
+	Keyring_GetKeyTypes(publicKeyHandle, &publicKeyType, &publicKeySubtype);
+	if (publicKeyType != PublicKey && publicKeyType != PublicAndPrivateKey)
+		return IOSC_INVALID_OBJTYPE;
+	if (publicKeySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	// Validate shared key type and subtype
+	KeyType sharedKeyType = PrivateKey;
+	KeySubtype sharedKeySubtype = AES_128;
+	Keyring_GetKeyTypes(sharedKeyHandle, &sharedKeyType, &sharedKeySubtype);
+	if (sharedKeyType != PrivateKey)
+		return IOSC_INVALID_OBJTYPE;
+	if (sharedKeySubtype >= RSA_2048)
+		return IOSC_INVALID_OBJTYPE;
+
+	// Get the private key data (30 bytes for ECC_233)
+	u8 privateKeyData[0x1e] ALIGNED(0x40) = { 0 };
+	ret = Keyring_GetKey(privateKeyHandle, privateKeyData, sizeof(privateKeyData));
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// Get the public key size
+	u32 publicKeySize = 0;
+	ret = Keyring_FindKeySize(&publicKeySize, publicKeyHandle);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// Get the public key data (60 bytes for ECC_233 public key)
+	u8 publicKeyData[0x3c] ALIGNED(0x40) = { 0 };
+	ret = Keyring_GetKey(publicKeyHandle, publicKeyData, publicKeySize);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// Get the shared key output size
+	u32 sharedKeySize = 0;
+	ret = Keyring_FindKeySize(&sharedKeySize, sharedKeyHandle);
+	if (ret != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// Perform ECC shared key computation (ECDH)
+	// TODO: Implement ECC multiplication operation
+	// This should compute: sharedKey = privateKey * publicKey (ECC point multiplication)
+	// For now, returning not-implemented error to indicate this requires ECC library
+	return IOSC_FAIL_INTERNAL;
+}
+
+// Syscall wrapper for IOSC_ComputeSharedKey
+// Validates caller permissions and memory access before delegating to internal implementation
+s32 IOSC_ComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	s32 ret = IPC_SUCCESS, keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		// Verify the shared key is a valid custom slot (not system slots)
+		// System slots (< 12) and root key are not allowed as output
+		if (sharedKeyHandle < 12 || sharedKeyHandle == RSA4096_ROOTKEY)
+		{
+			ret = IOSC_EACCES;
+			break;
+		}
+
+		// Verify caller owns the private key
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(privateKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		// Verify caller owns the public key
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(publicKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		// Verify caller owns the shared key output slot
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(sharedKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		// Call the internal implementation
+		ret = _IOSC_ComputeSharedKeyInner(privateKeyHandle, publicKeyHandle, sharedKeyHandle);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+
 #endif

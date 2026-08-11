@@ -116,6 +116,7 @@ s32 OSIOSCGenerateBlockMACAsync(ShaContext* context, const void* inputData, u32 
 s32 OSIOSCGenerateHash(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag, void* digest);
 s32 OSIOSCGenerateHashAsync(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag,
                             void* digest, s32 messageQueueId, IpcMessage* message);
+s32 OSIOSCComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle);
 
 // Special IOS syscall to print something to debug device
 void OSPrintk(const char* str);

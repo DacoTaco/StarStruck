@@ -52,4 +52,5 @@ s32 IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u3
                       const u32 chain_flag, void* digest);
 s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, const u32 inputSize,
                            const u32 chain_flag, void* digest, const s32 messageQueueId, IpcMessage* message);
+s32 IOSC_ComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle);
 #endif
