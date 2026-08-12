@@ -15,7 +15,9 @@
 #include <string.h>
 
 #include "crypto/aes.h"
+#include "crypto/iosc_helpers.h"
 #include "crypto/iosc.h"
+#include "crypto/iosc_hash.h"
 #include "crypto/otp.h"
 #include "crypto/keyring.h"
 #include "crypto/boot2.h"
@@ -49,8 +51,6 @@ static u32 TemporaryBuffer[0x80] ALIGNED(0x40) = { 0 };
 // provisional size, is located at the end of the kernel section
 extern u32 __ioscstack_addr[];
 #define IOSC_SafeStackEnd (u32) __ioscstack_addr
-
-extern void IOSC_SwapStack(u32 currentStackBase, u32 newStackBase);
 
 static s32 IOSC_BOOT2_UpdateVersion(void);
 static s32 IOSC_BOOT2_UpdateUnk1(void);
@@ -92,44 +92,6 @@ static inline s32 IOSC_CheckCurrentProcessCanRead(const void* ptr, u32 size)
 static inline s32 IOSC_CheckCurrentProcessCanReadWrite(const void* ptr, u32 size)
 {
 	return CheckMemoryPointer(ptr, size, 4, CurrentThread->ProcessId, 0);
-}
-
-static s32 DispatchIoctlv(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount, IoctlvMessageData* vectors)
-{
-	u32 flags = DisableInterrupts();
-	s32 ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors, NULL, NULL, 0);
-
-	RestoreInterrupts(flags);
-	return ret;
-}
-
-static s32 DispatchIoctlvAsync(s32 fd, u32 requestId, u32 vectorInputCount, u32 vectorIOCount,
-                               IoctlvMessageData* vectors, s32 messageQueueId, IpcMessage* message)
-{
-	u32 flags = DisableInterrupts();
-	s32 ret = 0;
-	if (messageQueueId >= MAX_MESSAGEQUEUES)
-	{
-		ret = -1;
-		goto _return_cleanup_dispatchIoctlvAsync;
-	}
-
-	if (MessageQueues[messageQueueId].ProcessId != CurrentThread->ProcessId)
-	{
-		return -4;
-		goto _return_cleanup_dispatchIoctlvAsync;
-	}
-
-	ret = CheckMemoryPointer(message, 0x20, 4, MessageQueues[messageQueueId].ProcessId, 0);
-	if (ret != 0)
-		goto _return_cleanup_dispatchIoctlvAsync;
-
-	ret = IoctlvFD_InnerWithFlag(fd, requestId, vectorInputCount, vectorIOCount, vectors,
-	                             &MessageQueues[messageQueueId], message, 0);
-
-_return_cleanup_dispatchIoctlvAsync:
-	RestoreInterrupts(flags);
-	return ret;
 }
 
 static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize,
@@ -240,83 +202,6 @@ _aes_encrypt_error_return:
 		FreeOnHeap(KernelHeapId, keyBlob);
 
 	if (messageData)
-		FreeOnHeap(KernelHeapId, messageData);
-
-	return ret;
-}
-static s32 _IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32 inputSize,
-                                  const void* customData, const u32 customDataSize, const u32 keyHandle,
-                                  const HMacCommandType hmacCommand, const void* signData,
-                                  const s32 messageQueueId, IpcMessage* message)
-{
-	if (((u32)inputData & 0x3F) != 0)
-		return -2016;
-
-	//hmac command should be the 0 based command, not the merged command
-	if (hmacCommand > FinalizeHmacState)
-		return IPC_EINVAL;
-
-	s32 ret = 0;
-	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x28);
-	if (messageData == NULL)
-	{
-		ret = IPC_ENOMEM;
-		goto _hmac_generate_cleanup_return;
-	}
-
-	messageData->Length = inputSize;
-	messageData->Data = (void*)inputData;
-	messageData[1].Data = (void*)context;
-	messageData[1].Length = sizeof(ShaContext);
-	messageData[2].Data = (void*)signData;
-	messageData[2].Length = signData == NULL ? 0 : 0x14;
-	messageData[3].Data = (void*)&keyHandle;
-	messageData[3].Length = sizeof(u32);
-	messageData[4].Data = (void*)customData;
-	messageData[4].Length = customDataSize;
-
-	ret = messageQueueId == -1 ?
-	          DispatchIoctlv(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData) :
-	          DispatchIoctlvAsync(SHA_STATIC_FILEDESC, hmacCommand, 3, 2, messageData, messageQueueId, message);
-
-	// On success, the SHA engine owns messageData and will free it
-	if (ret == IPC_SUCCESS)
-		return IPC_SUCCESS;
-
-_hmac_generate_cleanup_return:
-	if (messageData)
-		FreeOnHeap(KernelHeapId, messageData);
-
-	return ret;
-}
-
-static s32 _IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize,
-                              const u32 shaCommand, void* digest, const s32 messageQueueId, IpcMessage* message)
-{
-	if (((u32)inputData & 0x3F) != 0)
-		return IOSC_INVALID_ALIGN;
-
-	/* validate sha command: only Init/Contribute/Finalize are allowed */
-	if (shaCommand > FinalizeShaState)
-		return IPC_EINVAL;
-
-	IoctlvMessageData* messageData = (IoctlvMessageData*)AllocateOnHeap(KernelHeapId, 0x18);
-	if (messageData == NULL)
-		return IPC_ENOMEM;
-
-	messageData[0].Data = (void*)inputData;
-	messageData[0].Length = inputSize;
-	messageData[1].Data = (void*)context;
-	messageData[1].Length = sizeof(ShaContext);
-	messageData[2].Data = (void*)digest;
-	messageData[2].Length = digest == NULL ? 0 : 0x14;
-
-	s32 ret = messageQueueId == -1 ?
-	              DispatchIoctlv(SHA_STATIC_FILEDESC, shaCommand, 1, 2, messageData) :
-	              DispatchIoctlvAsync(SHA_STATIC_FILEDESC, shaCommand, 1, 2, messageData, messageQueueId, message);
-
-	/* On success the SHA engine takes ownership of messageData and will free it */
-	if (ret != IPC_SUCCESS)
 		FreeOnHeap(KernelHeapId, messageData);
 
 	return ret;
@@ -698,9 +583,9 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
 
 		ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
 		u32 computedHmac[5] __attribute__((aligned(0x40))) = { 0 };
-		_IOSC_GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, NULL, -1, NULL);
-		_IOSC_GenerateBlockMAC(&hmacContext, keyBuffer, importedKeySize, NULL, 0, verifyHandle,
-		                       FinalizeHmacState, computedHmac, -1, NULL);
+		GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, NULL, -1, NULL);
+		GenerateBlockMAC(&hmacContext, keyBuffer, importedKeySize, NULL, 0, verifyHandle, FinalizeHmacState,
+		                 computedHmac, -1, NULL);
 		if (memcmp(computedHmac, signBuffer, sizeof(computedHmac)) != 0)
 			return IOSC_FAIL_CHECKVALUE;
 	}
@@ -715,7 +600,7 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
 		u32 decryptSize = importedKeySize;
 		if ((decryptSize & 0xf) != 0)
 			decryptSize = (decryptSize + 0x10) & 0xfffffff0;
-		ret = _IOSC_Decrypt(decryptHandle, ivData, keyBuffer, decryptSize, TemporaryBuffer, -1, NULL);
+		ret = _IOSC_Decrypt(decryptHandle, (void*)ivData, keyBuffer, decryptSize, TemporaryBuffer, -1, NULL);
 		if (ret == IPC_SUCCESS)
 		{
 			ret = Keyring_SetKey(importedHandle, TemporaryBuffer, importedKeySize);
@@ -867,7 +752,7 @@ s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, con
 			return ret;
 	}
 
-	return _IOSC_GenerateHash(context, inputData, inputSize, chain_flag, digest, messageQueueId, message);
+	return GenerateHash(context, inputData, inputSize, chain_flag, digest, messageQueueId, message);
 }
 
 s32 IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize,
@@ -891,7 +776,7 @@ s32 IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u3
 			return ret;
 	}
 
-	return _IOSC_GenerateHash(context, inputData, inputSize, chain_flag, digest, -1, NULL);
+	return GenerateHash(context, inputData, inputSize, chain_flag, digest, -1, NULL);
 }
 
 s32 IOSC_CreateObject(u32* keyHandle, KeyType type, KeySubtype subtype)
@@ -1202,8 +1087,8 @@ static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, const vo
 				break;
 		}
 
-		ret = _IOSC_GenerateBlockMAC(context, inputData, inputSize, customData, customDataSize, keyHandle,
-		                             hmacCommand, signData, messageQueueId, message);
+		ret = GenerateBlockMAC(context, inputData, inputSize, customData, customDataSize, keyHandle,
+		                       hmacCommand, signData, messageQueueId, message);
 	}
 	while (0);
 
