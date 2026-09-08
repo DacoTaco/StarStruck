@@ -740,7 +740,7 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 	strncpy(srcEntry->Name, destinationName, MAX_FILE_SIZE);
 	srcEntry->Mode = sourceMode;
 	srcEntry->Sibling = parentEntry->StartCluster;
-	srcEntry->StartCluster = sourceInode;
+	parentEntry->StartCluster = sourceInode;
 
 	bool flushSuperBlock = false;
 	if (unlinkedInodes)
