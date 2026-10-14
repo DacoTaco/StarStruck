@@ -372,7 +372,7 @@ s32 MapMemoryAsCoursePage(MemorySection* memorySection, u8 mode)
 }
 
 //basically mmap
-s32 MapMemory(MemorySection* entry)
+static inline __attribute__((always_inline)) s32 MapMemory(MemorySection* entry, u8 mode)
 {
 	if (entry == NULL)
 		return IPC_EINVAL;
@@ -398,13 +398,23 @@ s32 MapMemory(MemorySection* entry)
 		}
 		else
 		{
-			ret = MapMemoryAsCoursePage(&memorySection, 0);
+			ret = MapMemoryAsCoursePage(&memorySection, mode);
 		}
 	}
 
 	FlushMemory();
 	TlbInvalidate();
 	return ret;
+}
+
+s32 MapKernelMemory(MemorySection* entry)
+{
+	return MapMemory(entry, 0);
+}
+
+s32 MapModuleMemory(MemorySection* entry)
+{
+	return MapMemory(entry, 1);
 }
 
 s32 MapHardwareRegisters()
@@ -418,7 +428,7 @@ s32 MapHardwareRegisters()
 		if (index >= sizeof(HWRegistersMemoryMaps) / sizeof(HWRegistersMemoryMaps[0]))
 			break;
 
-		ret = MapMemory(&HWRegistersMemoryMaps[index].Section);
+		ret = MapKernelMemory(&HWRegistersMemoryMaps[index].Section);
 		if (ret != 0)
 			break;
 
@@ -562,7 +572,7 @@ s32 InitializeMemory(void)
 	for (u32 i = 0; i < (sizeof(KernelMemoryMaps) / sizeof(KernelMemoryMaps[0])); i++)
 	{
 		MemorySection* section = &KernelMemoryMaps[i];
-		ret = MapMemory(section);
+		ret = MapKernelMemory(section);
 		if (ret < 0)
 			goto ret_init;
 	}

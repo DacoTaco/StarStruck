@@ -124,6 +124,29 @@ void IdleThread()
 	}
 }
 
+//go over the section described by the elf header and calculate the amount of valid elf headers to load
+static inline __attribute__((always_inline)) u32 GetProgramHeaderCount(const Elf32_Phdr* headers)
+{
+	if (headers[0].p_type != PT_PHDR || headers[0].p_vaddr != (u32)headers || headers[0].p_paddr != (u32)headers)
+		return 0;
+
+	const u32 headerCount = headers[0].p_memsz / sizeof(Elf32_Phdr);
+	if (headerCount <= 1)
+		return 0;
+
+	for (u32 index = 1; index < headerCount; index++)
+	{
+		const Elf32_Phdr* header = &headers[index];
+		if (header->p_type != PT_LOAD && header->p_type != PT_NOTE)
+			continue;
+
+		if (header->p_memsz < header->p_filesz || (header->p_vaddr & (header->p_align - 1)) != 0)
+			return 0;
+	}
+
+	return headerCount;
+}
+
 void kernel_main(void)
 {
 	//create IRQ Timer handler thread
@@ -186,7 +209,8 @@ void kernel_main(void)
 
 	//loop the program headers and map/launch all modules
 	Elf32_Phdr* headers = (Elf32_Phdr*)__headers_addr;
-	for (u32 index = 1; index < 0x0F; index++)
+	const u32 headerCount = GetProgramHeaderCount(headers);
+	for (u32 index = 1; index < headerCount; index++)
 	{
 		MemorySection section;
 		Elf32_Phdr header = headers[index];
@@ -204,19 +228,19 @@ void kernel_main(void)
 		else if (header.p_flags & PF_W)
 			section.AccessRights = AP_RWUSER;
 		else if (header.p_flags & PF_R)
-			section.AccessRights = AP_ROM;
-		else
 			section.AccessRights = AP_ROUSER;
+		else
+			section.AccessRights = AP_ROM;
 
 		section.IsCached = 1;
-		s32 ret = MapMemory(&section);
+		s32 ret = MapKernelMemory(&section);
 		if (ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
 		//map cached version
 		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
-		ret = MapMemory(&section);
+		ret = MapKernelMemory(&section);
 		if (ret != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 

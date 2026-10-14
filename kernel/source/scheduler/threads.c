@@ -609,7 +609,7 @@ s32 LaunchModule(const char* path)
 	const u32 elfMagic = ELFMAGIC;
 	Elf32_Nhdr* noteHeader = NULL;
 	Elf32_Phdr* programHeaders = NULL;
-	s32 fd = OpenFD(path, IOS_OPEN);
+	s32 fd = OpenFD(path, Read);
 	s32 ret = fd;
 	if (ret < 0)
 		goto cleanup_launch;
@@ -681,11 +681,11 @@ s32 LaunchModule(const char* path)
 		MemorySection section = { .PhysicalAddress = programHeader->p_paddr,
 			                      .VirtualAddress = programHeader->p_vaddr,
 			                      .Size = (programHeader->p_memsz + 0xFFF) & 0xFFFFF000,
-			                      .Domain = 0,
+			                      .Domain = 0x0F,
 			                      .AccessRights = AP_RWUSER,
 			                      .IsCached = 1 };
 
-		if (MapMemory(&section) != 0)
+		if (MapModuleMemory(&section) != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
 		ret = SeekFD(fd, (s32)programHeader->p_offset, 0);
@@ -697,32 +697,28 @@ s32 LaunchModule(const char* path)
 			goto cleanup_launch;
 
 		//if the filecontent < the memory size we need to clear it
-		if (ret < (s32)programHeader->p_memsz)
-			memset((void*)programHeader->p_vaddr, 0, programHeader->p_memsz - (u32)ret);
+		if (programHeader->p_filesz < programHeader->p_memsz)
+			memset((void*)(programHeader->p_vaddr + programHeader->p_filesz), 0,
+			       programHeader->p_memsz - programHeader->p_filesz);
 
-		//unknown flags
-		switch (programHeader->p_flags)
-		{
-			case 2:
-				section.AccessRights = AP_RWUSER;
-				break;
-			case 0:
-				section.AccessRights = AP_ROM;
-				break;
-			case 1:
-			default:
-				section.AccessRights = AP_ROUSER;
-				break;
-		}
+		//access rights flags
+		if (programHeader->p_flags & PF_X)
+			section.AccessRights = AP_ROUSER;
+		else if (programHeader->p_flags & PF_W)
+			section.AccessRights = AP_RWUSER;
+		else if (programHeader->p_flags & PF_R)
+			section.AccessRights = AP_ROUSER;
+		else
+			section.AccessRights = AP_ROM;
 
-		section.Domain = FLAGSTODOMAIN(programHeader->p_flags << 6);
-		if (MapMemory(&section) != 0)
+		section.Domain = FLAGSTODOMAIN(programHeader->p_flags);
+		if (MapModuleMemory(&section) != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
 		//map virtual address
 		section.VirtualAddress = MEM2_PHY2VIRT(section.VirtualAddress);
 		section.IsCached = 0;
-		if (MapMemory(&section) != 0)
+		if (MapKernelMemory(&section) != 0)
 			panic("Unable to map region %08x [%d bytes]\n", section.VirtualAddress, section.Size);
 
 		//no idea why but hey, you do you IOS
@@ -748,7 +744,8 @@ s32 LaunchModule(const char* path)
 
 	ret = 0;
 	const u32 noteSize = noteHeader->n_descsz / sizeof(ModuleInfo);
-	const ModuleInfo* module = (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr));
+	const ModuleInfo* module =
+	    (ModuleInfo*)(((u32)noteHeader) + sizeof(Elf32_Nhdr) + ((noteHeader->n_namesz + 3) & ~3u));
 	for (u32 index = 0; index < noteSize; index++)
 	{
 		s32 threadId = CreateThread(module[index].EntryPoint, (void*)module[index].UserId, (u32*)module[index].StackAddress,

@@ -121,7 +121,8 @@ typedef enum
 #ifndef MIOS
 s32 InitializeMemory(void);
 void* KMalloc(u32 size);
-s32 MapMemory(MemorySection* entry);
+s32 MapModuleMemory(MemorySection* entry);
+s32 MapKernelMemory(MemorySection* entry);
 u32 VirtualToPhysical(u32 virtualAddress);
 s32 CheckMemoryPointer(const void* ptr, u32 size, u32 type, u32 pid, u32 domainPid);
 u32 GetIosVersion(void);
