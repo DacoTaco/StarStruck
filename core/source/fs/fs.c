@@ -323,7 +323,8 @@ s32 SetFileVersionControl(const char* path, u8 version)
 s32 CreateAndWriteFile(const char* filepath, u8 attrib, u8 owner, u8 group, u8 other, const u8* data, u32 len)
 {
 	//compile the temp path and delete it just in case
-	char* tempPath = "/tmp/000000000000";
+	//filenames are maximum 8.3, so 12 zeroes
+	char tempPath[] = "/tmp/000000000000";
 	const char* filename = strrchr(filepath, '/');
 	strncpy(tempPath + 5, filename + 1, 12);
 	DeletePath(tempPath);
@@ -342,7 +343,7 @@ s32 CreateAndWriteFile(const char* filepath, u8 attrib, u8 owner, u8 group, u8 o
 	s32 written = WriteFile(fd, data, len);
 	ret = OSCloseFD(fd);
 	if (written != (s32)len)
-		return (written < 0) ? written : IOS_EIO;
+		return IOS_EIO;
 	else if (ret != IPC_SUCCESS)
 		return ret;
 
