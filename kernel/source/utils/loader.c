@@ -359,8 +359,8 @@ s32 LoadKernel(const char* path, s32 suspendBroadway, u32 version)
 	if (ret != (s32)len)
 		goto cleanup;
 
-	// Set GPIO ownership as IOS does before launching.
-	set32(HW_GPIO1OWNER, read32(HW_GPIO1OWNER) & ((0xFF000000 | GP_ALL) ^ GP_DISPIN));
+	// clear GPIO ownership for debug
+	clear32(HW_GPIO1OWNER, GP_DEBUG);
 
 	//launch the kernel image
 	_LaunchKernel(staging, version);
