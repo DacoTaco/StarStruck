@@ -46,7 +46,7 @@ MEMORY
 __stack_size = 0x300;
 __irqstack_size = 0x060;
 __excstack_size = 0x100;
-__ioscstack_size = 0x400;
+__ioscstack_size = 0x1000;
 
 __kmalloc_heap_start = ORIGIN(kmalloc_heap);
 __kmalloc_heap_size = LENGTH(kmalloc_heap);
