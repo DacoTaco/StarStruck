@@ -87,7 +87,7 @@ u32 OSVirtualToPhysical(u32 virtualAddress);
 u32 OSGetCoreClock(void);
 s32 OSLaunchModule(const char* path);
 s32 OSLoadBinary(const char* path);
-s32 OSLoadKernel(const char* path, s32 suspendBroadway, u64* version);
+s32 OSLoadKernel(const char* path, s32 suspendBroadway, u32 version);
 s32 OSLaunchKernel(const void* image, u32 version);
 s32 OSGetKernelFlavor(s16* type, s16* unk);
 
