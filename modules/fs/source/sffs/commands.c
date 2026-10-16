@@ -74,6 +74,38 @@ static u16 FindReservedCluster(SuperBlockInfo* superblock)
 	return SFFSBadNode;
 }
 
+// Free every cluster in the chain starting at startCluster, marking each one
+// SFFSFreeNode and updating the cluster statistics.
+//
+// Returns the number of clusters freed, or FS_ECORRUPT on a bad chain.
+s32 FreeClusterChain(SuperBlockInfo* superblock, u16 startCluster)
+{
+	const u32 firstCluster = _superblockOffset >> CLUSTER_SIZE_SHIFT;
+	const u32 numClusters = _fileSystemDataSize >> CLUSTER_SIZE_SHIFT;
+	u32 freed = 0;
+	u16 cluster = startCluster;
+
+	while (cluster != SFFSLastNode)
+	{
+		// cluster out of range
+		if (!(cluster >= firstCluster && cluster < firstCluster + numClusters))
+			return FS_ECORRUPT;
+
+		// We could not possibly loop more times than there are data clusters
+		// something must have gone horribly wrong.
+		if (freed >= numClusters)
+			return FS_ECORRUPT;
+
+		const u16 nextCluster = superblock->FatEntries[cluster];
+		superblock->FatEntries[cluster] = SFFSFreeNode;
+		RemoveUsedClusterStats(1);
+		freed++;
+		cluster = nextCluster;
+	}
+
+	return (s32)freed;
+}
+
 // Update all FAT chains and FST entries to reflect relocated clusters
 static void ClusterRelocationUpdate(SuperBlockInfo* superblock, SFFSClusterPair* relocationMap, u32 count)
 {
@@ -566,19 +598,12 @@ s32 DeletePath(const u32 uid, const u16 gid, const char* path)
 		if (ret != IPC_SUCCESS)
 			return ret;
 
-		// Get first cluster of file
-		u16 cluster = entry->StartCluster;
-
 		// Free the file's cluster chain
-		while (cluster != SFFSLastNode)
-		{
-			clustersFreed = true;
+		s32 freed = FreeClusterChain(superblock, entry->StartCluster);
+		if (freed < 0)
+			return freed;
 
-			u16 nextCluster = superblock->FatEntries[cluster];
-			superblock->FatEntries[cluster] = SFFSFreeNode;
-			RemoveUsedClusterStats(1);
-			cluster = nextCluster;
-		}
+		clustersFreed = freed > 0;
 	}
 
 	// Remove inode from parent's sibling chain
@@ -709,17 +734,11 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 				if (ret != IPC_SUCCESS)
 					return ret;
 
-				u16 cluster = destinationEntry->StartCluster;
-				if (cluster == SFFSLastNode)
-					break;
+				s32 freed = FreeClusterChain(superblock, destinationEntry->StartCluster);
+				if (freed < 0)
+					return freed;
 
-				unlinkedInodes = true;
-				while (cluster != SFFSLastNode)
-				{
-					superblock->FatEntries[cluster] = SFFSFreeNode;
-					RemoveUsedClusterStats(1);
-					cluster = superblock->FatEntries[cluster];
-				}
+				unlinkedInodes = freed > 0;
 				break;
 		}
 
@@ -740,17 +759,12 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 	strncpy(srcEntry->Name, destinationName, MAX_FILE_SIZE);
 	srcEntry->Mode = sourceMode;
 	srcEntry->Sibling = parentEntry->StartCluster;
-	srcEntry->StartCluster = sourceInode;
+	parentEntry->StartCluster = sourceInode;
 
-	bool flushSuperBlock = false;
 	if (unlinkedInodes)
-	{
-		ret = ReclaimBlocks(superblock);
-		flushSuperBlock = ret == IPC_SUCCESS;
-		ret = IPC_SUCCESS;
-	}
+		ReclaimBlocks(superblock);
 
-	return flushSuperBlock ? TryWriteSuperblock() : ret;
+	return TryWriteSuperblock();
 }
 
 s32 ReadDirectory(const u32 uid, const u16 gid, const char* path, char* files, u32* numberOfEntries)
