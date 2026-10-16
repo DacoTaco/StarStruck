@@ -20,8 +20,7 @@
 #include "interrupt/irq.h"
 #include "scheduler/threads.h"
 
-#define ALIGNED_BLOCK_HEADER_SIZE ((sizeof(HeapBlock) + 0x0F) & 0xFFFFFFF0)
-#define MAX_HEAP                  0x10
+#define MAX_HEAP 0x10
 
 s32 KernelHeapId = -1;
 static HeapInfo heaps[MAX_HEAP];
@@ -56,7 +55,7 @@ s32 CreateHeap(void* ptr, u32 size)
 
 	HeapBlock* firstBlock = (HeapBlock*)ptr;
 	firstBlock->BlockState = HeapBlockInit;
-	firstBlock->Size = size - ALIGNED_BLOCK_HEADER_SIZE;
+	firstBlock->Size = size - sizeof(HeapBlock);
 	firstBlock->PreviousBlock = NULL;
 	firstBlock->NextBlock = NULL;
 
@@ -107,13 +106,13 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 	u32 irqState = DisableInterrupts();
 	u32 ret = 0;
 
-	if (heapid < 0 || heapid > MAX_HEAP || !heaps[heapid].Heap || size == 0 || heaps[heapid].Size < size || alignment < 0x20)
-	{
+	//the alignment has to be a power of 2, an alignment smaller than the minimum gets raised to it (like IOS does)
+	if (size == 0 || alignment == 0 || ((alignment - 1) & alignment) != 0 || heapid < 0 ||
+	    heapid >= MAX_HEAP || heaps[heapid].Heap == NULL)
 		goto restore_and_return;
-	}
 
-	if (heaps[heapid].Heap == NULL)
-		goto restore_and_return;
+	if (alignment < 0x20)
+		alignment = 0x20;
 
 	//align size by 0x20
 	u32 alignedSize = (size + 0x1F) & 0xFFFFFFE0;
@@ -128,45 +127,52 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		blockSize = currentBlock->Size;
 		alignedOffset = (alignment - ((u32)(currentBlock + 1) & (alignment - 1))) & (alignment - 1);
 
+		//an exact fit is perfect
+		if (blockSize == alignedSize && alignedOffset == 0)
+		{
+			blockToAllocate = currentBlock;
+			break;
+		}
+
 		if (alignedSize + alignedOffset <= blockSize &&
 		    (blockToAllocate == NULL || blockSize < blockToAllocate->Size))
 			blockToAllocate = currentBlock;
 
 		currentBlock = currentBlock->NextBlock;
-
-		if (blockToAllocate != NULL && blockToAllocate->Size == alignedSize + alignedOffset)
-			break;
 	}
 
 	if (blockToAllocate == NULL)
 		goto restore_and_return;
 
+	//set values of selected block
+	blockSize = blockToAllocate->Size;
+	alignedOffset = (alignment - ((u32)(blockToAllocate + 1) & (alignment - 1))) & (alignment - 1);
+
 	HeapBlock* freeBlock = NULL;
 	//split up the block if its big enough to do so
-	if (alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE < blockSize)
+	if (alignedSize + alignedOffset + sizeof(HeapBlock) < blockSize)
 	{
-		blockToAllocate->Size = alignedSize + alignedOffset + ALIGNED_BLOCK_HEADER_SIZE;
-		freeBlock = (HeapBlock*)(((u32)blockToAllocate) + blockToAllocate->Size);
+		blockToAllocate->Size = alignedSize + alignedOffset;
+		freeBlock = (HeapBlock*)(((u32)blockToAllocate) + sizeof(HeapBlock) + blockToAllocate->Size);
 		freeBlock->BlockState = HeapBlockInit;
-		freeBlock->Size = blockSize - (blockToAllocate->Size);
-		freeBlock->PreviousBlock = blockToAllocate->PreviousBlock;
+		freeBlock->Size = blockSize - blockToAllocate->Size - sizeof(HeapBlock);
 		freeBlock->NextBlock = blockToAllocate->NextBlock;
+		if (freeBlock->NextBlock != NULL)
+			freeBlock->NextBlock->PreviousBlock = freeBlock;
+
+		blockToAllocate->NextBlock = freeBlock;
 	}
 	else
 		freeBlock = blockToAllocate->NextBlock;
 
 	//remove from heap list
-	currentBlock = blockToAllocate->PreviousBlock;
-	if (currentBlock == NULL)
-	{
+	if (blockToAllocate->PreviousBlock == NULL)
 		heaps[heapid].FirstBlock = freeBlock;
-		currentBlock = freeBlock;
-	}
 	else
-		currentBlock->NextBlock = freeBlock;
+		blockToAllocate->PreviousBlock->NextBlock = freeBlock;
 
-	if (currentBlock->NextBlock != NULL)
-		currentBlock->NextBlock->PreviousBlock = currentBlock;
+	if (blockToAllocate->NextBlock != NULL)
+		blockToAllocate->NextBlock->PreviousBlock = blockToAllocate->PreviousBlock;
 
 	//mark block as in use & remove it from our available heap
 	blockToAllocate->BlockState = HeapBlockInUse;
@@ -181,26 +187,24 @@ void* MallocateOnHeap(s32 heapid, u32 size, u32 alignment)
 		currentBlock->NextBlock = blockToAllocate;
 	}
 
-	//get pointer and clear it!
+	//get the pointer
 	ret = (u32)(currentBlock + 1);
-	if (ret)
-		memset((u8*)ret, 0, size);
 
 restore_and_return:
 	RestoreInterrupts(irqState);
 	return (void*)ret;
 }
 
-int MergeNextBlockIfUnused(HeapBlock* parentBlock)
+void MergeNextBlockIfUnused(HeapBlock* parentBlock)
 {
 	if (parentBlock == NULL || parentBlock->NextBlock == NULL)
-		return 0;
+		return;
 
 	u32 blockSize = parentBlock->Size;
 	HeapBlock* blockToMerge = parentBlock->NextBlock;
 
-	if (blockToMerge != (HeapBlock*)(((u32)parentBlock) + blockSize))
-		return 0;
+	if (blockToMerge != (HeapBlock*)(((u32)parentBlock) + sizeof(HeapBlock) + blockSize))
+		return;
 
 	//link parent block with the tomerge's next block and vice versa
 	HeapBlock* nextBlock = blockToMerge->NextBlock;
@@ -209,8 +213,7 @@ int MergeNextBlockIfUnused(HeapBlock* parentBlock)
 		nextBlock->PreviousBlock = parentBlock;
 
 	//merge sizes
-	parentBlock->Size = blockSize + blockToMerge->Size;
-	return 1;
+	parentBlock->Size = blockSize + blockToMerge->Size + sizeof(HeapBlock);
 }
 
 s32 FreeOnHeap(s32 heapid, void* ptr)
