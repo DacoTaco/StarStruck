@@ -26,6 +26,10 @@ FileDescriptor AesFileDescriptor SRAM_BSS;
 FileDescriptor ShaFileDescriptor SRAM_BSS;
 #endif
 
+//defined in threads, this is the only code that should access these outside of threading code
+extern u32 ProcessUID[MAX_PROCESSES];
+extern u16 ProcessGID[MAX_PROCESSES];
+
 static AllProcessesFileDescriptors_t ProcessFileDescriptors SRAM_BSS;
 
 static s32 GetThreadSpecificMsgOrFreeFromExtra(const int useMsgFromExtraInsteadOfThread, IpcMessage** out)
@@ -105,7 +109,7 @@ static FileDescriptor* GetProcessFd(const s32 id)
 s32 OpenFD_Inner(const char* path, AccessMode mode)
 {
 	const s32 currentThreadId = GetThreadID();
-	const u32 currentProcessId = CurrentThread == IpcHandlerThread ? 15 : GetProcessID();
+	const u32 currentProcessId = CurrentThread == IpcHandlerThread ? PPCBOOTId : GetProcessID();
 
 	const u32 pathLength = strnlen(path, MAX_PATHLEN);
 	if (pathLength >= MAX_PATHLEN)
@@ -136,8 +140,8 @@ s32 OpenFD_Inner(const char* path, AccessMode mode)
 		message->Request.Command = IOS_OPEN;
 		message->Request.Message.Open.Filepath = FiledescPathArray[currentThreadId].DevicePath;
 		message->Request.Message.Open.Mode = mode;
-		message->Request.Message.Open.UID = GetUID();
-		message->Request.Message.Open.GID = GetGID();
+		message->Request.Message.Open.UID = ProcessUID[currentProcessId];
+		message->Request.Message.Open.GID = ProcessGID[currentProcessId];
 		message->Callback = NULL;
 		message->CallerData = 0;
 
