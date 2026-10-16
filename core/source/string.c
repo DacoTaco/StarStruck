@@ -12,11 +12,34 @@ https://negix.net/trac/pdclib
 
 #include "string.h"
 
+char* strstr(const char* str, const char* substr)
+{
+	size_t i;
+	int c = substr[0];
+
+	if (c == 0)
+		return (char*)str;
+
+	for (; str[0] != '\0'; str++)
+	{
+		if (str[0] != c)
+			continue;
+		for (i = 1; substr[i] != 0; i++)
+			if (str[i] != substr[i])
+				break;
+		if (substr[i] == '\0')
+			return (char*)str;
+	}
+
+	return NULL;
+}
+
 size_t strlen(const char* s)
 {
 	size_t len;
 
-	for (len = 0; s[len]; len++);
+	for (len = 0; s[len]; len++)
+		;
 
 	return len;
 }
@@ -25,7 +48,8 @@ size_t strnlen(const char* s, size_t count)
 {
 	size_t len;
 
-	for (len = 0; s[len] && len < count; len++);
+	for (len = 0; s[len] && len < count; len++)
+		;
 
 	return len;
 }
@@ -88,7 +112,7 @@ void* memset(void* dest, int character, size_t length)
 	const u8 data = (u8)character & 0xff;
 	u32 cnt = 0;
 
- //if destination isn't 4 byte aligned, do a seperate memset until we are aligned
+	//if destination isn't 4 byte aligned, do a seperate memset until we are aligned
 	if (((u32)dest & 3) != 0)
 	{
 		cnt = 4 - ((u32)dest & 3);
@@ -103,7 +127,7 @@ void* memset(void* dest, int character, size_t length)
 		destination = (u8*)((u32)dest & 0xFFFFFFFC) + 4;
 	}
 
- //align destination to 16 bytes
+	//align destination to 16 bytes
 	if (length < 0x101 || ((u32)destination & 0xf) == 0)
 		cnt = length & 0xFFFFFFFC;
 	else
@@ -165,7 +189,7 @@ __attribute__((target("arm"))) void* memcpy(void* dest, const void* src, size_t 
 	void* ret = dest;
 	u8* input = (u8*)dest;
 	u8* source = (u8*)src;
- //nintendo's memcpy is very optimised and custom written and its lovely lol
+	//nintendo's memcpy is very optimised and custom written and its lovely lol
 
 	if ((((u32)input | (u32)source) & 0x03) == 0)
 	{
@@ -197,7 +221,7 @@ __attribute__((target("arm"))) void* memcpy(void* dest, const void* src, size_t 
 		                 :
 		                 : [source] "r"(source), [destination] "r"(input), [length] "r"(len));
 
-  //ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
+		//ok, nintendo's beauty has run, now we are left to copy 4 bytes at a time
 		while (len >= 4)
 		{
 			*(u32*)input = *(u32*)source;
@@ -207,7 +231,7 @@ __attribute__((target("arm"))) void* memcpy(void* dest, const void* src, size_t 
 		}
 	}
 
- //and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
+	//and then there is the MEM1 issue, which means single bytes they also need to be copied by 4 bytes
 	if (input < (u8*)0x1800000)
 	{
 		for (; len != 0; len--)
@@ -251,7 +275,8 @@ int strcmp(const char* s1, const char* s2)
 {
 	size_t i;
 
-	for (i = 0; s1[i] && s1[i] == s2[i]; i++);
+	for (i = 0; s1[i] && s1[i] == s2[i]; i++)
+		;
 
 	return s1[i] - s2[i];
 }
@@ -260,7 +285,8 @@ int strncmp(const char* s1, const char* s2, size_t n)
 {
 	size_t i;
 
-	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++);
+	for (i = 0; i < n && s1[i] && s1[i] == s2[i]; i++)
+		;
 	if (i == n)
 		return 0;
 	return s1[i] - s2[i];
@@ -272,7 +298,7 @@ int strncmp(const char* s1, const char* s2, size_t n)
 // hence the weird access/seperation of code
 char* strncpy(char* dest, const char* src, size_t maxlen)
 {
- // if in mem1, work in u32 sized chunks
+	// if in mem1, work in u32 sized chunks
 	if ((u32)dest < 0x01800000)
 	{
 		u32 index = 0;
@@ -289,7 +315,7 @@ char* strncpy(char* dest, const char* src, size_t maxlen)
 			index++;
 		}
 
-  //add padding
+		//add padding
 		while (index < maxlen)
 		{
 			u32* address = (u32*)(destination & (u32)~0x03);
@@ -300,7 +326,7 @@ char* strncpy(char* dest, const char* src, size_t maxlen)
 			index++;
 		}
 	}
- // otherwise, normal strncpy
+	// otherwise, normal strncpy
 	else
 	{
 		size_t i = 0;
@@ -309,7 +335,7 @@ char* strncpy(char* dest, const char* src, size_t maxlen)
 			dest[i] = src[i];
 		}
 
-  //padding
+		//padding
 		for (; i < maxlen; ++i)
 		{
 			dest[i] = 0;
@@ -365,7 +391,7 @@ char* strrchr(const char* s, int c)
 		s++;
 	}
 
- // Check the null terminator as well (important if c == '\0')
+	// Check the null terminator as well (important if c == '\0')
 	if ((char)c == '\0')
 		return (char*)s;
 
