@@ -105,7 +105,7 @@ void kernel_main(void)
 	PPCStart();
 
 	udelay(1000);
-	ClearAndEnableIPCInterrupt(IRQ_UNKNMIOS);
+	ClearAndEnableIPCInterrupt(IRQ_PIRESET);
 	SetThreadPriority(0, 0);
 	printk("Compat mode idle thread started\n");
 	while (true)

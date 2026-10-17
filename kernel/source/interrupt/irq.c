@@ -142,8 +142,8 @@ void ClearAndEnableIPCInterrupt(u32 interrupts)
 	}
 	else if (interrupts < IRQ_UNKN12 && interrupts == IRQ_OHCI1)
 		flags = IRQF_OHCI1;
-	else if (interrupts == IRQ_UNKNMIOS)
-		flags = IRQF_UNKNMIOS;
+	else if (interrupts == IRQ_PIRESET)
+		flags = IRQF_PIRESET;
 	else if (interrupts == IRQ_RESET)
 		flags = IRQF_RESET;
 
@@ -286,10 +286,10 @@ void IrqHandler(ThreadContext* context)
 	}
 
 #ifdef MIOS
-	if (flags & IRQF_UNKNMIOS)
+	if (flags & IRQF_PIRESET)
 	{
-		//gecko_printf("IRQ: UNKNMIOS\n");
-		clear32(HW_ARMIRQMASK, IRQ_UNKNMIOS);
+		//gecko_printf("IRQ: IRQ_PIRESET\n");
+		clear32(HW_ARMIRQMASK, IRQ_PIRESET);
 		//MIOS Executes something here. is it like a reset?
 	}
 #else
