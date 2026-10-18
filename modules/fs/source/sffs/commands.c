@@ -716,9 +716,10 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 				unlinkedInodes = true;
 				while (cluster != SFFSLastNode)
 				{
+					u16 nextCluster = superblock->FatEntries[cluster];
 					superblock->FatEntries[cluster] = SFFSFreeNode;
 					RemoveUsedClusterStats(1);
-					cluster = superblock->FatEntries[cluster];
+					cluster = nextCluster;
 				}
 				break;
 		}
