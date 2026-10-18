@@ -743,6 +743,10 @@ s32 Rename(const u32 userId, const u16 groupId, const char* source, const char* 
 	srcEntry->Sibling = parentEntry->StartCluster;
 	parentEntry->StartCluster = sourceInode;
 
+	//Potential IOS bug here. 
+	//if it moved a file to an existing file, it might fail here and the reclaim/this code might not flush superblock
+	//Also, if it failed to reclaim the blocks, it will swallow the error and still report success
+	//Both of these would leave the superblock correct in memory, but not on the actual nand
 	bool flushSuperBlock = false;
 	if (unlinkedInodes)
 	{
