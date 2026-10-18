@@ -501,6 +501,8 @@ s32 HandleDevFsIoctl(IpcMessage* message)
 			return DeletePath(handle->UserId, handle->GroupId, (const char*)ioctl->InputBuffer);
 
 		case IOCTL_RENAME:
+			if (ioctl->InputLength < MAX_FILE_PATH * 2)
+				return FS_EINVAL;
 			// Expect two MAX_FILE_PATH buffers concatenated: source path then destination path
 			const FileRenameParameter* paths = (const FileRenameParameter*)ioctl->InputBuffer;
 			return Rename(handle->UserId, handle->GroupId, paths->Source, paths->Destination);
