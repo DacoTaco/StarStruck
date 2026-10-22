@@ -97,6 +97,7 @@ s32 OSIOSCCreateObject(u32* keyHandle, u32 type, u32 subtype);
 s32 OSIOSCDeleteObject(u32 keyHandle);
 s32 OSIOSCImportSecretKey(u32 importedHandle, u32 verifyHandle, u32 decryptHandle, IOSCSecretKeySecurity flag,
                           const u8* signBuffer, const u8* ivData, const u8* keyBuffer);
+s32 OSIOSCComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle);
 s32 OSSetIOSCData(u32 keyHandle, u32 value);
 s32 OSGetIOSCData(u32 keyHandle, u32* value);
 s32 OSIOSCGetKeySize(u32* keySize, u32 keyHandle);

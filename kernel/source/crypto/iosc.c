@@ -19,6 +19,7 @@
 #include "crypto/iosc_helpers.h"
 #include "crypto/iosc.h"
 #include "crypto/iosc_hash.h"
+#include "crypto/iosc_ecdh.h"
 #include "crypto/otp.h"
 #include "crypto/keyring.h"
 #include "crypto/boot2.h"
@@ -29,6 +30,7 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "messaging/messageQueue.h"
+#include "ellipticCurve/uint233.h"
 
 #ifndef MIOS
 
@@ -542,7 +544,7 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
                                       const u8* signBuffer, const u8* ivData, const u8* keyBuffer)
 {
 	// Only custom slots (> 11), not RSA root key, and not the special 0xFFFFFFFF handle
-	if (importedHandle < 12 || importedHandle == RSA4096_ROOTKEY || importedHandle == (u32)-1)
+	if (importedHandle < KEYRING_MAX_VALUE || importedHandle == RSA4096_ROOTKEY || importedHandle == (u32)-1)
 		return IOSC_EACCES;
 
 	s32 ret = IPC_SUCCESS;
@@ -584,7 +586,7 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
 
 		IOSCHashContext hmacContext = { 0 };
 		u32 computedHmac[5] __attribute__((aligned(0x40))) = { 0 };
-		GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, NULL, -1, NULL);
+		GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, signBuffer, -1, NULL);
 		GenerateBlockMAC(&hmacContext, keyBuffer, importedKeySize, NULL, 0, verifyHandle, FinalizeHmacState,
 		                 computedHmac, -1, NULL);
 		if (memcmp(computedHmac, signBuffer, sizeof(computedHmac)) != 0)
@@ -725,6 +727,109 @@ s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandl
 
 		/* Call internal implementation */
 		ret = _IOSC_ImportPublicKey(keyData, metadata, keyHandle);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+
+static s32 _IOSC_ComputeSharedKeyInner(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	if (sharedKeyHandle < KEYRING_MAX_VALUE || sharedKeyHandle == RSA4096_ROOTKEY)
+		return IOSC_EACCES;
+
+	u32 zeroes = 0;
+	s32 ret = Keyring_GetKeyZeroesIfAnyPrivate(privateKeyHandle, &zeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	ret = Keyring_SetKeyZeroesIfAnyPrivate(sharedKeyHandle, zeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	KeySubtype keySubtype = 0;
+	KeyType keyType = 0;
+	Keyring_GetKeyTypes(privateKeyHandle, &keyType, &keySubtype);
+	if ((keyType != PrivateKey && keyType != PublicAndPrivateKey) || keySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	Keyring_GetKeyTypes(publicKeyHandle, &keyType, &keySubtype);
+	if ((keyType != PublicKey && keyType != PublicAndPrivateKey) || keySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	Keyring_GetKeyTypes(sharedKeyHandle, &keyType, &keySubtype);
+	if (keyType != PrivateKey || keySubtype >= RSA_2048)
+		return IOSC_INVALID_OBJTYPE;
+
+	u8 privateKey[0x20];
+	if (Keyring_GetKey(privateKeyHandle, privateKey, sizeof(ECCPrivateKey)) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	u32 publicKeySize = 0;
+	if (Keyring_FindKeySize(&publicKeySize, publicKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	u8 sharedKey[0x20];
+	ECCPublicKey publicKey;
+	Keyring_GetKeyTypes(publicKeyHandle, &keyType, &keySubtype);
+	if (keyType == PublicKey)
+	{
+		if (Keyring_GetKey(publicKeyHandle, &publicKey, publicKeySize) != IPC_SUCCESS)
+			return IOSC_FAIL_INTERNAL;
+	}
+	else
+	{
+		if (keyType != PublicAndPrivateKey)
+			return IOSC_INVALID_FORMAT;
+
+		ECCPublicAndPrivateKey keys;
+
+		ret = Keyring_GetKey(publicKeyHandle, &keys, publicKeySize);
+		memcpy(&publicKey, &keys.Public, sizeof(ECCPublicKey));
+		if (ret != IPC_SUCCESS)
+			return IOSC_FAIL_INTERNAL;
+	}
+
+	u32 sharedKeySize = 0;
+	if (Keyring_FindKeySize(&sharedKeySize, sharedKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// true when the key is too big for the 20 byte hash
+	if (ECDH_ComputeSharedSecretHash(privateKey, &publicKey, sharedKey, sharedKeySize))
+		return IOSC_FAIL_INTERNAL;
+
+	if (Keyring_FindKeySize(&publicKeySize, sharedKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	if (Keyring_SetKey(sharedKeyHandle, sharedKey, publicKeySize) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	return IPC_SUCCESS;
+}
+
+s32 IOSC_ComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	s32 ret = IPC_SUCCESS;
+	s32 keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		// Caller must own all 3 keys (RSA4096_ROOTKEY is allowed inside the helper)
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(privateKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(publicKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(sharedKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_ComputeSharedKeyInner(privateKeyHandle, publicKeyHandle, sharedKeyHandle);
 	}
 	while (0);
 

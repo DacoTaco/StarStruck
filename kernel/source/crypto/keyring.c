@@ -18,6 +18,9 @@
 #include "crypto/seeprom.h"
 #include "crypto/iosc.h"
 #include <ios/aes.h>
+#include "crypto/iosc_ecdh.h"
+#include "ellipticCurve/uint233.h"
+#include "ellipticCurve/wideUint233.h"
 
 KeyringEntry KeyringEntries[KEYRING_TOTAL_ENTRIES];
 KeyringMetadataType KeyringMetadata[KEYRING_METADATA_TOTAL_ENTRIES];
@@ -261,8 +264,15 @@ s32 Keyring_FindKeySize(u32* keySize, u32 keyHandle)
 
 	return IOSC_FAIL_INTERNAL;
 }
-s32 Keyring_GetSignatureSize(u32* publicKeySize, u32 keyHandle)
+s32 Keyring_GetSignatureSize(u32* signatureSize, u32 keyHandle)
 {
+	// the root key is the RSA 4096 key that signs everything
+	if (keyHandle == RSA4096_ROOTKEY)
+	{
+		*signatureSize = 0x200;
+		return IPC_SUCCESS;
+	}
+
 	KeyType keyType;
 	KeySubtype keySubtype;
 	Keyring_GetKeyTypes(keyHandle, &keyType, &keySubtype);
@@ -271,19 +281,19 @@ s32 Keyring_GetSignatureSize(u32* publicKeySize, u32 keyHandle)
 	{
 		case PublicKey:
 			if (keySubtype == RSA_4096)
-				*publicKeySize = 0x200;
+				*signatureSize = 0x200;
 			else if (keySubtype == RSA_2048)
-				*publicKeySize = 0x100;
+				*signatureSize = 0x100;
 			else if (keySubtype == ECC_233)
-				*publicKeySize = 0x3C;
+				*signatureSize = sizeof(ECCSignature);
 			else
 				return IOSC_EINVAL;
 			break;
 		case PrivateKey:
 			if (keySubtype == HMAC)
-				*publicKeySize = 0x14;
+				*signatureSize = sizeof(FinalShaHash);
 			else if (keySubtype == ECC_233)
-				*publicKeySize = 0x3C;
+				*signatureSize = sizeof(ECCSignature);
 			else
 				return IOSC_EINVAL;
 
@@ -292,7 +302,7 @@ s32 Keyring_GetSignatureSize(u32* publicKeySize, u32 keyHandle)
 			if (keySubtype != ECC_233)
 				return IOSC_EINVAL;
 
-			*publicKeySize = 0x3C;
+			*signatureSize = sizeof(ECCSignature);
 			break;
 		default:
 			return IOSC_EINVAL;
@@ -311,7 +321,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 			else if (keySubtype == RSA_2048) //RSA 2048 (256 bytes/2048 bits)
 				*keySize = 0x100;
 			else if (keySubtype == ECC_233) //ECC 233 (60 bytes/480 bits)
-				*keySize = 0x3C;
+				*keySize = sizeof(ECCPublicKey);
 			else
 				return IOSC_EINVAL;
 			break;
@@ -322,7 +332,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 			else if (keySubtype == AES_128) //AES 128 (16 bytes/128 bits)
 				*keySize = sizeof(AESBlock);
 			else if (keySubtype == ECC_233) //ECC 233 (30 bytes/240 bits)
-				*keySize = 0x1e;
+				*keySize = sizeof(ECCPrivateKey);
 			else
 				return IOSC_EINVAL;
 
@@ -333,7 +343,7 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 				return IOSC_EINVAL;
 
 			//ECC 233 (90 bytes/720 bits)
-			*keySize = 0x5a;
+			*keySize = sizeof(ECCPublicAndPrivateKey);
 			break;
 		case Other:
 			if (keySubtype == UNKNOWN1 || keySubtype == UNKNOWN2)
