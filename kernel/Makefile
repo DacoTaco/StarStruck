@@ -21,7 +21,7 @@ include $(SDKDIR)/starstruck_rules
 TARGET			:= armboot
 MAKEBIN 		:= tools/makebin.py
 BUILD			:= build
-SOURCES			:= source $(wildcard source/*/)
+SOURCES			:= $(shell find source -type d)
 INCLUDES		:= source
 DATA			:=
 MODULES			:= fs es
