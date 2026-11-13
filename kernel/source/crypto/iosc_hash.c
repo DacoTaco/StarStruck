@@ -10,6 +10,7 @@
 
 #include <ios/errno.h>
 #include <ios/ipc.h>
+#include <ios/iosc.h>
 #include <ios/sha.h>
 #include <ios/keyring.h>
 #include <string.h>
@@ -18,7 +19,7 @@
 #include "filedesc/calls_inner.h"
 #include "crypto/iosc_helpers.h"
 
-s32 GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32 inputSize, const void* customData,
+s32 GenerateBlockMAC(const IOSCHashContext* context, const void* inputData, const u32 inputSize, const void* customData,
                      const u32 customDataSize, const u32 keyHandle, const HMacCommandType hmacCommand,
                      const void* signData, const s32 messageQueueId, IpcMessage* message)
 {
@@ -39,7 +40,7 @@ s32 GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32
 
 	messageData->Length = inputSize;
 	messageData->Data = (void*)inputData;
-	messageData[1].Data = (void*)context;
+	messageData[1].Data = (void*)&context->ShaContext;
 	messageData[1].Length = sizeof(ShaContext);
 	messageData[2].Data = (void*)signData;
 	messageData[2].Length = signData == NULL ? 0 : 0x14;
@@ -63,8 +64,8 @@ _hmac_generate_cleanup_return:
 	return ret;
 }
 
-s32 GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize, const u32 shaCommand,
-                 void* digest, const s32 messageQueueId, IpcMessage* message)
+s32 GenerateHash(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
+                 const u32 shaCommand, void* digest, const s32 messageQueueId, IpcMessage* message)
 {
 	if (((u32)inputData & 0x3F) != 0)
 		return IOSC_INVALID_ALIGN;
@@ -79,7 +80,7 @@ s32 GenerateHash(const ShaContext* context, const void* inputData, const u32 inp
 
 	messageData[0].Data = (void*)inputData;
 	messageData[0].Length = inputSize;
-	messageData[1].Data = (void*)context;
+	messageData[1].Data = (void*)&context->ShaContext;
 	messageData[1].Length = sizeof(ShaContext);
 	messageData[2].Data = (void*)digest;
 	messageData[2].Length = digest == NULL ? 0 : 0x14;

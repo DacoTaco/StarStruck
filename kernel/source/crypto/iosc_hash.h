@@ -11,11 +11,12 @@
 
 #include <types.h>
 #include <ios/sha.h>
+#include <ios/iosc.h>
 #include <ios/ipc.h>
 
-s32 GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32 inputSize, const void* customData,
+s32 GenerateBlockMAC(const IOSCHashContext* context, const void* inputData, const u32 inputSize, const void* customData,
                      const u32 customDataSize, const u32 keyHandle, const HMacCommandType hmacCommand,
                      const void* signData, const s32 messageQueueId, IpcMessage* message);
 
-s32 GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize, const u32 shaCommand,
+s32 GenerateHash(const IOSCHashContext* context, const void* inputData, const u32 inputSize, const u32 shaCommand,
                  void* digest, const s32 messageQueueId, IpcMessage* message);

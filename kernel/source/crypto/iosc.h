@@ -14,6 +14,7 @@
 #include <ios/ipc.h>
 #include <ios/keyring.h>
 #include <ios/sha.h>
+#include <ios/iosc.h>
 
 #include "crypto/keyring.h"
 
@@ -42,14 +43,14 @@ s32 IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputData, const
 s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, const u32 dataSize,
                       void* outputData, const s32 messageQueueId, IpcMessage* message);
 s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandle);
-s32 IOSC_GenerateBlockMACAsync(const ShaContext* context, const void* inputData, const u32 inputSize, const void* customData,
+s32 IOSC_GenerateBlockMACAsync(const IOSCHashContext* context, const void* inputData, const u32 inputSize, const void* customData,
                                const u32 customDataSize, const u32 keyHandle, const HMacCommandType hmacCommand,
                                const void* signData, const s32 messageQueueId, IpcMessage* message);
-s32 IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32 inputSize,
+s32 IOSC_GenerateBlockMAC(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                           const void* customData, const u32 customDataSize, const u32 keyHandle,
                           const HMacCommandType hmacCommand, const void* signData);
-s32 IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize,
+s32 IOSC_GenerateHash(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                       const u32 chain_flag, void* digest);
-s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, const u32 inputSize,
+s32 IOSC_GenerateHashAsync(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                            const u32 chain_flag, void* digest, const s32 messageQueueId, IpcMessage* message);
 #endif

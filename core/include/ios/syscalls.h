@@ -17,6 +17,7 @@
 #include "ios/ahb.h"
 #include "ios/keyring.h"
 #include "ios/sha.h"
+#include "ios/iosc.h"
 #include "ios/messageQueue.h"
 
 typedef int (*ThreadFunc)(void* arg);
@@ -107,14 +108,14 @@ s32 OSIOSCEncryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 d
 s32 OSIOSCDecrypt(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData);
 s32 OSIOSCDecryptAsync(u32 keyHandle, void* ivData, const void* inputData, u32 dataSize, void* outputData,
                        s32 messageQueueId, IpcMessage* message);
-s32 OSIOSCGenerateBlockMAC(ShaContext* context, const void* inputData, u32 inputSize, const void* customData,
+s32 OSIOSCGenerateBlockMAC(IOSCHashContext* context, const void* inputData, u32 inputSize, const void* customData,
                            u32 customDataSize, u32 keyHandle, HMacCommandType hmacCommand, void* signData);
-s32 OSIOSCGenerateBlockMACAsync(ShaContext* context, const void* inputData, u32 inputSize, const void* customData,
+s32 OSIOSCGenerateBlockMACAsync(IOSCHashContext* context, const void* inputData, u32 inputSize, const void* customData,
                                 u32 customDataSize, u32 keyHandle, HMacCommandType hmacCommand,
                                 void* signData, s32 messageQueueId, IpcMessage* message);
 
-s32 OSIOSCGenerateHash(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag, void* digest);
-s32 OSIOSCGenerateHashAsync(ShaContext* context, const void* inputData, u32 inputSize, u32 chain_flag,
+s32 OSIOSCGenerateHash(IOSCHashContext* context, const void* inputData, u32 inputSize, u32 chain_flag, void* digest);
+s32 OSIOSCGenerateHashAsync(IOSCHashContext* context, const void* inputData, u32 inputSize, u32 chain_flag,
                             void* digest, s32 messageQueueId, IpcMessage* message);
 
 // Special IOS syscall to print something to debug device
