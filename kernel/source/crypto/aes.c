@@ -9,6 +9,7 @@
 */
 
 #include <string.h>
+#include <ios/aes.h>
 #include <ios/processor.h>
 #include <ios/errno.h>
 
@@ -111,9 +112,9 @@ void AesEngineHandler(void)
 					case AES_DECRYPT:
 						if (ioctlvMessage->InputArgc != 2 || ioctlvMessage->IoArgc != 2)
 							goto sendReply;
-						if (ioctlvMessage->MessageData[1].Length != 0x10 ||
+						if (ioctlvMessage->MessageData[1].Length != sizeof(AESBlock) ||
 						    ((u32)ioctlvMessage->MessageData[1].Data & 3) != 0 ||
-						    ioctlvMessage->MessageData[3].Length != 0x10 ||
+						    ioctlvMessage->MessageData[3].Length != sizeof(AESBlock) ||
 						    ((u32)ioctlvMessage->MessageData[3].Data & 3) != 0)
 							goto sendReply;
 
@@ -136,11 +137,11 @@ void AesEngineHandler(void)
 processAesCommand:
 						IoctlvMessageData* inputData = &ioctlvMessage->MessageData[0];
 						IoctlvMessageData* outputData = &ioctlvMessage->MessageData[ioctlvMessage->InputArgc];
-						if (inputData->Length != outputData->Length || ((inputData->Length - 0x10) & 0xFFFF000F) != 0 ||
+						if (inputData->Length != outputData->Length || ((inputData->Length - sizeof(AESBlock)) & 0xFFFF000F) != 0 ||
 						    ((u32)inputData->Data & 0x0F) != 0 || ((u32)outputData->Data & 0x0F) != 0)
 							goto sendReply;
 						if (ioctl == AES_DECRYPT)
-							memcpy(ivBuffer, (u8*)inputData->Data + inputData->Length - 0x10, 0x10);
+							memcpy(ivBuffer, (u8*)inputData->Data + inputData->Length - sizeof(AESBlock), sizeof(AESBlock));
 
 						write32(AES_SRC, VirtualToPhysical((u32)inputData->Data));
 						write32(AES_DEST, VirtualToPhysical((u32)outputData->Data));
@@ -153,7 +154,7 @@ processAesCommand:
 							                               .EnableDataHandling = ioctl != AES_COPY,
 							                               .IsDecryption = ioctl == AES_DECRYPT,
 							                               .ChainIV = 0,
-							                               .NumberOfBlocks = ((inputData->Length - 0x10U) >> 4) & 0xFFF } };
+							                               .NumberOfBlocks = ((inputData->Length - sizeof(AESBlock)) >> 4) & 0xFFF } };
 						write32(AES_CMD, command.Value);
 						u32* irqMessage;
 						ret = ReceiveMessage(AesEventMessageQueueId, (void**)&irqMessage, 0);
@@ -172,10 +173,10 @@ processAesCommand:
 						if (IVVector != NULL)
 						{
 							if (ioctl == AES_ENCRYPT)
-								memcpy(ivBuffer, (u8*)outputData->Data + outputData->Length - 0x10, 0x10);
+								memcpy(ivBuffer, (u8*)outputData->Data + outputData->Length - sizeof(AESBlock), sizeof(AESBlock));
 
 							if (ioctl <= AES_DECRYPT)
-								memcpy(IVVector->Data, ivBuffer, 0x10);
+								memcpy(IVVector->Data, ivBuffer, sizeof(AESBlock));
 
 							if (sourceVector != NULL)
 								FreeOnHeap(KernelHeapId, sourceVector->Data);

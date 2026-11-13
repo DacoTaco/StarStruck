@@ -9,6 +9,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <ios/aes.h>
 #include <ios/errno.h>
 #include <ios/ipc.h>
 #include <ios/keyring.h>
@@ -100,7 +101,7 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	void* keyBlob = AllocateOnHeap(KernelHeapId, sizeof(AESBlock));
 	if (keyBlob == NULL)
 		return IPC_ENOMEM;
 
@@ -127,11 +128,11 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData->Data = (void*)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
-	messageData[1].Length = 0x10;
+	messageData[1].Length = sizeof(AESBlock);
 	messageData[2].Data = outputData;
 	messageData[2].Length = dataSize;
 	messageData[3].Data = ivData;
-	messageData[3].Length = 0x10;
+	messageData[3].Length = sizeof(AESBlock);
 
 	ret = MessageQueueId == -1 ? DispatchIoctlv(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData) :
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData,
@@ -156,7 +157,7 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	void* keyBlob = AllocateOnHeap(KernelHeapId, sizeof(AESBlock));
 	if (keyBlob == NULL)
 		return IPC_ENOMEM;
 
@@ -183,11 +184,11 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData->Data = (void*)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
-	messageData[1].Length = 0x10;
+	messageData[1].Length = sizeof(AESBlock);
 	messageData[2].Data = outputData;
 	messageData[2].Length = dataSize;
 	messageData[3].Data = ivData;
-	messageData[3].Length = 0x10;
+	messageData[3].Length = sizeof(AESBlock);
 
 	ret = MessageQueueId == -1 ? DispatchIoctlv(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData) :
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData,
@@ -669,7 +670,7 @@ s32 IOSC_ImportSecretKey(u32 importedHandle, u32 verifyHandle, u32 decryptHandle
 					break;
 			}
 
-			ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+			ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 			if (ret != IPC_SUCCESS)
 				break;
 
@@ -992,7 +993,7 @@ static inline s32 IOSC_EncryptInner(const u32 keyHandle, void* ivData, const voi
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 		if (ret != IPC_SUCCESS)
 			break;
 
@@ -1023,7 +1024,7 @@ static inline s32 IOSC_DecryptInner(const u32 keyHandle, void* ivData, const voi
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 		if (ret != IPC_SUCCESS)
 			break;
 

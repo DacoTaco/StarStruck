@@ -17,6 +17,7 @@
 #include "crypto/otp.h"
 #include "crypto/seeprom.h"
 #include "crypto/iosc.h"
+#include <ios/aes.h>
 
 KeyringEntry KeyringEntries[KEYRING_TOTAL_ENTRIES];
 KeyringMetadataType KeyringMetadata[KEYRING_METADATA_TOTAL_ENTRIES];
@@ -317,9 +318,9 @@ s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keyS
 			//Private Key Lengths
 		case PrivateKey:
 			if (keySubtype == HMAC) //SHA-1 HMAC (20 bytes/160 bits)
-				*keySize = 0x14;
+				*keySize = sizeof(FinalShaHash);
 			else if (keySubtype == AES_128) //AES 128 (16 bytes/128 bits)
-				*keySize = 0x10;
+				*keySize = sizeof(AESBlock);
 			else if (keySubtype == ECC_233) //ECC 233 (30 bytes/240 bits)
 				*keySize = 0x1e;
 			else
