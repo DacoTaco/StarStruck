@@ -9,6 +9,7 @@
 # see file COPYING or http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
 */
 
+#include <ios/aes.h>
 #include <ios/errno.h>
 #include <ios/ipc.h>
 #include <ios/keyring.h>
@@ -18,6 +19,7 @@
 #include "crypto/iosc_helpers.h"
 #include "crypto/iosc.h"
 #include "crypto/iosc_hash.h"
+#include "crypto/iosc_ecdh.h"
 #include "crypto/otp.h"
 #include "crypto/keyring.h"
 #include "crypto/boot2.h"
@@ -28,6 +30,7 @@
 #include "memory/memory.h"
 #include "memory/heaps.h"
 #include "messaging/messageQueue.h"
+#include "ellipticCurve/uint233.h"
 
 #ifndef MIOS
 
@@ -100,7 +103,7 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	void* keyBlob = AllocateOnHeap(KernelHeapId, sizeof(AESBlock));
 	if (keyBlob == NULL)
 		return IPC_ENOMEM;
 
@@ -127,11 +130,11 @@ static s32 _IOSC_Decrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData->Data = (void*)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
-	messageData[1].Length = 0x10;
+	messageData[1].Length = sizeof(AESBlock);
 	messageData[2].Data = outputData;
 	messageData[2].Length = dataSize;
 	messageData[3].Data = ivData;
-	messageData[3].Length = 0x10;
+	messageData[3].Length = sizeof(AESBlock);
 
 	ret = MessageQueueId == -1 ? DispatchIoctlv(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData) :
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_DECRYPT, 2, 2, messageData,
@@ -156,7 +159,7 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	if (((u32)inputData & 0x1F) != 0 || ((u32)outputData & 0x1F) != 0)
 		return -2016;
 
-	void* keyBlob = AllocateOnHeap(KernelHeapId, 0x10);
+	void* keyBlob = AllocateOnHeap(KernelHeapId, sizeof(AESBlock));
 	if (keyBlob == NULL)
 		return IPC_ENOMEM;
 
@@ -183,11 +186,11 @@ static s32 _IOSC_Encrypt(const u32 keyHandle, void* ivData, const void* inputDat
 	messageData->Data = (void*)inputData;
 	messageData->Length = dataSize;
 	messageData[1].Data = keyBlob;
-	messageData[1].Length = 0x10;
+	messageData[1].Length = sizeof(AESBlock);
 	messageData[2].Data = outputData;
 	messageData[2].Length = dataSize;
 	messageData[3].Data = ivData;
-	messageData[3].Length = 0x10;
+	messageData[3].Length = sizeof(AESBlock);
 
 	ret = MessageQueueId == -1 ? DispatchIoctlv(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData) :
 	                             DispatchIoctlvAsync(AES_STATIC_FILEDESC, AES_ENCRYPT, 2, 2, messageData,
@@ -541,7 +544,7 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
                                       const u8* signBuffer, const u8* ivData, const u8* keyBuffer)
 {
 	// Only custom slots (> 11), not RSA root key, and not the special 0xFFFFFFFF handle
-	if (importedHandle < 12 || importedHandle == RSA4096_ROOTKEY || importedHandle == (u32)-1)
+	if (importedHandle < KEYRING_MAX_VALUE || importedHandle == RSA4096_ROOTKEY || importedHandle == (u32)-1)
 		return IOSC_EACCES;
 
 	s32 ret = IPC_SUCCESS;
@@ -581,9 +584,9 @@ static s32 _IOSC_ImportSecretKeyInner(u32 importedHandle, u32 verifyHandle, u32 
 		if (flag == IOSC_SECRET_SIGNED_ENCRYPTED && (importedKeySize & 0xf) != 0)
 			importedKeySize = (importedKeySize + 0x10) & 0xfffffff0;
 
-		ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
+		IOSCHashContext hmacContext = { 0 };
 		u32 computedHmac[5] __attribute__((aligned(0x40))) = { 0 };
-		GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, NULL, -1, NULL);
+		GenerateBlockMAC(&hmacContext, NULL, 0, NULL, 0, verifyHandle, InitHMacState, signBuffer, -1, NULL);
 		GenerateBlockMAC(&hmacContext, keyBuffer, importedKeySize, NULL, 0, verifyHandle, FinalizeHmacState,
 		                 computedHmac, -1, NULL);
 		if (memcmp(computedHmac, signBuffer, sizeof(computedHmac)) != 0)
@@ -669,7 +672,7 @@ s32 IOSC_ImportSecretKey(u32 importedHandle, u32 verifyHandle, u32 decryptHandle
 					break;
 			}
 
-			ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+			ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 			if (ret != IPC_SUCCESS)
 				break;
 
@@ -731,10 +734,113 @@ s32 IOSC_ImportPublicKey(const void* keyData, const void* metadata, u32 keyHandl
 	return ret;
 }
 
-s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, const u32 inputSize,
+static s32 _IOSC_ComputeSharedKeyInner(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	if (sharedKeyHandle < KEYRING_MAX_VALUE || sharedKeyHandle == RSA4096_ROOTKEY)
+		return IOSC_EACCES;
+
+	u32 zeroes = 0;
+	s32 ret = Keyring_GetKeyZeroesIfAnyPrivate(privateKeyHandle, &zeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	ret = Keyring_SetKeyZeroesIfAnyPrivate(sharedKeyHandle, zeroes);
+	if (ret != IPC_SUCCESS)
+		return ret;
+
+	KeySubtype keySubtype = 0;
+	KeyType keyType = 0;
+	Keyring_GetKeyTypes(privateKeyHandle, &keyType, &keySubtype);
+	if ((keyType != PrivateKey && keyType != PublicAndPrivateKey) || keySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	Keyring_GetKeyTypes(publicKeyHandle, &keyType, &keySubtype);
+	if ((keyType != PublicKey && keyType != PublicAndPrivateKey) || keySubtype != ECC_233)
+		return IOSC_INVALID_OBJTYPE;
+
+	Keyring_GetKeyTypes(sharedKeyHandle, &keyType, &keySubtype);
+	if (keyType != PrivateKey || keySubtype >= RSA_2048)
+		return IOSC_INVALID_OBJTYPE;
+
+	u8 privateKey[0x20];
+	if (Keyring_GetKey(privateKeyHandle, privateKey, sizeof(ECCPrivateKey)) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	u32 publicKeySize = 0;
+	if (Keyring_FindKeySize(&publicKeySize, publicKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	u8 sharedKey[0x20];
+	ECCPublicKey publicKey;
+	Keyring_GetKeyTypes(publicKeyHandle, &keyType, &keySubtype);
+	if (keyType == PublicKey)
+	{
+		if (Keyring_GetKey(publicKeyHandle, &publicKey, publicKeySize) != IPC_SUCCESS)
+			return IOSC_FAIL_INTERNAL;
+	}
+	else
+	{
+		if (keyType != PublicAndPrivateKey)
+			return IOSC_INVALID_FORMAT;
+
+		ECCPublicAndPrivateKey keys;
+
+		ret = Keyring_GetKey(publicKeyHandle, &keys, publicKeySize);
+		memcpy(&publicKey, &keys.Public, sizeof(ECCPublicKey));
+		if (ret != IPC_SUCCESS)
+			return IOSC_FAIL_INTERNAL;
+	}
+
+	u32 sharedKeySize = 0;
+	if (Keyring_FindKeySize(&sharedKeySize, sharedKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	// true when the key is too big for the 20 byte hash
+	if (ECDH_ComputeSharedSecretHash(privateKey, &publicKey, sharedKey, sharedKeySize))
+		return IOSC_FAIL_INTERNAL;
+
+	if (Keyring_FindKeySize(&publicKeySize, sharedKeyHandle) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	if (Keyring_SetKey(sharedKeyHandle, sharedKey, publicKeySize) != IPC_SUCCESS)
+		return IOSC_FAIL_INTERNAL;
+
+	return IPC_SUCCESS;
+}
+
+s32 IOSC_ComputeSharedKey(u32 privateKeyHandle, u32 publicKeyHandle, u32 sharedKeyHandle)
+{
+	s32 ret = IPC_SUCCESS;
+	s32 keyRet = IPC_SUCCESS;
+	IOSC_BEGIN_SAFETY_WRAPPER(ret, keyRet)
+
+	do
+	{
+		// Caller must own all 3 keys (RSA4096_ROOTKEY is allowed inside the helper)
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(privateKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(publicKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		keyRet = IOSC_CheckCurrentProcessOwnsKey(sharedKeyHandle);
+		if (keyRet != IPC_SUCCESS)
+			break;
+
+		ret = _IOSC_ComputeSharedKeyInner(privateKeyHandle, publicKeyHandle, sharedKeyHandle);
+	}
+	while (0);
+
+	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
+	return ret;
+}
+
+s32 IOSC_GenerateHashAsync(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                            const u32 chain_flag, void* digest, const s32 messageQueueId, IpcMessage* message)
 {
-	s32 ret = CheckMemoryPointer(context, 0x60, 4, CurrentThread->ProcessId, 0);
+	s32 ret = CheckMemoryPointer(context, sizeof(IOSCHashContext), 4, CurrentThread->ProcessId, 0);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
@@ -755,10 +861,10 @@ s32 IOSC_GenerateHashAsync(const ShaContext* context, const void* inputData, con
 	return GenerateHash(context, inputData, inputSize, chain_flag, digest, messageQueueId, message);
 }
 
-s32 IOSC_GenerateHash(const ShaContext* context, const void* inputData, const u32 inputSize,
+s32 IOSC_GenerateHash(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                       const u32 chain_flag, void* digest)
 {
-	s32 ret = CheckMemoryPointer(context, 0x60, 4, CurrentThread->ProcessId, 0);
+	s32 ret = CheckMemoryPointer(context, sizeof(IOSCHashContext), 4, CurrentThread->ProcessId, 0);
 	if (ret != IPC_SUCCESS)
 		return ret;
 
@@ -992,7 +1098,7 @@ static inline s32 IOSC_EncryptInner(const u32 keyHandle, void* ivData, const voi
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 		if (ret != IPC_SUCCESS)
 			break;
 
@@ -1023,7 +1129,7 @@ static inline s32 IOSC_DecryptInner(const u32 keyHandle, void* ivData, const voi
 		if (ret != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, 0x10);
+		ret = IOSC_CheckCurrentProcessCanReadWrite(ivData, sizeof(AESBlock));
 		if (ret != IPC_SUCCESS)
 			break;
 
@@ -1053,7 +1159,7 @@ s32 IOSC_DecryptAsync(const u32 keyHandle, void* ivData, const void* inputData, 
 	return IOSC_DecryptInner(keyHandle, ivData, inputData, dataSize, outputData, messageQueueId, message);
 }
 
-static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, const void* inputData,
+static inline s32 IOSC_GenerateBlockMACInner(const IOSCHashContext* context, const void* inputData,
                                              const u32 inputSize, const void* customData, const u32 customDataSize,
                                              const u32 keyHandle, const HMacCommandType hmacCommand,
                                              const void* signData, const s32 messageQueueId, IpcMessage* message)
@@ -1067,7 +1173,7 @@ static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, const vo
 		if (keyRet != IPC_SUCCESS)
 			break;
 
-		ret = IOSC_CheckCurrentProcessCanReadWrite(context, 0x60);
+		ret = IOSC_CheckCurrentProcessCanReadWrite(context, sizeof(IOSCHashContext));
 		if (ret != IPC_SUCCESS)
 			break;
 
@@ -1095,14 +1201,15 @@ static inline s32 IOSC_GenerateBlockMACInner(const ShaContext* context, const vo
 	IOSC_END_SAFETY_WRAPPER(ret, keyRet)
 	return ret;
 }
-s32 IOSC_GenerateBlockMACAsync(const ShaContext* context, const void* inputData, const u32 inputSize, const void* customData,
-                               const u32 customDataSize, const u32 keyHandle, const HMacCommandType hmacCommand,
-                               const void* signData, const s32 messageQueueId, IpcMessage* message)
+s32 IOSC_GenerateBlockMACAsync(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
+                               const void* customData, const u32 customDataSize, const u32 keyHandle,
+                               const HMacCommandType hmacCommand, const void* signData,
+                               const s32 messageQueueId, IpcMessage* message)
 {
 	return IOSC_GenerateBlockMACInner(context, inputData, inputSize, customData, customDataSize, keyHandle,
 	                                  hmacCommand, signData, messageQueueId, message);
 }
-s32 IOSC_GenerateBlockMAC(const ShaContext* context, const void* inputData, const u32 inputSize,
+s32 IOSC_GenerateBlockMAC(const IOSCHashContext* context, const void* inputData, const u32 inputSize,
                           const void* customData, const u32 customDataSize, const u32 keyHandle,
                           const HMacCommandType hmacCommand, const void* signData)
 {

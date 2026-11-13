@@ -57,7 +57,7 @@ static s32 ReadClustersInner(u16 cluster, u32 count, u8* clusterIv, u8* clusterS
 	bool nandCommandExecuted = false;
 	bool ioscCommandExecuted = false;
 
-	ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
+	IOSCHashContext hmacContext = { 0 };
 	u8 hmacDigest[0x14] __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacBuffer[0x40] = { 0 };
 	u8* hmacBufferPtr = NULL;
@@ -340,7 +340,7 @@ static s32 WriteClustersInner(u16 cluster, u32 count, u8* clusterIv, u8* cluster
 	s32 ret = IPC_SUCCESS;
 	bool ioscCommandExecuted = false;
 
-	ShaContext hmacContext __attribute__((aligned(0x40))) = { 0 };
+	IOSCHashContext hmacContext = { 0 };
 	u8 hmacDigest[0x14] __attribute__((aligned(0x40))) = { 0 };
 	u8 hmacBuffer[0x40] = { 0 };
 	u8* hmacBufferPtr = NULL;

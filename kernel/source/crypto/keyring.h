@@ -92,7 +92,7 @@ s16 Keyring_GetKeyIndexFitSize(const u32 keySize);
 s32 Keyring_GetHandleFitSize(u32* keyHandle, const u32 keySize);
 
 s32 Keyring_FindKeySize(u32* keySize, u32 keyHandle);
-s32 Keyring_GetSignatureSize(u32* publicKeySize, u32 keyHandle);
+s32 Keyring_GetSignatureSize(u32* signatureSize, u32 keyHandle);
 s32 Keyring_GetKeySizeFromType(KeyType keyType, KeySubtype keySubtype, u32* keySize);
 
 s32 Keyring_SetKeyKind(u32 keyHandle, KeyKind keyKind);
